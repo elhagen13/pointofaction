@@ -1,0 +1,205 @@
+/* Navbar container */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #333;
+  color: white;
+  padding: 1rem;
+  box-shadow: 0px 3px 2px rgb(107, 107, 107, .5);
+}
+
+.navbarContainer {
+  width: 100%;
+  padding: 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Brand/logo */
+.navbarBrand {
+  color: white;
+  text-decoration: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  height: 75px;
+  flex-shrink: 0; 
+  margin-right: 1rem;
+}
+
+/* logo image */
+.logo {
+  height: 100%;
+}
+
+/* Toggle button for mobile */
+.navbarToggle {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.toggleIcon {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background-color: white;
+  margin: 5px 0;
+  transition: all 0.3s ease;
+}
+
+/* Navbar menu - Updated this section */
+.navbarMenu {
+  display: flex;
+  flex-grow: 1; /* Take up remaining space */
+  justify-content: flex-end; /* Align menu items to the right */
+}
+
+.navbarNav {
+  display: flex;
+  flex-direction: row; /* Change from column to row */
+  flex-wrap: wrap; /* Allow items to wrap */
+  justify-content: center; /* Center items horizontally */
+  align-items: center; /* Center vertically */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  gap: 0.5rem; 
+}
+
+.navItem {
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.navLink {
+  color: #BCBCBC;
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 0.5rem 1rem; 
+  display: block;
+  position: relative;
+  transition: color 0.3s ease;
+  white-space: normal; /* Override any nowrap */
+  }
+
+.navLink:hover {
+  color: white; 
+}
+
+/* Green underline animation */
+.navLink::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background-color: #538561; 
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.navLink:hover::after {
+  width: calc(100% - 2rem); 
+}
+
+
+.styledButton{
+  display: inline-flex;
+  padding: 0.5rem 2rem;
+  background-color: #538561;
+  color: #D9D9D9;
+  text-decoration: none;
+  border: none;
+  border-radius: 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-weight: bold;
+  box-shadow: inset 0 0 3px black;
+  max-height: 35px;
+}
+
+.styledButton:hover{
+  background-color: #3e6a4a;
+  color: white;
+}
+
+/* General dropdown container */
+.generalDropdown {
+  position: absolute;
+  top: 100%; /* Position below navbar */
+  left: 0;
+  width: 100%;
+  background-color: #444;
+  display: none;
+  flex-direction: column;
+  padding: 1rem 0;
+  z-index: 1000;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+
+
+.shoppingCart{
+  width: 35px;
+  height: 35px;
+}
+
+/* General pages item styling */
+.generalPages {
+  position: relative; /* For dropdown positioning */
+  cursor: pointer;
+}
+
+
+/* Mobile styles */
+@media (max-width: 769px) {
+  .navbarToggle {
+    display: block;
+  }
+
+  .navbarMenu {
+    display: none;
+    width: 100vh;
+    flex-grow: 0; 
+  }
+
+  .navbarMenu.show{
+    display: block;
+    width: 100%;
+    text-align: center;
+
+  }
+
+  .navbarNav{
+    display: flex;
+    flex-direction: column;
+  }
+
+
+  .styledButton{
+    margin: 1rem 0;
+  }
+
+}
+
+/* Desktop styles */
+@media (min-width: 769px) {
+  .navbarMenu {
+    width: auto;
+  }
+
+  .navbarNav {
+    flex-direction: row;
+  }
+
+}

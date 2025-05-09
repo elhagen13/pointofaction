@@ -1,0 +1,188 @@
+
+.carouselContainer {
+    position: relative;
+    display: flex;
+    gap: 30px;
+    padding: 20px; 
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+}
+
+.carouselContainer::-webkit-scrollbar {
+    display: none;
+}
+
+.carousel{
+    position: relative;
+    width: 100%;
+    height: 40vw;
+    padding: none;
+    
+}
+
+
+/* Base container style - ensures square aspect ratio */
+.imageContainer {
+    position: relative;
+    flex-shrink: 0;
+    aspect-ratio: 1/1;
+    overflow: hidden; 
+    border-radius: 8px;
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    box-shadow: 0px 2px 5px rgb(70, 70, 70);
+
+}
+
+.image{
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+
+}
+
+/* Size variations */
+.active {
+    width: 40%;
+    max-width: 600px;
+    z-index: 3;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+
+}
+
+.med_left, .med_right{
+    width: 30%;
+    max-width: 400px;
+    z-index: 2;
+    position: absolute;
+    top: 50%;
+    transform: translate(0, -50%);
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+}
+
+
+.med_left {
+    left: 15%;
+}
+
+.med_right{
+    right: 15%
+
+}
+
+.small_left, .small_right {
+    width: 20%;
+    max-width: 300px;
+    z-index: 1;
+    position: absolute;
+    top: 50%;
+    transform: translate(0, -50%);
+    filter: opacity(50%);
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+
+}
+
+.small_left {
+    left: 5%;
+
+}
+
+.small_right{
+    right: 5%;
+
+}
+
+
+.hidden {
+    display: none;
+    z-index: 0
+}
+
+.image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    display: block; 
+}
+
+.imageContainer {
+    transition: all 0.5s ease;
+    will-change: transform, width, height, opacity;
+}
+
+.active, .med_left, .med_right, .small_left, .small_right {
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.small_left, .small_right {
+    transition: all 0.5s ease, opacity 0.3s ease;
+}
+
+.navButtons{
+    display: flex;
+    flex-direction: row;
+    gap: 80px;
+    margin-top: 20px;
+}
+
+.circles{
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   width: 50px;
+   height: 50px;
+   background-color: rgba(222, 222, 222, 0.8);
+   border-radius: 30px;
+   color: white;
+
+}
+
+.navButton{
+    width: 30px;
+    height: 30px;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .active{
+        width: 50%;
+    }
+
+    .med_left, .med_right{
+        width: 40%;
+    }
+
+    .small_left, .small_right{
+        width: 30%;
+    }
+
+    .med_left{
+        left: 10%;
+    }
+    .med_right{
+        right: 10%;
+    }
+
+    .small_left{
+        left: 10% 
+    }
+
+    .small_right{
+        right: 10%;
+    }
+
+}

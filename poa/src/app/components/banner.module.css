@@ -1,0 +1,126 @@
+.bannerContainer {
+    position: relative; 
+    width: 100vw;
+    height: 50vh; 
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y; /* Allows vertical scroll but prevents horizontal scroll */
+}
+  
+.bannerImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+  
+.bannerImageContents {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    padding: 20px 30px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center; /* Center horizontally */
+    gap: 10rem; /* Space between logo and text */
+    background: linear-gradient(rgba(0, 0, 0, 0.75), #1D2F3C)
+
+}
+
+.internalImage {
+    height: 75%;
+    max-width: 100%; /* Prevent overflow */
+    object-fit: contain; /* Keep logo aspect ratio */
+}
+  
+.textContent {
+    color: white; 
+    font-size: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); 
+    width: 50%;
+}
+
+.portalBanner{
+    position: absolute;
+    top:0;
+    width: 100%;
+    background-color: rgba(228, 255, 236, .7);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    color: #3F3636;
+    font-weight: bold;
+    align-items: center;
+
+}
+
+.portalBannerButtons{
+    display: flex;
+    gap: 10px;
+}
+
+.portalBannerButton{
+    display: inline-flex;
+    padding: 0.5rem 1rem;
+    background-color: #243a2a98;
+    color: #D9D9D9;
+    text-decoration: none;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-weight: bold;
+    max-height: 35px;
+
+}
+
+@media (max-width: 769px){
+    .bannerContainer {
+        height: 30vh; 
+    }
+
+    .bannerImageContents{
+        gap: 2rem;
+    }
+
+    .internalImage{
+        height: 50%;
+    }
+
+    .textContent{
+        font-size: 0.75rem
+    }
+
+    .selectBanner{
+        transform: translate(-50%, 50px);
+    }
+}
+  
+
+.bannerButton{
+    background-color: rgb(132, 132, 132);
+    width: 40px;
+    height: 10px;
+    border-radius: 10px;
+}
+
+.selectBanner{
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -30px);
+}
+
+.selectBannerButtons{
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.active{
+    background-color: #538561 !important
+}
