@@ -10,7 +10,6 @@ export default function companyStores() {
     const [search, setSearch] = useState("")
     const [result, setResult] = useState([])
 
-
     function lookup(array, searchTerm) {
         if (!searchTerm || !searchTerm.trim()) return [];
       
@@ -24,12 +23,16 @@ export default function companyStores() {
           );
         }));
         return;
-      }
-
-    
+    }
     
     const handleSearch = (event) => {
         setSearch(event.target.value);
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            lookup(stores, search);
+        }
     };
 
     useEffect(() => {}, [result])
@@ -39,9 +42,17 @@ export default function companyStores() {
             <div className={styles.header}>
                 Store Search
                 <div className={styles.searchContainer}>
-                    <input className={styles.searchBar} placeholder="Search"
-                    onChange={handleSearch} value={search}/>
-                    <IoSearch className={styles.searchIcon} onClick={() => lookup(stores, search)}/>
+                    <input 
+                        className={styles.searchBar} 
+                        placeholder="Search"
+                        onChange={handleSearch} 
+                        onKeyDown={handleKeyDown}
+                        value={search}
+                    />
+                    <IoSearch 
+                        className={styles.searchIcon} 
+                        onClick={() => lookup(stores, search)}
+                    />
                 </div>
             </div>
             <div className={styles.resultContainer}>
@@ -51,11 +62,9 @@ export default function companyStores() {
                             <img src={res.image} className={styles.storeImage}/>
                             {res.store}
                         </Link>
-                        
                     ))
                 }
             </div>
-        
         </div>
     );
 }

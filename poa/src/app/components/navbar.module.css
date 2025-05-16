@@ -160,6 +160,16 @@
   cursor: pointer;
 }
 
+.faq{
+  position: absolute;
+  top: 70px;
+  left: 0;
+  background-color: white;
+  color: black;
+  padding: 30px;
+
+}
+
 
 /* Mobile styles */
 @media (max-width: 769px) {
@@ -190,6 +200,12 @@
     margin: 1rem 0;
   }
 
+  .shopVoxStore{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
 }
 
 /* Desktop styles */
@@ -202,4 +218,23 @@
     flex-direction: row;
   }
 
+}
+
+.dropdown{
+  background-color: #E6E6E6;
+  color: #837B7B;
+  border-radius: 0 0 30px 30px;
+  display:flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.dropdown{
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.dropdown::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
 }

@@ -52,10 +52,17 @@
 }
 
 
-@media(max-width < 769){
+@media(max-width: 769){
     .galleryReferences{
-        display: grid;
+        display: flex;
+        flex-direction: column;
     }
+
+    .link{
+        max-width: 100%
+    }
+
+
 }
 
 .breadcrumbs{

@@ -82,6 +82,30 @@ const images = [
     {
       link:  "/sample_works/image21.png",
       type: "Embroidery"
+    },
+    {
+      link:  "/sample_works/image22.png",
+      type: "Patches"
+    },
+    {
+      link:  "/sample_works/image23.png",
+      type: "Patches"
+    },
+    {
+      link:  "/sample_works/image24.png",
+      type: "Patches"
+    },
+    {
+      link:  "/sample_works/image25.png",
+      type: "Patches"
+    },
+    {
+      link:  "/sample_works/image26.png",
+      type: "Patches"
+    },
+    {
+      link:  "/sample_works/image27.png",
+      type: "Patches"
     }
      
 ]

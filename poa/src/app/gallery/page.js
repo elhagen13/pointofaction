@@ -31,6 +31,11 @@ export default function Home() {
       link: "/gallery/ArtDigitizing",
 
     },
+    {
+      text: "Patches Gallery",
+      link: "/gallery/Patches",
+
+    },
   ]
   return (
     <div className={styles.galleryPage}>
