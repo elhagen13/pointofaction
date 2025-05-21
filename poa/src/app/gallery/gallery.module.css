@@ -76,3 +76,22 @@
 .breadcrumb:hover{
     text-decoration: underline;
 }
+
+.photoGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    font-weight: bold;
+}
+  
+.gridImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.gridImageParent{
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}

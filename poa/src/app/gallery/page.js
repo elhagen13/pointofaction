@@ -52,6 +52,17 @@ export default function Home() {
           ))}
         </div>
         <GalleryCarousel images={images}/>
+        <div className={styles.photoGrid}>
+        {images.map((image, index) => (
+          <div key={index}>
+          <div className={styles.gridImageParent}>
+            <img src={image.link} className={styles.gridImage}/>
+          </div>
+          {image.company}
+          </div>
+        ))}
+
+      </div>
        
        
     </div>

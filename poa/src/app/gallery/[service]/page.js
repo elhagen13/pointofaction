@@ -21,6 +21,17 @@ export default function TargetPage({ params }) {
       </div>
       <h1 className={styles.title}>{service.split(/(?=[A-Z])/).join(" ")} Gallery</h1>
       <GalleryCarousel images={filteredImages}/>
+      <div className={styles.photoGrid}>
+        {filteredImages.map((image, index) => (
+          <div key={index}>
+          <div className={styles.gridImageParent}>
+            <img src={image.link} className={styles.gridImage}/>
+          </div>
+          {image.company}
+          </div>
+        ))}
+
+      </div>
 
     </div>
   );

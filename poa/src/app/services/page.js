@@ -66,7 +66,7 @@ export default function Services() {
           </video>
         </div>
         <div className={`${styles.textContainer} ${styles.left}`}>
-            Vinyl Printing
+            Vinyl Printing & Cutting
             <div style={{position: "relative"}}>
               <Link className={styles.textLink} href="/services/vinyl">Learn More</Link>
             </div>        

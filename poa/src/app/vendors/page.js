@@ -13,6 +13,24 @@ export default function Vendors(){
     const [workwear, setWorkwear] = useState([]);
     const [drinkware, setDrinkwear] = useState([]);
 
+    const [overlay, setOverlay] = useState(false);
+    const [overlayLink, setOverlayLink] = useState('')
+
+    const vendorClick = (link) => {
+        console.log(link)
+        setOverlayLink(link)
+        setOverlay(true)
+
+        return;
+    }
+
+    const overlayOff = () => {
+        setOverlayLink('');
+        setOverlay(false);
+
+        return;
+    }
+
     
     useEffect(() => {
         setOverall(categories.overall.map(vendor => vendors[vendor]));
@@ -43,13 +61,26 @@ export default function Vendors(){
         <div className={styles.vendorList}>
         {
             overall.map((vendor, index) => (
-                <Link key={index} href={vendor.link} target="_blank">
-                    <div className={styles.imageContainer}>
-                        <img src={vendor.image} className={styles.image}/>
+                <>
+                {
+                    !vendor.blocked ? 
+                    <div onClick={() => vendorClick(vendor.link)}>
+                        <div className={styles.imageContainer}>
+                            <img src={vendor.image} className={styles.image}/>
+                        </div>
+                        {vendor.storeName}
                     </div>
-                    {vendor.storeName}
-                </Link>
-            ))
+                    :
+                    <Link key={index} href={vendor.link} target="_blank">
+                        <div className={styles.imageContainer}>
+                            <img src={vendor.image} className={styles.image}/>
+                        </div>
+                        {vendor.storeName}
+                    </Link>
+                }               
+                </>
+            )
+            )
         }
         </div>
         <div className={styles.title}>
@@ -58,12 +89,24 @@ export default function Vendors(){
         <div className={styles.vendorList}>
             {
                 tops.map((vendor, index) => (
-                    <Link key={index} href={vendor.link} target="_blank">
-                        <div className={styles.imageContainer}>
-                            <img src={vendor.image} className={styles.image}/>
-                        </div>
-                        {vendor.storeName}
-                    </Link>
+                    <>
+                        {
+                            !vendor.blocked ? 
+                            <div onClick={() => vendorClick(vendor.link)}>
+                                <div className={styles.imageContainer}>
+                                    <img src={vendor.image} className={styles.image}/>
+                                </div>
+                                {vendor.storeName}
+                            </div>
+                            :
+                            <Link key={index} href={vendor.link} target="_blank">
+                                <div className={styles.imageContainer}>
+                                    <img src={vendor.image} className={styles.image}/>
+                                </div>
+                                {vendor.storeName}
+                            </Link>
+                        }               
+                    </>
                 ))
             }
         </div>
@@ -73,12 +116,24 @@ export default function Vendors(){
         <div className={styles.vendorList}>
             {
                 outerwear.map((vendor, index) => (
-                    <Link key={index} href={vendor.link} target="_blank">
-                        <div className={styles.imageContainer}>
-                            <img src={vendor.image} className={styles.image}/>
+                <>
+                    {
+                        !vendor.blocked ? 
+                        <div onClick={() => vendorClick(vendor.link)}>
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.image} className={styles.image}/>
+                            </div>
+                            {vendor.storeName}
                         </div>
-                        {vendor.storeName}
-                    </Link>
+                        :
+                        <Link key={index} href={vendor.link} target="_blank">
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.image} className={styles.image}/>
+                            </div>
+                            {vendor.storeName}
+                        </Link>
+                    }               
+                </>
                 ))
             }
         </div>
@@ -88,12 +143,24 @@ export default function Vendors(){
         <div className={styles.vendorList}>
             {
                 headwear.map((vendor, index) => (
-                    <Link key={index} href={vendor.link} target="_blank">
-                        <div className={styles.imageContainer}>
-                            <img src={vendor.image} className={styles.image}/>
+                    <>
+                    {
+                        !vendor.blocked ? 
+                        <div onClick={() => vendorClick(vendor.link)}>
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.image} className={styles.image}/>
+                            </div>
+                            {vendor.storeName}
                         </div>
-                        {vendor.storeName}
-                    </Link>
+                        :
+                        <Link key={index} href={vendor.link} target="_blank">
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.image} className={styles.image}/>
+                            </div>
+                            {vendor.storeName}
+                        </Link>
+                    }               
+                    </>
                 ))
             }
         </div>
@@ -103,12 +170,24 @@ export default function Vendors(){
         <div className={styles.vendorList}>
             {
                 activewear.map((vendor, index) => (
-                    <Link key={index} href={vendor.link} target="_blank">
-                        <div className={styles.imageContainer}>
-                            <img src={vendor.image} className={styles.image}/>
+                    <>
+                    {
+                        !vendor.blocked ? 
+                        <div onClick={() => vendorClick(vendor.link)}>
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.image} className={styles.image}/>
+                            </div>
+                            {vendor.storeName}
                         </div>
-                        {vendor.storeName}
-                    </Link>
+                        :
+                        <Link key={index} href={vendor.link} target="_blank">
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.image} className={styles.image}/>
+                            </div>
+                            {vendor.storeName}
+                        </Link>
+                    }               
+                    </>
                 ))
             }
         </div>
@@ -118,12 +197,24 @@ export default function Vendors(){
         <div className={styles.vendorList}>
             {
                 workwear.map((vendor, index) => (
-                    <Link key={index} href={vendor.link} target="_blank">
-                        <div className={styles.imageContainer}>
-                            <img src={vendor.image} className={styles.image}/>
+                    <>
+                    {
+                        !vendor.blocked ? 
+                        <div onClick={() => vendorClick(vendor.link)}>
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.image} className={styles.image}/>
+                            </div>
+                            {vendor.storeName}
                         </div>
-                        {vendor.storeName}
-                    </Link>
+                        :
+                        <Link key={index} href={vendor.link} target="_blank">
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.image} className={styles.image}/>
+                            </div>
+                            {vendor.storeName}
+                        </Link>
+                    }               
+                    </>
                 ))
             }
         </div>
@@ -133,15 +224,45 @@ export default function Vendors(){
         <div className={styles.vendorList}>
             {
                 drinkware.map((vendor, index) => (
-                    <Link key={index} href={vendor.link} target="_blank">
-                        <div className={styles.imageContainer}>
-                            <img src={vendor.image} className={styles.image}/>
-                        </div>
-                        {vendor.storeName}
-                    </Link>
+                    <>
+                        {
+                            !vendor.blocked ? 
+                            <div onClick={() => vendorClick(vendor.link)}>
+                                <div className={styles.imageContainer}>
+                                    <img src={vendor.image} className={styles.image}/>
+                                </div>
+                                {vendor.storeName}
+                            </div>
+                            :
+                            <Link key={index} href={vendor.link} target="_blank">
+                                <div className={styles.imageContainer}>
+                                    <img src={vendor.image} className={styles.image}/>
+                                </div>
+                                {vendor.storeName}
+                            </Link>
+                        }               
+                    </>
                 ))
             }
         </div>
+        {overlay && 
+        <div className={styles.frameOverlay}>
+            <button 
+                className={styles.closeButton} 
+                onClick={overlayOff}
+                aria-label="Close overlay"
+                >
+                <div style={{transform: "translateY(-2px)"}}>
+                    ×
+                </div>
+            </button>
+            <iframe 
+                src={overlayLink} 
+                title="Vendor website"
+                allowFullScreen
+            />
+        </div>
+        }
 
     </div>
   );
