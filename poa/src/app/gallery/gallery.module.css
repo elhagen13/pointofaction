@@ -1,3 +1,5 @@
+@import "../fonts.css";
+
 .galleryPage{
     padding: 50px 80px;
 }
@@ -52,19 +54,6 @@
 }
 
 
-@media(max-width: 769){
-    .galleryReferences{
-        display: flex;
-        flex-direction: column;
-    }
-
-    .link{
-        max-width: 100%
-    }
-
-
-}
-
 .breadcrumbs{
     display: flex;
     gap: 10px;
@@ -94,4 +83,26 @@
 .gridImageParent{
     width: 100%;
     aspect-ratio: 1 / 1;
+}
+
+@media(max-width: 769){
+    .galleryPage{
+        padding: 50px 40px;
+    }
+
+    .galleryReferences{
+        display: flex;
+        flex-direction: column;
+    }
+
+    .link{
+        max-width: 100%
+    }
+
+    .photoGrid{
+        grid-template-columns: repeat(2, 1fr);
+
+    }
+
+
 }

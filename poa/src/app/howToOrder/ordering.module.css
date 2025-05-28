@@ -17,11 +17,12 @@
 }
 
 .tutorialDropdown{
-    width: 20%;
     box-shadow: 0 0 2px gray;
     border-radius: 10px;
     padding: 10px;
-    min-height: calc(100vh - 300px)
+    min-height: calc(100vh - 300px);
+    min-width: 300px;
+    max-width: 100%;
 }
 
 .orderingProcess{
@@ -29,6 +30,7 @@
     font-weight: bold;
     text-transform: uppercase;
     padding: 10px;
+    margin-bottom: 10px;
 }
 
 .orderingProcess::after{
@@ -47,6 +49,20 @@
     display: flex;
     justify-content: space-between;
     flex-direction: row;
+}
+
+.chosenStep{
+    background-color: rgb(200, 200, 200);
+    border-radius: 20px;
+}
+.chosenSubSection{
+    background-color: rgb(220, 220, 220);
+    border-radius: 20px;
+}
+
+.chosenSection{
+    background-color: rgb(240, 240, 240);
+    border-radius: 20px;
 }
 
 .sectionTitle{
@@ -79,4 +95,23 @@
 
 .stepDetails{
     flex-grow: 1;
+}
+
+.nextButton{
+    border-radius: 10px;
+    background-color: green;
+    border: none;
+    color: white;
+    padding: 10px;
+    font-weight: bold;
+}
+
+@media(max-width: 768px){
+    .tutorial{
+        flex-direction: column;
+    }
+
+    .tutorialDropdown{
+        min-height: 0px;
+    }
 }

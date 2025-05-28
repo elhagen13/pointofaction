@@ -2,6 +2,7 @@
 import styles from './banner.module.css';
 import { useState, useRef, useEffect } from 'react';
 import BannerItem from './BannerItem';
+import Link from 'next/link';
 
 const bannerItems = [
     {
@@ -74,9 +75,9 @@ const Banner = () => {
             <div className={styles.portalBanner}>
                 Planning to reorder often?
                 <div className={styles.portalBannerButtons}>
-                    <button className={styles.portalBannerButton}>
+                    <Link href="/requestPortal"className={styles.portalBannerButton}>
                         Request a Client Portal
-                    </button>
+                    </Link>
                     <button className={styles.portalBannerButton}>
                         Client Portal Login
                     </button>

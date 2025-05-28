@@ -45,7 +45,6 @@
 
 }
 
-/* Size variations */
 .active {
     width: 40%;
     max-width: 600px;
@@ -157,32 +156,45 @@
     font-weight: bold;
 }
 
+/* Modify your mobile media query */
 @media (max-width: 768px) {
-    .active{
+
+    .active, .med_left, .med_right, .small_left, .small_right {
+        transition: all 0.5s ease;
+    }
+
+
+    .active {
         width: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%); 
     }
 
-    .med_left, .med_right{
+    .med_left, .med_right {
         width: 40%;
+        transform: translateY(-50%);
     }
 
-    .small_left, .small_right{
-        width: 30%;
-    }
-
-    .med_left{
+    .med_left {
         left: 10%;
+        right: auto;
     }
-    .med_right{
+
+    .med_right {
         right: 10%;
+        left: auto;
     }
 
-    .small_left{
-        left: 10% 
+    .small_left, .small_right {
+        width: 30%;
+        transform: translateY(-50%); 
     }
 
-    .small_right{
-        right: 10%;
+    .small_left {
+        left: 5%; 
     }
 
+    .small_right {
+        right: 5%; /* Adjusted from 10% to maintain progression */
+    }
 }

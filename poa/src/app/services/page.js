@@ -2,6 +2,7 @@
 import { useRef } from 'react';
 import styles from './services.module.css';
 import Link from 'next/link';
+import services from './services';
 
 export default function Services() {
   // Create separate refs for each video
@@ -10,7 +11,6 @@ export default function Services() {
   const laserVideoRef = useRef(null);
   const directToFilmVideoRef = useRef(null)
 
-  // Generic handler (DRY approach)
   const handleMouseEnter = (videoRef) => {
     if (videoRef.current) {
       videoRef.current.play().catch(e => console.log("Play failed:", e));
@@ -23,6 +23,33 @@ export default function Services() {
     }
   };
 
+  return(
+    <div>
+     {Object.values(services).map((service, index) => (
+      <div className={styles.backgroundBlock} key={index}>
+        {index % 2 === 0 ? (
+          <>
+            <img src={service.video} className={styles.photoLeft} alt={service.name} />
+            <div className={`${styles.textBlock} ${styles.textBlockRight}`}>
+              <h2 className={styles.serviceText}>{service.name}</h2>
+              <Link href={service.link} className={styles.learnMore}>LEARN MORE</Link>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={`${styles.textBlock} ${styles.textBlockLeft}`}>
+              <h2 className={styles.serviceText}>{service.name}</h2>
+              <Link href={service.link} className={styles.learnMore}>LEARN MORE</Link>
+            </div>
+            <img src={service.video} className={styles.photoRight} alt={service.name} />
+          </>
+        )}
+      </div>
+    ))}      
+    </div>
+  )
+
+  /*
   return (
     <div style={{backgroundColor: "#365266", color: "white"}}>
       <div 
@@ -31,15 +58,11 @@ export default function Services() {
         onMouseLeave={() => handleMouseLeave(embroideryVideoRef)}
       >
         <div className={`${styles.videoContainer} ${styles.left}`}>
-          <video
-            ref={embroideryVideoRef}
-            muted
-            loop
-            playsInline
-            className={styles.video}
+          <img
+            src="/services/embroidery.mp4"
+            className={styles.croppedVideo}
           >
-            <source src="/services/embroidery.mp4" type="video/mp4" />
-          </video>
+          </img>
         </div>
         <div className={`${styles.textContainer} ${styles.right}`}>
             Embroidery
@@ -119,5 +142,5 @@ export default function Services() {
         </div>
       </div>
     </div>
-  );
+  );*/
 }

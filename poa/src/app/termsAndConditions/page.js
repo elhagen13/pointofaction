@@ -13,7 +13,7 @@ export default function TermsAndConditions() {
         Welcome to Point of Action! These Terms and Conditions (“Terms”) govern your use of our website and the purchase of products from our online store. By using our website or making a purchase, you agree to be bound by these Terms. Please read them carefully.
 
         <div className={styles.section}>1. Introduction</div>
-        By accessing and using [Your Website Name], you agree to comply with these Terms and all applicable laws and regulations. If you do not agree with any part of these Terms, please refrain from using our website.
+        By accessing and using Point of Action, you agree to comply with these Terms and all applicable laws and regulations. If you do not agree with any part of these Terms, please refrain from using our website.
 
 
         <div className={styles.section}>2. Account Registration</div>

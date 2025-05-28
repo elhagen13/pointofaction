@@ -15,7 +15,7 @@ export default function Service({params}) {
             <div className={styles.info}>
                 <div className={styles.breadcrumbs}>
                     <Link href="/services">
-                        <div className={styles.breadcrumb}>Gallery</div>
+                        <div className={styles.breadcrumb}>Services</div>
                     </Link>
                      &gt;
                     <div>

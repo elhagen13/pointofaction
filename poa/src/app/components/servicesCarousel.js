@@ -10,27 +10,27 @@ const ServicesCarousel = () => {
     {
         service: "Embroidery",
         image: "/service_embroidery.png",
-        link: "/service/embroidery"
+        link: "/services/embroidery"
     },
     {
         service: "Vinyl Printing",
         image: "/service_vinylprinting.png",
-        link: "/service/vinyl_printing"
+        link: "/services/vinyl"
     },
     {
         service: "Laser Etching",
         image: "/service_laseretching.png",
-        link: "/service/laser_etching"
+        link: "/services/laser"
     },
     {
         service: "Direct to Film",
         image: "/service_directtofilm.png",
-        link: "/service/direct_to_film"
+        link: "/services/film"
     },
     {
         service: "Art Digitizing",
         image: "/service_artdigitizing.png",
-        link: "/service/art_digitizing"
+        link: "/services/digitizing"
     },
 
   ]
@@ -41,57 +41,51 @@ const ServicesCarousel = () => {
         <div className={styles.group}>
         {
             services.map((service, index) => 
-                <div key={index} className={styles.serviceCard}>
+                <Link href={service.link} key={index} className={styles.serviceCard}>
                     <img src={service.image} className={styles.serviceCardImage}/>
                     <div className={styles.hoveredCard}>
                         <div className={styles.textContainer}>
                             <div className={styles.text}>
                                 {service.service}
                             </div>                                
-                            <Link href={service.link}>
-                                <MdArrowOutward className={styles.arrow} />
-                            </Link>                        
+                            <MdArrowOutward className={styles.arrow} />
                         </div>
                     </div>
-                </div>
+                </Link>
             )
         }
         </div>
         <div aria-hidden className={styles.group}>
         {
             services.map((service, index) => 
-                <div key={index} className={styles.serviceCard}>
+                <Link href={service.link} key={index} className={styles.serviceCard}>
                     <img src={service.image} className={styles.serviceCardImage}/>
                     <div className={styles.hoveredCard}>
                         <div className={styles.textContainer}>
                             <div className={styles.text}>
                                 {service.service}
                             </div>
-                            <Link href={service.link}>
-                                <MdArrowOutward className={styles.arrow} />
-                            </Link>
+                            <MdArrowOutward className={styles.arrow} />
                             </div>
                     </div>
-                </div>
+                </Link>
             )
         }
         </div>
         <div aria-hidden className={styles.group}>
         {
             services.map((service, index) => 
-                <div key={index} className={styles.serviceCard}>
+                <Link href={service.link} key={index} className={styles.serviceCard}>
                     <img src={service.image} className={styles.serviceCardImage}/>
                     <div className={styles.hoveredCard}>
                         <div className={styles.textContainer}>
                             <div className={styles.text}>
                                 {service.service}
                             </div>
-                            <Link href={service.link}>
-                                <MdArrowOutward className={styles.arrow} />
-                            </Link>
+                            <MdArrowOutward className={styles.arrow} />
                         </div>
                     </div>
-                </div>
+                </Link>
             )
         }
         </div>

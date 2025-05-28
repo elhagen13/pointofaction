@@ -79,3 +79,18 @@
     align-items: center;
 
 }
+
+@media(max-width: 768){
+    .servicePage{
+        flex-direction: column
+    }
+    .serviceImage, .info{
+        width: 100%;
+    }
+
+    .info{
+        padding: 30px 20px;
+    }
+
+    
+}

@@ -1,6 +1,32 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Montserrat, Inter, Lato, Roboto } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer"
+
+const lato = Lato({
+  weight: ['400', '700'], // Example weights
+  subsets: ['latin'],
+  variable: '--font-lato', // Optional CSS variable name
+});
+
+const montserrat = Montserrat({
+  weight: ['400', '700'], // Example: Regular and Bold
+  subsets: ['latin'], // Or other subsets like 'cyrillic', 'greek', etc.
+  display: 'swap',
+  fallback: ['Arial', 'sans-serif'], // Optional fallback font
+});
+
+
+const inter = Inter({
+  subsets: ['latin'], // Specify the subsets you need
+  variable: '--font-inter', // Optional: Define a CSS variable for the font
+});
+
+const roboto = Roboto({
+  weight: ['400', '700'], // Optional: Specify font weights
+  subsets: ['latin'],    // Optional: Specify subsets (e.g., 'latin')
+  display: 'swap',      // Optional:  Use 'swap' for faster loading
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,9 +46,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`} style={{backgroundColor: "white"}}>
+      <body className={`${roboto.className}`} style={{backgroundColor: "white"}}>
         <Navbar/>
         {children}
+        <Footer/>
       </body>
     </html>
   );

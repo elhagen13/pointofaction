@@ -78,17 +78,17 @@
     display: flex;
     gap: 20px;
     will-change: transform;
-    animation: scrolling 50s linear infinite;
+    animation: scrolling 100s linear infinite;
     
 
 }
 
 @keyframes scrolling {
     0% {
-      transform: translateX(0);
+      transform: translateX(-100%);
     }
     100% {
-      transform: translateX(-100%);
+      transform: translateX(0);
     }
   }
 

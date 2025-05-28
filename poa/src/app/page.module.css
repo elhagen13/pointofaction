@@ -1,4 +1,6 @@
 
+@import "./fonts.css";
+
 .banner{
   width: 60%;
   height: auto;
@@ -52,7 +54,7 @@
 }
 
 .title, .learnMore{
-  font-weight: bold;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
