@@ -1,0 +1,19 @@
+.termsPage{
+    padding: 60px;
+}
+
+.title{
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.text{
+    font-size: 18px;
+    color: rgb(54, 54, 54);
+    margin-top: 30px;
+}
+
+.section{
+    font-weight: bold;
+    margin-top: 30px;
+}

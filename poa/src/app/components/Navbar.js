@@ -175,6 +175,13 @@ const Navbar = () => {
                   >
                     Terms & Conditions
                   </Link>
+                  <Link
+                    href="/policies"
+                    className={styles.navLink}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Policies
+                  </Link>
                 </li>
               </div>
             )}
@@ -234,6 +241,14 @@ const Navbar = () => {
             onClick={() => setIsOpen(false)}
           >
             Terms & Conditions
+          </Link>
+          <Link
+            href="/policies"
+            className={styles.navLink}
+            style={{ color: "#837B7B" }}
+            onClick={() => setIsOpen(false)}
+          >
+            Policies
           </Link>
         </div>
       )}

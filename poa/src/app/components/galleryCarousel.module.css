@@ -138,6 +138,11 @@
     margin-top: 20px;
 }
 
+.circles:hover{
+    background-color: rgba(157, 155, 155, 0.8);
+
+}
+
 .circles{
    display: flex;
    justify-content: center;

@@ -78,9 +78,9 @@ const Banner = () => {
                     <Link href="/requestPortal"className={styles.portalBannerButton}>
                         Request a Client Portal
                     </Link>
-                    <button className={styles.portalBannerButton}>
+                    <Link href="https://portal.shopvox.com/sign-in" className={styles.portalBannerButton}>
                         Client Portal Login
-                    </button>
+                    </Link>
                 </div>
 
             </div>

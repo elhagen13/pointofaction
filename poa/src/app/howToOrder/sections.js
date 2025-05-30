@@ -312,47 +312,7 @@ const sections = {
             "Step": "Quantity",
             "Description": "The number of items that will be engraved",
             "Video Link": "/tutorials/"
-          }, 
-          {
-            "Step": "Product",
-            "Description": "The specific hat we will put the patch on. The catalog number is included, so if you need a more in depth view of the product, go to the vendors website and lookup the catalog number.",
-            "Video Link": "/tutorials/PatchHatProduct.mp4"
-          }, 
-          {
-            "Step": "Color",
-            "Description": "The offered colors of the chosen hat.",
-            "Video Link": "/tutorials/PatchHatColor.mp4"
-          }, 
-          {
-            "Step": "Size & Quantity",
-            "Description": "How many of each size you would like.",
-            "Video Link": "/tutorials/PatchHatQuantity.mp4"
-          }, 
-          {
-            "Step": "Adding a Different Color",
-            "Description": "If you want two different colors of the same order, you can simply copy the order you just made, change the color and then update the quantity of the new color.",
-            "Video Link": "/tutorials/PatchHatCopyStyle.mp4"
-          }, 
-          {
-            "Step": "Adding a New Product",
-            "Description": "If you want a different product but have the design in the same place, such as a vest and a jacket with a screenprinted logo on the front right, you can add a new style.",
-            "Video Link": "/tutorials/PatchHatAddStyle.mp4"
           },
-          {
-            "Step": "Placement",
-            "Description": "Where you want your design to be put. There are four options: the front, back, left, and right. With each side there are options to specify the scope of the design on that side of the apparel piece. Examples can be seen on the top left with the pictures. The front will be a patch, and if side or back placements are selected will be embroidered.",
-            "Video Link": "/tutorials/PatchHatPlacement.mp4"
-          }, 
-          {
-            "Step": "Custom Fields",
-            "Description": "Any additional notes, this could incur an additional fee depending on the scope of your request.",
-            "Video Link": "/tutorials/PatchHatNotes.mp4"
-          },
-          {
-            "Step": "Add to Cart",
-            "Description": "Adding to cart, you will be prompted to upload design files or continue shopping/continue to cart. If you don't upload design files, you will be put in touch with one of our designers. If you do, ensure that the design files are vectorized otherwise an additional fee may occur.",
-            "Video Link": "/tutorials/ApparelNotes.mp4"
-          }, 
 
       ]
     },

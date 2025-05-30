@@ -13,17 +13,17 @@ export default function Services() {
         {index % 2 === 0 ? (
           <>
             <img src={service.video} className={styles.photoLeft} alt={service.name} />
-            <div className={`${styles.textBlock} ${styles.textBlockRight}`}>
+            <Link href={service.link} className={`${styles.textBlock} ${styles.textBlockRight}`}>
               <h2 className={styles.serviceText}>{service.name}</h2>
-              <Link href={service.link} className={styles.learnMore}>LEARN MORE</Link>
-            </div>
+              <div className={styles.learnMore}>LEARN MORE</div>
+            </Link>
           </>
         ) : (
           <>
-            <div className={`${styles.textBlock} ${styles.textBlockLeft}`}>
+            <Link href={service.link} className={`${styles.textBlock} ${styles.textBlockLeft}`}>
               <h2 className={styles.serviceText}>{service.name}</h2>
-              <Link href={service.link} className={styles.learnMore}>LEARN MORE</Link>
-            </div>
+              <div className={styles.learnMore}>LEARN MORE</div>
+            </Link>
             <img src={service.video} className={styles.photoRight} alt={service.name} />
           </>
         )}

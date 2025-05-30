@@ -3,12 +3,33 @@
 import { useEffect, useState } from "react";
 import styles from "./companyStores.module.css"
 import { IoSearch } from "react-icons/io5";
-import stores from "./stores.js"
 import Link from "next/link";
 
 export default function companyStores() {
     const [search, setSearch] = useState("")
     const [result, setResult] = useState([])
+    const [stores, setCompanies] = useState([])
+
+    useEffect(() => {
+        getAllCompanies()
+    }, [])
+
+    async function getAllCompanies() {
+        try {
+          const response = await fetch("/api/companyStores");
+          const data = await response.json();
+    
+          if (data.success) {
+            console.log("Companies:", data.data);
+            console.log("Total companies:", data.pagination.total);
+            setCompanies(data.data);
+          } else {
+            console.error("Error:", data.error);
+          }
+        } catch (error) {
+          console.error("Fetch error:", error);
+        }
+      }
 
     function lookup(array, searchTerm) {
         if (!searchTerm || !searchTerm.trim()) return [];
@@ -16,7 +37,7 @@ export default function companyStores() {
         const searchWords = searchTerm.trim().toLowerCase().split(/\s+/);
       
         setResult(array.filter(item => {
-          const itemWords = item.store.toLowerCase().split(/\s+/);
+          const itemWords = item.companyName.toLowerCase().split(/\s+/);
           
           return searchWords.every(searchWord => 
             itemWords.some(itemWord => itemWord === searchWord)
@@ -58,9 +79,9 @@ export default function companyStores() {
             <div className={styles.resultContainer}>
                 {
                     result.map((res, index) => (
-                        <Link href={res.link} className={styles.storeCard} key={index}>
-                            <img src={res.image} className={styles.storeImage}/>
-                            {res.store}
+                        <Link href={res.companyLink} className={styles.storeCard} key={index}>
+                            <img src={res.companyImage} className={styles.storeImage}/>
+                            {res.companyStore}
                         </Link>
                     ))
                 }

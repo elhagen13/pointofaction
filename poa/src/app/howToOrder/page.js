@@ -11,15 +11,51 @@ export default function HowToOrder() {
 
 
   const toggleSection = (sectionIndex) => {
-    setExpandedIndices(prev => 
-      prev[0] === sectionIndex ? [null, null] : [sectionIndex, null]
-    );
+    const sectionName = Object.keys(sections)[sectionIndex];
+    const sectionValue = sections[sectionName];
+    
+    // Check if this section has subsections (is an object) or direct steps (is an array)
+    if (Array.isArray(sectionValue)) {
+      // Direct steps - auto-select first step
+      const firstStep = sectionValue[0];
+      setStep(firstStep);
+      setExpandedIndices([sectionIndex, null, 0]);
+      
+      if (videoRef.current && firstStep["Video Link"]) {
+        videoRef.current.pause();
+        videoRef.current.src = firstStep["Video Link"];
+        videoRef.current.load();
+        videoRef.current.play().catch(error => {
+          console.log('Autoplay failed:', error);
+        });
+      }
+    } else {
+      // Has subsections - just toggle expansion
+      setExpandedIndices(prev => 
+        prev[0] === sectionIndex ? [null, null] : [sectionIndex, null]
+      );
+    }
   };
 
   const toggleSubSection = (sectionIndex, subSectionIndex) => {
-    setExpandedIndices(prev => 
-      prev[1] === subSectionIndex ? [sectionIndex, null, null] : [sectionIndex, subSectionIndex, null]
-    );
+    const sectionName = Object.keys(sections)[sectionIndex];
+    const sectionValue = sections[sectionName];
+    const subSectionName = Object.keys(sectionValue)[subSectionIndex];
+    const subSectionValue = sectionValue[subSectionName];
+    
+    // Auto-select first step of the subsection
+    const firstStep = subSectionValue[0];
+    setStep(firstStep);
+    setExpandedIndices([sectionIndex, subSectionIndex, 0]);
+    
+    if (videoRef.current && firstStep["Video Link"]) {
+      videoRef.current.pause();
+      videoRef.current.src = firstStep["Video Link"];
+      videoRef.current.load();
+      videoRef.current.play().catch(error => {
+        console.log('Autoplay failed:', error);
+      });
+    }
   };
 
   const selectStep = (stepData, indices) => {
@@ -101,6 +137,12 @@ export default function HowToOrder() {
           ))}
         </div>
         <div className={styles.stepDetails} style={{display: Object.keys(step).length > 0 ? 'block' : 'none'}}>
+          <div style={{ padding: "20px 0" }}>
+            <div style={{ fontWeight: "bold", marginBottom: "10px" }}>
+              {step["Step"]}
+            </div>
+            {step["Description"]}
+          </div>
           <video
             ref={videoRef}
             autoPlay
@@ -111,107 +153,8 @@ export default function HowToOrder() {
             onError={(e) => console.log("Video error:", e.target.error)}
           >
           </video>
-          <div style={{ padding: "20px 0" }}>
-            <div style={{ fontWeight: "bold", marginBottom: "10px" }}>
-              {step["Step"]}
-            </div>
-            {step["Description"]}
-          </div>
         </div>
       </div>
     </div>
   );
 }
-/*
- <div className={styles.tutorialPage}>
-      <div className={styles.title}>Tutorial</div>
-      <div className={styles.tutorial}>
-        <div className={styles.tutorialDropdown}>
-          <div className={styles.orderingProcess}>Ordering Process</div>
-          {
-            Object.entries(sections).map(([key, value], index) => {
-              return(
-              <div key={`${key}_${index}`}>
-                <div className={styles.section} onClick={() => {setSection(index === section ? '' : index); setSubSection('');}}>
-                  <div className={styles.sectionTitle}>{index + 1}. {key}</div>
-                  {section === index ? <GoChevronUp strokeWidth="2px"/> : <GoChevronDown strokeWidth="2px"/>}
-                </div>
-                {
-                  section !== index ? <div></div> : 
-                  Array.isArray(value) ? 
-                  <div>
-                    {
-                      value.map((step, index) => {
-                        return(
-                          <div className={styles.step} key={`${step}_${index}`} onClick={() => setStep(step)}>
-                            {String.fromCharCode(index + 97)}. {step["Step"]}
-                          </div>
-                        )
-                      }
-                       
-                      )
-                    }
-                  </div>
-                  :
-                  <div>
-                    <div>
-                    {
-                      Object.entries(value).map(([key, value], index) => {
-                        return(
-                          <div>
-                            <div className={styles.subSection} onClick={() => setSubSection(index === subSection ? '' : index)}>
-                              <div className={styles.sectionTitle}>{index + 1}. {key}</div>
-                              {subSection === index ? <GoChevronUp strokeWidth="2px"/> : <GoChevronDown strokeWidth="2px"/>}
-                            </div>
-                            <div>
-                              { subSection === index &&
-                                value.map((step, index) => {
-                                  return(
-                                    <div className={styles.subStep} key={`${step}_${index}`} onClick={() => setStep(step)}>
-                                      {String.fromCharCode(index + 97)}. {step["Step"]}
-                                    </div>
-                                  )
-                                }
-                                
-                                )
-                              }
-                            </div>
-                          </div>
-
-                        )
-                      }
-                       
-                      )
-                    }
-                  </div>
-                  </div>
-                }
-              </div>
-              )
-
-            })
-          }
-        </div>
-        <div className={styles.stepDetails}>
-          <video
-             autoPlay
-             muted
-             playsInline
-             controls
-             className={styles.video}
-             onError={(e) => console.log("Video error:", e.target.error)}
-          >
-            <source src={step["Video Link"]} type="video/mp4" />
-          </video>
-          <div style={{padding: "20px 0"}}>
-            <div style={{fontWeight: "bold", marginBottom:"10px"}}>
-              {step["Step"]}
-            </div>
-            {step["Description"]}
-            </div>
-        </div>
-
-      </div>
-    </div>
-
-*/
