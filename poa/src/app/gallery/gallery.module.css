@@ -85,10 +85,9 @@
     aspect-ratio: 1 / 1;
 }
 
-@media(max-width: 768){
+@media(max-width: 768px){
     .galleryPage{
         padding: 20px;
-        background-color: green;
     }
 
     .galleryReferences{

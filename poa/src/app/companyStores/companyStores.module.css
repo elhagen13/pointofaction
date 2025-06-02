@@ -79,7 +79,7 @@
   margin-bottom: 10px;
 }
 
-@media(max-width: 768){
+@media(max-width: 768px){
 
   .storeSearch{
     padding: 20px;
