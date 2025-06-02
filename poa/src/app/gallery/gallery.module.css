@@ -88,6 +88,7 @@
 @media(max-width: 768){
     .galleryPage{
         padding: 20px;
+        background-color: green;
     }
 
     .galleryReferences{
