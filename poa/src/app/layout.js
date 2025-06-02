@@ -48,6 +48,9 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Point of Action",
+  icons: {
+    icon: '/logo.png'
+  }
 };
 
 export default function RootLayout({ children }) {

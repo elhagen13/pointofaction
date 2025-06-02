@@ -82,7 +82,7 @@
 
 
 
-@media(max-width: 768){
+@media(max-width: 768px){
     .servicePage{
         flex-direction: column
     }

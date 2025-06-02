@@ -20,7 +20,7 @@ const Footer = () => {
   return (
     <footer className={styles.footer}>
       <div className={styles.logo}>
-        <img src="/logo.png" alt="Point of Action Logo" className={styles.logoImage}/>
+        <img src="/logo-light.png" alt="Point of Action Logo" className={styles.logoImage}/>
         <div className={styles.social}>
           <Link href="https://www.facebook.com/p/Point-of-Action-100066848020006/">
             <img src="/facebookIcon.png" alt="Facebook" className={styles.socialIcon}/>

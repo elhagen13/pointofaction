@@ -62,7 +62,7 @@ const Navbar = () => {
     <nav className={styles.navbar} onMouseLeave={handleMouseLeave}>
       <div className={styles.navbarContainer}>
         <Link href="/" className={styles.navbarBrand}>
-          <img src="/logo.png" className={styles.logo} alt="Logo" />
+          <img src="/logo-light.png" className={styles.logo} alt="Logo" />
         </Link>
 
         <button
