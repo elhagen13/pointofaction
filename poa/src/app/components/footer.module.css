@@ -1,125 +1,149 @@
 .footer {
-    width: 100%;
-    background-color: #333;
-    color: #BCBCBC;
-    padding: 40px 80px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 30px;
-    font-weight: bold;
-  }
+  width: 100%;
+  background-color: #333;
+  color: #bcbcbc;
+  padding: 40px 80px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 30px;
+  font-weight: bold;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start;
+  min-width: 200px;
+}
+
+.logoImage {
+  height: 150px;
+  width: auto;
+  object-fit: contain;
+}
+
+.contactInfo {
+  min-width: 200px;
+  line-height: 1.6;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+
+.sectionTitle {
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-weight: normal;
+}
+
+.link {
+  color: #bcbcbc;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.link:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+.social {
+  display: flex;
+  gap: 15px;
+}
+
+.socialIcon {
+  width: 40px;
+  height: 40px;
+  transition: transform 0.2s;
+}
+
+.socialIcon:hover {
+  transform: scale(1.1);
+}
+
+.admin {
+  margin-top: 30px;
+  background-color: green;
+  display: inline-flex;
+  padding: 0.5rem 2rem;
+  background-color: #538561;
+  color: #d9d9d9;
+  text-decoration: none;
+  border: none;
+  border-radius: 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: bold;
+  box-shadow: inset 0 0 3px black;
+  max-height: 35px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100px;
+}
   
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .footer {
+    flex-direction: column;
+    padding: 30px 20px;
+    gap: 40px;
+  }
+
   .logo {
-    display: flex;
     flex-direction: column;
-    gap: 20px;
-    align-items: flex-start;
-    min-width: 200px;
+    align-items: center;
+    text-align: center;
   }
-  
-  .logoImage {
-    height: 150px;
-    width: auto;
-    object-fit: contain;
-  }
-  
+
   .contactInfo {
-    min-width: 200px;
-    line-height: 1.6;
+    text-align: center;
   }
-  
+
   .section {
-    display: flex;
-    flex-direction: column;
-    min-width: 150px;
+    align-items: center;
+    text-align: center;
   }
-  
-  .sectionTitle {
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-  }
-  
+
   .links {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    font-weight: normal;
+    align-items: center;
   }
-  
-  .link {
-    color: #BCBCBC;
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-  
-  .link:hover {
-    color: white;
-    text-decoration: underline;
-  }
-  
+
   .social {
-    display: flex;
-    gap: 15px;
+    justify-content: center;
   }
-  
-  .socialIcon {
-    width: 40px;
-    height: 40px;
-    transition: transform 0.2s;
+}
+
+/* Tablet styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .footer {
+    padding: 40px;
+    gap: 40px;
   }
-  
-  .socialIcon:hover {
-    transform: scale(1.1);
+
+  .logo {
+    flex-basis: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
-  
-  /* Mobile styles */
-  @media (max-width: 768px) {
-    .footer {
-      flex-direction: column;
-      padding: 30px 20px;
-      gap: 40px;
-    }
-    
-    .logo {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    
-    .contactInfo {
-      text-align: center;
-    }
-    
-    .section {
-      align-items: center;
-      text-align: center;
-    }
-    
-    .links {
-      align-items: center;
-    }
-    
-    .social {
-      justify-content: center;
-    }
+
+  .contactInfo,
+  .section {
+    flex-basis: calc(50% - 20px);
   }
-  
-  /* Tablet styles */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .footer {
-      padding: 40px;
-      gap: 40px;
-    }
-    
-    .logo {
-      flex-basis: 100%;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .contactInfo, .section {
-      flex-basis: calc(50% - 20px);
-    }
-  }
+}

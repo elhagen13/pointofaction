@@ -79,6 +79,15 @@
   margin-bottom: 10px;
 }
 
+.noResults{
+  padding: 30px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-weight: bold;
+  color: gray;
+}
+
 @media(max-width: 768px){
 
   .storeSearch{

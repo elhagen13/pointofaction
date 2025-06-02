@@ -35,14 +35,17 @@ export default function companyStores() {
         if (!searchTerm || !searchTerm.trim()) return [];
       
         const searchWords = searchTerm.trim().toLowerCase().split(/\s+/);
-      
-        setResult(array.filter(item => {
-          const itemWords = item.companyName.toLowerCase().split(/\s+/);
-          
-          return searchWords.every(searchWord => 
-            itemWords.some(itemWord => itemWord === searchWord)
-          );
-        }));
+        
+        const result = array.filter(item => {
+            const itemWords = item.companyName.toLowerCase().split(/\s+/);
+            
+            return searchWords.every(searchWord => 
+              itemWords.some(itemWord => itemWord === searchWord)
+            );
+        })
+        
+        result.length == 0 ? setResult([null]) : setResult(result)
+        
         return;
     }
     
@@ -76,6 +79,8 @@ export default function companyStores() {
                     />
                 </div>
             </div>
+            {
+            result[0] !== null ?
             <div className={styles.resultContainer}>
                 {
                     result.map((res, index) => (
@@ -84,8 +89,16 @@ export default function companyStores() {
                             {res.companyName}
                         </Link>
                     ))
+
                 }
             </div>
+            :
+            <div className={styles.noResults}>
+                <div style={{fontWeight: "bold", fontSize:"25px", color: "gray"}}>No results found</div>
+                <div>Interested in creating a prepopulated company store?</div>
+                <div>Reach out to <a href="/requestPortal" style={{color: "#4F71B5"}}>austin@pointofaction.com</a></div>
+            </div>
+            }
         </div>
     );
 }
