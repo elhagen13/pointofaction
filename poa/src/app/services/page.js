@@ -1,10 +1,9 @@
 'use client'
-import { useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import styles from './services.module.css';
 import Link from 'next/link';
 import services from './services';
 
-// Memoized service item component to prevent unnecessary re-renders
 const ServiceItem = ({ service, index }) => {
   const isEven = index % 2 === 0;
   
@@ -16,7 +15,6 @@ const ServiceItem = ({ service, index }) => {
             src={service.video} 
             className={styles.photoLeft} 
             alt={service.name}
-            loading={index < 2 ? 'eager' : 'lazy'} // Lazy load images below fold
           />
           <Link href={service.link} className={`${styles.textBlock} ${styles.textBlockRight}`}>
             <h2 className={styles.serviceText}>{service.name}</h2>
@@ -33,12 +31,6 @@ const ServiceItem = ({ service, index }) => {
             src={service.video} 
             className={styles.photoRight} 
             alt={service.name}
-            width={500} // Add appropriate dimensions
-            height={300}
-            priority={index < 2} // Prioritize first 2 images
-            loading={index < 2 ? 'eager' : 'lazy'} // Lazy load images below fold
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyLDd5F8xxqUyHRGcwHKs3nHNW5w+tg="
           />
         </>
       )}
@@ -47,16 +39,40 @@ const ServiceItem = ({ service, index }) => {
 };
 
 export default function Services() {
-  // Memoize the services array to prevent recalculation on every render
   const servicesArray = useMemo(() => Object.values(services), []);
+  const [allImagesLoaded, setAllImagesLoaded] = useState(false);
+
+  useEffect(() => {
+    const preloadImages = async () => {
+      const imagePromises = servicesArray.map(service => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = resolve;
+          img.onerror = resolve; // Resolve even on error to prevent hanging
+          img.src = service.video;
+        });
+      });
+
+      // Wait for all images to load
+      await Promise.all(imagePromises);
+      setAllImagesLoaded(true);
+    };
+
+    preloadImages();
+  }, [servicesArray]);
+
+  // Don't render anything until all images are loaded
+  if (!allImagesLoaded) {
+    return null; // Completely blank screen
+  }
 
   return (
     <div>
       {servicesArray.map((service, index) => (
         <ServiceItem 
-          key={service.id || service.name || index} // Use unique ID if available
+          key={service.id || service.name || index}
           service={service} 
-          index={index} 
+          index={index}
         />
       ))}
     </div>

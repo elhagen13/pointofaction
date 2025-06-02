@@ -76,7 +76,8 @@ export default function LeafletMap() {
                 </div>
                 <div style={{fontWeight: "bold", fontSize: "20px"}}>{employee.name}</div>
                 <div style={{fontWeight: "600"}}>{employee.role}</div>
-                <div>{employee.email}    •    {employee.number}</div>
+                <div>{employee.email}</div>
+                <div>{employee.number}</div>
               </div>
             ))
           }

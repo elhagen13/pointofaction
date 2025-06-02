@@ -11,7 +11,7 @@ export default function Service({params}) {
 
     return (
         <div className={styles.servicePage}>
-            <img src={serviceInfo.image} className={styles.serviceImage}/>
+            <img src={serviceInfo.image} className={styles.serviceImage} loading="eager"/>
             <div className={styles.info}>
                 <div className={styles.breadcrumbs}>
                     <Link href="/services">

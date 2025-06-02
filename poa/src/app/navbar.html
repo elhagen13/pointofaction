@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Navbar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        /* Navbar container */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            box-shadow: 0px 3px 2px rgb(107, 107, 107, .5);
+        }
+
+        .navbarContainer {
+            width: 100%;
+            padding: 0 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Brand/logo */
+        .navbarBrand {
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            height: 75px;
+            flex-shrink: 0;
+            margin-right: 1rem;
+        }
+
+        /* logo image */
+        .logo {
+            height: 100%;
+        }
+
+        /* Toggle button for mobile */
+        .navbarToggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .toggleIcon {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+
+        /* Navbar menu */
+        .navbarMenu {
+            display: flex;
+            flex-grow: 1;
+            justify-content: flex-end;
+        }
+
+        .navbarNav {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            gap: 0.5rem;
+        }
+
+        .navItem {
+            text-align: center;
+            text-transform: uppercase;
+            position: relative;
+        }
+
+        .navLink {
+            color: #BCBCBC;
+            text-transform: uppercase;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            display: block;
+            position: relative;
+            transition: color 0.3s ease;
+            white-space: normal;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .navLink:hover {
+            color: white;
+        }
+
+        /* Green underline animation */
+        .navLink::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background-color: #538561;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .navLink:hover::after {
+            width: calc(100% - 2rem);
+        }
+
+        .faqLink {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chevron {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .chevron.up {
+            transform: rotate(180deg);
+        }
+
+        .styledButton {
+            display: inline-flex;
+            padding: 0.5rem 2rem;
+            background-color: #538561;
+            color: #D9D9D9;
+            text-decoration: none;
+            border: none;
+            border-radius: 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            white-space: nowrap;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: inset 0 0 3px black;
+            max-height: 35px;
+        }
+
+        .styledButton:hover {
+            background-color: #3e6a4a;
+            color: white;
+        }
+
+        .shoppingCart {
+            width: 35px;
+            height: 35px;
+        }
+
+        .shopVoxStore {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            text-decoration: none;
+            justify-content: center;
+        }
+
+        .dropdown {
+            background-color: #E6E6E6;
+            color: #837B7B;
+            border-radius: 0 0 30px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            gap: 10px;
+            position: absolute;
+            transform: translate(-35%, 1rem);
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 1s, padding 1s;
+            padding: 0 25px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .dropdown::-webkit-scrollbar {
+            display: none;
+        }
+
+        .dropdown.show {
+            max-height: 500px;
+            padding: 25px;
+        }
+
+        .dropdown .navLink {
+            color: #837B7B;
+        }
+
+        .mobileDropdown {
+            display: none;
+        }
+
+        .mobileDropdown.show {
+            display: block;
+        }
+
+        /* Mobile styles */
+        @media (max-width: 769px) {
+            .navbarToggle {
+                display: block;
+            }
+
+            .navbarMenu {
+                display: none;
+                width: 100%;
+                flex-grow: 0;
+            }
+
+            .navbarMenu.show {
+                display: block;
+                width: 100%;
+                text-align: center;
+            }
+
+            .navbarNav {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .styledButton {
+                margin: 1rem 0;
+            }
+
+            .shopVoxStore {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+
+            .dropdown {
+                display: none !important;
+            }
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .navbarMenu {
+                width: auto;
+            }
+
+            .navbarNav {
+                flex-direction: row;
+            }
+        }
+
+        /* Demo content */
+        .content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .content p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="navbarContainer">
+            <a href="/" class="navbarBrand">
+                <img src="https://static.wixstatic.com/media/8e173a_5e9c047e2ce944549da127203caba763~mv2.png/v1/fit/w_2500,h_1330,al_c/8e173a_5e9c047e2ce944549da127203caba763~mv2.png" class="logo" alt="Logo" />
+            </a>
+
+            <button class="navbarToggle" id="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="toggleIcon"></span>
+                <span class="toggleIcon"></span>
+                <span class="toggleIcon"></span>
+            </button>
+
+            <div class="navbarMenu" id="navbarMenu">
+                <ul class="navbarNav">
+                    <li class="navItem">
+                        <a href="https://pointofaction.vercel.app/" class="navLink">Home</a>
+                    </li>
+                    <li class="navItem">
+                        <a href="https://pointofaction.vercel.app/companyStores" class="navLink">Company Stores</a>
+                    </li>
+                    <li class="navItem">
+                        <a href="https://pointofaction.vercel.app/services" class="navLink">Services</a>
+                    </li>
+                    <li class="navItem">
+                        <a href="https://pointofaction.vercel.app/vendors" class="navLink">Vendors</a>
+                    </li>
+                    <li class="navItem">
+                        <a href="https://pointofaction.vercel.app/gallery" class="navLink">Gallery</a>
+                    </li>
+                    <li class="navItem">
+                        <a href="https://pointofaction.vercel.app/contact" class="navLink">Contact Us</a>
+                    </li>
+                    <li class="navItem" id="faqItem">
+                        <div class="navLink faqLink" id="faqToggle">
+                            FAQs 
+                            <svg class="chevron" id="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </div>
+                        <div class="mobileDropdown" id="mobileDropdown">
+                            <a href="https://pointofaction.vercel.app/howToOrder" class="navLink">How to Order</a>
+                            <a href="https://pointofaction.vercel.app/requestPortal" class="navLink">Request Client Portal</a>
+                            <a href="https://pointofaction.vercel.app/notifications" class="navLink">Text Notification Form</a>
+                            <a href="https://pointofaction.vercel.app/termsAndConditions" class="navLink">Terms & Conditions</a>
+                            <a href="https://pointofaction.vercel.app/policies" class="navLink">Policies</a>
+                        </div>
+                    </li>
+                </ul>
+                <a href="https://dpipcoincdbapointofaction.shops.shopvox.com" class="shopVoxStore">
+                    <div>{{voxSearchBar}}</div>
+                    <div>{{voxCartButton}}</div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="dropdown" id="dropdown">
+            <a href="https://pointofaction.vercel.app/howToOrder" class="navLink">How to Order</a>
+            <a href="https://pointofaction.vercel.app/requestPortal" class="navLink">Request Client Portal</a>
+            <a href="https://pointofaction.vercel.app/notifications" class="navLink">Text Notification Form</a>
+            <a href="https://pointofaction.vercel.app/termsAndConditions" class="navLink">Terms & Conditions</a>
+            <a href="https://pointofaction.vercel.app/policies" class="navLink">Policies</a>
+        </div>
+    </nav>
+     <script>
+        class Navbar {
+            constructor() {
+                this.isOpen = false;
+                this.isFaqOpen = false;
+                this.isMobile = window.innerWidth <= 769;
+                
+                this.navbarToggle = document.getElementById('navbarToggle');
+                this.navbarMenu = document.getElementById('navbarMenu');
+                this.faqToggle = document.getElementById('faqToggle');
+                this.faqItem = document.getElementById('faqItem');
+                this.dropdown = document.getElementById('dropdown');
+                this.mobileDropdown = document.getElementById('mobileDropdown');
+                this.chevron = document.getElementById('chevron');
+                this.navbar = document.getElementById('navbar');
+                
+                this.init();
+            }
+            
+            init() {
+                this.bindEvents();
+                this.handleResize();
+            }
+            
+            bindEvents() {
+                // Mobile toggle
+                this.navbarToggle.addEventListener('click', () => this.toggleNavbar());
+                
+                // FAQ toggle
+                this.faqToggle.addEventListener('click', () => this.toggleFAQs());
+                
+                // Desktop hover events
+                this.faqItem.addEventListener('mouseenter', () => this.handleFaqMouseEnter());
+                this.navbar.addEventListener('mouseleave', () => this.handleMouseLeave());
+                this.dropdown.addEventListener('mouseleave', () => this.handleMouseLeave());
+                
+                // Resize event
+                window.addEventListener('resize', () => this.handleResize());
+                window.addEventListener('scroll', () => this.updateDropdownPosition());
+                
+                // Close mobile menu when clicking nav links
+                const navLinks = document.querySelectorAll('.navLink');
+                navLinks.forEach(link => {
+                    if (link !== this.faqToggle) {
+                        link.addEventListener('click', () => this.closeNavbar());
+                    }
+                });
+            }
+            
+            toggleNavbar() {
+                this.isOpen = !this.isOpen;
+                this.isFaqOpen = false;
+                this.updateNavbarState();
+                this.updateFaqState();
+            }
+            
+            closeNavbar() {
+                this.isOpen = false;
+                this.updateNavbarState();
+            }
+            
+            toggleFAQs() {
+                this.isFaqOpen = !this.isFaqOpen;
+                this.updateFaqState();
+            }
+            
+            handleFaqMouseEnter() {
+                if (!this.isMobile) {
+                    this.isFaqOpen = true;
+                    this.updateFaqState();
+                }
+            }
+            
+            handleMouseLeave() {
+                if (!this.isMobile) {
+                    this.isFaqOpen = false;
+                    this.updateFaqState();
+                }
+            }
+            
+            handleResize() {
+                this.isMobile = window.innerWidth <= 769;
+                this.updateDropdownPosition();
+                
+                // Close mobile menu if switching to desktop
+                if (!this.isMobile && this.isOpen) {
+                    this.isOpen = false;
+                    this.updateNavbarState();
+                }
+            }
+            
+            updateNavbarState() {
+                this.navbarMenu.classList.toggle('show', this.isOpen);
+                this.navbarToggle.setAttribute('aria-expanded', this.isOpen);
+            }
+            
+            updateFaqState() {
+                // Update chevron
+                this.chevron.classList.toggle('up', this.isFaqOpen);
+                
+                // Update dropdown visibility
+                if (this.isMobile) {
+                    this.mobileDropdown.classList.toggle('show', this.isFaqOpen);
+                    this.dropdown.classList.remove('show');
+                } else {
+                    this.dropdown.classList.toggle('show', this.isFaqOpen);
+                    this.mobileDropdown.classList.remove('show');
+                }
+            }
+            
+            updateDropdownPosition() {
+                if (!this.isMobile && this.faqItem) {
+                    const rect = this.faqItem.getBoundingClientRect();
+                    this.dropdown.style.left = `${rect.left + window.scrollX}px`;
+                }
+            }
+        }
+        
+        // Initialize navbar when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new Navbar();
+        });
+    </script>
+</body>
+</html>
