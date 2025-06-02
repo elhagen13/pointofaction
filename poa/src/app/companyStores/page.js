@@ -81,7 +81,7 @@ export default function companyStores() {
                     result.map((res, index) => (
                         <Link href={res.companyLink} className={styles.storeCard} key={index}>
                             <img src={res.companyImage} className={styles.storeImage}/>
-                            {res.companyStore}
+                            {res.companyName}
                         </Link>
                     ))
                 }

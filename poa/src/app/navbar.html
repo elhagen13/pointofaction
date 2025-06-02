@@ -47,9 +47,10 @@
             margin-right: 1rem;
         }
 
-        /* logo image */
         .logo {
-            height: 100%;
+            width: 90px;
+            height: 75px; 
+            object-fit: contain; 
         }
 
         /* Toggle button for mobile */
@@ -295,7 +296,7 @@
     <nav class="navbar" id="navbar">
         <div class="navbarContainer">
             <a href="/" class="navbarBrand">
-                <img src="https://static.wixstatic.com/media/8e173a_5e9c047e2ce944549da127203caba763~mv2.png/v1/fit/w_2500,h_1330,al_c/8e173a_5e9c047e2ce944549da127203caba763~mv2.png" class="logo" alt="Logo" />
+                <img src="https://static.wixstatic.com/media/8e173a_5e9c047e2ce944549da127203caba763~mv2.png/v1/fit/w_2500,h_1330,al_c/8e173a_5e9c047e2ce944549da127203caba763~mv2.png" class="logo" alt="Logo"/>
             </a>
 
             <button class="navbarToggle" id="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
@@ -340,10 +341,10 @@
                         </div>
                     </li>
                 </ul>
-                <a href="https://dpipcoincdbapointofaction.shops.shopvox.com" class="shopVoxStore">
+                <div class="shopVoxStore">
                     <div>{{voxSearchBar}}</div>
                     <div>{{voxCartButton}}</div>
-                </a>
+                </div>
             </div>
         </div>
         

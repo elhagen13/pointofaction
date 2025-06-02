@@ -4,29 +4,18 @@ import styles from './services.module.css';
 import Link from 'next/link';
 import services from './services';
 
-// Shimmer loading component
-const ShimmerBox = () => (
-  <div className={styles.shimmerWrapper}>
-    <div className={styles.shimmer}></div>
-  </div>
-);
-
-const ServiceItem = ({ service, index, isLoading = false }) => {
+const ServiceItem = ({ service, index }) => {
   const isEven = index % 2 === 0;
   
   return (
     <div className={styles.backgroundBlock}>
       {isEven ? (
         <>
-          {isLoading ? (
-            <ShimmerBox />
-          ) : (
-            <img
-              src={service.video}
-              className={styles.photoLeft}
-              alt={service.name}
-            />
-          )}
+          <img 
+            src={service.video} 
+            className={styles.photoLeft} 
+            alt={service.name}
+          />
           <Link href={service.link} className={`${styles.textBlock} ${styles.textBlockRight}`}>
             <h2 className={styles.serviceText}>{service.name}</h2>
             <div className={styles.learnMore}>LEARN MORE</div>
@@ -38,15 +27,11 @@ const ServiceItem = ({ service, index, isLoading = false }) => {
             <h2 className={styles.serviceText}>{service.name}</h2>
             <div className={styles.learnMore}>LEARN MORE</div>
           </Link>
-          {isLoading ? (
-            <ShimmerBox />
-          ) : (
-            <img
-              src={service.video}
-              className={styles.photoRight}
-              alt={service.name}
-            />
-          )}
+          <img 
+            src={service.video} 
+            className={styles.photoRight} 
+            alt={service.name}
+          />
         </>
       )}
     </div>
@@ -76,14 +61,21 @@ export default function Services() {
     preloadImages();
   }, [servicesArray]);
 
+  // Don't render anything until all images are loaded
+  if (!allImagesLoaded) {
+    return 
+    <div>
+
+    </div>
+  }
+
   return (
     <div>
       {servicesArray.map((service, index) => (
-        <ServiceItem
+        <ServiceItem 
           key={service.id || service.name || index}
-          service={service}
+          service={service} 
           index={index}
-          isLoading={!allImagesLoaded}
         />
       ))}
     </div>
