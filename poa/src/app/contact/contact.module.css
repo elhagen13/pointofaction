@@ -69,6 +69,7 @@
 @media(max-width: 768px){
     .contactUs{
         flex-direction: column;
+        padding: 30px;
     }
 
     .employees{
