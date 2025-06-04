@@ -30,6 +30,7 @@ const ServiceItem = ({ service, index }) => {
             ref={videoRef}
             src={service.video}
             className={styles.photoLeft}
+            poster={service.thumbnail}
             width={500}
             height={300}
             muted
@@ -56,6 +57,7 @@ const ServiceItem = ({ service, index }) => {
             ref={videoRef}
             src={service.video}
             className={styles.photoRight}
+            poster={service.thumbnail} 
             width={500}
             height={300}
             muted
