@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Footer Component</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .footer {
+            width: 100%;
+            background-color: #333;
+            color: #bcbcbc;
+            padding: 40px 80px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 30px;
+            font-weight: bold;
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-start;
+            min-width: 200px;
+        }
+
+        .logoImage {
+            height: 150px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .contactInfo {
+            min-width: 200px;
+            line-height: 1.6;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            min-width: 150px;
+        }
+
+        .sectionTitle {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-weight: normal;
+        }
+
+        .link {
+            color: #bcbcbc;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .social {
+            display: flex;
+            gap: 15px;
+        }
+
+        .socialIcon {
+            width: 40px;
+            height: 40px;
+            transition: transform 0.2s;
+        }
+
+        .socialIcon:hover {
+            transform: scale(1.1);
+        }
+
+        .admin {
+            margin-top: 30px;
+            background-color: green;
+            display: inline-flex;
+            padding: 0.5rem 2rem;
+            background-color: #538561;
+            color: #d9d9d9;
+            text-decoration: none;
+            border: none;
+            border-radius: 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: inset 0 0 3px black;
+            max-height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 100px;
+        }
+
+        .admin a{
+            color: #d9d9d9;
+            text-decoration: none;
+        }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .footer {
+                flex-direction: column;
+                padding: 30px 20px;
+                gap: 40px;
+            }
+
+            .logo {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .contactInfo {
+                text-align: center;
+            }
+
+            .section {
+                align-items: center;
+                text-align: center;
+            }
+
+            .links {
+                align-items: center;
+            }
+
+            .social {
+                justify-content: center;
+            }
+        }
+
+        /* Tablet styles */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .footer {
+                padding: 40px;
+                gap: 40px;
+            }
+
+            .logo {
+                flex-basis: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .contactInfo,
+            .section {
+                flex-basis: calc(50% - 20px);
+            }
+        }
+
+        /* Demo background styles */
+        .demo-content {
+            background-color: white;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <footer class="footer">
+        <div class="logo">
+            <img src="https://static.wixstatic.com/media/8e173a_5e9c047e2ce944549da127203caba763~mv2.png/v1/fit/w_2500,h_1330,al_c/8e173a_5e9c047e2ce944549da127203caba763~mv2.png" alt="Point of Action Logo" class="logoImage"/>
+            <div class="social">
+                <a href="https://www.facebook.com/p/Point-of-Action-100066848020006/">
+                    <img src="https://companystores.s3.us-east-1.amazonaws.com/facebookIcon.png" alt="Facebook" class="socialIcon"/>
+                </a>
+                <a href="https://www.instagram.com/point_of_action_official/">
+                    <img src="https://companystores.s3.us-east-1.amazonaws.com/instagramIcon.png" alt="Instagram" class="socialIcon"/>
+                </a>
+            </div>
+        </div>
+
+        <div class="contactInfo">
+            1 (805) 922 - 6253
+            <br/>
+            orders@pointofaction.com
+            <br/><br/>
+            2232 South Depot Street
+            <br/>
+            Santa Maria, CA 93455
+        </div>
+
+        <div class="section">
+            <h3 class="sectionTitle">Quick Links</h3>
+            <div class="links">
+                <a href="https://pointofaction.vercel.app/" class="link">Home</a>
+                <a href="https://pointofaction.vercel.app/companyStores" class="link">Company Stores</a>
+                <a href="https://pointofaction.vercel.app/services" class="link">Services</a>
+                <a href="https://pointofaction.vercel.app/vendors" class="link">Vendors</a>
+                <a href="https://pointofaction.vercel.app/gallery" class="link">Gallery</a>
+                <a href="https://pointofaction.vercel.app/contact" class="link">Contact Us</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="sectionTitle">Services</h3>
+            <div class="links">
+                <a href="https://pointofaction.vercel.app/services/embroidery" class="link">Embroidery</a>
+                <a href="https://pointofaction.vercel.app/services/vinyl" class="link">Vinyl Printing & Cutting</a>
+                <a href="https://pointofaction.vercel.app/services/laser" class="link">Laser Etching</a>
+                <a href="https://pointofaction.vercel.app/services/film" class="link">Direct to Film</a>
+            </div>
+            <div class="admin">
+                <a href="https://pointofaction.vercel.app/addCompanyStore">Admin</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile view detection (equivalent to the React useState and useEffect)
+        let mobileView = false;
+
+        function handleResize() {
+            mobileView = window.innerWidth <= 768;
+            // You can use this variable for any mobile-specific JavaScript logic
+            console.log('Mobile view:', mobileView);
+        }
+
+        // Initialize on page load
+        handleResize();
+
+        // Add event listener for window resize
+        window.addEventListener('resize', handleResize);
+
+        // Cleanup function would be called when page unloads
+        window.addEventListener('beforeunload', function() {
+            window.removeEventListener('resize', handleResize);
+        });
+    </script>
+</body>
+</html>

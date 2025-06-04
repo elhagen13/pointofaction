@@ -7,18 +7,13 @@ import Link from 'next/link';
 const bannerItems = [
     {
         image: "/banner1.png",
-        obj1: "/logo-alt.png",
-        obj2: "POA provides customized, attractive, and high-quality products in bulk for businesses and organizations locally and throughout the United States. With numerous state-of-the-art machines, we take your ideas and turn them into real, ground breaking products that you and your organization will love!"
     },
     {
-        image: "/banner1.png",
-        obj1: null,
-        obj2: "fjdsflkdsjfldsk"
+        image: "/banner2.png",
+       
     },
     {
-        image: "/banner1.png",
-        obj1: "/logo-alt.png",
-        obj2: "fsdkfjdsflkdjsflskdfjdsf"
+        image: "/banner3.png",
     }
 ]
 
@@ -67,11 +62,9 @@ const Banner = () => {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
-            <BannerItem 
-                image={bannerItems[curPage].image} 
-                obj1={bannerItems[curPage].obj1}
-                obj2={bannerItems[curPage].obj2}
-            />
+             <div className={styles.bannerContainer}>
+                <img src={bannerItems[curPage].image} className={styles.bannerImage} />
+            </div>
             <div className={styles.portalBanner}>
                 Planning to reorder often?
                 <div className={styles.portalBannerButtons}>

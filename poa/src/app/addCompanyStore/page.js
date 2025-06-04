@@ -1,13 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
 import styles from "./addStore.module.css";
-import { FaRegEdit } from "react-icons/fa";
+import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 
 function AddStore({ onClose, onCompanyAdded }) {
   const [companyName, setCompanyName] = useState("");
   const [companyImage, setCompanyImage] = useState("");
   const [companyLink, setCompanyLink] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -19,12 +23,74 @@ function AddStore({ onClose, onCompanyAdded }) {
     e.stopPropagation();
   };
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setUploadError('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (5MB)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        setUploadError('File size must be less than 5MB');
+        return;
+      }
+
+      setSelectedFile(file);
+      setUploadError("");
+      setCompanyImage(""); // Clear manual URL if file is selected
+    }
+  };
+
+  const handleUploadImage = async () => {
+    if (!selectedFile) {
+      setUploadError('Please select a file first');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError("");
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/companyStores/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setUploadedImageUrl(result.url);
+        setCompanyImage(result.url);
+        setSelectedFile(null);
+      } else {
+        setUploadError(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      setUploadError('Network error: ' + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeUploadedImage = () => {
+    setUploadedImageUrl("");
+    setCompanyImage("");
+    setSelectedFile(null);
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
 
     // Basic validation
     if (!companyName || !companyImage || !companyLink) {
-      alert("Please fill in all fields");
+      alert("Please fill in all fields and upload an image");
       return;
     }
 
@@ -37,6 +103,8 @@ function AddStore({ onClose, onCompanyAdded }) {
         setCompanyName("");
         setCompanyImage("");
         setCompanyLink("");
+        setUploadedImageUrl("");
+        setSelectedFile(null);
 
         // Notify parent component to refresh the list
         if (onCompanyAdded) {
@@ -105,16 +173,71 @@ function AddStore({ onClose, onCompanyAdded }) {
               required
             />
           </div>
+          
           <div className={styles.formInput}>
-            <label>Company Image</label>
+            <label>Company Logo</label>
+            
+            {/* File Upload Section */}
+            <div className={styles.uploadSection}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className={styles.fileInput}
+                id="file-upload"
+              />
+              <label htmlFor="file-upload" className={styles.fileLabel}>
+                <FaUpload /> Choose Image File
+              </label>
+              
+              {selectedFile && (
+                <div className={styles.fileInfo}>
+                  <span>{selectedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={handleUploadImage}
+                    disabled={isUploading}
+                    className={styles.uploadButton}
+                  >
+                    {isUploading ? "Uploading..." : "Upload to S3"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Show uploaded image preview */}
+            {uploadedImageUrl && (
+              <div className={styles.imagePreview}>
+                <img src={uploadedImageUrl} alt="Uploaded" className={styles.previewImage} />
+                <button
+                  type="button"
+                  onClick={removeUploadedImage}
+                  className={styles.removeButton}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            )}
+
+            {/* Fallback: Manual URL input */}
+            <div className={styles.orDivider}>
+              <span>OR</span>
+            </div>
             <input
               className={styles.input}
               value={companyImage}
               onChange={(e) => setCompanyImage(e.target.value)}
-              placeholder="Image URL"
-              required
+              placeholder="Or paste image URL"
+              disabled={!!uploadedImageUrl}
             />
+
+            {uploadError && (
+              <div className={styles.error}>
+                {uploadError}
+              </div>
+            )}
           </div>
+
           <div className={styles.formInput}>
             <label>Company Link</label>
             <input
@@ -125,11 +248,15 @@ function AddStore({ onClose, onCompanyAdded }) {
               required
             />
           </div>
+          
           <div>
-            <button type="submit" disabled={isSubmitting} className={styles.button}>
+            <button 
+              type="submit" 
+              disabled={isSubmitting || isUploading} 
+              className={styles.button}
+            >
               {isSubmitting ? "Submitting..." : "Submit"}
             </button>
-            
           </div>
         </form>
       </div>
@@ -143,7 +270,10 @@ function EditStore({ company, onClose, onCompanyEdited }) {
   const [companyLink, setCompanyLink] = useState(company.companyLink);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(company.companyImage);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -155,10 +285,68 @@ function EditStore({ company, onClose, onCompanyEdited }) {
     e.stopPropagation();
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setUploadError('Please select an image file');
+        return;
+      }
+      
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        setUploadError('File size must be less than 5MB');
+        return;
+      }
 
-    // Basic validation
+      setSelectedFile(file);
+      setUploadError("");
+    }
+  };
+
+  const handleUploadImage = async () => {
+    if (!selectedFile) {
+      setUploadError('Please select a file first');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError("");
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/companyStores/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setUploadedImageUrl(result.url);
+        setCompanyImage(result.url);
+        setSelectedFile(null);
+      } else {
+        setUploadError(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      setUploadError('Network error: ' + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeUploadedImage = () => {
+    setUploadedImageUrl("");
+    setCompanyImage("");
+    setSelectedFile(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     if (!companyName || !companyImage || !companyLink) {
       alert("Please fill in all fields");
       return;
@@ -169,16 +357,9 @@ function EditStore({ company, onClose, onCompanyEdited }) {
     try {
       const success = await editCompany();
       if (success) {
-        // Clear form
-        setCompanyName("");
-        setCompanyImage("");
-        setCompanyLink("");
-
-        // Notify parent component to refresh the list
         if (onCompanyEdited) {
           onCompanyEdited();
         }
-        //Close modal
         onClose();
       }
     } catch (error) {
@@ -195,24 +376,16 @@ function EditStore({ company, onClose, onCompanyEdited }) {
     try {
       const success = await deleteCompany();
       if (success) {
-        // Clear form
-        setCompanyName("");
-        setCompanyImage("");
-        setCompanyLink("");
-
-        // Notify parent component to refresh the list
         if (onCompanyEdited) {
           onCompanyEdited();
         }
-        //Close modal
         onClose();
       }
     } catch (error) {
       console.error("Error deleting:", error);
     } finally {
-      setIsSubmitting(false);
+      setIsDeleting(false);
     }
-
   }
 
   async function editCompany() {
@@ -235,11 +408,9 @@ function EditStore({ company, onClose, onCompanyEdited }) {
 
       if (data.success) {
         console.log("Company edited successfully:", data.data);
-        console.log("Message:", data.message);
         return true;
       } else {
         console.error("Error editing company:", data.error);
-        console.error("Details:", data.details);
         alert("Error editing company: " + (data.error || "Unknown error"));
         return false;
       }
@@ -260,7 +431,6 @@ function EditStore({ company, onClose, onCompanyEdited }) {
   
       if (data.success) {
         console.log('Company deleted successfully:', data.message);
-        console.log('Deleted company data:', data.data);
         return true;
       } else {
         console.error('Error deleting company:', data.error);
@@ -289,16 +459,70 @@ function EditStore({ company, onClose, onCompanyEdited }) {
               required
             />
           </div>
+          
           <div className={styles.formInput}>
-            <label>Company Image</label>
+            <label>Company Logo</label>
+            
+            {/* Current Image */}
+            {uploadedImageUrl && (
+              <div className={styles.imagePreview}>
+                <img src={uploadedImageUrl} alt="Current" className={styles.previewImage} />
+                <button
+                  type="button"
+                  onClick={removeUploadedImage}
+                  className={styles.removeButton}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            )}
+
+            {/* File Upload Section */}
+            <div className={styles.uploadSection}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className={styles.fileInput}
+                id="file-upload-edit"
+              />
+              <label htmlFor="file-upload-edit" className={styles.fileLabel}>
+                <FaUpload /> {uploadedImageUrl ? 'Change Image' : 'Choose Image File'}
+              </label>
+              
+              {selectedFile && (
+                <div className={styles.fileInfo}>
+                  <span>{selectedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={handleUploadImage}
+                    disabled={isUploading}
+                    className={styles.uploadButton}
+                  >
+                    {isUploading ? "Uploading..." : "Upload to S3"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Manual URL input */}
+            <div className={styles.orDivider}>
+              <span>OR</span>
+            </div>
             <input
               className={styles.input}
               value={companyImage}
               onChange={(e) => setCompanyImage(e.target.value)}
-              placeholder="Image URL"
-              required
+              placeholder="Or paste image URL"
             />
+
+            {uploadError && (
+              <div className={styles.error}>
+                {uploadError}
+              </div>
+            )}
           </div>
+
           <div className={styles.formInput}>
             <label>Company Link</label>
             <input
@@ -309,11 +533,20 @@ function EditStore({ company, onClose, onCompanyEdited }) {
               required
             />
           </div>
+          
           <div style={{display:"flex", justifyContent:"space-between"}}>
-            <button type="submit" disabled={isSubmitting} className={styles.button}>
+            <button 
+              type="submit" 
+              disabled={isSubmitting || isUploading} 
+              className={styles.button}
+            >
               {isSubmitting ? "Submitting..." : "Submit"}
             </button>
-            <button className={`${styles.button} ${styles.delete}`} onClick={handleDelete}>
+            <button 
+              className={`${styles.button} ${styles.delete}`} 
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
               {isDeleting ? "Deleting..." : "Delete"}
             </button>
           </div>
@@ -329,15 +562,9 @@ function AddCompanyStore() {
   const [editStoreOpen, setEditStoreOpen] = useState(false);
   const [selectedStore, setSelectedStore] = useState({})
 
-
   useEffect(() => {
     getAllCompanies();
   }, []);
-
-  useEffect(() => {
-    console.log(companies);
-  }, [companies]);
-
 
   const handleCompanyAdded = () => {
     getAllCompanies(); 
@@ -350,7 +577,6 @@ function AddCompanyStore() {
 
       if (data.success) {
         console.log("Companies:", data.data);
-        console.log("Total companies:", data.pagination.total);
         setCompanies(data.data);
       } else {
         console.error("Error:", data.error);

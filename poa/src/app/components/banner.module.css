@@ -1,7 +1,6 @@
 .bannerContainer {
     position: relative; 
     width: 100vw;
-    height: 50vh; 
     position: relative;
     overflow: hidden;
     touch-action: pan-y; /* Allows vertical scroll but prevents horizontal scroll */
@@ -9,8 +8,6 @@
   
 .bannerImage {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
     object-position: center;
 }
   

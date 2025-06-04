@@ -1,6 +1,7 @@
 const services = {
     embroidery: {
         name: "Embroidery",
+        thumbnail: "/services/embroidery_thumbnail.png",
         link: "/services/embroidery",
         image: "/services/embroidery.png",
         video: "/services/embroidery.mp4",
@@ -9,6 +10,7 @@ const services = {
     },
     vinyl: {
         name: "Vinyl Printing",
+        thumbnail: "/services/embroidery.png",
         link: "services/vinyl",
         image: "/services/vinyl.png",
         video: "/services/vinyl.mp4",
@@ -17,6 +19,7 @@ const services = {
     },
     laser: {
         name: "Laser Etching",
+        thumbnail: "/services/embroidery.png",
         link: "services/laser",
         image: "/services/laser.png",
         video: "/services/laser.mp4",
@@ -25,6 +28,7 @@ const services = {
     },
     film: {
         name: "Direct to Film",
+        thumbnail: "/services/embroidery.png",
         link: "services/film",
         image: "/services/film.png",
         video: "/services/film.mp4",
@@ -33,7 +37,8 @@ const services = {
 
     },
     digitizing: {
-        name: "Art Digitizing",
+        name: "Art Vectorizing & Digitizing",
+        thumbnail: "/services/embroidery.png",
         link: "services/digitizing",
         video: "/services/vinyl.mp4",
     }

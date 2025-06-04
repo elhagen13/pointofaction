@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "./companyStores.module.css"
 import { IoSearch } from "react-icons/io5";
+import { IoWarningOutline } from "react-icons/io5";
 import Link from "next/link";
 
 export default function companyStores() {
@@ -79,6 +80,16 @@ export default function companyStores() {
                     />
                 </div>
             </div>
+            {
+                search.length == 0 ? 
+                <div className={styles.directions}>
+                    <IoWarningOutline size={50} color="white"/>
+                    <div>
+                        A company store is a store that has been pre-populated with a customers previous orders for the ease of placing a repeat order. If you do not have an existing store with us, and are instead looking to place a new customized order, visit our online store <Link href="https://dpipcoincdbapointofaction.shops.shopvox.com" style={{color: "#4F71B5", textDecoration:"underline"}}>here.</Link>
+                    </div>
+                </div>
+                : <></>
+            }
             {
             result[0] !== null ?
             <div className={styles.resultContainer}>

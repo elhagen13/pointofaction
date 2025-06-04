@@ -50,7 +50,7 @@ export default function LeafletMap() {
         <div className={styles.title}>Contact Us</div>
         <div>
           <div className={styles.bold}>Interested in Ordering?</div>
-          Follow this <Link href="/howToOrder">tutorial</Link> to place an order at the online store.
+          Follow this <Link href="/howToOrder" style={{color:"#4F71B5", textDecoration:"underline"}}>tutorial</Link> to place an order at the online store.
         </div>
         <div>
           <div className={styles.bold}>Need further assistance?<br/>Get in touch!</div>

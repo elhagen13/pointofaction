@@ -133,7 +133,7 @@ const sections = {
         "Video Link": "/tutorials/CardAddToCart.mp4"
       }, 
     ],
-    "Clothing": {
+    "Apparel Items": {
       "Apparel Printing":
       [
         {

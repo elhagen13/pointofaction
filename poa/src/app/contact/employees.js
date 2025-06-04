@@ -4,7 +4,6 @@ const employees = [
         name: "Isaac Porter",
         role: "CEO",
         email: "Ike@pointofaction.com",
-        number: "(805) 922-6253 x 10"
     },
     {
         photo: "/employees/employee2.png",

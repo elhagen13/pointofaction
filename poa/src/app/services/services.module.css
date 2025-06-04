@@ -119,6 +119,7 @@ clip-path: polygon(0 0, 100% 0, 70% 100%, 0 100%);
   .serviceText{
     font-size: 32px;
   }
+
  
 
   @media(max-width: 768){
