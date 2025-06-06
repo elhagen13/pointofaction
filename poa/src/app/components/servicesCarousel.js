@@ -9,27 +9,27 @@ const ServicesCarousel = () => {
   const services = [
     {
         service: "Embroidery",
-        image: "/service_embroidery.png",
+        image: "/service_embroidery.jpeg",
         link: "/services/embroidery"
     },
     {
         service: "Vinyl Printing",
-        image: "/service_vinylprinting.png",
+        image: "/service_vinylprinting.jpeg",
         link: "/services/vinyl"
     },
     {
         service: "Laser Etching",
-        image: "/service_laseretching.png",
+        image: "/service_laseretching.jpeg",
         link: "/services/laser"
     },
     {
         service: "Direct to Film",
-        image: "/service_directtofilm.png",
+        image: "/service_directtofilm.jpeg",
         link: "/services/film"
     },
     {
         service: "Art Digitizing",
-        image: "/service_artdigitizing.png",
+        image: "/service_artdigitizing.jpeg",
         link: "/services/digitizing"
     },
 
