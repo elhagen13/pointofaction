@@ -9,7 +9,7 @@ const services = {
         capabilities: ["Shirts", "Jackets", "Caps", "Sweatshirts", "Any Fabric Item"]
     },
     vinyl: {
-        name: "Vinyl Printing",
+        name: "Vinyl Printing & Cutting",
         thumbnail: "/services/vinyl_thumbnail.jpeg",
         link: "services/vinyl",
         image: "/services/vinyl.png",

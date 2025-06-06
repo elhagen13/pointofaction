@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import styles from "./addStore.module.css";
+import styles from "./admin.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 
 function AddStore({ onClose, onCompanyAdded }) {

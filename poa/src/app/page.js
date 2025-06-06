@@ -1,13 +1,75 @@
+"use client";
 import Link from "next/link";
 import styles from "./page.module.css";
 import Banner from "./components/Banner";
 import ServicesCarousel from "./components/servicesCarousel";
 import CustomerCarousel from "./components/customerCarousel";
-
+import { useState, useEffect } from "react";
 export default function Home() {
+  const [hours, setHours] = useState([])
+
+  function convertTo12Hour(militaryTime) {
+    // Handle empty or invalid input
+    if (!militaryTime) return '';
+    
+    // Split the time string (e.g., "17:00" -> ["17", "00"])
+    const [hours, minutes] = militaryTime.split(':');
+    
+    // Convert to numbers
+    const hour24 = parseInt(hours, 10);
+    const min = parseInt(minutes, 10);
+    
+    // Determine AM/PM
+    const period = hour24 >= 12 ? 'PM' : 'AM';
+    
+    // Convert hour to 12-hour format
+    let hour12 = hour24 % 12;
+    if (hour12 === 0) hour12 = 12; // Handle midnight (0) and noon (12)
+    
+    // Format minutes with leading zero if needed
+    const formattedMinutes = min < 10 ? `0${min}` : min;
+    
+    return `${hour12}:${formattedMinutes} ${period}`;
+  }
+
+  useEffect(() => {
+    async function getTodaysHours() {
+      try {
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+        
+        const response = await fetch(`/api/hours?date=${today}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.log('No hours found for today');
+            return null;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const hours = await response.json();
+        console.log('Today\'s hours:', hours);
+        setHours(hours)
+        return hours;
+        
+      } catch (error) {
+        console.error('Error fetching today\'s hours:', error);
+        return null;
+      }
+    }
+
+    getTodaysHours()
+  }, [])
   return (
     <div>
        <Banner/>
+       <div style={{padding: "20px", marginLeft: "20px"}}>
+          Hours today:
+          <div>
+            {convertTo12Hour(hours.startTime)}-{convertTo12Hour(hours.endTime)}
+          </div>
+        </div>
       <main className={styles.main}>
         <div name="services" className={styles.homeItem}>
           <div className={styles.title}>

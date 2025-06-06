@@ -62,7 +62,7 @@ const Footer = () => {
           <Link href="/services/film" className={styles.link}>Direct to Film</Link>
         </div>
         <div className={styles.admin}>
-          <a href="/addCompanyStore">Admin</a>
+          <a href="/admin">Admin</a>
         </div>
       </div>
     </footer>
