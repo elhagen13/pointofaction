@@ -23,7 +23,8 @@ const ServiceItem = ({ service, index }) => {
   }, []);
 
   return (
-    <div className={styles.backgroundBlock}>
+    <div className={styles.backgroundBlock}  onMouseEnter={handleMouseEnter}
+    onMouseLeave={handleMouseLeave}>
       {isEven ? (
         <>
           <video
@@ -37,8 +38,6 @@ const ServiceItem = ({ service, index }) => {
             loop
             playsInline
             preload="metadata"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
           >
             Your browser does not support the video tag.
           </video>
