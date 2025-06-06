@@ -22,6 +22,35 @@ const Banner = () => {
     const [startX, setStartX] = useState(null);
     const bannerRef = useRef(null);
 
+    useEffect(() => {
+        const preloadImages = () => {
+          let loadCount = 0;
+          
+          bannerItems.forEach((item) => {
+            const img = new Image();
+            img.onload = () => {
+              loadCount++;
+              setLoadedCount(loadCount);
+              if (loadCount === bannerItems.length) {
+                setImagesLoaded(true);
+              }
+            };
+            img.onerror = () => {
+              console.error(`Failed to load image: ${item.image}`);
+              loadCount++;
+              setLoadedCount(loadCount);
+              if (loadCount === bannerItems.length) {
+                setImagesLoaded(true);
+              }
+            };
+            img.src = item.image;
+          });
+        };
+        
+        
+        preloadImages();
+      }, []);
+
     // Handle touch start
     const handleTouchStart = (e) => {
         setStartX(e.touches[0].clientX);
