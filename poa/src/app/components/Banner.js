@@ -6,14 +6,14 @@ import Link from 'next/link';
 
 const bannerItems = [
     {
-        image: "/banner1.png",
+        image: "/banner1-min.jpeg",
     },
     {
-        image: "/banner2.png",
+        image: "/banner2-min.jpeg",
        
     },
     {
-        image: "/banner3.png",
+        image: "/banner3-min.jpeg",
     }
 ]
 
@@ -47,7 +47,7 @@ const Banner = () => {
           });
         };
         
-        
+
         preloadImages();
       }, []);
 
