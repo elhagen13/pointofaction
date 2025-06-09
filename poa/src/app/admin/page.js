@@ -5,7 +5,8 @@ import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 import AddCompanyStore from "./addStore.js"
 
 function Admin() {
-  const [selectedDate, setSelectedDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("17:00");
   const [open, setOpen] = useState(true)
@@ -13,7 +14,7 @@ function Admin() {
 
   const handleSubmitHours = async () => {
     // Validation
-    if (!selectedDate) {
+    if (!startDate || !endDate) {
       alert("Please select a date");
       return;
     }
@@ -32,7 +33,8 @@ function Admin() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          date: selectedDate,
+          startDate: startDate,
+          endDate: endDate,
           startTime: startTime,
           endTime: endTime,
           open: open,
@@ -68,11 +70,26 @@ function Admin() {
         <div>
           <input 
             type="date" 
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          -
+          <input 
+            type="date" 
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
           />
         </div>
-        <div>
+        <div style={{display: "flex", gap: "10px"}}>
+          <div style={{display: "flex", gap: "5px", alignItems: "center"}}>
+            <input type="radio" id="open" name="status" value="Open" checked={open} onClick={() => setOpen(true)}/>
+            <label for="open">Open</label></div>
+          <div style={{display: "flex", gap: "5px", alignItems: "center"}}>
+            <input type="radio" id="close" name="status" value="Close" checked={!open} onClick={() => setOpen(false)} />
+            <label for="close">Close</label>
+          </div>
+        </div>
+        {open && <div>
           <input 
             type="time" 
             value={startTime}
@@ -83,13 +100,7 @@ function Admin() {
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
           />
-        </div>
-        <div>
-          <input type="radio" id="open" name="status" value="Open" checked={open}/>
-          <label for="open">Open</label>
-          <input type="radio" id="close" name="status" value="Close" />
-          <label for="close">Close</label>
-        </div>
+        </div>}
         <div>
           <button 
             className={styles.button} 

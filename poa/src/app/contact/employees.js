@@ -1,47 +1,47 @@
 const employees = [
     {
-        photo: "/employees/employee1.png",
+        photo: "/employees/anonymous.jpeg",
         name: "Isaac Porter",
         role: "CEO",
         email: "Ike@pointofaction.com",
     },
     {
-        photo: "/employees/employee2.png",
+        photo: "/employees/Zac.jpeg",
         name: "Zac Bace",
         role: "Production Manager",
         email: "Zac@pointofaction.com",
         number: "(805) 922-6253 x 10"
     },
     {
-        photo: "/employees/employee3.png",
+        photo: "/employees/Debbie.jpeg",
         name: "Deb Porter",
         role: "CFO/Sales",
         email: "Deb@pointofaction.com",
         number: "(805) 922-6253 x 101"
     },
     {
-        photo: "/employees/employee4.png",
+        photo: "/employees/Austin.jpeg",
         name: "Austin Porter",
         role: "Sales/Lead Design",
         email: "Austin@pointofaction.com",
         number: "(805) 922-6253 x 20"
     },
     {
-        photo: "/employees/employee5.png",
+        photo: "/employees/Roberta.jpeg",
         name: "Roberta Garner",
         role: "Head Sales/Design",
         email: "Roberta@pointofaction.com",
         number: "(805) 922-6253 x 73"
     },
     {
-        photo: "/employees/employee6.png",
+        photo: "/employees/anonymous.jpeg",
         name: "Brad Bachrach",
         role: "Sign Room Manager",
         email: "Brad@pointofaction.com",
         number: "(805) 922-6253 x 71"
     },
     {
-        photo: "/employees/employee6.png",
+        photo: "/employees/Tracy.jpeg",
         name: "Tracy Alvino",
         role: "Account Support Assistant",
         email: "Tracy@pointofaction.com",
