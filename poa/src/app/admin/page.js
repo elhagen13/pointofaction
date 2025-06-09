@@ -8,6 +8,7 @@ function Admin() {
   const [selectedDate, setSelectedDate] = useState("");
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("17:00");
+  const [open, setOpen] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmitHours = async () => {
@@ -34,6 +35,7 @@ function Admin() {
           date: selectedDate,
           startTime: startTime,
           endTime: endTime,
+          open: open,
           updatedAt: new Date().toISOString()
         }),
       });
@@ -81,6 +83,12 @@ function Admin() {
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
           />
+        </div>
+        <div>
+          <input type="radio" id="open" name="status" value="Open" checked={open}/>
+          <label for="open">Open</label>
+          <input type="radio" id="close" name="status" value="Close" />
+          <label for="close">Close</label>
         </div>
         <div>
           <button 

@@ -3,10 +3,10 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
+  region: process.env.REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.ACCESS_KEY_ID,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
   },
 });
 
@@ -34,7 +34,7 @@ export async function POST(request) {
     const fileName = `company-logos/${uuidv4()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     
     const uploadParams = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Bucket: process.env.S3_BUCKET_NAME,
       Key: fileName,
       Body: buffer,
       ContentType: file.type,
@@ -44,7 +44,7 @@ export async function POST(request) {
     const command = new PutObjectCommand(uploadParams);
     await s3Client.send(command);
 
-    const fileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${fileName}`;
 
     return Response.json({
       success: true,
