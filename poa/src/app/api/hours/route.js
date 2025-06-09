@@ -29,7 +29,9 @@ export async function GET(request) {
     let date;
     try {
       const url = new URL(request.url);
+      console.log(url)
       date = url.searchParams.get('date');
+      console.log(date)
     } catch (error) {
       console.error('Error parsing URL:', error);
       return Response.json(
@@ -71,7 +73,7 @@ export async function POST(request) {
     const body = await request.json();
     const { startDate, endDate, startTime, endTime, open, updatedAt = new Date().toISOString() } = body;
 
-    if (!open || !startDate || !endDate || !startTime || !endTime) {
+    if (!startDate || !endDate || !startTime || !endTime) {
       return Response.json(
         { error: 'Missing required fields: open, startDate, endDate, startTime, endTime' },
         { status: 400 }

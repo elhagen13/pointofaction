@@ -17,7 +17,7 @@ export default function RequestPortal() {
     const subject = `Portal Access Request - ${company}`;
     const body = `Name: ${firstName} ${lastName}\n\nCompany: ${company}\n\n Requesting a company portal\n\nAdditional Information:\n${additionalInfo}\n\nContact Details:\nEmail: ${email}\nPhone: ${phone}`;
     
-    window.location.href = `mailto:eklhagen@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:austin@pointofaction.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   return (

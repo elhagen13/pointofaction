@@ -2,15 +2,17 @@
 import { useState, useEffect } from "react";
 import styles from "./admin.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
-import AddCompanyStore from "./addStore.js"
+import AddCompanyStore from "./addStore.js";
+import Calendar from "../components/Calendar";
 
 function Admin() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("17:00");
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); 
 
   const handleSubmitHours = async () => {
     // Validation
@@ -18,7 +20,7 @@ function Admin() {
       alert("Please select a date");
       return;
     }
-    
+
     if (startTime >= endTime) {
       alert("Start time must be before end time");
       return;
@@ -27,10 +29,10 @@ function Admin() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/hours', {
-        method: 'POST',
+      const response = await fetch("/api/hours", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           startDate: startDate,
@@ -38,7 +40,7 @@ function Admin() {
           startTime: startTime,
           endTime: endTime,
           open: open,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         }),
       });
 
@@ -47,17 +49,18 @@ function Admin() {
       }
 
       const result = await response.json();
-      console.log('Hours updated successfully:', result);
-      alert('Hours updated successfully!');
-      
+      console.log("Hours updated successfully:", result);
+      alert("Hours updated successfully!");
+      setRefreshKey(prev => prev + 1);
+
+
       // Optionally reset form
       // setSelectedDate("");
       // setStartTime("10:00");
       // setEndTime("17:00");
-      
     } catch (error) {
-      console.error('Error updating hours:', error);
-      alert('Failed to update hours. Please try again.');
+      console.error("Error updating hours:", error);
+      alert("Failed to update hours. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,53 +69,76 @@ function Admin() {
   return (
     <div className={styles.admin}>
       <div className={styles.title}>Change Hours</div>
-      <div className={styles.scheduleChange}>
-        <div>
-          <input 
-            type="date" 
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          -
-          <input 
-            type="date" 
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-        <div style={{display: "flex", gap: "10px"}}>
-          <div style={{display: "flex", gap: "5px", alignItems: "center"}}>
-            <input type="radio" id="open" name="status" value="Open" checked={open} onClick={() => setOpen(true)}/>
-            <label for="open">Open</label></div>
-          <div style={{display: "flex", gap: "5px", alignItems: "center"}}>
-            <input type="radio" id="close" name="status" value="Close" checked={!open} onClick={() => setOpen(false)} />
-            <label for="close">Close</label>
+      <div className={styles.schedule}>
+        <div className={styles.scheduleChange}>
+          <div>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            -
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="open"
+                name="status"
+                value="Open"
+                checked={open}
+                onClick={() => setOpen(true)}
+              />
+              <label for="open">Open</label>
+            </div>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="close"
+                name="status"
+                value="Close"
+                checked={!open}
+                onClick={() => setOpen(false)}
+              />
+              <label for="close">Close</label>
+            </div>
+          </div>
+          {open && (
+            <div>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />{" "}
+              -
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </div>
+          )}
+          <div>
+            <button
+              className={styles.button}
+              style={{ padding: "5px 10px" }}
+              onClick={handleSubmitHours}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Updating..." : "Change Hours"}
+            </button>
           </div>
         </div>
-        {open && <div>
-          <input 
-            type="time" 
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-          /> - 
-          <input 
-            type="time" 
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-          />
-        </div>}
-        <div>
-          <button 
-            className={styles.button} 
-            style={{padding: "5px 10px"}}
-            onClick={handleSubmitHours}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Updating..." : "Change Hours"}
-          </button>
+        <div style={{flexGrow: "2"}}>
+        <Calendar refresh={refreshKey}/>
         </div>
       </div>
-      <AddCompanyStore/>
+      <AddCompanyStore />
     </div>
   );
 }

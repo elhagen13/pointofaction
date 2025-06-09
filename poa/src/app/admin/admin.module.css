@@ -143,13 +143,21 @@
   }
 
 
-  .scheduleChange{
-    width: 200px;
+  .schedule{
+    width: 100%;
     padding: 20px;
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     gap: 10px;
     border-radius: 10px;
     box-shadow: 0 0 2px gray;
 
+  }
+
+  .scheduleChange{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 200px;
   }

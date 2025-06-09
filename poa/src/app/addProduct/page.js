@@ -20,7 +20,7 @@ export default function RequestPortal() {
     const subject = `Add Product - ${company}`;
     const body = `Name: ${firstName} ${lastName}\n\nCompany: ${company}\n\nStyle:\n${style}\nColor:\n${color}\nDesign:\n${design}\nAdditional Information:\n${additionalInfo}\n\nContact Details:\nEmail: ${email}\nPhone: ${phone}`;
     
-    window.location.href = `mailto:eklhagen@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:austin@pointofaction.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   return (

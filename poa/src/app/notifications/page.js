@@ -14,7 +14,7 @@ export default function Notifications() {
     const subject = "SMS Notification Preference Update";
     const body = `Dear Point of Action team,\n\nI would like to ${choice.includes("don't") ? "opt out" : "opt in"} to SMS notifications.\n\nMy details:\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\n\nPreferred status: ${choice}\n\nThank you,\n${name}`;
     
-    window.location.href = `mailto:eklhagen@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:austin@pointofaction.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   return (
