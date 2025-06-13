@@ -150,6 +150,7 @@ export async function POST(request) {
       companyName: body.companyName.trim(),
       companyLink: body.companyLink.trim(),
       companyImage: body.companyImage.trim(),
+      private: body.private,
       createdAt: new Date(),
       updatedAt: new Date()
     };

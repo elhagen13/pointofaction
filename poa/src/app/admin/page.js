@@ -54,10 +54,7 @@ function Admin() {
       setRefreshKey(prev => prev + 1);
 
 
-      // Optionally reset form
-      // setSelectedDate("");
-      // setStartTime("10:00");
-      // setEndTime("17:00");
+
     } catch (error) {
       console.error("Error updating hours:", error);
       alert("Failed to update hours. Please try again.");

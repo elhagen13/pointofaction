@@ -7,6 +7,7 @@ function AddStore({ onClose, onCompanyAdded }) {
   const [companyName, setCompanyName] = useState("");
   const [companyImage, setCompanyImage] = useState("");
   const [companyLink, setCompanyLink] = useState("");
+  const [privateShop, isPrivateShop] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
@@ -127,6 +128,7 @@ function AddStore({ onClose, onCompanyAdded }) {
         companyName: companyName,
         companyLink: companyLink,
         companyImage: companyImage,
+        private: privateShop,
       };
 
       const response = await fetch("/api/companyStores", {
@@ -248,6 +250,31 @@ function AddStore({ onClose, onCompanyAdded }) {
               required
             />
           </div>
+          <div className={styles.formInput} style={{ display: "flex", gap: "10px" }}>
+            <label>Viewing Settings</label>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="private"
+                name="status"
+                value="Private"
+                checked={privateShop}
+                onClick={() => isPrivateShop(true)}
+              />
+              <label for="private">Private</label>
+            </div>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="public"
+                name="status"
+                value="Public"
+                checked={!privateShop}
+                onClick={() => isPrivateShop(false)}
+              />
+              <label for="public">Public</label>
+            </div>
+          </div>
           
           <div>
             <button 
@@ -265,9 +292,11 @@ function AddStore({ onClose, onCompanyAdded }) {
 }
 
 function EditStore({ company, onClose, onCompanyEdited }) {
+  console.log(company)
   const [companyName, setCompanyName] = useState(company.companyName);
   const [companyImage, setCompanyImage] = useState(company.companyImage);
   const [companyLink, setCompanyLink] = useState(company.companyLink);
+  const [privateShop, isPrivateShop] = useState(company.private)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -394,6 +423,8 @@ function EditStore({ company, onClose, onCompanyEdited }) {
         companyName: companyName,
         companyLink: companyLink,
         companyImage: companyImage,
+        private: privateShop,
+
       };
 
       const response = await fetch(`/api/companyStores/${company._id}`, {
@@ -533,6 +564,31 @@ function EditStore({ company, onClose, onCompanyEdited }) {
               required
             />
           </div>
+          <div className={styles.formInput} style={{ display: "flex", gap: "10px" }}>
+            <label>Viewing Settings</label>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="private"
+                name="status"
+                value="Private"
+                checked={privateShop}
+                onClick={() => isPrivateShop(true)}
+              />
+              <label for="private">Private</label>
+            </div>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="public"
+                name="status"
+                value="Public"
+                checked={!privateShop}
+                onClick={() => isPrivateShop(false)}
+              />
+              <label for="public">Public</label>
+            </div>
+          </div>
           
           <div style={{display:"flex", justifyContent:"space-between"}}>
             <button 
@@ -585,6 +641,7 @@ function AddCompanyStore() {
       console.error("Fetch error:", error);
     }
   }
+  console.log(companies)
 
   return (
     <>

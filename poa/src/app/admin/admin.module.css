@@ -1,163 +1,265 @@
 .admin{
   width: 100%;
-  padding: 50px;
-}
-.addStore {
-    
-    width: 100%
+ padding: 50px;
+ }
+ .addStore {
+ width: 100%
   }
-  
-  .titleBar {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    margin: 20px 0;
+ .titleBar {
+ width: 100%;
+ display: flex;
+ justify-content: space-between;
+ margin: 20px 0;
   }
-  
-  .title {
-    font-size: 30px;
-    font-weight: bold;
+ .title {
+ font-size: 30px;
+ font-weight: bold;
   }
-  
-  .button {
-    background-color: #538561;
-    color: white;
-    font-weight: bold;
-    border: none;
-    outline: none;
-    padding: 10px 20px;
-    border-radius: 20px;
-    cursor: pointer;
+ .button {
+ background-color: #538561;
+ color: white;
+ font-weight: bold;
+ border: none;
+ outline: none;
+ padding: 10px 20px;
+ border-radius: 20px;
+ cursor: pointer;
   }
-  
-  .button:hover {
-    background-color: rgb(50, 120, 50);
+ .button:hover {
+ background-color: rgb(50, 120, 50);
   }
-
-  .delete{
-    background-color: #a83a32;
+ .delete{
+ background-color: #a83a32;
   }
-
-  .delete:hover{
-    background-color: #9a352e;
+ .delete:hover{
+ background-color: #9a352e;
   }
-  
-  .companies {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+ .companies {
+ display: grid;
+ grid-template-columns: repeat(4, 1fr);
+ gap: 15px;
   }
-  
-  .company {
-    grid-column: span 1;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+ .company {
+ grid-column: span 1;
+ position: relative;
+ display: flex;
+ flex-direction: column;
+ gap: 15px;
   }
-  
-  .imageContainer {
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
-    border-radius: 15px;
-    box-shadow: 0 0 4px gray;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f5f5f5; /* Optional: adds background for images that don't fill completely */
+ .imageContainer {
+ width: 100%;
+ height: 200px;
+ overflow: hidden;
+ border-radius: 15px;
+ box-shadow: 0 0 4px gray;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ background-color: #f5f5f5; /* Optional: adds background for images that don't fill completely */
   }
-  
-  .companyImage {
-    object-fit: contain;
-    width: 100%;
-    height: 100%;
+ .companyImage {
+ object-fit: contain;
+ width: 100%;
+ height: 100%;
   }
-
-  .companyName {
-    font-weight: bold;
+ .companyName {
+ font-weight: bold;
   }
-  
-  .edit {
-    position: absolute;
-    top: -15px;
-    right: -15px;
-    border-radius: 30px;
-    width: 40px;
-    height: 40px;
-    color: white;
-    background-color: orange;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
+ .edit {
+ position: absolute;
+ top: -15px;
+ right: -15px;
+ border-radius: 30px;
+ width: 40px;
+ height: 40px;
+ color: white;
+ background-color: orange;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ cursor: pointer;
   }
-  
-  .edit:hover {
-    background-color: rgb(235, 156, 10);
+ .edit:hover {
+ background-color: rgb(235, 156, 10);
   }
-  
-  /* Blurred overlay styles */
-  .addStoreOverlay {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(151, 151, 151, 0.5); 
-    backdrop-filter: blur(8px); 
-    -webkit-backdrop-filter: blur(8px); 
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+ /* Fixed blurred overlay styles */
+ .addStoreOverlay {
+ position: fixed;
+ left: 0;
+ top: 0;
+ width: 100vw;
+ height: 100vh;
+ background-color: rgba(151, 151, 151, 0.5);
+ backdrop-filter: blur(8px);
+ -webkit-backdrop-filter: blur(8px);
+ z-index: 1000;
+ display: flex;
+ justify-content: center;
+ align-items: flex-start; /* Changed from center to flex-start */
+ padding: 30px;
+ overflow-y: auto; /* Added to enable scrolling */
   }
-
-  .overlay{
-    background-color: white;
-    width: 50%;
-    padding: 40px;
-    box-shadow: 0 0 4px gray;
-    border-radius: 20px;
+ .overlay{
+ position: relative;
+ background-color: white;
+ width: 50%;
+ max-width: 600px; /* Added max-width for better responsiveness */
+ padding: 40px;
+ box-shadow: 0 0 4px gray;
+ border-radius: 20px;
+ margin: auto 0; /* Added for better centering when content is small */
   }
-
-  .overlay form{
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+ .overlay form{
+ display: flex;
+ flex-direction: column;
+ gap: 20px;
   }
-
-
-  .formInput{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+ .formInput{
+ width: 100%;
+ display: flex;
+ flex-direction: column;
+ gap: 5px;
   }
-
-  .input{
-    padding: 10px 20px;
-    border-radius: 30px;
-    border:none;
-    box-shadow: 0 0 3px gray;
+ .input{
+ padding: 10px 20px;
+ border-radius: 30px;
+ border:none;
+ box-shadow: 0 0 3px gray;
   }
-
-
-  .schedule{
-    width: 100%;
-    padding: 20px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 10px;
-    border-radius: 10px;
-    box-shadow: 0 0 2px gray;
-
+ 
+ /* Upload section styles */
+ .uploadSection {
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+ }
+ 
+ .fileInput {
+ display: none;
+ }
+ 
+ .fileLabel {
+ display: inline-flex;
+ align-items: center;
+ gap: 8px;
+ padding: 10px 20px;
+ background-color: #f0f0f0;
+ border: 2px dashed #ccc;
+ border-radius: 8px;
+ cursor: pointer;
+ text-align: center;
+ transition: all 0.3s ease;
+ }
+ 
+ .fileLabel:hover {
+ background-color: #e0e0e0;
+ border-color: #999;
+ }
+ 
+ .fileInfo {
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ padding: 10px;
+ background-color: #f9f9f9;
+ border-radius: 8px;
+ }
+ 
+ .uploadButton {
+ padding: 8px 16px;
+ background-color: #007bff;
+ color: white;
+ border: none;
+ border-radius: 4px;
+ cursor: pointer;
+ font-size: 14px;
+ }
+ 
+ .uploadButton:hover {
+ background-color: #0056b3;
+ }
+ 
+ .uploadButton:disabled {
+ background-color: #6c757d;
+ cursor: not-allowed;
+ }
+ 
+ .imagePreview {
+ position: relative;
+ display: inline-block;
+ margin: 10px 0;
+ }
+ 
+ .previewImage {
+ max-width: 200px;
+ max-height: 200px;
+ border-radius: 8px;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ }
+ 
+ .removeButton {
+ position: absolute;
+ top: -8px;
+ right: -8px;
+ background-color: #dc3545;
+ color: white;
+ border: none;
+ border-radius: 50%;
+ width: 24px;
+ height: 24px;
+ cursor: pointer;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 12px;
+ }
+ 
+ .removeButton:hover {
+ background-color: #c82333;
+ }
+ 
+ .orDivider {
+ text-align: center;
+ margin: 15px 0;
+ position: relative;
+ }
+ 
+ .orDivider::before {
+ content: '';
+ position: absolute;
+ top: 50%;
+ left: 0;
+ right: 0;
+ height: 1px;
+ background-color: #ddd;
+ }
+ 
+ .orDivider span {
+ background-color: white;
+ padding: 0 15px;
+ color: #666;
+ font-size: 14px;
+ }
+ 
+ .error {
+ color: #dc3545;
+ font-size: 14px;
+ margin-top: 5px;
+ }
+ 
+ .schedule{
+ width: 100%;
+ padding: 20px;
+ display: flex;
+ flex-direction: row;
+ justify-content: space-between;
+ gap: 10px;
+ border-radius: 10px;
+ box-shadow: 0 0 2px gray;
   }
-
-  .scheduleChange{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-width: 200px;
+ .scheduleChange{
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+ max-width: 200px;
   }

@@ -10,6 +10,7 @@ export default function companyStores() {
     const [search, setSearch] = useState("")
     const [result, setResult] = useState([])
     const [stores, setCompanies] = useState([])
+    const [publicCompanies, setPublicCompanies] = useState([])
 
     useEffect(() => {
         getAllCompanies()
@@ -24,6 +25,7 @@ export default function companyStores() {
             console.log("Companies:", data.data);
             console.log("Total companies:", data.pagination.total);
             setCompanies(data.data);
+            setPublicCompanies(data.data.filter(d => !d.private))
           } else {
             console.error("Error:", data.error);
           }
@@ -82,34 +84,51 @@ export default function companyStores() {
             </div>
             {
                 search.length == 0 ? 
-                <div className={styles.directions}>
-                    <IoWarningOutline size={50} color="white"/>
-                    <div>
-                        A company store is a store that has been pre-populated with a customers previous orders for the ease of placing a repeat order. If you do not have an existing store with us, and are instead looking to place a new customized order, visit our online store <Link href="https://dpipcoincdbapointofaction.shops.shopvox.com" style={{color: "#4F71B5", textDecoration:"underline"}}>here.</Link>
+                <>
+                    <div className={styles.directions}>
+                        <IoWarningOutline size={50} color="white"/>
+                        <div>
+                            A company store is a store that has been pre-populated with a customers previous orders for the ease of placing a repeat order. If you do not have an existing store with us, and are instead looking to place a new customized order, visit our online store <Link href="https://dpipcoincdbapointofaction.shops.shopvox.com" style={{color: "#4F71B5", textDecoration:"underline"}}>here.</Link>
+                        </div>
                     </div>
-                </div>
-                : <></>
-            }
-            {
-            result[0] !== null ?
-            <div className={styles.resultContainer}>
-                {
-                    result.map((res, index) => (
-                        <Link href={res.companyLink} className={styles.storeCard} key={index}>
-                            <img src={res.companyImage} className={styles.storeImage}/>
-                            {res.companyName}
-                        </Link>
-                    ))
+                    {publicCompanies.length > 0 ? <div style={{fontWeight: "bold", fontSize:"25px", color: "gray", marginTop:"30px"}}>Public Stores</div> : <></>}
+                    <div className={styles.resultContainer} style={{marginTop: "5px"}}>
+                        {
+                            publicCompanies.map((res, index) => (
+                                <Link href={res.companyLink} className={styles.storeCard} key={index}>
+                                    <img src={res.companyImage} className={styles.storeImage}/>
+                                    {res.companyName}
+                                </Link>
+                            ))
 
-                }
-            </div>
-            :
-            <div className={styles.noResults}>
-                <div style={{fontWeight: "bold", fontSize:"25px", color: "gray"}}>No results found</div>
-                <div>Interested in creating a prepopulated company store?</div>
-                <div>Reach out to <a href="/requestPortal" style={{color: "#4F71B5"}}>austin@pointofaction.com</a></div>
-            </div>
+                        }
+                    </div>
+                </>
+                : 
+                <>
+                {
+            result[0] !== null ?
+                    <div className={styles.resultContainer}>
+                        {
+                            result.map((res, index) => (
+                                <Link href={res.companyLink} className={styles.storeCard} key={index}>
+                                    <img src={res.companyImage} className={styles.storeImage}/>
+                                    {res.companyName}
+                                </Link>
+                            ))
+
+                        }
+                    </div>
+                    :
+                    <div className={styles.noResults}>
+                        <div style={{fontWeight: "bold", fontSize:"25px", color: "gray"}}>No results found</div>
+                        <div>Interested in creating a prepopulated company store?</div>
+                        <div>Reach out to <a href="/requestPortal" style={{color: "#4F71B5"}}>austin@pointofaction.com</a></div>
+                    </div>
+                    }
+                </>
             }
+            
         </div>
     );
 }

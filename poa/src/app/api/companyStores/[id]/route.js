@@ -115,7 +115,7 @@ export async function PATCH(request, { params }) {
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
-    const { id } = params;
+    const { id } = await params;
 
     // Validate ObjectId format
     if (!ObjectId.isValid(id)) {
@@ -200,6 +200,9 @@ export async function PATCH(request, { params }) {
     }
     if (body.companyImage !== undefined) {
       updateDocument.companyImage = body.companyImage.trim();
+    }
+    if (body.private !== undefined) {
+      updateDocument.private = body.private;
     }
 
     // Update the document
