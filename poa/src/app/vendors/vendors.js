@@ -110,16 +110,47 @@ const vendors = {
         blocked: false
 
     },
+    "Carhartt":{
+        storeName: "Carhartt",
+        image: "/vendors/carhartt.png",
+        link: "https://www.sanmar.com/Brands/Carhartt/c/bra-carhartt?categorySearchTerm=carhartt.com",
+        blocked: true
+    },
+    "Berne":{
+        storeName: "Berne",
+        image: "/vendors/berne.png",
+        link: "https://www.ssactivewear.com/ps/?q=berne",
+        blocked: true
+    },
+    "DRI DUCK":{
+        storeName: "DRI DUCK",
+        image: "/vendors/driduck.png",
+        link: "https://www.ssactivewear.com/ps/?q=dri_duck",
+        blocked: true
+    },
+    "JDS":{
+        storeName: "JDS",
+        image: "/vendors/jds.png",
+        link: "https://www.jdsindustries.com",
+        blocked: true
+    },
+    "Polar Camel":{
+        storeName: "Polar Camel",
+        image: "/vendors/polarcamel.png",
+        link: "https://www.jdsindustries.com/?view=shop&jds-category1=15&jds-category1-desc=Drinkware&jds-category2=138&jds-category2-desc=Polar%20Camel",
+        blocked: true
+    },
+    
 };
 
 const categories = {
     overall: ["SanMar", "S&S"],
     tops: ["American Apparel", "NorthFace", "Fossa", "Landway"],
-    outerwear: ["NorthFace", "Fossa", "Landway"],
+    outerwear: ["NorthFace", "Fossa", "Landway", "Carhartt", "Berne", "DRI DUCK"],
     activewear: ["NorthFace", "Landway"],
     headwear: ["Richardson", "Pacific", "Flexfit", "Outdoor Cap", "Otto", "Nissin"],
     workwear: ["ChefWorks", "Daystar Apparel"],
-    drinkware: ["Numo", "ETS Express"]
+    drinkware: ["Numo", "ETS Express", "JDS", "Polar Camel"]
 };
 
 // Export as named exports
