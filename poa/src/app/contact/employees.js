@@ -28,7 +28,7 @@ const employees = [
         number: "(805) 922-6253 x 101"
     },
     {
-        photo: "/employees/anonymous.jpeg",
+        photo: "/employees/Brad.jpeg",
         name: "Brad Bachrach",
         role: "Sign Room Manager",
         email: "Brad@pointofaction.com",
@@ -42,7 +42,7 @@ const employees = [
         number: "(805) 922-6253 x 10"
     },
     {
-        photo: "/employees/anonymous.jpeg",
+        photo: "/employees/Ike.jpeg",
         name: "Isaac Porter",
         role: "CEO",
         email: "Ike@pointofaction.com",
