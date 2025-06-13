@@ -59,7 +59,7 @@ function AddStore({ onClose, onCompanyAdded }) {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('/api/companyStores/upload', {
+      const response = await fetch('/api/companyStores/uploadImage', {
         method: 'POST',
         body: formData,
       });
@@ -346,7 +346,7 @@ function EditStore({ company, onClose, onCompanyEdited }) {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('/api/companyStores/upload', {
+      const response = await fetch('/api/companyStores/uploadImage', {
         method: 'POST',
         body: formData,
       });

@@ -38,7 +38,6 @@ export async function POST(request) {
       Key: fileName,
       Body: buffer,
       ContentType: file.type,
-      ACL: 'public-read',
     };
 
     const command = new PutObjectCommand(uploadParams);
