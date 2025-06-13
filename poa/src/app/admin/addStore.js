@@ -46,9 +46,12 @@ function AddStore({ onClose, onCompanyAdded }) {
     }
   };
 
+  useEffect(() => {
+    handleUploadImage()
+  }, [selectedFile])
+
   const handleUploadImage = async () => {
     if (!selectedFile) {
-      setUploadError('Please select a file first');
       return;
     }
 
@@ -191,20 +194,6 @@ function AddStore({ onClose, onCompanyAdded }) {
               <label htmlFor="file-upload" className={styles.fileLabel}>
                 <FaUpload /> Choose Image File
               </label>
-              
-              {selectedFile && (
-                <div className={styles.fileInfo}>
-                  <span>{selectedFile.name}</span>
-                  <button
-                    type="button"
-                    onClick={handleUploadImage}
-                    disabled={isUploading}
-                    className={styles.uploadButton}
-                  >
-                    {isUploading ? "Uploading..." : "Upload to S3"}
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Show uploaded image preview */}
@@ -333,9 +322,12 @@ function EditStore({ company, onClose, onCompanyEdited }) {
     }
   };
 
+  useEffect(() => {
+    handleUploadImage();
+  }, [selectedFile])
+
   const handleUploadImage = async () => {
     if (!selectedFile) {
-      setUploadError('Please select a file first');
       return;
     }
 
@@ -520,20 +512,6 @@ function EditStore({ company, onClose, onCompanyEdited }) {
               <label htmlFor="file-upload-edit" className={styles.fileLabel}>
                 <FaUpload /> {uploadedImageUrl ? 'Change Image' : 'Choose Image File'}
               </label>
-              
-              {selectedFile && (
-                <div className={styles.fileInfo}>
-                  <span>{selectedFile.name}</span>
-                  <button
-                    type="button"
-                    onClick={handleUploadImage}
-                    disabled={isUploading}
-                    className={styles.uploadButton}
-                  >
-                    {isUploading ? "Uploading..." : "Upload to S3"}
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Manual URL input */}
