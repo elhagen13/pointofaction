@@ -138,12 +138,12 @@ const sections = {
       [
         {
           "Step": "Catalog",
-          "Description": "The company whose product we will screen print on. We will order directly from the vendor themselves depending on your order, to see a list of our vendors and the products they offer check out our vendors page.",
+          "Description": "The company whose product we will print on. We will order directly from the vendor themselves depending on your order, to see a list of our vendors and the products they offer check out our vendors page.",
           "Video Link": "/tutorials/ApparelCatalog.mp4"
         }, 
         {
           "Step": "Product",
-          "Description": "The product that we will screen print on. The catalog number is included, so if you need a more in depth view of the product, go to the vendors website and lookup the catalog number.",
+          "Description": "The product that we will print on. The catalog number is included, so if you need a more in depth view of the product, go to the vendors website and lookup the catalog number.",
           "Video Link": "/tutorials/ApparelProduct.mp4"
         }, 
         {
@@ -163,7 +163,7 @@ const sections = {
         }, 
         {
           "Step": "Adding a New Product",
-          "Description": "If you want a different product but have the design in the same place, such as a vest and a jacket with a screenprinted logo on the front right, you can add a new style.",
+          "Description": "If you want a different product but have the design in the same place, such as a vest and a jacket with a printed logo on the front right, you can add a new style.",
           "Video Link": "/tutorials/ApparelAddStyle.mp4"
         },
         {
@@ -210,7 +210,7 @@ const sections = {
           }, 
           {
             "Step": "Adding a New Product",
-            "Description": "If you want a different product but have the design in the same place, such as a vest and a jacket with a screenprinted logo on the front right, you can add a new style.",
+            "Description": "If you want a different product but have the design in the same place, such as a vest and a jacket with a printed logo on the front right, you can add a new style.",
             "Video Link": "/tutorials/PatchHatAddStyle.mp4"
           },
           {

@@ -14,7 +14,7 @@ const services = {
         link: "services/vinyl",
         image: "/services/vinyl.png",
         video: "/services/vinyl.mp4",
-        description: "Affordable and High Impact: Use vinyl graphics and lettering to display store hours, tenant identification, additional information, or create a custom message for your vehicle or boat. Made from durable, adhesive backed PVC material, they’re available in a nearly unlimited number of colors and fonts. Excellent for most applications like vehicle graphics, banners, window graphics and exterior signs. Available in a variety of finishes, life expediencies and durability, vinyl can fit nearly any project need. ",
+        description: "Affordable and High Impact: Use vinyl graphics and lettering to display store hours, tenant identification, additional information, or create a custom message for your vehicle or boat. Made from durable, adhesive backed PVC material, they’re available in a nearly unlimited number of colors and fonts. Excellent for most applications like vehicle graphics, banners, window graphics and exterior signs. Available in a variety of finishes, life expectancies and durability, vinyl can fit nearly any project need. ",
         capabilities: ["Vehicle Graphics", "Banners", "Window Graphics", "Exterior Signs"]
     },
     laser: {
@@ -32,7 +32,7 @@ const services = {
         link: "services/film",
         image: "/services/film.png",
         video: "/services/film.mp4",
-        description: "Quick to film is a modern printing technique where your artwork is digitally processed and then transferred onto a film or screen, which is used to apply the design onto your product. Unlike traditional screen printing, this method skips several manual steps, allowing for faster production without sacrificing quality. Quick to film is ideal for detailed designs and smaller runs, as it reduces setup time and costs. Our artwork team will evaluate your design to determine if this method is the best fit for your project",
+        description: "Direct to film is a modern printing technique where your artwork is digitally processed and then transferred onto a film or screen, which is used via heat to apply the design to the product. Unlike traditional screen printing, this method skips several manual steps, allowing for faster production without sacrificing quality. Direct to film is ideal for detailed designs and smaller runs, as it reduces setup time and costs. Our artwork team will evaluate your design to determine if this method is the best fit for your project",
         capabilities: ["Shirts", "Jackets", "Team Uniforms", "Signage", "Textiles"]
 
     },

@@ -178,9 +178,7 @@ export default function Home() {
               <div className={styles.aboutUsText}>
                 <div className={styles.subtitle}>Our History </div><br/>
                 Point of Action opened in 1987 originally as a silk screen
-                business and has expanded and grown to what it is today – a successful,
-                quality marketing materials manufacturer on the California Central
-                Coast
+                business and has expanded and grown to what it is today – a successful marketing value added reseller on the Central Coast.
               </div>
             </div>
             <div className={styles.aboutUsItem}>
@@ -188,10 +186,9 @@ export default function Home() {
               <div className={styles.aboutUsText}>
                 <div className={styles.subtitle}>Our Staff </div><br/>
                 P.O.A. prides itself on its experienced staff with master embroiderers,
-                graphic designers, sign-makers, etchers, and silk-screeners. Our customer
+                graphic designers, sign-makers, and etchers. Our customer
                 service group with friendly, knowledgeable, and professional personnel,
-                will suggest ideas to help you stand out with the most impact while
-                having a professional look.
+                will suggest ideas to help you stand out with the most impact in todays market.
               </div>
             </div>
             <div className={styles.aboutUsItem}>
