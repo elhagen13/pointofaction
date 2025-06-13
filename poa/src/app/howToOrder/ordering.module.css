@@ -49,6 +49,7 @@
     display: flex;
     justify-content: space-between;
     flex-direction: row;
+    cursor: pointer;
 }
 
 .chosenStep{
@@ -71,6 +72,8 @@
 
 .step{
     padding: 5px 20px;
+    cursor: pointer;
+
 }
 
 .subSection{
@@ -79,11 +82,14 @@
     display: flex;
     justify-content: space-between;
     flex-direction: row;
+    cursor: pointer;
 }
 
 
 .subStep{
     padding: 5px 30px;
+    cursor: pointer;
+
 }
 
 .video{
