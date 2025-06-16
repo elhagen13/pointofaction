@@ -1,0 +1,33 @@
+
+
+.faqPage{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 50px;
+    gap: 20px;
+}
+
+
+
+.questionContainer{
+    width: 100%
+}
+.faq{
+    width:fit-content;
+    padding: 20px;
+    box-shadow: 0 0 2px gray;
+    border-radius: 10px; 
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.faq:hover{
+    background-color: rgb(219, 219, 219);
+}
+
+.title {
+    font-size: 24px;
+    font-weight: bold;
+  }
