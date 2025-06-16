@@ -37,7 +37,6 @@ const ServiceItem = ({ service, index }) => {
             muted
             loop
             playsInline
-            preload="metadata"
           >
             Your browser does not support the video tag.
           </video>
@@ -62,7 +61,6 @@ const ServiceItem = ({ service, index }) => {
             muted
             loop
             playsInline
-            preload="metadata"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >

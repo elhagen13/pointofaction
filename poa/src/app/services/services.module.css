@@ -1,152 +1,149 @@
-.service{
-    width: 100%;
-    position: relative;
-    height: 250px;
+.service {
+  width: 100%;
+  position: relative;
+  height: 250px;
 }
 .videoContainer {
-    position: relative;
-    width: 100%;
-    height: 0;
-    padding-bottom: 75%; /* Adjust this to control aspect ratio */
-    overflow: hidden;
-  }
-  
+  position: relative;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+}
+
 .croppedVideo {
-position: absolute;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-object-fit: cover;
-clip-path: polygon(0 0, 100% 0, 70% 100%, 0 100%);
-}  
-
-.textContainer{
-    width: 35%;
-    height: 250px;
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 30px;
-    font-weight: bold;
-    text-transform: uppercase;
-    flex-direction: column;
-    gap: 15px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  clip-path: polygon(0 0, 100% 0, 70% 100%, 0 100%);
 }
 
-.left{
-    left: 0;
+.textContainer {
+  width: 35%;
+  height: 250px;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
+  font-weight: bold;
+  text-transform: uppercase;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.right{
-    right: 0;
+.left {
+  left: 0;
+}
+
+.right {
+  right: 0;
 }
 
 .video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; 
-    display: block; 
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-.textLink{
-    font-size: 15px;
-    text-transform: uppercase;
+.textLink {
+  font-size: 15px;
+  text-transform: uppercase;
 }
 
 .textLink::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    margin-top: 10px;
-    height: 2px;
-    background-color: #ffffff; 
-    transition: all 0.3s ease;
-    transform: translateX(0%);
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  margin-top: 10px;
+  height: 2px;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  transform: translateX(0%);
+}
+
+.textLink:hover::after {
+  width: calc(100%);
+}
+
+.backgroundBlock {
+  display: flex;
+  flex-direction: row;
+  background-color: #405869;
+  color: white;
+}
+
+.photoLeft,
+.photoRight,
+.textBlock {
+  height: 350px;
+}
+
+.photoLeft {
+  width: 70%;
+  object-fit: cover;
+  clip-path: polygon(0 0, 100% 0, 70% 100%, 0 100%);
+}
+
+.photoRight {
+  width: 70%;
+  object-fit: cover;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 30% 100%);
+}
+
+.textBlock {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+  text-transform: uppercase;
+  font-weight: bold;
+  text-align: center;
+}
+
+.textBlockLeft {
+  transform: translate(50px, 0);
+}
+
+.textBlockRight {
+  transform: translate(-50px, 0);
+}
+
+.serviceText {
+  font-size: 32px;
+}
+
+@media (max-width: 768px) {
+  .photoLeft,
+  .photoRight,
+  .textBlock {
+    height: 300px;
   }
-  
-  .textLink:hover::after {
-    width: calc(100% ); 
+
+  .serviceText {
+    font-size: 20px;
   }
 
-
-
-  .backgroundBlock{
-    display: flex;
-    flex-direction: row;
-    background-color: #405869;
-    color: white;
+  .textBlock {
+    gap: 10px;
   }
 
-  .photoLeft, .photoRight, .textBlock{
-    height: 350px;
+  .learnMore {
+    font-size: 10px;
   }
 
-  .photoLeft{
-    width: 70%;
-    object-fit: cover;
-    clip-path: polygon(0 0, 100% 0, 70% 100%, 0 100%);
+  .textBlockLeft {
+    transform: translate(10px, 0);
   }
 
-  .photoRight{
-    width: 70%;
-    object-fit: cover;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 30% 100%);
+  .textBlockRight {
+    transform: translate(-10px, 0);
   }
-
-  .textBlock{
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    gap: 20px;
-    text-transform: uppercase;
-    font-weight: bold;
-    text-align: center;
-  }
-
-  .textBlockLeft{
-    transform: translate(50px, 0)
-  }
-
-  .textBlockRight{
-    transform: translate(-50px, 0)
-  }
-
-  .serviceText{
-    font-size: 32px;
-  }
-
- 
-
-  @media(max-width: 768px){
-    .photoLeft, .photoRight, .textBlock{
-        height: 150px;
-    }
-
-    .serviceText{
-        font-size: 20px;
-    }
-
-    .textBlock{
-        gap: 10px;
-    }
-
-    .learnMore{
-        font-size: 10px;
-    }
-
-    .textBlockLeft{
-        transform: translate(10px, 0);
-    }
-
-    .textBlockRight{
-        transform: translate(-10px, 0);
-    }
-
-
-  }
+}
