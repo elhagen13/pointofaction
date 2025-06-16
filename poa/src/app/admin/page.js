@@ -12,7 +12,20 @@ function Admin() {
   const [endTime, setEndTime] = useState("17:00");
   const [open, setOpen] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0); 
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleSubmitHours = async () => {
     // Validation
@@ -53,8 +66,6 @@ function Admin() {
       alert("Hours updated successfully!");
       setRefreshKey(prev => prev + 1);
 
-
-
     } catch (error) {
       console.error("Error updating hours:", error);
       alert("Failed to update hours. Please try again.");
@@ -66,75 +77,114 @@ function Admin() {
   return (
     <div className={styles.admin}>
       <div className={styles.title}>Change Hours</div>
+      
       <div className={styles.schedule}>
         <div className={styles.scheduleChange}>
           <div>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-            -
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+            <label htmlFor="start-date" style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
+              Date Range
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <input
-                type="radio"
-                id="open"
-                name="status"
-                value="Open"
-                checked={open}
-                onClick={() => setOpen(true)}
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{ flex: 1, minWidth: '140px' }}
               />
-              <label for="open">Open</label>
-            </div>
-            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <span style={{ color: '#666', fontSize: '14px' }}>to</span>
               <input
-                type="radio"
-                id="close"
-                name="status"
-                value="Close"
-                checked={!open}
-                onClick={() => setOpen(false)}
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{ flex: 1, minWidth: '140px' }}
               />
-              <label for="close">Close</label>
             </div>
           </div>
+          
+          <div>
+            <label style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
+              Status
+            </label>
+            <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <input
+                  type="radio"
+                  id="open"
+                  name="status"
+                  value="Open"
+                  checked={open}
+                  onChange={() => setOpen(true)}
+                  style={{ width: '18px', height: '18px' }}
+                />
+                <label htmlFor="open" style={{ cursor: 'pointer', userSelect: 'none' }}>Open</label>
+              </div>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <input
+                  type="radio"
+                  id="close"
+                  name="status"
+                  value="Close"
+                  checked={!open}
+                  onChange={() => setOpen(false)}
+                  style={{ width: '18px', height: '18px' }}
+                />
+                <label htmlFor="close" style={{ cursor: 'pointer', userSelect: 'none' }}>Close</label>
+              </div>
+            </div>
+          </div>
+          
           {open && (
             <div>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />{" "}
-              -
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
+              <label style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
+                Hours
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  style={{ flex: 1, minWidth: '120px' }}
+                />
+                <span style={{ color: '#666', fontSize: '14px' }}>to</span>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  style={{ flex: 1, minWidth: '120px' }}
+                />
+              </div>
             </div>
           )}
+          
           <div>
             <button
               className={styles.button}
-              style={{ padding: "5px 10px" }}
               onClick={handleSubmitHours}
               disabled={isSubmitting}
+              style={{ 
+                width: isMobile ? '100%' : 'auto',
+                marginTop: '10px'
+              }}
             >
               {isSubmitting ? "Updating..." : "Change Hours"}
             </button>
           </div>
         </div>
-        <div style={{flexGrow: "2"}}>
-        <Calendar refresh={refreshKey}/>
-        </div>
+        
+        {!isMobile && (
+          <div style={{ flex: 2, minWidth: '300px' }}>
+            <Calendar refresh={refreshKey}/>
+          </div>
+        )}
       </div>
+      
+      {isMobile && (
+        <div style={{ margin: '20px 0' }}>
+          <Calendar refresh={refreshKey}/>
+        </div>
+      )}
+      
       <AddCompanyStore />
     </div>
   );

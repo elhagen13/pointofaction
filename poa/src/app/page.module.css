@@ -116,7 +116,6 @@
   flex-direction: column;
   gap: 32px;
   grid-row-start: 2;
-  /*background: linear-gradient(#1D2F3C, #FFFFFF 639px, #FFFFFF);*/
   background-color: white;
   min-height: 630px;
 }

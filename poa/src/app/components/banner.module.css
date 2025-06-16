@@ -1,17 +1,45 @@
-.bannerContainer {
-    position: relative; 
-    width: 100vw;
-    position: relative;
-    overflow: hidden;
-    touch-action: pan-y; /* Allows vertical scroll but prevents horizontal scroll */
-}
-  
-.bannerImage {
+/* Base styles */
+.bannerWrapper {
     width: 100%;
-    object-position: center;
-}
+    max-width: 100vw;
+    overflow: hidden;
+  }
   
-.bannerImageContents {
+  .bannerContainer {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    touch-action: pan-y;
+    user-select: none;
+    cursor: grab;
+  }
+  
+  .bannerContainer:active {
+    cursor: grabbing;
+  }
+  
+  .bannerImageContainer {
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0; /* Optional: background color for letterboxing */
+  }
+  
+  .bannerImage {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+    user-drag: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+  
+  .bannerImageContents {
     position: absolute;
     top: 0;
     left: 0;
@@ -21,103 +49,167 @@
     padding: 20px 30px;
     flex-direction: row;
     align-items: center;
-    justify-content: center; /* Center horizontally */
-    gap: 10rem; /* Space between logo and text */
-    background: linear-gradient(rgba(0, 0, 0, 0.75), #1D2F3C)
-
-}
-
-.internalImage {
-    height: 75%;
-    max-width: 100%; /* Prevent overflow */
-    object-fit: contain; /* Keep logo aspect ratio */
-}
+    justify-content: center;
+    gap: 10rem;
+    background: linear-gradient(rgba(0, 0, 0, 0.75), #1D2F3C);
+  }
   
-.textContent {
-    color: white; 
+  .internalImage {
+    height: 75%;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  
+  .textContent {
+    color: white;
     font-size: 1rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); 
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     width: 50%;
-}
-
-.portalBanner{
+  }
+  
+  .portalBanner {
     position: absolute;
-    top:0;
+    top: 0;
+    left: 0;
+    right: 0;
     width: 100%;
-    background-color: rgba(228, 255, 236, .7);
-    padding: 10px 20px;
+    background-color: rgba(228, 255, 236, 0.9);
+    padding: 12px 20px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     color: #3F3636;
     font-weight: bold;
-    align-items: center;
-
-}
-
-.portalBannerButtons{
+    z-index: 10;
+    box-sizing: border-box;
+  }
+  
+  .portalBannerText {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  
+  .portalBannerButtons {
     display: flex;
     gap: 10px;
-}
-
-.portalBannerButton{
+    flex-shrink: 0;
+  }
+  
+  .portalBannerButton {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.5rem 1rem;
     background-color: #243a2a98;
     color: #D9D9D9;
     text-decoration: none;
     border: none;
     border-radius: 20px;
-    font-size: 0.5rem;
+    font-size: 0.7rem;
     cursor: pointer;
     white-space: nowrap;
     text-transform: uppercase;
     font-weight: bold;
-    max-height: 35px;
-
-}
-
-@media (max-width: 769px){
-    .bannerContainer {
-        height: 30vh; 
-    }
-
-    .bannerImageContents{
-        gap: 2rem;
-    }
-
-    .internalImage{
-        height: 50%;
-    }
-
-    .textContent{
-        font-size: 0.75rem
-    }
-
-    .selectBanner{
-        transform: translate(-50%, 50px);
-    }
-}
+    min-height: 35px;
+    transition: background-color 0.2s ease;
+  }
   
-
-.bannerButton{
-    background-color: rgb(132, 132, 132);
-    width: 40px;
-    height: 10px;
-    border-radius: 10px;
-}
-
-.selectBanner{
+  .portalBannerButton:hover {
+    background-color: #243a2acc;
+  }
+  
+  .selectBanner {
     position: absolute;
+    bottom: 20px;
     left: 50%;
-    transform: translate(-50%, -30px);
-}
-
-.selectBannerButtons{
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+  
+  .selectBannerButtons {
     display: flex;
     flex-direction: row;
     gap: 10px;
-}
-
-.active{
-    background-color: #538561 !important
-}
+    justify-content: center;
+  }
+  
+  .bannerButton {
+    background-color: rgba(132, 132, 132, 0.7);
+    width: 40px;
+    height: 10px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .bannerButton:hover {
+    background-color: rgba(132, 132, 132, 0.9);
+  }
+  
+  .bannerButton.active {
+    background-color: #538561 !important;
+  }
+  
+  /* Mobile styles */
+  @media (max-width: 768px) {
+    .bannerWrapper {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .bannerContainer {
+      min-height: 200px;
+      order: 2;
+    }
+    
+    .portalBanner {
+      position: static;
+      order: 1;
+      z-index: 1000;
+      padding: 8px 15px;
+      gap: 8px;
+      text-align: center;
+      background-color: rgba(228, 255, 236, 1);
+    }
+    
+    .portalBannerText {
+      font-size: 0.75rem;
+      margin-bottom: 5px;
+    }
+    
+    .portalBannerButtons {
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .portalBannerButton {
+      font-size: 0.5rem;
+      padding: 0.4rem 0.7rem;
+      min-height: 30px;
+    }
+    
+    .bannerImageContents {
+      gap: 2rem;
+      padding: 15px 20px;
+    }
+    
+    .internalImage {
+      height: 50%;
+    }
+    
+    .textContent {
+      font-size: 0.75rem;
+    }
+    
+    .selectBanner {
+      bottom: 15px;
+    }
+    
+    .bannerButton {
+      width: 30px;
+      height: 8px;
+    }
+  }
+  

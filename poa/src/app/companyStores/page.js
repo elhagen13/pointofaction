@@ -86,7 +86,7 @@ export default function companyStores() {
                 search.length == 0 ? 
                 <>
                     <div className={styles.directions}>
-                        <IoWarningOutline size={50} color="white"/>
+                        {window.innerWidth > 768 ? <IoWarningOutline size={50} color="white"/> : <></>}
                         <div>
                             A company store is a store that has been pre-populated with a customers previous orders for the ease of placing a repeat order. If you do not have an existing store with us, and are instead looking to place a new customized order, visit our online store <Link href="https://dpipcoincdbapointofaction.shops.shopvox.com" style={{color: "#4F71B5", textDecoration:"underline"}}>here.</Link>
                         </div>

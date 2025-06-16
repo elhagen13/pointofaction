@@ -1,45 +1,72 @@
-.policyPage{
-    width: 100%;
-    padding: 50px;
+.policyPage {
+  width: 100%;
+  padding: 50px;
 }
 
-.title{
-    font-size: 30px;
-    font-weight: bold;
+.title {
+  font-size: 30px;
+  font-weight: bold;
 }
 
 .policies {
-    margin-top: 20px;
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+.terms,
+.imageContainer {
+  flex: 1;
+}
+
+.imageContainer,
+.text {
+  border-radius: 15px;
+  box-shadow: 0 0 3px gray;
+}
+
+.imageContainer {
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.text {
+  font-size: 18px;
+  color: rgb(54, 54, 54);
+  padding: 30px;
+}
+
+.section {
+  font-weight: bold;
+  margin-top: 30px;
+}
+
+@media (max-width: 768px) {
+  .policyPage {
+    padding: 20px;
+  }
+  .policies {
     display: flex;
+    flex-direction: column;
     gap: 20px;
   }
-  
-  .terms, .imageContainer {
-    flex: 1; 
-  }
-  
-  .imageContainer, .text {
-    border-radius: 15px;
-    box-shadow: 0 0 3px gray;
-  }
-  
   .imageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
     overflow: hidden;
   }
-  
+
   .image {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
   }
-  
-  .text {
-    font-size: 18px;
-    color: rgb(54, 54, 54);
-    padding: 30px; 
-  }
-  
-  .section {
-    font-weight: bold;
-    margin-top: 30px;
-  }
+}

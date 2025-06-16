@@ -136,14 +136,14 @@ const Calendar = ({refresh = 0}) => {
     }
   }
   return (
-    <div style={{padding: "20px", marginLeft: "20px", fontWeight: "bold"}}>
+    <div style={{padding: "20px", marginLeft: "0px", fontWeight: "bold"}}>
         This Week's Hours:
         {loading ? (
           <div style={{marginTop: "10px"}}>Loading hours...</div>
         ) : (
-          <div style={{marginTop: "10px", display: "grid", gridTemplateColumns: "repeat(7, 1fr", gap: "10px"}}>
+          <div style={{marginTop: "10px", display: "grid", gridTemplateColumns: "repeat(7, 1fr", gap: "10px", overflowX:"scroll"}}>
             {Object.keys(weeklyHours).map((day, index) => (
-              <div key={day} style={{padding: "8px", border: index !== 0 ?  "1px solid #ddd" : "1px solid red", borderRadius: "4px"}}>
+              <div key={day} style={{padding: "8px", border: index !== 0 ?  "1px solid #ddd" : "1px solid red", borderRadius: "4px", minWidth: "100px"}}>
                 <div style={{fontWeight: "bold", fontSize: "14px"}}>{day}:</div>
                 <div style={{fontSize: "12px", marginTop: "2px"}}>
                   {renderDayHours(day)}

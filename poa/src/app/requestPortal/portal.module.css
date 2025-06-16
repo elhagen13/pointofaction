@@ -1,72 +1,78 @@
-.notificationPage{
-    width: 100vw;
-    padding: 60px;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-
+.notificationPage {
+  width: 100vw;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
 }
 
-.title{
-    font-size: 30px;
-    font-weight: bold;
+.title {
+  font-size: 30px;
+  font-weight: bold;
 }
 
-.text{
-    font-size: 18px;
-    color: rgb(54, 54, 54);
+.text {
+  font-size: 18px;
+  color: rgb(54, 54, 54);
 }
 
-.form{
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    width: 100%;
-    gap: 20px;
+.form {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  width: 100%;
+  gap: 20px;
 }
 
-.input_sm, .input_lg, .input_md{
-    border-radius: 10px;
-    border: 1px solid gray;
-    padding: 15px;
-    font-size: 15px;
+.input_sm,
+.input_lg,
+.input_md {
+  border-radius: 10px;
+  border: 1px solid gray;
+  padding: 15px;
+  font-size: 15px;
 }
 
-.input_sm{
-    grid-column: span 2
+.input_sm {
+  grid-column: span 2;
 }
 
-.input_md{
-    grid-column: span 3
+.input_md {
+  grid-column: span 3;
 }
 
-.input_lg{
-    position: relative;
-    grid-column: span 6
+.input_lg {
+  position: relative;
+  grid-column: span 6;
 }
 
-.submitButton{
+.submitButton {
+  grid-column: span 6;
+  display: inline-flex;
+  padding: 15px;
+  background-color: #538561;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  font-size: 15px;
+  text-transform: uppercase;
+  font-weight: bold;
+  box-shadow: inset 0 0 3px black;
+  justify-content: center;
+  text-align: center;
+}
+
+.submitButton:hover {
+  background-color: #3e6a4a;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .notificationPage {
+    padding: 20px;
+  }
+  .input_sm,
+  .input_md,
+  .input_lg {
     grid-column: span 6;
-    display: inline-flex;
-    padding: 15px;
-    background-color: #538561;
-    color: white;
-    border: none;
-    border-radius: 15px;
-    font-size: 15px;
-    text-transform: uppercase;
-    font-weight: bold;
-    box-shadow: inset 0 0 3px black;
-    justify-content: center;
-    text-align: center;
   }
-  
-  .submitButton:hover{
-    background-color: #3e6a4a;
-    color: white;
-  }
-  
-@media(max-width: 768){
-   .input_sm, .input_md, .input_lg{
-    grid-column: span 6
-   }
 }
