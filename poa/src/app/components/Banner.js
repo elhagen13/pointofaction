@@ -32,15 +32,19 @@ const Banner = () => {
   const [curPage, setCurPage] = useState(0);
   const [startX, setStartX] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isSmall, setIsSmall] = useState(window.innerWidth < 769);
+  const [isSmall, setIsSmall] = useState(false);
   const bannerRef = useRef(null);
 
   
-  const checkSize = () => {
-    setIsSmall(window.innerWidth < 769)
-  }
-
-  window.addEventListener("resize", checkSize);
+  useEffect(() => {
+    const handleResize = () => setIsSmall(window.innerWidth < 769);
+    
+    handleResize();
+    
+    window.addEventListener("resize", handleResize);
+    
+    return () => window.removeEventListener("resize", handleResize);
+}, []);
 
   // Auto-advance banner
   useEffect(() => {
