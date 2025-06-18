@@ -1,37 +1,73 @@
 const images = [
     {
-      link: "/sample_works/image1.jpeg",
-      type: "Embroidery",
-      company: "Company Name 1"
+      link: "/sample_works/calfruit.jpg",
+      type: "Patches",
+      company: "CalFruit"
     },
     {
-      link:  "/sample_works/image2.jpeg",
-      type: "Embroidery",
-      company: "Company Name 2"
+      link:  "/sample_works/freedomequitygroup.jpg",
+      type: "Patches",
+      company: "Freedom Equity Group"
 
     },
     {
-      link:  "/sample_works/image3.jpeg",
+      link:  "/sample_works/nutrien-hat.jpg",
+      type: "Patches",
+      company: "Nutrien"
+
+    },
+    {
+      link:  "/sample_works/hat.jpg",
       type: "Embroidery",
-      company: "Company Name 3"
+      company: "Miata"
 
     },
     {
-      link:  "/sample_works/image4.jpeg",
+      link:  "/sample_works/machado.jpg",
       type: "Embroidery",
-      company: "Company Name 4"
+      company: "Machado Farming & Ranching"
 
     },
     {
-      link:  "/sample_works/image5.jpeg",
-      type: "Vinyl",
-      company: "Company Name 5"
+      link:  "/sample_works/s.jpg",
+      type: "Embroidery",
+      company: ""
 
     },
     {
-      link:  "/sample_works/image6.jpeg",
-      type: "LaserEtching",
-      company: "Company Name 6"
+      link:  "/sample_works/onageroptek.jpg",
+      type: "Patches",
+      company: "Onager Optek"
+
+    },
+    {
+      link:  "/sample_works/peakingproduce.jpg",
+      type: "Embroidery",
+      company: "Pea King Produce"
+
+    },
+    {
+      link:  "/sample_works/sdf.jpg",
+      type: "Embroidery",
+      company: "Search Dog Foundation"
+
+    },
+    {
+      link:  "/sample_works/premier.jpg",
+      type: "Patches",
+      company: "Premier Heating & Air"
+
+    },
+    {
+      link:  "/sample_works/reiterberryfarms.jpg",
+      type: "Embroidery",
+      company: "Reiter Berry Farms"
+
+    },
+    {
+      link:  "/sample_works/sms.jpg",
+      type: "Patches",
+      company: "Santa Maria Seeds"
 
     },
     {

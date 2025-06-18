@@ -39,6 +39,7 @@ export default function RequestPortal() {
     try {
       // Create FormData to handle file upload
       const formData = new FormData();
+      formData.append('formType', 'product-request');
       formData.append('email', email);
       formData.append('firstName', firstName);
       formData.append('lastName', lastName);

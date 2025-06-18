@@ -7,21 +7,21 @@ import { MdArrowOutward } from "react-icons/md";
 
 const CustomerCarousel = () => {
   const customer_reviews = [
-    "/sample_works/image1.jpeg",
-    "/sample_works/image2.jpeg",
-    "/sample_works/image3.jpeg",
-    "/sample_works/image4.jpeg",
-    "/sample_works/image5.jpeg",
-    "/sample_works/image6.jpeg",
-    "/sample_works/image7.jpeg",
-    "/sample_works/image8.jpeg",
-    "/sample_works/image9.jpeg",
-    "/sample_works/image10.jpeg",
-    "/sample_works/image11.jpeg",
+    "/sample_works/calfruit.jpg",
+    "/sample_works/freedomequitygroup.jpg",
+    "/sample_works/hat.jpg",
+    "/sample_works/nutrien-hat.jpg",
+    "/sample_works/machado.jpg",
+    "/sample_works/onageroptek.jpg",
+    "/sample_works/peakingproduce.jpg",
+    "/sample_works/premier.jpg",
+    "/sample_works/reiterberryfarms.jpg",
+    "/sample_works/s.jpg",
+    "/sample_works/sdf.jpg",
+    "/sample_works/sms.jpg",
     "/sample_works/image12.jpeg",
     "/sample_works/image13.jpeg",
     "/sample_works/image14.jpeg",
-    "/sample_works/image15.jpeg",
   ]
 
   return (

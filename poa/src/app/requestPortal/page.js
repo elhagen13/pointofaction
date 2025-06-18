@@ -9,16 +9,55 @@ export default function RequestPortal() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [additionalInfo, setAdditionalInfo] = useState('');
-  const [choice, setChoice] = useState('Opt In')
+  const [submitMessage, setSubmitMessage] = useState('')
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const subject = `Portal Access Request - ${company}`;
-    const body = `Name: ${firstName} ${lastName}\n\nCompany: ${company}\n\n Requesting a company portal\n\nAdditional Information:\n${additionalInfo}\n\nContact Details:\nEmail: ${email}\nPhone: ${phone}`;
-    
-    window.location.href = `mailto:austin@pointofaction.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setSubmitMessage('');
+
+
+    try {
+      // Create FormData to handle file upload
+      const formData = new FormData();
+      formData.append('formType', 'store-request');
+      formData.append('email', email);
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('company', company);
+      formData.append('phone', phone);
+      formData.append('additionalInfo', additionalInfo);
+
+      // Send form dara to API
+      const emailResponse = await fetch('/api/resend', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (emailResponse.ok) {  
+        setSubmitMessage('Request sent successfully!');
+      
+        // Clear form
+        setFirstName('');
+        setLastName('');
+        setCompany('');
+        setEmail('');
+        setPhone('');
+        setAdditionalInfo('');
+        
+      } else {
+        const errorData = await emailResponse.json();
+        setSubmitMessage(`Error: ${errorData.error}`);
+
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      setSubmitMessage('Error submitting form. Please try again.');
+
+    } finally {
+    }
   }
+
 
   return (
     <div className={styles.notificationPage}>
@@ -96,6 +135,13 @@ export default function RequestPortal() {
           />
           
           <button type="submit" className={styles.submitButton}>Submit</button>
+          {submitMessage && (
+          <div style={{gridColumn: "span 6", fontWeight: "bold", textAlign: "center", marginTop: "10px"}}>
+            <p style={{color: submitMessage.includes('Error') ? 'red' : 'green'}}>
+              {submitMessage}
+            </p>
+          </div>
+        )}
         </form>
       </div>
     </div>
