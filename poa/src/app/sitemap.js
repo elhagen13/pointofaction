@@ -1,10 +1,130 @@
 export default function sitemap() {
     return [
       {
-        url: 'https://pointofaction.com',
-        lastModified: new Date(),
+        url: 'https://www.pointofaction.com/',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'yearly',
+        priority: 1.00,
+      },
+      {
+        url: 'https://www.pointofaction.com/companyStores',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
         changeFrequency: 'monthly',
-        priority: 1,
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/services',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'monthly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/vendors',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'monthly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/gallery',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'weekly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/contact',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'yearly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/howToOrder',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'yearly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/requestPortal',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'monthly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/notifications',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'weekly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/termsAndConditions',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'yearly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/policies',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'yearly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/services/embroidery',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'monthly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/services/vinyl',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'monthly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/services/laser',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'monthly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/services/film',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'monthly',
+        priority: 0.80,
+      },
+      {
+        url: 'https://www.pointofaction.com/gallery/Embroidery',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'weekly',
+        priority: 0.64,
+      },
+      {
+        url: 'https://www.pointofaction.com/gallery/Vinyl',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'weekly',
+        priority: 0.64,
+      },
+      {
+        url: 'https://www.pointofaction.com/gallery/LaserEtching',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'weekly',
+        priority: 0.64,
+      },
+      {
+        url: 'https://www.pointofaction.com/gallery/DirectToFilm',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'weekly',
+        priority: 0.64,
+      },
+      {
+        url: 'https://www.pointofaction.com/gallery/ArtDigitizing',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'weekly',
+        priority: 0.64,
+      },
+      {
+        url: 'https://www.pointofaction.com/gallery/Patches',
+        lastModified: new Date('2025-06-18T17:36:31+00:00'),
+        changeFrequency: 'weekly',
+        priority: 0.64,
       },
     ]
   }

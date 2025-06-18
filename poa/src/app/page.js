@@ -146,11 +146,11 @@ export default function Home() {
   return (
     <>
     <Head>
-        <title>Point of Action - Embroidery, Signs & Custom Marketing Solutions | Central Coast</title>
-        <meta name="description" content="Point of Action has been serving the Central Coast since 1987 with professional embroidery, custom signs, and marketing solutions. Expert staff, quality craftsmanship." />
-        <meta name="keywords" content="embroidery, custom signs, marketing, Central Coast, silk screen, Point of Action" />
+        <title>Point of Action - Embroidery, Signs & Custom Marketing Solutions | Santa Maria</title>
+        <meta name="description" content="Point of Action has been serving Santa Maria since 1987 with professional embroidery, custom signs, and marketing solutions. Expert staff, quality craftsmanship." />
+        <meta name="keywords" content="embroidery, custom signs, engraving, marketing, Central Coast, Santa Maria, Nipomo, Arroyo Grande, silk screen, Point of Action" />
         <meta property="og:title" content="Point of Action - Custom Embroidery & Signs" />
-        <meta property="og:description" content="Professional embroidery and custom marketing solutions since 1987" />
+        <meta property="og:description" content="Professional embroidery and custom marketing solutions since 1987 in Santa Maria" />
         <meta property="og:type" content="website" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://pointofaction.com" />
@@ -205,7 +205,7 @@ export default function Home() {
               <div className={styles.aboutUsText}>
                 <div className={styles.subtitle}>Our History </div><br/>
                 Point of Action opened in 1987 originally as a silk screen
-                business and has expanded and grown to what it is today – a successful marketing value added reseller on the Central Coast.
+                business and has expanded and grown in Santa Maria to what it is today – a successful marketing value added reseller on the Central Coast.
               </div>
             </div>
             <div className={styles.aboutUsItem}>
