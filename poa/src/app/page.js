@@ -1,11 +1,13 @@
 "use client";
 import Link from "next/link";
+import Head from "next/head";
 import styles from "./page.module.css";
 import Banner from "./components/Banner";
 import Calendar from "./components/Calendar";
 import ServicesCarousel from "./components/servicesCarousel";
 import CustomerCarousel from "./components/customerCarousel";
 import { useState, useEffect } from "react";
+
 
 export default function Home() {
   const [weeklyHours, setWeeklyHours] = useState({});
@@ -142,6 +144,31 @@ export default function Home() {
   }
 
   return (
+    <>
+    <Head>
+        <title>Point of Action - Embroidery, Signs & Custom Marketing Solutions | Central Coast</title>
+        <meta name="description" content="Point of Action has been serving the Central Coast since 1987 with professional embroidery, custom signs, and marketing solutions. Expert staff, quality craftsmanship." />
+        <meta name="keywords" content="embroidery, custom signs, marketing, Central Coast, silk screen, Point of Action" />
+        <meta property="og:title" content="Point of Action - Custom Embroidery & Signs" />
+        <meta property="og:description" content="Professional embroidery and custom marketing solutions since 1987" />
+        <meta property="og:type" content="website" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://pointofaction.com" />
+        
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "LocalBusiness",
+              "name": "Point of Action",
+              "description": "Professional embroidery, custom signs, and marketing solutions since 1987",
+              "foundingDate": "1987",
+              "url": "https://pointofaction.com"
+            })
+          }}
+        />
+      </Head>
     <div>
       <Banner/>
       <Calendar/>
@@ -207,5 +234,6 @@ export default function Home() {
       <footer className={styles.footer}>
       </footer>
     </div>
+    </>
   );
 }
