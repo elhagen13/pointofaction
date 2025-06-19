@@ -104,6 +104,48 @@ const images = [
       company: ""
 
     },
+    {
+      link:  "/sample_works/honda.jpg",
+      type: "Embroidery",
+      company: "Honda"
+
+    },
+    {
+      link:  "/sample_works/losalamosgardens.jpg",
+      type: "Embroidery",
+      company: "Los Alamos Gardens"
+
+    },
+    {
+      link:  "/sample_works/pvhs.jpg",
+      type: "Vinyl",
+      company: "Pioneer Valley High School"
+
+    },
+    {
+      link:  "/sample_works/simplot.jpg",
+      type: "Embroidery",
+      company: "Simplot"
+
+    },
+    {
+      link:  "/sample_works/smhs.jpg",
+      type: "Embroidery",
+      company: "Santa Maria High School"
+
+    },
+    {
+      link:  "/sample_works/smpc-bag.jpg",
+      type: "Patches",
+      company: "Santa Maria Police Council"
+
+    },
+    {
+      link:  "/sample_works/smpc.jpg",
+      type: "LaserEtching",
+      company: "Santa Maria Police Council"
+
+    },
 
     {
       link:  "/sample_works/image7.jpeg",
