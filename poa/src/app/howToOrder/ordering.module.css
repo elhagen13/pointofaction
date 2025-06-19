@@ -120,14 +120,20 @@
 }
 
 .button{
-    padding: 10px;
-    border-radius: 5px;
-    border: 2px solid rgb(201, 201, 201);
-    background-color: white;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: rgb(165, 165, 165);
-    user-select: none;
+    background-color: #538561;
+  color: white;
+  font-weight: bold;
+  border: none;
+  outline: none;
+  padding: 12px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  min-height: 44px; /* Touch-friendly minimum size */
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button:hover{
