@@ -112,6 +112,28 @@
     font-weight: bold;
 }
 
+.navigate{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+}
+
+.button{
+    padding: 10px;
+    border-radius: 5px;
+    border: 2px solid rgb(201, 201, 201);
+    background-color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: rgb(165, 165, 165);
+    user-select: none;
+}
+
+.button:hover{
+    background-color: rgb(237, 237, 237);
+}
+
 @media(max-width: 768px){
     .tutorial{
         flex-direction: column;

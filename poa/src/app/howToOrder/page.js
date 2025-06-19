@@ -6,10 +6,10 @@ import { GoChevronDown, GoChevronUp } from "react-icons/go";
 
 export default function HowToOrder() {
   const [step, setStep] = useState({});
+  const [stepLength, setStepLength] = useState(null)
   const [expandedIndices, setExpandedIndices] = useState([null, null, null]); // [sectionIndex, subSectionIndex]
   const videoRef = useRef(null);
-
-
+  
   const toggleSection = (sectionIndex) => {
     const sectionName = Object.keys(sections)[sectionIndex];
     const sectionValue = sections[sectionName];
@@ -17,6 +17,7 @@ export default function HowToOrder() {
     // Check if this section has subsections (is an object) or direct steps (is an array)
     if (Array.isArray(sectionValue)) {
       // Direct steps - auto-select first step
+      setStepLength(sectionValue.length)
       const firstStep = sectionValue[0];
       setStep(firstStep);
       setExpandedIndices([sectionIndex, null, 0]);
@@ -31,9 +32,7 @@ export default function HowToOrder() {
       }
     } else {
       // Has subsections - just toggle expansion
-      setExpandedIndices(prev => 
-        prev[0] === sectionIndex ? [null, null] : [sectionIndex, null]
-      );
+      toggleSubSection(sectionIndex, 0)
     }
   };
 
@@ -45,6 +44,7 @@ export default function HowToOrder() {
     
     // Auto-select first step of the subsection
     const firstStep = subSectionValue[0];
+    setStepLength(subSectionValue.length)
     setStep(firstStep);
     setExpandedIndices([sectionIndex, subSectionIndex, 0]);
     
@@ -57,6 +57,17 @@ export default function HowToOrder() {
       });
     }
   };
+
+  const getStep = (indices) => {
+    let category = Object.values(sections)[indices[0]]
+    if(Array.isArray(category)){
+      return category[indices[2]]
+    }
+    else{
+      const subCategory = Object.values(category)[indices[1]]
+      return subCategory[indices[2]]
+    }
+  }
 
   const selectStep = (stepData, indices) => {
     setStep(stepData);
@@ -153,6 +164,17 @@ export default function HowToOrder() {
             onError={(e) => console.log("Video error:", e.target.error)}
           >
           </video>
+          <div className={styles.navigate}>
+            <div>{expandedIndices[2] > 0 && <button className={styles.button} onClick={() => selectStep(getStep([expandedIndices[0], expandedIndices[1], expandedIndices[2] - 1]), [expandedIndices[0], expandedIndices[1], expandedIndices[2] - 1])}>
+              Previous
+            </button>}
+            </div>
+            <div>{expandedIndices[2] < stepLength - 1 && <button className={styles.button} onClick={() => selectStep(getStep([expandedIndices[0], expandedIndices[1], expandedIndices[2] + 1]), [expandedIndices[0], expandedIndices[1], expandedIndices[2] + 1])}>
+              Next
+            </button>}
+            </div>
+
+          </div>
         </div>
       </div>
     </div>

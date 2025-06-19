@@ -148,7 +148,7 @@ export default function Home() {
     <Head>
         <title>Point of Action - Embroidery, Signs & Custom Marketing Solutions | Santa Maria</title>
         <meta name="description" content="Point of Action has been serving Santa Maria since 1987 with professional embroidery, custom signs, and marketing solutions. Expert staff, quality craftsmanship." />
-        <meta name="keywords" content="embroidery, custom signs, engraving, marketing, Central Coast, Santa Maria, Nipomo, Arroyo Grande, silk screen, Point of Action" />
+        <meta name="keywords" content="embroidery, custom signs, laser etching, engraving, laser engraving, marketing, Central Coast, Santa Maria, Nipomo, Arroyo Grande, silk screen, Point of Action" />
         <meta property="og:title" content="Point of Action - Custom Embroidery & Signs" />
         <meta property="og:description" content="Professional embroidery and custom marketing solutions since 1987 in Santa Maria" />
         <meta property="og:type" content="website" />

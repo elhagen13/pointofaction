@@ -71,6 +71,41 @@ const images = [
 
     },
     {
+      link:  "/sample_works/fredsautomotive.jpg",
+      type: "Patches",
+      company: "Fred's Automotive"
+
+    },
+    {
+      link:  "/sample_works/gofwest.jpg",
+      type: "Patches",
+      company: "GoF West"
+
+    },
+    {
+      link:  "/sample_works/lompoc.jpg",
+      type: "Patches",
+      company: ""
+    },
+    {
+      link:  "/sample_works/montereyrangerdistrict.jpg",
+      type: "Patches",
+      company: "Monterey Ranger District"
+    },
+    {
+      link:  "/sample_works/santabarbaracountry.jpg",
+      type: "Patches",
+      company: "Santa Barbara County"
+
+    },
+    {
+      link:  "/sample_works/tailwindswindmillcentury.jpg",
+      type: "Patches",
+      company: ""
+
+    },
+
+    {
       link:  "/sample_works/image7.jpeg",
       type: "LaserEtching",
       company: "Company Name 7"
@@ -141,62 +176,7 @@ const images = [
       type: "LaserEtching",
       company: "Company Name 18"
 
-    },
-    {
-      link:  "/sample_works/image19.jpeg",
-      type: "Embroidery",
-      company: "Company Name 19"
-
-    },
-    {
-      link:  "/sample_works/image20.jpeg",
-      type: "Embroidery",
-      company: "Company Name 20"
-
-    },
-    {
-      link:  "/sample_works/image21.jpeg",
-      type: "Embroidery",
-      company: "Company Name 21"
-
-    },
-    {
-      link:  "/sample_works/image22.jpeg",
-      type: "Patches",
-      company: "Company Name 22"
-
-    },
-    {
-      link:  "/sample_works/image23.jpeg",
-      type: "Patches",
-      company: "Company Name 23"
-
-    },
-    {
-      link:  "/sample_works/image24.jpeg",
-      type: "Patches",
-      company: "Company Name 24"
-
-    },
-    {
-      link:  "/sample_works/image25.jpeg",
-      type: "Patches",
-      company: "Company Name 25"
-
-    },
-    {
-      link:  "/sample_works/image26.jpeg",
-      type: "Patches",
-      company: "Company Name 26"
-
-    },
-    {
-      link:  "/sample_works/image27.jpeg",
-      type: "Patches",
-      company: "Company Name 27"
-
-    }
-     
+    },   
 ]
 
 export default images

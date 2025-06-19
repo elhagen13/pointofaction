@@ -19,9 +19,9 @@ const CustomerCarousel = () => {
     "/sample_works/s.jpg",
     "/sample_works/sdf.jpg",
     "/sample_works/sms.jpg",
-    "/sample_works/image12.jpeg",
-    "/sample_works/image13.jpeg",
-    "/sample_works/image14.jpeg",
+    "/sample_works/fredsautomotive.jpg",
+    "/sample_works/gofwest.jpg",
+    "/sample_works/lompoc.jpg",
   ]
 
   return (
