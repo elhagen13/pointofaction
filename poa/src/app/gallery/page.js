@@ -22,7 +22,7 @@ export default function Home() {
 
     },
     {
-      text: "Direct to Film Gallery",
+      text: "Printing Gallery",
       link: "/gallery/DirectToFilm",
 
     },

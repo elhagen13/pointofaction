@@ -43,9 +43,14 @@
     align-items: center;
     box-shadow: 0 0 4px gray;
     border-radius: 25px;
-    gap: 10px
+    gap: 10px;
+    transition: transform 0.2s ease;
     
 
+}
+
+.employeeContainer:hover{
+    transform: translateY(-2px);
 }
 
 .imageContainer{
@@ -66,7 +71,15 @@
     object-position: center;
 
 }
+
+.allEmployees{
+    padding: 30px 60px;
+}
 @media(max-width: 768px){
+
+    .allEmployees{
+        padding: 20px;
+    }
     .contactUs{
         flex-direction: column;
         padding: 30px;

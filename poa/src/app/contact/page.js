@@ -3,10 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 import styles from "./contact.module.css";
 import Link from 'next/link';
 import employees from './employees';
+import EmployeePopup from '../components/EmployeePopup';
 
-export default function LeafletMap() {
+export default function Contact() {
   const mapRef = useRef(null);
   const [isClient, setIsClient] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -19,8 +21,16 @@ export default function LeafletMap() {
       const L = await import('leaflet');
       await import('leaflet/dist/leaflet.css');
 
+      // Fix for default marker icons
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      });
+
       const map = L.map(mapRef.current).setView([34.919091, -120.442226], 15);
-      
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(map);
@@ -35,8 +45,13 @@ export default function LeafletMap() {
     loadMap();
   }, [isClient]);
 
+  
   return (
     <div>
+      {
+      selectedEmployee !== null ? 
+      <EmployeePopup employee={selectedEmployee} onClose={() => setSelectedEmployee(null)}></EmployeePopup> : <></>
+    }
       {isClient ? (
         <div ref={mapRef} style={{ height: '300px', width: '100%' }} />
       ) : (
@@ -65,12 +80,12 @@ export default function LeafletMap() {
       </div>
       <img style={{width: "50%", objectFit: "cover"}} className={styles.storeImage} src="/about_us/store.png"/>
     </div>
-    <div style={{padding: "30px 60px"}}>
+    <div className={styles.allEmployees}>
       <div style={{fontWeight: "bold" ,fontSize: "32px", marginBottom: "20px"}}>Meet Our Team!</div>
         <div className={styles.employees}>
           {
             employees.map((employee, index) => (
-              <div key={index} className={styles.employeeContainer}>
+              <div key={index} className={styles.employeeContainer} onClick={() => setSelectedEmployee(employee)}>
                 <div className={styles.imageContainer}>
                   <img src={employee.photo} className={styles.image}/>
                 </div>
