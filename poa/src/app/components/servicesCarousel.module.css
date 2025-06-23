@@ -104,4 +104,8 @@
         min-width: 150px;
     }
 
+    .serviceCardImage, .hoveredCard{
+        border-radius: 10px;
+    }
+    
   }
