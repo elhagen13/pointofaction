@@ -158,14 +158,15 @@ async function handleStoreRequest(formData) {
 // Support Ticket Handler
 async function handleNotificationRequest(formData) {
   const email = formData.get("email");
-  const name = formData.get("name");
+  const firstName = formData.get("firstName");
+  const lastName = formData.get("lastName");
   const phone = formData.get("phone");
   const choice = formData.get("choice");
 
   return {
     from: "onboarding@resend.dev",
     to: ["ella.kl.hagen@gmail.com"],
-    subject:  `Notification Request: ${name}`,
+    subject:  `Notification Request: ${firstName} ${lastName}`,
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
@@ -174,7 +175,7 @@ async function handleNotificationRequest(formData) {
     
     <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
       <h3 style="color: #495057; margin-top: 0;">Contact Information</h3>
-      <p><strong>Name:</strong> ${name}</p>
+      <p><strong>Name:</strong> ${firstName} ${lastName}</p>
       <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
       <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
     </div>

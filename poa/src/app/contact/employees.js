@@ -6,7 +6,7 @@ const employees = [
      roleDescription: "Leads the sales team and oversees design projects, ensuring client requirements are met while driving revenue growth and maintaining design quality standards.",
      email: "Roberta@pointofaction.com",
      number: "(805) 922-6253 x 73",
-     capabilities: ["Sales", "Design"]
+     capabilities: ["Quoting", "Sales", "Design", "Order Management"]
     },
     {
      photo: "/employees/Tracy.jpeg",
@@ -15,7 +15,7 @@ const employees = [
      roleDescription: "Provides comprehensive support to client accounts, manages customer inquiries, coordinates project communications, and ensures smooth client relationships throughout the project lifecycle.",
      email: "Tracy@pointofaction.com",
      number: "(805) 922-6253 x 102",
-     capabilities: ["Order Tracking", "Order Fulfillment"]
+     capabilities: ["Order Tracking", "Order Fulfillment", "Customer Support"]
 
     },
     {
@@ -55,7 +55,7 @@ const employees = [
      roleDescription: "Oversees all production operations, manages workflow efficiency, coordinates between design and manufacturing teams, and ensures timely delivery of high-quality products to clients.",
      email: "Zac@pointofaction.com",
      number: "(805) 922-6253 x 10",
-     capabilities: ["Quoting", "Order Management", "Sales", "Production Management", "Software Management"]
+     capabilities: ["Quoting", "Order Management", "Sales", "Production Management"]
     },
     {
      photo: "/employees/Ike.jpeg",
