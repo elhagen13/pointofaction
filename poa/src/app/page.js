@@ -6,12 +6,17 @@ import Banner from "./components/Banner";
 import Calendar from "./components/Calendar";
 import ServicesCarousel from "./components/servicesCarousel";
 import CustomerCarousel from "./components/customerCarousel";
+import SaleBanner from "./components/SaleBanner";
 import { useState, useEffect } from "react";
+import { LuExternalLink } from "react-icons/lu";
+
 
 
 export default function Home() {
   const [weeklyHours, setWeeklyHours] = useState({});
   const [loading, setLoading] = useState(true);
+  const [saleOpen, setSaleOpen] = useState(false)
+  const [sale, setSale] = useState(false)
 
   function convertTo12Hour(militaryTime) {
     if (!militaryTime) return '';
@@ -45,6 +50,29 @@ export default function Home() {
     
     return weekDates;
   }
+
+  useEffect(() => {
+    async function getSaleStatus(){
+      try{
+        const response = await fetch(`/api/checkSale`);
+        if (response.ok) {
+          const status = await response.json();
+          console.log("status", status)
+          setSaleOpen(status.data.sale)
+          setSale(status.data.sale)
+          
+        } else{
+          setSaleOpen(false)
+          setSale(false)
+        }
+      }
+    catch (error) {
+      console.error('Error fetching weekly hours:', error);
+    }
+
+  }
+  getSaleStatus()
+}, [])
 
   useEffect(() => {
     async function getWeeklyHours() {
@@ -170,7 +198,17 @@ export default function Home() {
         />
       </Head>
     <div>
+      {saleOpen && <SaleBanner toggleOff={() => setSaleOpen(false)}/>}
       <Banner/>
+      {sale && 
+        <Link href="" style={{backgroundColor:"#FF5D5D", width: "100%", padding: "15px 10px", display: "flex", justifyContent: "space-between", fontWeight: "bold", color: "white"}}>
+          <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
+            <div className={styles.item}>HEAVILY DISCOUNTED OVERSTOCKED ITEMS!</div>
+            <div className={styles.item}>BIG SALE!</div>
+            <div className={styles.item}>FIRST COME FIRST SERVED!</div>
+          </div>
+          <LuExternalLink/>
+        </Link>}
       <Calendar/>
       <main className={styles.main}>
         <div name="services" className={styles.homeItem} style={{marginTop: "3rem"}}>

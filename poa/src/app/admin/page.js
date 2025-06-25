@@ -14,18 +14,88 @@ function Admin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Sale toggle state
+  const [saleActive, setSaleActive] = useState(false);
+  const [isSaleLoading, setIsSaleLoading] = useState(true);
+  const [isUpdatingSale, setIsUpdatingSale] = useState(false);
 
   // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Fetch sale status on component mount
+  useEffect(() => {
+    const fetchSaleStatus = async () => {
+      try {
+        setIsSaleLoading(true);
+        const response = await fetch("/api/checkSale", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log(result)
+        if (result.success) {
+          setSaleActive(result.data.sale);
+        } else {
+          console.error("Failed to fetch sale status:", result.error);
+        }
+      } catch (error) {
+        console.error("Error fetching sale status:", error);
+      } finally {
+        setIsSaleLoading(false);
+      }
+    };
+
+    fetchSaleStatus();
+  }, []);
+
+  // Handle sale toggle change
+  const handleSaleToggle = async (newSaleStatus) => {
+    try {
+      setIsUpdatingSale(true);
+      const response = await fetch("/api/checkSale", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sale: newSaleStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setSaleActive(result.data.sale);
+        console.log("Sale status updated successfully:", result.message);
+      } else {
+        console.error("Failed to update sale status:", result.error);
+        alert("Failed to update sale status. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating sale status:", error);
+      alert("Failed to update sale status. Please try again.");
+    } finally {
+      setIsUpdatingSale(false);
+    }
+  };
 
   const handleSubmitHours = async () => {
     // Validation
@@ -33,14 +103,12 @@ function Admin() {
       alert("Please select a date");
       return;
     }
-
     if (startTime >= endTime) {
       alert("Start time must be before end time");
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const response = await fetch("/api/hours", {
         method: "POST",
@@ -65,7 +133,6 @@ function Admin() {
       console.log("Hours updated successfully:", result);
       alert("Hours updated successfully!");
       setRefreshKey(prev => prev + 1);
-
     } catch (error) {
       console.error("Error updating hours:", error);
       alert("Failed to update hours. Please try again.");
@@ -77,7 +144,6 @@ function Admin() {
   return (
     <div className={styles.admin}>
       <div className={styles.title}>Change Hours</div>
-      
       <div className={styles.schedule}>
         <div className={styles.scheduleChange}>
           <div>
@@ -101,7 +167,7 @@ function Admin() {
               />
             </div>
           </div>
-          
+
           <div>
             <label style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
               Status
@@ -133,7 +199,7 @@ function Admin() {
               </div>
             </div>
           </div>
-          
+
           {open && (
             <div>
               <label style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
@@ -156,13 +222,13 @@ function Admin() {
               </div>
             </div>
           )}
-          
+
           <div>
             <button
               className={styles.button}
               onClick={handleSubmitHours}
               disabled={isSubmitting}
-              style={{ 
+              style={{
                 width: isMobile ? '100%' : 'auto',
                 marginTop: '10px'
               }}
@@ -171,20 +237,38 @@ function Admin() {
             </button>
           </div>
         </div>
-        
+
         {!isMobile && (
           <div style={{ flex: 2, minWidth: '300px' }}>
             <Calendar refresh={refreshKey}/>
           </div>
         )}
       </div>
-      
+
       {isMobile && (
         <div style={{ margin: '20px 0' }}>
           <Calendar refresh={refreshKey}/>
         </div>
       )}
-      
+
+      <div style={{display: "flex", flexDirection: "row", gap: "20px", alignItems:"center"}}>
+        <div className={styles.title}>Sale</div>
+        <label className={styles.switch}>
+          <input 
+            type="checkbox"
+            checked={saleActive}
+            onChange={(e) => handleSaleToggle(e.target.checked)}
+            disabled={isSaleLoading || isUpdatingSale}
+          />
+          <span className={`${styles.slider} ${styles.round}`}></span>
+        </label>
+        {(isSaleLoading || isUpdatingSale) && (
+          <span style={{ fontSize: '14px', color: '#666' }}>
+            {isSaleLoading ? 'Loading...' : 'Updating...'}
+          </span>
+        )}
+      </div>
+
       <AddCompanyStore />
     </div>
   );

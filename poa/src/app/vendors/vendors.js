@@ -144,10 +144,10 @@ const vendors = {
 };
 
 const categories = {
-    overall: ["SanMar", "S&S"],
+    overall: ["SanMar", "S&S", "Augusta"],
     tops: ["NorthFace", "Fossa", "Landway"],
     outerwear: ["NorthFace", "Fossa", "Landway", "Carhartt", "Berne", "DRI DUCK"],
-    activewear: ["NorthFace", "Landway", "Augusta"],
+    activewear: ["NorthFace", "Landway"],
     headwear: ["Richardson", "Pacific", "Flexfit", "Outdoor Cap", "Otto", "Nissin"],
     workwear: ["ChefWorks", "Daystar Apparel"],
     drinkware: ["Numo", "ETS Express", "JDS", "Polar Camel"]
