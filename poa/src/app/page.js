@@ -186,7 +186,7 @@ export default function Home() {
         </div>
         <div name="sample_works" className={styles.homeItem}>
           <div className={styles.title}>
-            Works from <br/> previous customers
+            Previous works <br/> from customers
           </div>
           <Link href="/gallery">
             <div className={styles.learnMore}>

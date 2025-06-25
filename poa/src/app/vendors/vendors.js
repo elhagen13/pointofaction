@@ -11,17 +11,10 @@ const vendors = {
         link: "https://www.ssactivewear.com",
         blocked: true
     },
-    "American Apparel": {
-        storeName: "American Apparel",
-        image: "/vendors/americanapparel.png",
-        link: "https://www.americanapparel.com/us/en/",
-        blocked: true
-
-    },
     "NorthFace": {
         storeName: "North Face",
         image: "/vendors/northface.png",
-        link: "https://www.thenorthface.com/en-us",
+        link: "https://www.sanmar.com/search?text=North+Face",
         blocked: false
 
     },
@@ -51,6 +44,13 @@ const vendors = {
         storeName: "Pacific Headwear",
         image: "/vendors/pacificheadwear.png",
         link: "https://www.augustasportswear.com/pacific-headwear",
+        blocked: false
+
+    },
+    "Augusta": {
+        storeName: "Augusta Sportswear",
+        image: "/vendors/augustasportswear.png",
+        link: "https://www.augustasportswear.com",
         blocked: false
 
     },
@@ -145,9 +145,9 @@ const vendors = {
 
 const categories = {
     overall: ["SanMar", "S&S"],
-    tops: ["American Apparel", "NorthFace", "Fossa", "Landway"],
+    tops: ["NorthFace", "Fossa", "Landway"],
     outerwear: ["NorthFace", "Fossa", "Landway", "Carhartt", "Berne", "DRI DUCK"],
-    activewear: ["NorthFace", "Landway"],
+    activewear: ["NorthFace", "Landway", "Augusta"],
     headwear: ["Richardson", "Pacific", "Flexfit", "Outdoor Cap", "Otto", "Nissin"],
     workwear: ["ChefWorks", "Daystar Apparel"],
     drinkware: ["Numo", "ETS Express", "JDS", "Polar Camel"]

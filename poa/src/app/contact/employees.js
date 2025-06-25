@@ -1,12 +1,12 @@
 const employees = [
     {
-     photo: "/employees/Roberta.jpeg",
+     photo: "/employees/Roberta.jpg",
      name: "Roberta Garner",
      role: "Head Sales/Design",
      roleDescription: "Leads the sales team and oversees design projects, ensuring client requirements are met while driving revenue growth and maintaining design quality standards.",
      email: "Roberta@pointofaction.com",
      number: "(805) 922-6253 x 73",
-     capabilities: ["Quoting", "Sales", "Design", "Order Management"]
+     capabilities: ["Graphic Designer", "Marketing Advisor", "Sales Associate", "Order Management", "Quoting"]
     },
     {
      photo: "/employees/Tracy.jpeg",

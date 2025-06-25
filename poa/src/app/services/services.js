@@ -38,9 +38,12 @@ const services = {
     },
     digitizing: {
         name: "Art Vectorizing & Digitizing",
-        thumbnail: "/services/embroidery_thumbnail.jpeg",
+        thumbnail: "/services/digitizing_thumbnail.jpeg",
         link: "services/digitizing",
-        video: "/services/vinyl.mp4",
+        video: "/services/digitizing.mp4",
+        image: "/services/art_digitizing.jpeg",
+        description: "Art vectorizing and digitizing takes your designs and creates it into a vector digital image. This allows for your image to be embroidered, engraved or printed onto the apparel or object of your choice.",
+        capabilities: ["Any image file", "Adobe Illustrator", "Adobe Photoshop"]
     }
 
 
