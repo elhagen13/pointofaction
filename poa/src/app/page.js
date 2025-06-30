@@ -206,6 +206,8 @@ export default function Home() {
             <div className={styles.item}>HEAVILY DISCOUNTED OVERSTOCKED ITEMS!</div>
             <div className={styles.item}>BIG SALE!</div>
             <div className={styles.item}>FIRST COME FIRST SERVED!</div>
+            <div className={styles.item} style={{textDecoration: "underline"}}>CLICK HERE!</div>
+
           </div>
           <LuExternalLink/>
         </Link>}

@@ -34,7 +34,7 @@ export default function Carousel({ images}) {
                         className={`${styles.imageContainer} ${position(index)}`}
                     >
                         <img
-                            src={image.link}
+                            src={image.imageLink}
                             className={styles.image}
                             alt={`Gallery item ${index}`}
                         />

@@ -1,10 +1,25 @@
-
+'use client'
 import GalleryCarousel from "../components/galleryCarousel";
 import styles from "./gallery.module.css"
 import Link from "next/link";
-import images from "./images"
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [images, setImages] = useState([])
+
+  useEffect(() => {
+    const getImages = async () => {
+      const response = await fetch("/api/galleryImages", {
+        method: "GET",
+      });
+
+      const result = await response.json();
+
+      setImages(result.data)
+    }
+    getImages()
+     
+  }, [])
 
   const galleryLinks = [
     {
@@ -13,22 +28,22 @@ export default function Home() {
     },
     {
       text: "Vinyl Gallery",
-      link: "/gallery/Vinyl",
+      link: "/gallery/Vinyl_Printing",
 
     },
     {
       text: "Laser Etching Gallery",
-      link: "/gallery/LaserEtching",
+      link: "/gallery/Laser_Etching",
 
     },
     {
       text: "Printing Gallery",
-      link: "/gallery/DirectToFilm",
+      link: "/gallery/Printing",
 
     },
     {
       text: "Art Digitizing Gallery",
-      link: "/gallery/ArtDigitizing",
+      link: "/gallery/Art_Digitizing",
 
     },
     {
@@ -56,7 +71,7 @@ export default function Home() {
           {images.map((image, index) => (
             <div key={index}>
               <div className={styles.gridImageParent}>
-                <img src={image.link} className={styles.gridImage}/>
+                <img src={image.imageLink} className={styles.gridImage}/>
               </div>
             {image.company}
             </div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import styles from "./admin.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 import AddCompanyStore from "./addStore.js";
+import AddGalleryItem from "./addGalleryItem";
 import Calendar from "../components/Calendar";
 
 function Admin() {
@@ -143,7 +144,7 @@ function Admin() {
 
   return (
     <div className={styles.admin}>
-      <div className={styles.title}>Change Hours</div>
+      <div className={styles.title} style={{marginBottom: "20px"}}>Change Hours</div>
       <div className={styles.schedule}>
         <div className={styles.scheduleChange}>
           <div>
@@ -270,6 +271,7 @@ function Admin() {
       </div>
 
       <AddCompanyStore />
+      <AddGalleryItem/>
     </div>
   );
 }

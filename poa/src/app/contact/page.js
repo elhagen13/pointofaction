@@ -78,7 +78,7 @@ export default function Contact() {
           Santa Maria, CA 93455
         </div>
       </div>
-      <img style={{width: "50%", objectFit: "cover"}} className={styles.storeImage} src="/about_us/store.png"/>
+      <img style={{width: "50%", objectFit: "cover"}} className={styles.storeImage} src="/about_us/store.jpg"/>
     </div>
     <div className={styles.allEmployees}>
       <div style={{fontWeight: "bold" ,fontSize: "32px", marginBottom: "20px"}}>Meet Our Team!</div>
