@@ -1,10 +1,10 @@
 'use client'
 import styles from './galleryCarousel.module.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi2";
 
 
-export default function Carousel({ images}) {
+export default function Carousel({images}) {
     const [activePage, setActivePage] = useState(0);
 
     const position = (index) => {

@@ -15,11 +15,26 @@ export default function Home() {
 
       const result = await response.json();
 
-      setImages(result.data)
+      setImages(shuffleArray(result.data))
     }
     getImages()
      
   }, [])
+
+  function shuffleArray(array) {
+    // Create a shallow copy to avoid modifying the original array
+    const shuffledArray = [...array]; 
+  
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+      // Generate a random index between 0 and i (inclusive)
+      const j = Math.floor(Math.random() * (i + 1));
+  
+      // Swap elements at indices i and j
+      [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+    }
+  
+    return shuffledArray;
+  }
 
   const galleryLinks = [
     {
