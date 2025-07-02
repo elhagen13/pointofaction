@@ -595,6 +595,7 @@ function AddCompanyStore() {
   const [addStoreOpen, setAddStoreOpen] = useState(false);
   const [editStoreOpen, setEditStoreOpen] = useState(false);
   const [selectedStore, setSelectedStore] = useState({})
+  const [storesOpen, setStoresOpen] = useState(false)
 
   useEffect(() => {
     getAllCompanies();
@@ -639,15 +640,35 @@ function AddCompanyStore() {
       <div className={styles.addStore}>
         <div className={styles.titleBar}>
           <div className={styles.title}>Company Stores</div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: "15px",
+            }}
+          >
+            <button
+              className={styles.button}
+              style={{
+                border: "2px solid #538561",
+                backgroundColor: "white",
+                color: "#538561",
+              }}
+              onClick={() => setStoresOpen(!storesOpen)}
+            >
+              {storesOpen ? "Hide Stores" : "View Stores"}
+            </button>
           <button
             className={styles.button}
             onClick={() => setAddStoreOpen(true)}
           >
             Add Store
           </button>
+          </div>
         </div>
         <div className={styles.companies}>
-          {companies.map((company, index) => (
+          {storesOpen && companies.map((company, index) => (
             <div className={styles.company} key={index}>
               <div className={styles.imageContainer}>
                 <img

@@ -145,7 +145,7 @@ const Calendar = ({refresh = 0}) => {
             {Object.keys(weeklyHours).map((day, index) => (
               <div key={day} style={{padding: "8px", border: index !== 0 ?  "1px solid #ddd" : "1px solid red", borderRadius: "4px", minWidth: "100px"}}>
                 <div style={{fontWeight: "bold", fontSize: "14px"}}>{day}:</div>
-                <div style={{fontSize: "12px", marginTop: "2px"}}>
+                <div style={{fontSize: "12px", marginTop: "2px", color: renderDayHours(day) == "CLOSED" ? "#973636" : "black"}}>
                   {renderDayHours(day)}
                 </div>
               </div>

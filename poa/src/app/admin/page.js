@@ -4,6 +4,7 @@ import styles from "./admin.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 import AddCompanyStore from "./addStore.js";
 import AddGalleryItem from "./addGalleryItem";
+import AddVendorItem from "./addVendor";
 import Calendar from "../components/Calendar";
 
 function Admin() {
@@ -272,6 +273,7 @@ function Admin() {
 
       <AddCompanyStore />
       <AddGalleryItem/>
+      <AddVendorItem/>
     </div>
   );
 }

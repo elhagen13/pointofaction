@@ -12,6 +12,7 @@ export default function Vendors(){
     const [headwear, setHeadwear] = useState([]);
     const [workwear, setWorkwear] = useState([]);
     const [drinkware, setDrinkwear] = useState([]);
+    const [vendors2, setVendors] = useState([])
 
     const [overlay, setOverlay] = useState(false);
     const [overlayLink, setOverlayLink] = useState('')
@@ -33,15 +34,42 @@ export default function Vendors(){
 
     
     useEffect(() => {
-        setOverall(categories.overall.map(vendor => vendors[vendor]));
+        setOverall(vendors2.filter((vendor) => vendor.category.includes("overall")))
+        setTops(vendors2.filter((vendor) => vendor.category.includes("tops")))
+        setOuterwear(vendors2.filter((vendor) => vendor.category.includes("outerwear")))
+        setActivewear(vendors2.filter((vendor)=> vendor.category.includes("activewear")))
+        setHeadwear(vendors2.filter((vendor) => vendor.category.includes("headwear")))
+        setWorkwear(vendors2.filter((vendor) => vendor.category.includes("workwear"))),
+        setDrinkwear(vendors2.filter((vendor) => vendor.category.includes("drinkware")))
+
+        /*setOverall(categories.overall.map(vendor => vendors[vendor]));
         setTops(categories.tops.map(vendor => vendors[vendor]));
         setOuterwear(categories.outerwear.map(vendor => vendors[vendor]));
         setActivewear(categories.activewear.map(vendor => vendors[vendor]));
         setHeadwear(categories.headwear.map(vendor => vendors[vendor]));
         setWorkwear(categories.workwear.map(vendor => vendors[vendor]));
-        setDrinkwear(categories.drinkware.map(vendor => vendors[vendor]));
+        setDrinkwear(categories.drinkware.map(vendor => vendors[vendor]));*/
 
-    }, [])
+    }, [vendors2])
+
+    useEffect(() => {
+        const getVendors = async () => {
+          const response = await fetch("/api/vendors", {
+            method: "GET",
+          });
+    
+          const result = await response.json();
+    
+          setVendors(result.data)
+        }
+        getVendors()
+         
+      }, [])
+
+    useEffect(() => {
+        console.log(workwear)
+    }, [workwear])
+
 
     return (
     <div className={styles.vendorPage}>
@@ -66,16 +94,16 @@ export default function Vendors(){
                     !vendor.blocked ? 
                     <div onClick={() => vendorClick(vendor.link)}>
                         <div className={styles.imageContainer}>
-                            <img src={vendor.image} className={styles.image}/>
+                            <img src={vendor.imageLink} className={styles.image}/>
                         </div>
-                        {vendor.storeName}
+                        {vendor.company}
                     </div>
                     :
                     <Link key={index} href={vendor.link} target="_blank">
                         <div className={styles.imageContainer}>
-                            <img src={vendor.image} className={styles.image}/>
+                            <img src={vendor.imageLink} className={styles.image}/>
                         </div>
-                        {vendor.storeName}
+                        {vendor.company}
                     </Link>
                 }               
                 </>
@@ -94,16 +122,16 @@ export default function Vendors(){
                             !vendor.blocked ? 
                             <div onClick={() => vendorClick(vendor.link)}>
                                 <div className={styles.imageContainer}>
-                                    <img src={vendor.image} className={styles.image}/>
+                                    <img src={vendor.imageLink} className={styles.image}/>
                                 </div>
-                                {vendor.storeName}
+                                {vendor.company}
                             </div>
                             :
                             <Link key={index} href={vendor.link} target="_blank">
                                 <div className={styles.imageContainer}>
-                                    <img src={vendor.image} className={styles.image}/>
+                                    <img src={vendor.imageLink} className={styles.image}/>
                                 </div>
-                                {vendor.storeName}
+                                {vendor.company}
                             </Link>
                         }               
                     </>
@@ -121,16 +149,16 @@ export default function Vendors(){
                         !vendor.blocked ? 
                         <div onClick={() => vendorClick(vendor.link)}>
                             <div className={styles.imageContainer}>
-                                <img src={vendor.image} className={styles.image}/>
+                                <img src={vendor.imageLink} className={styles.image}/>
                             </div>
-                            {vendor.storeName}
+                            {vendor.company}
                         </div>
                         :
                         <Link key={index} href={vendor.link} target="_blank">
                             <div className={styles.imageContainer}>
-                                <img src={vendor.image} className={styles.image}/>
+                                <img src={vendor.imageLink} className={styles.image}/>
                             </div>
-                            {vendor.storeName}
+                            {vendor.company}
                         </Link>
                     }               
                 </>
@@ -148,16 +176,16 @@ export default function Vendors(){
                         !vendor.blocked ? 
                         <div onClick={() => vendorClick(vendor.link)}>
                             <div className={styles.imageContainer}>
-                                <img src={vendor.image} className={styles.image}/>
+                                <img src={vendor.imageLink} className={styles.image}/>
                             </div>
-                            {vendor.storeName}
+                            {vendor.company}
                         </div>
                         :
                         <Link key={index} href={vendor.link} target="_blank">
                             <div className={styles.imageContainer}>
-                                <img src={vendor.image} className={styles.image}/>
+                                <img src={vendor.imageLink} className={styles.image}/>
                             </div>
-                            {vendor.storeName}
+                            {vendor.company}
                         </Link>
                     }               
                     </>
@@ -175,16 +203,16 @@ export default function Vendors(){
                         !vendor.blocked ? 
                         <div onClick={() => vendorClick(vendor.link)}>
                             <div className={styles.imageContainer}>
-                                <img src={vendor.image} className={styles.image}/>
+                                <img src={vendor.imageLink} className={styles.image}/>
                             </div>
-                            {vendor.storeName}
+                            {vendor.company}
                         </div>
                         :
                         <Link key={index} href={vendor.link} target="_blank">
                             <div className={styles.imageContainer}>
-                                <img src={vendor.image} className={styles.image}/>
+                                <img src={vendor.imageLink} className={styles.image}/>
                             </div>
-                            {vendor.storeName}
+                            {vendor.company}
                         </Link>
                     }               
                     </>
@@ -202,16 +230,16 @@ export default function Vendors(){
                         !vendor.blocked ? 
                         <div onClick={() => vendorClick(vendor.link)}>
                             <div className={styles.imageContainer}>
-                                <img src={vendor.image} className={styles.image}/>
+                                <img src={vendor.imageLink} className={styles.image}/>
                             </div>
-                            {vendor.storeName}
+                            {vendor.company}
                         </div>
                         :
                         <Link key={index} href={vendor.link} target="_blank">
                             <div className={styles.imageContainer}>
-                                <img src={vendor.image} className={styles.image}/>
+                                <img src={vendor.imageLink} className={styles.image}/>
                             </div>
-                            {vendor.storeName}
+                            {vendor.company}
                         </Link>
                     }               
                     </>
@@ -229,16 +257,16 @@ export default function Vendors(){
                             !vendor.blocked ? 
                             <div onClick={() => vendorClick(vendor.link)}>
                                 <div className={styles.imageContainer}>
-                                    <img src={vendor.image} className={styles.image}/>
+                                    <img src={vendor.imageLink} className={styles.image}/>
                                 </div>
-                                {vendor.storeName}
+                                {vendor.company}
                             </div>
                             :
                             <Link key={index} href={vendor.link} target="_blank">
                                 <div className={styles.imageContainer}>
-                                    <img src={vendor.image} className={styles.image}/>
+                                    <img src={vendor.imageLink} className={styles.image}/>
                                 </div>
-                                {vendor.storeName}
+                                {vendor.company}
                             </Link>
                         }               
                     </>
