@@ -5,6 +5,7 @@ import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 import AddCompanyStore from "./addStore.js";
 import AddGalleryItem from "./addGalleryItem";
 import AddVendorItem from "./addVendor";
+import EditSale from "./editSale.js"
 import Calendar from "../components/Calendar";
 
 function Admin() {
@@ -17,11 +18,6 @@ function Admin() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   
-  // Sale toggle state
-  const [saleActive, setSaleActive] = useState(false);
-  const [isSaleLoading, setIsSaleLoading] = useState(true);
-  const [isUpdatingSale, setIsUpdatingSale] = useState(false);
-
   // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -32,72 +28,7 @@ function Admin() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Fetch sale status on component mount
-  useEffect(() => {
-    const fetchSaleStatus = async () => {
-      try {
-        setIsSaleLoading(true);
-        const response = await fetch("/api/checkSale", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log(result)
-        if (result.success) {
-          setSaleActive(result.data.sale);
-        } else {
-          console.error("Failed to fetch sale status:", result.error);
-        }
-      } catch (error) {
-        console.error("Error fetching sale status:", error);
-      } finally {
-        setIsSaleLoading(false);
-      }
-    };
-
-    fetchSaleStatus();
-  }, []);
-
-  // Handle sale toggle change
-  const handleSaleToggle = async (newSaleStatus) => {
-    try {
-      setIsUpdatingSale(true);
-      const response = await fetch("/api/checkSale", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sale: newSaleStatus,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setSaleActive(result.data.sale);
-        console.log("Sale status updated successfully:", result.message);
-      } else {
-        console.error("Failed to update sale status:", result.error);
-        alert("Failed to update sale status. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error updating sale status:", error);
-      alert("Failed to update sale status. Please try again.");
-    } finally {
-      setIsUpdatingSale(false);
-    }
-  };
 
   const handleSubmitHours = async () => {
     // Validation
@@ -252,28 +183,11 @@ function Admin() {
           <Calendar refresh={refreshKey}/>
         </div>
       )}
-
-      <div style={{display: "flex", flexDirection: "row", gap: "20px", alignItems:"center"}}>
-        <div className={styles.title}>Sale</div>
-        <label className={styles.switch}>
-          <input 
-            type="checkbox"
-            checked={saleActive}
-            onChange={(e) => handleSaleToggle(e.target.checked)}
-            disabled={isSaleLoading || isUpdatingSale}
-          />
-          <span className={`${styles.slider} ${styles.round}`}></span>
-        </label>
-        {(isSaleLoading || isUpdatingSale) && (
-          <span style={{ fontSize: '14px', color: '#666' }}>
-            {isSaleLoading ? 'Loading...' : 'Updating...'}
-          </span>
-        )}
-      </div>
-
+      <EditSale/>
       <AddCompanyStore />
       <AddGalleryItem/>
       <AddVendorItem/>
+
     </div>
   );
 }

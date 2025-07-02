@@ -40,6 +40,7 @@ export async function GET(request) {
     if (!saleDocument) {
       const defaultDoc = {
         sale: false,
+        link: null,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -55,7 +56,7 @@ export async function GET(request) {
     
     return Response.json({
       success: true,
-      data: { sale: saleDocument.sale },
+      data: { active: saleDocument.sale },
       message: 'Sale status retrieved successfully'
     });
     
@@ -81,7 +82,7 @@ export async function PUT(request) {
     const body = await request.json();
     
     // Validate that sale field is provided and is boolean
-    if (typeof body.sale !== 'boolean') {
+    if (typeof body.active !== 'boolean') {
       return Response.json(
         { 
           success: false, 
@@ -97,7 +98,8 @@ export async function PUT(request) {
       {}, // Empty filter to match any document (since there's only one)
       {
         $set: {
-          sale: body.sale,
+          sale: body.active,
+          link: body.link,
           updatedAt: new Date()
         },
         $setOnInsert: {
