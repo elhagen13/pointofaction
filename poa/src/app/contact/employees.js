@@ -50,12 +50,12 @@ const employees = [
     },
     {
         photo: "/employees/Bobby.jpeg",
-        name: "Bobby",
+        name: "Bobby Peterson",
         role: "Shipping and Receiving",
         roleDescription: "Manages the  shipment and receipt of all products, materials, and supplies. Tracks, traces, and updates the status of incoming and outgoing shipments.",
         email: "Bobby@pointofaction.com",
-        number: "(805) 922-6253 x 71",
-        capabilities: ["Shipping", "Recieving"]
+        number: "(805) 922-6253 x 10",
+        capabilities: ["Shipping", "Recieving", "Customer Service", "Order Processing"]
    
        },
     {
