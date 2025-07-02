@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import styles from "./admin.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 
@@ -594,8 +594,23 @@ function AddCompanyStore() {
   const [companies, setCompanies] = useState([]);
   const [addStoreOpen, setAddStoreOpen] = useState(false);
   const [editStoreOpen, setEditStoreOpen] = useState(false);
-  const [selectedStore, setSelectedStore] = useState({})
-  const [storesOpen, setStoresOpen] = useState(false)
+  const [selectedStore, setSelectedStore] = useState({});
+  const [storesOpen, setStoresOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+
+  const filteredCompanies= useMemo(() => {
+    if (!search.trim()) {
+      return companies;
+    }
+    
+    const searchLower = search.toLowerCase();
+    return companies.filter(company => {
+      const companyMatch = company.companyName.toLowerCase().includes(searchLower);
+      
+      return companyMatch;
+    });
+  }, [companies, search]);
 
   useEffect(() => {
     getAllCompanies();
@@ -667,8 +682,13 @@ function AddCompanyStore() {
           </button>
           </div>
         </div>
+        {storesOpen && 
+            <div style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "right"}}>
+                <input placeholder="Search..." className={styles.search} value={search} onChange={(e) => {setSearch(e.target.value)}}/>
+            </div>
+        }
         <div className={styles.companies}>
-          {storesOpen && companies.map((company, index) => (
+          {storesOpen && filteredCompanies.map((company, index) => (
             <div className={styles.company} key={index}>
               <div className={styles.imageContainer}>
                 <img

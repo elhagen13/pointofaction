@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import styles from "./admin.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 
@@ -540,14 +540,36 @@ function AddGalleryItem() {
   const [editGalleryItemOpen, setEditGalleryItemOpen] = useState(false);
   const [selectedGalleryItem, setSelectedGalleryItem] = useState({});
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredImages = useMemo(() => {
+    if (!search.trim()) {
+      return images;
+    }
+    
+    const searchLower = search.toLowerCase();
+    return images.filter(image => {
+      const companyMatch = image.company.toLowerCase().includes(searchLower);
+      const typeMatch = image.type.toLowerCase().includes(searchLower);
+      
+      return companyMatch || typeMatch;
+    });
+  }, [images, search]);
 
   useEffect(() => {
     getAllImages();
   }, []);
 
+
   const handleCompanyAdded = () => {
     getAllImages();
   };
+
+  const filterImages = () => {
+    setFilteredImages(images.filter(image => 
+        image.company.toLowerCase().includes(search.toLowerCase()) || image.type.toLowerCase().includes(search.toLowerCase())
+    ))
+  }
 
   async function getAllImages() {
     try {
@@ -611,28 +633,34 @@ function AddGalleryItem() {
             </button>
           </div>
         </div>
-        <div className={styles.companies}>
-          { galleryOpen && images.map((image, index) => (
-            <div className={styles.company} key={index}>
-              <div className={styles.imageContainer}>
-                <img
-                  src={image.imageLink}
-                  className={styles.companyImage}
-                  alt={image.company}
-                />
-              </div>
-              <div className={styles.companyName}>{image.company}</div>
-              <div
-                className={styles.edit}
-                onClick={() => {
-                  setSelectedGalleryItem(image);
-                  setEditGalleryItemOpen(true);
-                }}
-              >
-                <FaRegEdit size={20} />
-              </div>
+        {galleryOpen && 
+            <div style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "right"}}>
+                <input placeholder="Search..." className={styles.search} value={search} onChange={(e) => {setSearch(e.target.value)}}/>
             </div>
-          ))}
+        }
+        <div className={styles.companies}>
+          {galleryOpen &&
+            filteredImages.map((image, index) => (
+                <div className={styles.company} key={index}>
+                  <div className={styles.imageContainer}>
+                    <img
+                      src={image.imageLink}
+                      className={styles.companyImage}
+                      alt={image.company}
+                    />
+                  </div>
+                  <div className={styles.companyName}>{image.company}</div>
+                  <div
+                    className={styles.edit}
+                    onClick={() => {
+                      setSelectedGalleryItem(image);
+                      setEditGalleryItemOpen(true);
+                    }}
+                  >
+                    <FaRegEdit size={20} />
+                  </div>
+                </div>
+            ))}
         </div>
       </div>
     </>

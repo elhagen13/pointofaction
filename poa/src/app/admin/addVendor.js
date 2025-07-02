@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import styles from "./admin.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 
@@ -629,14 +629,39 @@ function AddVendorItem() {
   const [editVendorItemOpen, setEditVendorItemOpen] = useState(false);
   const [selectedVendorItem, setSelectedVendorItem] = useState({});
   const [vendorOpen, setVendorOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredImages = useMemo(() => {
+    if (!search.trim()) {
+      return images;
+    }
+    
+    const searchLower = search.toLowerCase();
+    return images.filter(image => {
+      const companyMatch = image.company.toLowerCase().includes(searchLower);
+      // Fix: Check if any category in the array matches
+      const categoryMatch = Array.isArray(image.category) 
+        ? image.category.some(cat => cat.toLowerCase().includes(searchLower))
+        : image.category.toLowerCase().includes(searchLower);
+      
+      return companyMatch || categoryMatch;
+    });
+  }, [images, search]);
 
   useEffect(() => {
     getAllImages();
   }, []);
 
+
   const handleVendorAdded = () => {
     getAllImages();
   };
+
+  const filterImages = () => {
+    setFilteredImages(images.filter(image => 
+        image.company.toLowerCase().includes(search.toLowerCase()) || image.category.includes(search.toLowerCase())
+    ))
+  }
 
   async function getAllImages() {
     try {
@@ -699,9 +724,19 @@ function AddVendorItem() {
             </button>
           </div>
         </div>
+        {vendorOpen && 
+            <div style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "right"}}>
+            <input 
+              placeholder="Search..." 
+              className={styles.search} 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+            />
+          </div>
+        }
         <div className={styles.companies}>
           {vendorOpen &&
-            images.map((image, index) => (
+            filteredImages.map((image, index) => (
               <div className={styles.company} key={index}>
                 <div className={styles.imageContainer}>
                   <img

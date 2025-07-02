@@ -56,9 +56,19 @@
   background-color: #9a352e;
 }
 
+.search{
+  border: 2px solid rgb(219, 218, 218);
+  max-width: 100%;
+  width: 600px;
+  padding: 12px 20px;
+  min-height: 44px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
 .companies {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
   margin-top: 20px;
 }
@@ -475,10 +485,6 @@ input:checked + .slider:before {
     gap: 15px;
   }
   
-  .companies {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
   
   .overlay {
     padding: 20px;
@@ -516,9 +522,6 @@ input:checked + .slider:before {
     padding: 10px;
   }
   
-  .companies {
-    grid-template-columns: 1fr;
-  }
   
   .company {
     padding: 12px;
