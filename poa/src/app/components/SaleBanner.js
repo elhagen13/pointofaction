@@ -4,7 +4,7 @@ import Link from "next/link";
 import { IoMdClose } from "react-icons/io";
 
 
-const SaleBanner = ({toggleOff}) => {
+const SaleBanner = ({link, toggleOff}) => {
     const handleClickOff = (e) => {
         if (e.target === e.currentTarget) {
             toggleOff();
@@ -25,7 +25,7 @@ const SaleBanner = ({toggleOff}) => {
         <div className={styles.text}>
           Overstock Items <br /> For Sale <br /> NOW
         </div>
-        <Link href="" className={styles.styledButton}>
+        <Link href={link} className={styles.styledButton}>
            GO →
         </Link>
         <div className={styles.container}>

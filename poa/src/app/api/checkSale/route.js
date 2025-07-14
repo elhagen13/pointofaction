@@ -35,7 +35,7 @@ export async function GET(request) {
     
     // Find the single sale document
     const saleDocument = await collection.findOne({});
-    
+    console.log(saleDocument)
     // If no document exists, create one with default value
     if (!saleDocument) {
       const defaultDoc = {
@@ -49,14 +49,14 @@ export async function GET(request) {
       
       return Response.json({
         success: true,
-        data: { sale: false },
+        data: { sale: false, link: null },
         message: 'Sale document created with default value'
       });
     }
     
     return Response.json({
       success: true,
-      data: { active: saleDocument.sale },
+      data: { active: saleDocument.sale, link: saleDocument.link },
       message: 'Sale status retrieved successfully'
     });
     
