@@ -172,6 +172,10 @@
   overflow-y: auto;
 }
 
+.overlayLg{
+  max-width: 90%
+}
+
 .overlay form {
   display: flex;
   flex-direction: column;
@@ -207,6 +211,24 @@
   box-shadow: 0 0 0 3px rgba(83, 133, 97, 0.1);
 }
 
+.priceBoxContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.priceBoxContainer .formInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.priceBoxContainer .formInput .input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 /* Upload section styles */
 .uploadSection {
   display: flex;
@@ -217,7 +239,6 @@
 .fileInput {
   display: none;
 }
-
 .fileLabel {
   display: inline-flex;
   align-items: center;
@@ -467,6 +488,57 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+
+.tableReg {
+  width: 10%;
+  height: 60px;
+  padding: 5px; 
+  vertical-align: middle;
+}
+
+.tableSm img {
+  width: 50px; 
+  height: 50px; 
+  object-fit: cover; 
+  border-radius: 4px; 
+  display: block; 
+  box-shadow: 0 0 2px gray
+}
+
+.tableReg tr {
+  height: 60px; 
+}
+
+.tableSm{
+  width: 55px;
+}
+
+.tableMed{
+  width: 15%
+}
+
+.tableTiny{
+  width: 20px;
+}
+
+
+.tableLg{
+  width: calc(35% + 80px);
+  height: 60px;
+}
+
+.trash{
+  margin: 0 auto;
+}
+
+.tableReg, .tableMed, .tableLg, .tableTiny{
+  padding: 5px 10px;
+}
+
+.row th{
+  font-weight: normal;
 }
 
 /* Responsive breakpoints */

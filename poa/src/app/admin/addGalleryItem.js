@@ -92,6 +92,7 @@ function AddImage({ onClose, onCompanyAdded }) {
     }
   };
 
+
   const removeUploadedImage = () => {
     setUploadedImageUrl("");
     setImage("");
