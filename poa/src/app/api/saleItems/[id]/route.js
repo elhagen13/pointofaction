@@ -80,6 +80,7 @@ export async function GET(request, { params }) {
 
 // PATCH - Update company by ID
 export async function PATCH(request, { params }) {
+  console.log("hello")
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
@@ -98,7 +99,7 @@ export async function PATCH(request, { params }) {
 
     // Parse request body
     const body = await request.json();
-
+    console.log(body)
     // Check if body is empty
     if (Object.keys(body).length === 0) {
       return Response.json(
@@ -128,6 +129,7 @@ export async function PATCH(request, { params }) {
       updatedAt: new Date()
     };
 
+  
     // Only include fields that are provided and trim strings
     if (body.name !== undefined) {
       updateDocument.name = body.name.trim();
@@ -138,12 +140,31 @@ export async function PATCH(request, { params }) {
     if (body.imageLink !== undefined) {
       updateDocument.imageLink = body.imageLink.trim();
     }
-    if (body.price !== undefined) {
-      updateDocument.price = body.price.trim();
+    if(body.contents !== undefined){
+      updateDocument.contents = body.contents
     }
-    if (body.stock !== undefined) {
-        updateDocument.stock = body.stock.trim();
-      }
+    if (body.discount !== undefined) {
+      updateDocument.discount = body.discount.trim();
+    }
+    if (body.location !== undefined) {
+      updateDocument.location = body.location.trim();
+    }
+    if (body.size !== undefined) {
+      updateDocument.size = body.size.trim();
+    }
+    if (body.style !== undefined) {
+      updateDocument.style = body.style.trim();
+    }
+    if (body.color !== undefined) {
+      updateDocument.color = body.color.trim();
+    }
+    if (body.quantity !== undefined) {
+      updateDocument.quantity = body.quantity;
+    }
+    if (body.price !== undefined) {
+      updateDocument.price = body.price;
+    }
+   
 
     // Update the document
     const result = await collection.updateOne(

@@ -65,9 +65,10 @@ export async function POST(request) {
     // Parse request body
     const body = await request.json();
     
-
+    
     // Prepare document for insertion
-    const saleItemDocument = {
+    const saleItemDocument = 
+      body.type.trim() === "box" ?   {
       name: body.name.trim(),
       itemDescription: body.description.trim(),
       imageLink: body.imageLink.trim(),
@@ -76,7 +77,25 @@ export async function POST(request) {
       contents: body.contents,
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+      }
+    :
+    {
+        imageLink: body.imageUrl.trim(),
+        itemDescription: body.description.trim(),
+        style: body.style.trim(),
+        size: body.size.trim(),
+        color: body.color.trim(),
+        quantity: body.quantity,
+        price: body.price,
+        location: body.location.trim(),
+        createdAt: new Date(),
+      updatedAt: new Date()
+
+    }
+
+
+    
+    
     
     // Insert the document
     const result = await collection.insertOne(saleItemDocument);
