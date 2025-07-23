@@ -7,6 +7,9 @@ import { FaRegSquarePlus } from "react-icons/fa6";
 function AddOverstock({ onClose, onOverstockAdded }) {
   const [boxName, setBoxName] = useState("");
   const [boxDescription, setBoxDescription] = useState("");
+  const [minimumPrice, setMinimumPrice] = useState(0)
+  /*admin (always clicked), public inventory, sale*/
+  const [visibility, setVisibility] = useState("private")
   const [boxDiscount, setBoxDiscount] = useState(20);
   const [boxLocation, setBoxLocation] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -214,6 +217,7 @@ function AddOverstock({ onClose, onOverstockAdded }) {
       !boxName ||
       !boxDiscount ||
       !boxDescription ||
+      minimumPrice === ""  || 
       !boxLocation ||
       !imageUrl ||
       contents.length < 1
@@ -345,6 +349,7 @@ function AddOverstock({ onClose, onOverstockAdded }) {
       const itemData = {
         type: page,
         name: boxName,
+        minPrice: minimumPrice,
         description: boxDescription,
         discount: boxDiscount,
         location: boxLocation,
@@ -410,6 +415,17 @@ function AddOverstock({ onClose, onOverstockAdded }) {
                     className={styles.input}
                     value={boxName}
                     onChange={(e) => setBoxName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={styles.formInput} style={{ width: "10%" }}>
+                  <label>Min. Purchase</label>
+                  <input
+                    className={styles.input}
+                    onChange={(e) =>
+                      setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
+                    }
+                    value={`$${minimumPrice}`}
                     required
                   />
                 </div>
@@ -1141,6 +1157,7 @@ function AddOverstock({ onClose, onOverstockAdded }) {
 function EditOverstock({ overstock, onClose, onOverstockEdited }) {
   const [boxName, setBoxName] = useState(overstock.name || "");
   const [boxDescription, setBoxDescription] = useState(overstock.itemDescription || "");
+  const [minimumPrice, setMinimumPrice] = useState(overstock.minPrice || 0)
   const [boxDiscount, setBoxDiscount] = useState(overstock.discount || 20);
   const [boxLocation, setBoxLocation] = useState(overstock.location || "");
   const [imageUrl, setImageUrl] = useState(overstock.imageLink || "");
@@ -1359,6 +1376,7 @@ function EditOverstock({ overstock, onClose, onOverstockEdited }) {
         if (
           !boxName ||
           !boxDiscount ||
+          minimumPrice == "" || 
           !boxDescription ||
           !boxLocation ||
           !imageUrl ||
@@ -1456,6 +1474,7 @@ function EditOverstock({ overstock, onClose, onOverstockEdited }) {
       const itemData = {
         type: page,
         name: boxName,
+        minPrice: minimumPrice,
         itemDescription: boxDescription,
         discount: boxDiscount,
         location: boxLocation,
@@ -1532,6 +1551,17 @@ function EditOverstock({ overstock, onClose, onOverstockEdited }) {
                     className={styles.input}
                     value={boxName}
                     onChange={(e) => setBoxName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={styles.formInput} style={{ width: "10%" }}>
+                  <label>Min. Purchase</label>
+                  <input
+                    className={styles.input}
+                    onChange={(e) =>
+                      setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
+                    }
+                    value={`$${minimumPrice}`}
                     required
                   />
                 </div>

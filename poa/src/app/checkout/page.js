@@ -7,6 +7,7 @@ import CheckoutForm from '../components/CheckoutForm';
 import { getProductById } from '../../lib/products';
 
 export default function Checkout() {
+  /*
   const searchParams = useSearchParams();
   const productId = searchParams.get('productId');
   const [product, setProduct] = useState(null);
@@ -77,7 +78,9 @@ export default function Checkout() {
       </div>
     );
   }
+*/
 
+/*
   return (
     <div style={{ 
       maxWidth: '800px', 
@@ -92,7 +95,6 @@ export default function Checkout() {
         gap: '40px',
         alignItems: 'start'
       }}>
-        {/* Order Summary */}
         <div style={{
           backgroundColor: 'white',
           padding: '24px',
@@ -164,7 +166,6 @@ export default function Checkout() {
           )}
         </div>
 
-        {/* Payment Form */}
         <div style={{
           backgroundColor: 'white',
           padding: '24px',
@@ -192,5 +193,5 @@ export default function Checkout() {
         </div>
       </div>
     </div>
-  );
+  );*/
 }

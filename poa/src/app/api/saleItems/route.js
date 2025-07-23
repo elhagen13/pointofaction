@@ -73,6 +73,7 @@ export async function POST(request) {
       itemDescription: body.description.trim(),
       imageLink: body.imageLink.trim(),
       discount: body.discount,
+      minPrice: body.minPrice,
       location: body.location.trim(),
       contents: body.contents,
       createdAt: new Date(),

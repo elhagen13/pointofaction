@@ -80,7 +80,6 @@ export async function GET(request, { params }) {
 
 // PATCH - Update company by ID
 export async function PATCH(request, { params }) {
-  console.log("hello")
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
@@ -145,6 +144,9 @@ export async function PATCH(request, { params }) {
     }
     if (body.discount !== undefined) {
       updateDocument.discount = body.discount.trim();
+    }
+    if (body.minPrice !== undefined) {
+      updateDocument.minPrice = body.minPrice;
     }
     if (body.location !== undefined) {
       updateDocument.location = body.location.trim();
