@@ -5,7 +5,7 @@ import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 import AddCompanyStore from "./addStore.js";
 import AddGalleryItem from "./addGalleryItem";
 import AddVendorItem from "./addVendor";
-import AddOverstock from "./addOverstockItem"
+import AddOverstock from "./addInventory"
 import EditSale from "./editSale.js"
 import Calendar from "../components/Calendar";
 

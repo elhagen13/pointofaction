@@ -95,7 +95,7 @@ const ProductsPage = () => {
 
   useEffect(() => {
     const getImages = async () => {
-      const response = await fetch("/api/saleItems", {
+      const response = await fetch("/api/inventory", {
         method: "GET",
       });
 

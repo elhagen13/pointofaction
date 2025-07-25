@@ -21,7 +21,7 @@ export default function Product({}) {
 
   useEffect(() => {
     const getProduct = async () => {
-      const response = await fetch(`/api/saleItems/${params.id}`, {
+      const response = await fetch(`/api/inventory/${params.id}`, {
         method: "GET",
       });
 

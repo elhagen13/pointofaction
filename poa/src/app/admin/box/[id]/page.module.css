@@ -1,0 +1,50 @@
+.row th{
+    font-weight: normal;
+  }
+
+   /*table styles*/
+   .tableReg {
+    width: 10%;
+    height: 60px;
+    padding: 5px; 
+    vertical-align: middle;
+  }
+  
+  .tableSm img {
+    width: 50px; 
+    height: 50px; 
+    object-fit: cover; 
+    border-radius: 4px; 
+    display: block; 
+    box-shadow: 0 0 2px gray;
+  }
+  
+  .tableReg tr {
+    height: 60px; 
+  }
+  
+  .tableSm{
+    width: 55px;
+  }
+  
+  .tableMed{
+    width: 15%
+  }
+  
+  .tableTiny{
+    width: 20px;
+  }
+  
+  
+  .tableLg{
+    width: calc(35% + 80px);
+    height: 60px;
+  }
+  
+  .trash{
+    margin: 0 auto;
+  }
+  
+  .tableReg, .tableMed, .tableSm, .tableLg, .tableTiny{
+    padding: 5px 10px;
+  }
