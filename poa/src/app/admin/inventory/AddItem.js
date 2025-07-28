@@ -11,15 +11,17 @@ import {
 } from "react-icons/fa";
 import { FaRegSquarePlus} from "react-icons/fa6";
 import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
+import jsPDF from 'jspdf';
 
 
 
-export default function AddItem({onClose}) {
+export default function AddItem({onClose, refresh}) {
   const [page, setPage] = useState("box");
   const [box, setBox] = useState ({})
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
+      refresh();
       onClose();
     }
   };
@@ -40,61 +42,54 @@ export default function AddItem({onClose}) {
 
 
 const QrPopup = ({box}) => {
+  const downloadBoxPDF = async () => {
+    try {
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: [4, 6]
+      });
 
-    async function downloadBoxPDF() {
-      try {
-        const response = await fetch('/api/create-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            boxId: box.boxId, 
-            qrCode: box.qrCode 
-          }) // Fixed: proper object syntax
-        });
-        
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `box-${box.boxId}.pdf`; // Fixed: use box.boxId
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        } else {
-          console.error('Failed to generate PDF');
-        }
-      } catch (error) {
-        console.error('Error downloading PDF:', error);
-      }
+      pdf.setFontSize(24);
+      pdf.setFont(undefined, 'bold');
+      pdf.text(`Box ${box.boxId}`, 2, 1, { align: 'center' });
+
+      const qrSize = 2; 
+      const qrX = (4 - qrSize) / 2; 
+      const qrY = 2.2; 
+      
+      pdf.addImage(box.qrCode, 'PNG', qrX, qrY, qrSize, qrSize);
+
+      pdf.save(`box-${box.boxId}.pdf`);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
     }
-  
-    return(
-      <div style={{
-        width: "100%", 
-        display: "flex", 
-        flexDirection: "column", 
-        alignItems: "center", 
-        gap: "20px"
-      }}>
-        <div style={{fontWeight: "bold", fontSize: "32px"}}>
-          Box {box.boxId}
-        </div>
-        <div>
-          <img src={box.qrCode} alt={`QR Code for Box ${box.boxId}`} />
-        </div>
-        <div style={{width: "100%", display: "flex", justifyContent: "end"}}>
-                <button className={styles.button} onClick={downloadBoxPDF}>
-                    <span>Download <FaDownload /></span>
-                </button>
+  };
 
-              </div>
+  return(
+    <div style={{
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "20px"
+    }}>
+      <div style={{fontWeight: "bold", fontSize: "32px"}}>
+        Box {box.boxId}
       </div>
-    )
-  }
+      <div>
+        <img src={box.qrCode} alt={`QR Code for Box ${box.boxId}`} />
+      </div>
+      <div style={{width: "100%", display: "flex", justifyContent: "end"}}>
+        <button className={styles.button} onClick={downloadBoxPDF}>
+          <span>Download PDF <FaDownload /></span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 
 const AddBox = ({setPage, setBox}) => {
   const [boxDescription, setBoxDescription] = useState("");

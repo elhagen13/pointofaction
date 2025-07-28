@@ -75,6 +75,8 @@ export async function POST(request) {
       color: body.color.trim(),
       quantity: body.quantity,
       price: body.price,
+      sale: body.sale,
+      public: body.public,
       createdAt: new Date(),
       updatedAt: new Date()
     }
