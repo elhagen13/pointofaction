@@ -49,19 +49,24 @@ const QrPopup = ({box}) => {
         unit: 'in',
         format: [4, 6]
       });
-
+      
+      // Title
       pdf.setFontSize(24);
       pdf.setFont(undefined, 'bold');
       pdf.text(`Box ${box.boxId}`, 2, 1, { align: 'center' });
-
-      const qrSize = 2; 
-      const qrX = (4 - qrSize) / 2; 
-      const qrY = 2.2; 
       
+      pdf.setFontSize(12); 
+      pdf.setFont(undefined, 'normal'); 
+      pdf.text(`${box.description}`, 2, 1.6, { 
+        align: 'center',
+        maxWidth: 3.5 
+      });
+      
+      const qrSize = 2;
+      const qrX = (4 - qrSize) / 2;
+      const qrY = 2.2;
       pdf.addImage(box.qrCode, 'PNG', qrX, qrY, qrSize, qrSize);
-
       pdf.save(`box-${box.boxId}.pdf`);
-      
     } catch (error) {
       console.error('Error generating PDF:', error);
     }
