@@ -78,6 +78,7 @@ function Inventory() {
         display: "flex",
         flexDirection: "column",
         gap: "20px",
+        color: "black"
       }}
     >
       <div className={styles.pageSelection}>
@@ -140,7 +141,8 @@ function Inventory() {
           <thead style={{ textAlign: "left" }}>
             <tr>
               <th className={styles.tableSm}>Item</th>
-              <th>id</th>
+              <th>Box</th>
+              <th>Location</th>
               <th>Description</th>
               <th>Style</th>
               <th>Color</th>
@@ -156,6 +158,7 @@ function Inventory() {
                   <img src={item.image} alt={`Item ${index + 1}`} />
                 </td>
                 <td>{boxDict[item.boxId.toString()]?.boxId || "No box"}</td>
+                <td>{boxDict[item.boxId.toString()]?.location}</td>
                 <td>{item.description}</td>
                 <td>{item.style}</td>
                 <td>{item.color}</td>
@@ -169,7 +172,7 @@ function Inventory() {
         </table>
       )}
       {page === "all inventory" && filter === "boxes" && (
-        <table className={styles.inventoryTable}>
+        <table className={styles.inventoryTable} style={{borderCollapse:"collapse"}}>
           <thead style={{ textAlign: "left" }}>
             <tr>
               <th className={styles.tableSm}>Box</th>
@@ -184,7 +187,7 @@ function Inventory() {
           </thead>
           <tbody>
             {boxes.map((box, index) => (
-              <tr key={index}>
+              <tr key={index} style={{backgroundColor: index % 2 == 0 ? "#ebebeb" : "#f2f2f2"}}>
                 <td className={styles.tableSm} style={{ position: "relative" }}>
                   <img src={box.image} alt={`Item ${index + 1}`} />
                 </td>

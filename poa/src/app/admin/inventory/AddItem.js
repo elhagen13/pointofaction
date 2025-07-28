@@ -412,7 +412,7 @@ const AddBox = ({setPage, setBox}) => {
   }
 
   return(
-    <div>
+    <div  style={{overflowX:"scroll", color: "black"}}>
         <div>
             <h2>Add Box to Inventory</h2>
             <form className={styles.form} style={{ marginTop: "30px" }} onSubmit={handleSubmitBox}>
@@ -426,7 +426,7 @@ const AddBox = ({setPage, setBox}) => {
                   required
                 />
               </div>
-              <div className={styles.horizontal}>
+              <div className={styles.imageAndLocation}>
                 <div className={styles.formInput}>
                   <label>Image</label>
                   <div className={styles.uploadSection}>
@@ -473,6 +473,7 @@ const AddBox = ({setPage, setBox}) => {
               <div className={styles.formInput}>
                 <label>Box Inventory</label>
                 <table
+                  className={styles.boxTable}
                   style={{
                     width: "100%",
                     textAlign: "left",
@@ -800,8 +801,9 @@ const AddBox = ({setPage, setBox}) => {
                                   className={styles.fileLabel}
                                   onClick={handleNewItemThumbnailClick}
                                   title="Enter image URL"
+                          
                                 >
-                                  <FaLink />
+                                  <FaLink color="black"/>
                                 </button>
                               </div>
                             )}
