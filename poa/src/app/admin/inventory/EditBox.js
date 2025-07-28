@@ -15,10 +15,7 @@ import jsPDF from 'jspdf';
 
 
 
-export default function AddItem({onClose, refresh}) {
-  const [page, setPage] = useState("box");
-  const [box, setBox] = useState ({})
-
+export default function EditItem({box, onClose, refresh}) {
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       refresh();
@@ -33,78 +30,22 @@ export default function AddItem({onClose, refresh}) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        {page === "box" && <AddBox setPage={setPage} setBox={setBox}/>}
-        {page === "qr" && <QrPopup setPage={setPage} box={box}/>}
+        <AddBox box={box}/>
       </div>
     </div>
   );
 }
 
 
-const QrPopup = ({box}) => {
-  const downloadBoxPDF = async () => {
-    try {
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'in',
-        format: [4, 6]
-      });
-      
-      // Title
-      pdf.setFontSize(24);
-      pdf.setFont(undefined, 'bold');
-      pdf.text(`Box ${box.boxId}`, 2, 1, { align: 'center' });
-      
-      pdf.setFontSize(12); 
-      pdf.setFont(undefined, 'normal'); 
-      pdf.text(`${box.description}`, 2, 1.6, { 
-        align: 'center',
-        maxWidth: 3.5 
-      });
-      
-      const qrSize = 2;
-      const qrX = (4 - qrSize) / 2;
-      const qrY = 2.2;
-      pdf.addImage(box.qrCode, 'PNG', qrX, qrY, qrSize, qrSize);
-      pdf.save(`box-${box.boxId}.pdf`);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    }
-  };
-
-  return(
-    <div style={{
-      width: "100%",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "20px"
-    }}>
-      <div style={{fontWeight: "bold", fontSize: "32px"}}>
-        Box {box.boxId}
-      </div>
-      <div>
-        <img src={box.qrCode} alt={`QR Code for Box ${box.boxId}`} />
-      </div>
-      <div style={{width: "100%", display: "flex", justifyContent: "end"}}>
-        <button className={styles.button} onClick={downloadBoxPDF}>
-          <span>Download PDF <FaDownload /></span>
-        </button>
-      </div>
-    </div>
-  )
-}
-
-
-const AddBox = ({setPage, setBox}) => {
-  const [boxDescription, setBoxDescription] = useState("");
-  const [boxLocation, setBoxLocation] = useState("");
+const AddBox = ({box}) => {
+  const [boxDescription, setBoxDescription] = useState(box.description);
+  const [boxLocation, setBoxLocation] = useState(box.location);
   const [contents, setContents] = useState([]);
-  const [imageUrl, setImageUrl] = useState("");
-  const [minimumPrice, setMinimumPrice] = useState(0);
+  const [imageUrl, setImageUrl] = useState(box.image);
+  const [minimumPrice, setMinimumPrice] = useState(box.minPrice);
   /*admin (always clicked), public inventory, sale*/
-  const [visibility, setVisibility] = useState(["admin"]);
-  const [boxDiscount, setBoxDiscount] = useState(20);
+  const [visibility, setVisibility] = useState(box.sale && box.public ? ["admin", "sale", "public"] : box.sale ? ["admin", "sale"] : box.admin );
+  const [boxDiscount, setBoxDiscount] = useState(box.discount ?? 20);
   const [currentItem, setCurrentItem] = useState({
     imageUrl: "",
     description: "",
@@ -121,6 +62,28 @@ const AddBox = ({setPage, setBox}) => {
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  
+  useEffect(() => {
+    const getContent = async () => {
+      const response = await fetch("/api/inventory/item", {
+        method: "GET",
+      });
+
+      const result = await response.json();
+      
+      result.data.forEach((item) => {
+        if(item.boxId == box._id){
+          setContents([...contents, item])
+        }
+      })
+    };
+
+    getContent();
+  }, []);
+
+  useEffect(() => {
+    console.log("contents", contents)
+  }, [contents])
 
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
@@ -373,7 +336,6 @@ const AddBox = ({setPage, setBox}) => {
           image: content.imageUrl,
           description: content.description,
           style: content.style,
-          size: content.size,
           color: content.color,
           quantity: content.quantity,
           price: content.price,
@@ -424,7 +386,6 @@ const AddBox = ({setPage, setBox}) => {
                   style={{ resize: "vertical", minHeight: "90px" }}
                   value={boxDescription}
                   onChange={(e) => setBoxDescription(e.target.value)}
-                  
                   required
                 />
               </div>
@@ -550,7 +511,7 @@ const AddBox = ({setPage, setBox}) => {
                           style={{ position: "relative" }}
                         >
                           <img
-                            src={item.imageUrl}
+                            src={item.image}
                             alt={`Item ${index + 1}`}
                             onClick={() => handleThumbnailClick(index)}
                             style={{

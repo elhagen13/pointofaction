@@ -1,12 +1,15 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import styles from "./inventory.module.css";
-import { FaRegEdit, FaUpload, FaTimes, FaRegTrashAlt} from "react-icons/fa";
+import { FaRegEdit, FaUpload, FaTimes, FaRegTrashAlt, FaEye} from "react-icons/fa";
 import { FaRegSquarePlus } from "react-icons/fa6";
 import { MdPublic,  MdOutlinePublicOff } from "react-icons/md";
 import { HiCash } from "react-icons/hi";
 
 import AddItem from "./AddItem.js";
+import EditItem from "./EditItem.js";
+import EditBox from "./EditBox.js";
+
 
 function Inventory() {
   /*"all inventory", "boxes", "public", "sale"*/
@@ -16,6 +19,8 @@ function Inventory() {
   const colors = ["#BDCE67", "#93A537", "#6B7B15"];
 
   const [addItemOpen, setAddItemOpen] = useState(false);
+  const [editItemOpen, setEditItemOpen] = useState(null);
+  const [editBoxOpen, setEditBoxOpen] = useState(null)
 
   const [inventory, setInventory] = useState([]);
   const [boxes, setBoxes] = useState([]);
@@ -141,14 +146,15 @@ function Inventory() {
           <thead style={{ textAlign: "left" }}>
             <tr>
               <th className={styles.tableSm}>Item</th>
-              <th>Box</th>
-              <th>Location</th>
-              <th>Description</th>
               <th>Style</th>
               <th>Color</th>
+              <th>Description</th>
               <th>Quantity</th>
+              <th>Box</th>
+              <th>Location</th>
               <th>Price</th>
               <th>Visibility</th>
+              <></>
             </tr>
           </thead>
           <tbody>
@@ -157,15 +163,15 @@ function Inventory() {
                 <td className={styles.tableSm} style={{ position: "relative" }}>
                   <img src={item.image} alt={`Item ${index + 1}`} />
                 </td>
-                <td>{boxDict[item.boxId.toString()]?.boxId || "No box"}</td>
-                <td>{boxDict[item.boxId.toString()]?.location}</td>
-                <td>{item.description}</td>
                 <td>{item.style}</td>
                 <td>{item.color}</td>
+                <td>{item.description}</td>
                 <td>{item.quantity}</td>
+                <td>{boxDict[item.boxId.toString()]?.boxId || "No box"}</td>
+                <td>{boxDict[item.boxId.toString()]?.location}</td>
                 <td>${item.price}</td>
                 <td>{item.public ? <MdPublic color="green"/> : <MdOutlinePublicOff color="red"/>}  {item.sale ? <HiCash color="blue"/> : <></>}</td>
-
+                <td><FaEye onClick={() => setEditItemOpen(item)} style={{cursor:"pointer"}}/></td>
               </tr>
             ))}
           </tbody>
@@ -183,6 +189,7 @@ function Inventory() {
               <th>Sale</th>
               <th>Discount</th>
               <th>Min Purchase</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -200,6 +207,7 @@ function Inventory() {
                 <td>{box.discount ? "Yes" : "No"}</td>
                 <td>{box.discount ? `${box.discount}%` : "N/A"}</td>
                 <td>{box.minPrice ? `$${box.minPrice}` : "N/A"}</td>
+                <td><FaEye onClick={() => setEditBoxOpen(box)} style={{cursor:"pointer"}}/></td>
               </tr>
             ))}
           </tbody>
@@ -208,6 +216,12 @@ function Inventory() {
 
       {addItemOpen && (
         <AddItem onClose={() => setAddItemOpen(false)} refresh={getInventory} />
+      )}
+      {editItemOpen !== null &&  (
+        <EditItem item={editItemOpen} onClose={() => setEditItemOpen(null)} refresh={getInventory} />
+      )}
+       {editBoxOpen !== null &&  (
+        <EditBox box={editBoxOpen} onClose={() => setEditBoxOpen(null)} refresh={getInventory} />
       )}
     </div>
   );
