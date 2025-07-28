@@ -424,7 +424,7 @@ const AddBox = ({setPage, setBox}) => {
                   style={{ resize: "vertical", minHeight: "90px" }}
                   value={boxDescription}
                   onChange={(e) => setBoxDescription(e.target.value)}
-                  
+
                   required
                 />
               </div>
@@ -659,7 +659,7 @@ const AddBox = ({setPage, setBox}) => {
                               updateExistingContent(
                                 index,
                                 "quantity",
-                                parseInt(e.target.value) || 0
+                                parseInt(e.target.value)
                               )
                             }
                             className={styles.input}
@@ -679,7 +679,7 @@ const AddBox = ({setPage, setBox}) => {
                               updateExistingContent(
                                 index,
                                 "price",
-                                parseFloat(e.target.value) || 0
+                                parseFloat(e.target.value)
                               )
                             }
                             className={styles.input}

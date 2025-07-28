@@ -44,7 +44,7 @@ const AddBox = ({box}) => {
   const [imageUrl, setImageUrl] = useState(box.image);
   const [minimumPrice, setMinimumPrice] = useState(box.minPrice);
   /*admin (always clicked), public inventory, sale*/
-  const [visibility, setVisibility] = useState(box.sale && box.public ? ["admin", "sale", "public"] : box.sale ? ["admin", "sale"] : box.admin );
+  const [visibility, setVisibility] = useState(["admin"]);
   const [boxDiscount, setBoxDiscount] = useState(box.discount ?? 20);
   const [currentItem, setCurrentItem] = useState({
     imageUrl: "",
@@ -71,7 +71,7 @@ const AddBox = ({box}) => {
 
       const result = await response.json();
       
-      result.data.forEach((item) => {
+      result.data.forEach((item, index) => {
         if(item.boxId == box._id){
           setContents([...contents, item])
         }
@@ -82,7 +82,8 @@ const AddBox = ({box}) => {
   }, []);
 
   useEffect(() => {
-    console.log("contents", contents)
+    if(contents[0]?.public) setVisibility([...visibility, "public"])
+    if(contents[0]?.sale) setVisibility([...visibility, "sale"])
   }, [contents])
 
   const handleFileSelect = (e, type, itemIndex = null) => {
@@ -291,6 +292,7 @@ const AddBox = ({box}) => {
   useEffect(() => {
     console.log(visibility);
   }, [visibility]);
+  
 
   async function uploadBox() {
     try {
@@ -306,8 +308,8 @@ const AddBox = ({box}) => {
       };
   
       // Create the box first
-      const boxResponse = await fetch("/api/inventory/box", {
-        method: "POST",
+      const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -325,8 +327,6 @@ const AddBox = ({box}) => {
   
       console.log("Box created successfully:", data.data);
       console.log("Message:", data.message);
-
-      setBox(data.data)
   
       const boxId = data.data._id
   
@@ -336,6 +336,7 @@ const AddBox = ({box}) => {
           image: content.imageUrl,
           description: content.description,
           style: content.style,
+          size: content.size,
           color: content.color,
           quantity: content.quantity,
           price: content.price,
@@ -343,12 +344,12 @@ const AddBox = ({box}) => {
           public: visibility.includes("public")
         };
   
-        const itemResponse = await fetch("/api/inventory/item", {
-          method: "POST",
+        const itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(itemData), // Fixed: was boxData
+          body: JSON.stringify(itemData), 
         });
   
         const itemResult = await itemResponse.json();
@@ -371,6 +372,55 @@ const AddBox = ({box}) => {
       console.error("Network error:", error);
       alert("Network error: " + error.message);
       return false;
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      // Delete the box first
+      const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      const deleteResult = await boxResponse.json(); // Fixed: use boxResponse instead of itemResponse
+  
+      if (!deleteResult.success) {
+        console.error("Error deleting box:", deleteResult.error);
+        alert("Error deleting box: " + (deleteResult.error || "Unknown error"));
+        return;
+      }
+  
+      // Delete all items in the box
+      for (const item of contents) { 
+        if (item._id) { 
+          const itemResponse = await fetch(`/api/inventory/item/${item._id}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+  
+          const itemResult = await itemResponse.json();
+          
+          if (!itemResult.success) {
+            console.error("Error deleting item:", itemResult.error);
+            // Continue deleting other items even if one fails
+          }
+        }
+      }
+  
+      alert("Box and all items deleted successfully!");
+      
+      // Refresh the inventory and close the modal
+      refresh();
+      onClose();
+  
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Network error: " + error.message);
     }
   }
 
@@ -984,9 +1034,12 @@ const AddBox = ({box}) => {
               </div>
               }
               {uploadError && <div className={styles.error}>{uploadError}</div>}
-              <div style={{width: "100%", display: "flex", justifyContent: "end"}}>
-                <button className={styles.button}>
-                    Upload & Finalize
+              <div style={{width: "100%", display: "flex", justifyContent: "space-between"}}>
+                <button className={styles.button} style={{backgroundColor:"#a83a32"}} onClick={handleDelete}>
+                    Delete
+                </button>
+                <button className={styles.button} type="submit">
+                    Save
                 </button>
 
               </div>

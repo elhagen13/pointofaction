@@ -70,7 +70,7 @@ export async function POST(request) {
     const itemDocument = {
       boxId: body.box_id,
       description: body.description.trim(),
-      image: body.image.trim(),
+      image: body.image,
       style: body.style.trim(),
       size: body.size.trim(),
       color: body.color.trim(),

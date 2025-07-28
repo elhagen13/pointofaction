@@ -241,19 +241,18 @@ export async function DELETE(request, { params }) {
       return Response.json(
         {
           success: false,
-          error: 'Invalid company ID format'
+          error: 'Invalid ID format'
         },
         { status: 400 }
       );
     }
 
-    // Check if company exists before deleting
-    const existingSaleItem = await collection.findOne({ _id: new ObjectId(id) });
-    if (!existingSaleItem) {
+    const existingItem = await collection.findOne({ _id: new ObjectId(id) });
+    if (!existingItem) {
       return Response.json(
         {
           success: false,
-          error: 'Sale Item not found'
+          error: 'Item not found'
         },
         { status: 404 }
       );
@@ -274,8 +273,8 @@ export async function DELETE(request, { params }) {
 
     return Response.json({
       success: true,
-      message: 'Company deleted successfully',
-      data: existingSaleItem
+      message: 'Item deleted successfully',
+      data: existingItem
     });
 
   } catch (error) {
@@ -290,3 +289,4 @@ export async function DELETE(request, { params }) {
     );
   }
 }
+
