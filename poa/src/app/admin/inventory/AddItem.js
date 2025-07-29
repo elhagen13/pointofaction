@@ -302,6 +302,13 @@ const AddBox = ({ setPage, setBox }) => {
       return;
     }
 
+    for(const item of contents){
+      if(!item.description || !item.style || !item.size || !item.color || !item.quantity || !item.price){
+        alert("One of the items in the box is missing a field");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -680,7 +687,7 @@ const AddBox = ({ setPage, setBox }) => {
                           updateExistingContent(
                             index,
                             "quantity",
-                            parseInt(e.target.value)
+                            (parseInt(e.target.value) || "")
                           )
                         }
                         className={styles.input}
@@ -701,7 +708,7 @@ const AddBox = ({ setPage, setBox }) => {
                           updateExistingContent(
                             index,
                             "price",
-                            parseFloat(e.target.value)
+                            (parseFloat(e.target.value) || "")
                           )
                         }
                         className={styles.input}
@@ -911,7 +918,7 @@ const AddBox = ({ setPage, setBox }) => {
                           onChange={(e) =>
                             setCurrentItem({
                               ...currentItem,
-                              quantity: parseInt(e.target.value) || 0,
+                              quantity: parseInt(e.target.value) || "",
                             })
                           }
                           className={styles.input}
@@ -931,7 +938,7 @@ const AddBox = ({ setPage, setBox }) => {
                           onChange={(e) =>
                             setCurrentItem({
                               ...currentItem,
-                              price: parseFloat(e.target.value) || 0,
+                              price: parseFloat(e.target.value) || "",
                             })
                           }
                           className={styles.input}

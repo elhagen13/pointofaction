@@ -28,13 +28,13 @@ export default function EditItem({ box, onClose, refresh }) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        <AddBox box={box} />
+        <AddBox box={box} onClose={onClose} />
       </div>
     </div>
   );
 }
 
-const AddBox = ({ box }) => {
+const AddBox = ({ box, onClose }) => {
   const [boxDescription, setBoxDescription] = useState(box.description);
   const [boxLocation, setBoxLocation] = useState(box.location);
   const [contents, setContents] = useState([]);
@@ -281,6 +281,13 @@ const AddBox = ({ box }) => {
       return;
     }
 
+    for(const item of contents){
+      if(!item.description || !item.style || !item.size || !item.color || !item.quantity || !item.price){
+        alert("One of the items in the box is missing a field");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -300,7 +307,7 @@ const AddBox = ({ box }) => {
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
-      setIsSubmitting(false);
+      onClose();
     }
   };
 
@@ -705,13 +712,15 @@ const AddBox = ({ box }) => {
                     </td>
                     <td className={styles.tableReg}>
                       <input
-                        type="number"
+                        type="text"
+                        pattern="[0-9]*"
+                        inputMode="numeric"
                         value={item.quantity}
                         onChange={(e) =>
                           updateExistingContent(
                             index,
                             "quantity",
-                            parseInt(e.target.value) || 0
+                            parseInt(e.target.value) || ""
                           )
                         }
                         className={styles.input}
@@ -724,14 +733,15 @@ const AddBox = ({ box }) => {
                     </td>
                     <td className={styles.tableReg}>
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
+                        pattern="^\d*\.?\d*$"
+                        inputMode="decimal"
                         value={item.price}
                         onChange={(e) =>
                           updateExistingContent(
                             index,
                             "price",
-                            parseFloat(e.target.value) || 0
+                            parseFloat(e.target.value) || ""
                           )
                         }
                         className={styles.input}
@@ -934,12 +944,14 @@ const AddBox = ({ box }) => {
                       </td>
                       <td className={styles.tableReg}>
                         <input
-                          type="number"
+                           type="text"
+                           pattern="[0-9]*"
+                           inputMode="numeric"
                           value={currentItem.quantity}
                           onChange={(e) =>
                             setCurrentItem({
                               ...currentItem,
-                              quantity: parseInt(e.target.value) || 0,
+                              quantity: parseInt(e.target.value) || "",
                             })
                           }
                           className={styles.input}
@@ -952,13 +964,14 @@ const AddBox = ({ box }) => {
                       </td>
                       <td className={styles.tableReg}>
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
+                          pattern="^\d*\.?\d*$"
+                          inputMode="decimal"
                           value={currentItem.price}
                           onChange={(e) =>
                             setCurrentItem({
                               ...currentItem,
-                              price: parseFloat(e.target.value) || 0,
+                              price: parseFloat(e.target.value) || "",
                             })
                           }
                           className={styles.input}
@@ -1110,3 +1123,5 @@ const AddBox = ({ box }) => {
     </div>
   );
 };
+
+
