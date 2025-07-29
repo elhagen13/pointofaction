@@ -13,6 +13,7 @@ import { FaRegSquarePlus } from "react-icons/fa6";
 import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
 import jsPDF from "jspdf";
 
+
 export default function EditItem({ box, onClose, refresh }) {
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -81,6 +82,36 @@ const AddBox = ({ box, onClose }) => {
     if (contents[0]?.sale) newVisibility.push("sale");
     setVisibility(newVisibility);
   }, [contents]);
+
+  const downloadBoxPDF = async () => {
+    try {
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "in",
+        format: [4, 6],
+      });
+
+      // Title
+      pdf.setFontSize(24);
+      pdf.setFont(undefined, "bold");
+      pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
+
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, "normal");
+      pdf.text(`${box.description.length >= 50 ? box.description.substring(0, 50) : box.description}`, 2, 1.6, {
+        align: "center",
+        maxWidth: 3.5,
+      });
+
+      const qrSize = 2;
+      const qrX = (4 - qrSize) / 2;
+      const qrY = 2.2;
+      pdf.addImage(box.qrCode, "PNG", qrX, qrY, qrSize, qrSize);
+      pdf.save(`box-${box.boxId}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
 
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
@@ -472,7 +503,10 @@ const AddBox = ({ box, onClose }) => {
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
+        <div style={{display: "flex", flexDirection:"row", justifyContent:"space-between"}}>
         <h2>Add Box to Inventory</h2>
+        <button className={styles.button} onClick={downloadBoxPDF}>Download QR </button>
+        </div>
         <form
           className={styles.form}
           style={{ marginTop: "30px" }}
@@ -1123,5 +1157,3 @@ const AddBox = ({ box, onClose }) => {
     </div>
   );
 };
-
-

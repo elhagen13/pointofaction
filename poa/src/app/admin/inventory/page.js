@@ -22,6 +22,7 @@ function Inventory() {
   const [editItemOpen, setEditItemOpen] = useState(null);
   const [editBoxOpen, setEditBoxOpen] = useState(null)
 
+
   const [inventory, setInventory] = useState([]);
   const [boxes, setBoxes] = useState([]);
 
@@ -65,6 +66,35 @@ function Inventory() {
     return dict;
   }, [boxes]);
 
+  // Filter inventory based on page selection
+  const filteredInventory = useMemo(() => {
+    switch (page) {
+      case "public":
+        return inventory.filter(item => item.public === true);
+      case "sale":
+        return inventory.filter(item => item.sale === true);
+      default: // "all inventory"
+        return inventory;
+    }
+  }, [inventory, page]);
+
+  // Filter boxes based on page selection (checking their contents)
+  const filteredBoxes = useMemo(() => {
+    switch (page) {
+      case "public":
+        return boxes.filter(box => {
+          const contents = contentDict[box._id.toString()] || [];
+          return contents.some(item => item.public === true);
+        });
+      case "sale":
+        return boxes.filter(box => {
+          const contents = contentDict[box._id.toString()] || [];
+          return contents.some(item => item.sale === true);
+        });
+      default: // "all inventory"
+        return boxes;
+    }
+  }, [boxes, contentDict, page]);
 
   const getInventory = async () => {
     const response = await fetch("/api/inventory/item", {
@@ -238,11 +268,25 @@ function Inventory() {
         </div>
         <div className={styles.pageSelection}>
           {pageOptions.map((opt, index) => (
-            <div key={index} style={{ backgroundColor: colors[index] }}>{opt}</div>
+            <button 
+              key={index} 
+              onClick={() => setPage(opt)}
+              style={{ 
+                backgroundColor: page === opt ? colors[index] : "#f0f0f0",
+                color: page === opt ? "white" : "black",
+                border: "1px solid #ccc",
+                padding: "8px 16px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontWeight: "bold"
+              }}
+            >
+              {opt}
+            </button>
           ))}
         </div>
       </div>
-      {page === "all inventory" && filter === "line items" && (
+      {filter === "line items" && (
         <table className={styles.inventoryTable} style={{borderCollapse:"collapse"}}>
           <thead style={{ textAlign: "left" }}>
             <tr>
@@ -259,7 +303,7 @@ function Inventory() {
             </tr>
           </thead>
           <tbody>
-            {inventory.map((item, index) => (
+            {filteredInventory.map((item, index) => (
               <tr key={index} style={{backgroundColor: index % 2 == 0 ? "#ebebeb" : "#f2f2f2"}}>
                 <td className={styles.tableSm} style={{ position: "relative" }}>
                   <img src={item.image} alt={`Item ${index + 1}`} />
@@ -278,7 +322,7 @@ function Inventory() {
           </tbody>
         </table>
       )}
-      {page === "all inventory" && filter === "boxes" && (
+      {filter === "boxes" && (
         <table className={styles.inventoryTable} style={{borderCollapse:"collapse"}}>
           <thead style={{ textAlign: "left" }}>
             <tr>
@@ -294,7 +338,7 @@ function Inventory() {
             </tr>
           </thead>
           <tbody>
-            {boxes.map((box, index) => (
+            {filteredBoxes.map((box, index) => (
               <tr key={index} style={{backgroundColor: index % 2 == 0 ? "#ebebeb" : "#f2f2f2", cursor:"pointer"}}>
                 <td className={styles.tableSm} style={{ position: "relative" }} onClick={() => setEditBoxOpen(box)}>
                   <img src={box.image} alt={`Item ${index + 1}`} />
