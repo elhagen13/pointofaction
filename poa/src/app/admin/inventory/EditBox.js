@@ -489,11 +489,10 @@ const AddBox = ({ box, onClose }) => {
       retString =
         retString +
         "• " +
+        item.description + " " + 
+        item.size + " " + 
+        item.color + " " + 
         item.quantity.toString() +
-        " " +
-        item.size +
-        " " +
-        item.description +
         " (" + 
         item.style
         ")\n";
