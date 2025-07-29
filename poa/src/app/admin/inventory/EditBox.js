@@ -494,7 +494,9 @@ const AddBox = ({ box, onClose }) => {
         item.size +
         " " +
         item.description +
-        "\n";
+        " (" + 
+        item.style
+        ")\n";
     });
 
     setBoxDescription(retString);
