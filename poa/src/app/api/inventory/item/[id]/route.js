@@ -26,6 +26,7 @@ async function connectToDatabase() {
     throw error;
   }
 }
+
 export async function PATCH(request, { params }) {
     try {
       const { db } = await connectToDatabase();
@@ -99,13 +100,13 @@ export async function PATCH(request, { params }) {
         updateDocument.quantity = body.quantity;
       }
       if (body.price !== undefined) {
-        updateDocument.price = body.quantity;
+        updateDocument.price = body.price;
       }
       if (body.sale !== undefined) {
         updateDocument.sale = body.sale;
       }
       if (body.public !== undefined) {
-        updateDocument.public = body.quantity;
+        updateDocument.public = body.public;
       }
       
   
@@ -170,4 +171,68 @@ export async function PATCH(request, { params }) {
       );
     }
   }
+
+export async function DELETE(request, { params }) {
+    try {
+      const { db } = await connectToDatabase();
+      const collection = db.collection(COLLECTION_NAME);
+      const { id } = await params;
   
+      // Validate ObjectId format
+      if (!ObjectId.isValid(id)) {
+        return Response.json(
+          {
+            success: false,
+            error: 'Invalid item ID format'
+          },
+          { status: 400 }
+        );
+      }
+  
+      // Check if item exists before deletion
+      const existingItem = await collection.findOne({ _id: new ObjectId(id) });
+      if (!existingItem) {
+        return Response.json(
+          {
+            success: false,
+            error: 'Item not found'
+          },
+          { status: 404 }
+        );
+      }
+  
+      // Delete the document
+      const result = await collection.deleteOne({ _id: new ObjectId(id) });
+  
+      if (result.deletedCount === 0) {
+        return Response.json(
+          {
+            success: false,
+            error: 'Item could not be deleted'
+          },
+          { status: 500 }
+        );
+      }
+  
+      return Response.json({
+        success: true,
+        message: 'Item deleted successfully',
+        data: {
+          deletedId: id,
+          deletedItem: existingItem
+        }
+      });
+  
+    } catch (error) {
+      console.error('DELETE error:', error);
+      
+      return Response.json(
+        {
+          success: false,
+          error: 'Failed to delete item',
+          details: error.message
+        },
+        { status: 500 }
+      );
+    }
+  }

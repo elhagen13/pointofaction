@@ -7,15 +7,13 @@ import {
   FaTimes,
   FaRegTrashAlt,
   FaLink,
-  FaDownload
+  FaDownload,
 } from "react-icons/fa";
-import { FaRegSquarePlus} from "react-icons/fa6";
+import { FaRegSquarePlus } from "react-icons/fa6";
 import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
-import jsPDF from 'jspdf';
+import jsPDF from "jspdf";
 
-
-
-export default function EditItem({box, onClose, refresh}) {
+export default function EditItem({ box, onClose, refresh }) {
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       refresh();
@@ -30,14 +28,13 @@ export default function EditItem({box, onClose, refresh}) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        <AddBox box={box}/>
+        <AddBox box={box} />
       </div>
     </div>
   );
 }
 
-
-const AddBox = ({box}) => {
+const AddBox = ({ box }) => {
   const [boxDescription, setBoxDescription] = useState(box.description);
   const [boxLocation, setBoxLocation] = useState(box.location);
   const [contents, setContents] = useState([]);
@@ -62,29 +59,28 @@ const AddBox = ({box}) => {
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
-  
+
   useEffect(() => {
     const getContent = async () => {
       const response = await fetch("/api/inventory/item", {
         method: "GET",
       });
-
       const result = await response.json();
-      
-      result.data.forEach((item, index) => {
-        if(item.boxId == box._id){
-          setContents([...contents, item])
-        }
-      })
-    };
 
+      const matchingItems = result.data.filter(
+        (item) => item.boxId === box._id
+      );
+      setContents(matchingItems);
+    };
     getContent();
   }, []);
 
   useEffect(() => {
-    if(contents[0]?.public) setVisibility([...visibility, "public"])
-    if(contents[0]?.sale) setVisibility([...visibility, "sale"])
-  }, [contents])
+    const newVisibility = [];
+    if (contents[0]?.public) newVisibility.push("public");
+    if (contents[0]?.sale) newVisibility.push("sale");
+    setVisibility(newVisibility);
+  }, [contents]);
 
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
@@ -213,10 +209,29 @@ const AddBox = ({box}) => {
     );
   };
 
-  const removeItem = (indexToRemove) => {
+  const removeItem = async (indexToRemove, id) => {
     setContents((prevContents) =>
       prevContents.filter((_, index) => index !== indexToRemove)
     );
+
+    const itemResponse = await fetch(`/api/inventory/item/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await itemResponse.json();
+
+    if (!data.success) {
+      console.error("Error deleting item:", data.error);
+      console.error("Details:", data.details);
+      alert("Error creating item: " + (data.error || "Unknown error"));
+      return false;
+    }
+
+    console.log("Box created successfully:", data.data);
+    console.log("Message:", data.message);
   };
 
   const addNewItem = () => {
@@ -259,8 +274,8 @@ const AddBox = ({box}) => {
       !boxDescription ||
       !boxLocation ||
       !imageUrl ||
-      contents.length < 1
-      || (visibility.includes("sale") && !(boxDiscount && minimumPrice))
+      contents.length < 1 ||
+      (visibility.includes("sale") && !(boxDiscount && minimumPrice))
     ) {
       alert("Please fill in all fields and upload an image");
       return;
@@ -277,10 +292,10 @@ const AddBox = ({box}) => {
         setBoxLocation("");
         setImageUrl("");
         setContents([]);
-        setVisibility(["admin"])
+        setVisibility(["admin"]);
 
         // Close modal
-        setPage("qr")
+        setPage("qr");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -292,7 +307,6 @@ const AddBox = ({box}) => {
   useEffect(() => {
     console.log(visibility);
   }, [visibility]);
-  
 
   async function uploadBox() {
     try {
@@ -302,11 +316,11 @@ const AddBox = ({box}) => {
         description: boxDescription,
         ...(visibility.includes("sale") && {
           discount: boxDiscount,
-          minPrice: minimumPrice
+          minPrice: minimumPrice,
         }),
-        contents: contents
+        contents: contents,
       };
-  
+
       // Create the box first
       const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
         method: "PATCH",
@@ -315,21 +329,21 @@ const AddBox = ({box}) => {
         },
         body: JSON.stringify(boxData),
       });
-  
+
       const data = await boxResponse.json();
-      
+
       if (!data.success) {
         console.error("Error creating box:", data.error);
         console.error("Details:", data.details);
         alert("Error creating box: " + (data.error || "Unknown error"));
         return false;
       }
-  
+
       console.log("Box created successfully:", data.data);
       console.log("Message:", data.message);
-  
-      const boxId = data.data._id
-  
+
+      const boxId = data.data._id;
+
       for (const content of contents) {
         const itemData = {
           box_id: boxId,
@@ -341,33 +355,34 @@ const AddBox = ({box}) => {
           quantity: content.quantity,
           price: content.price,
           sale: visibility.includes("sale"),
-          public: visibility.includes("public")
+          public: visibility.includes("public"),
         };
-  
+
         const itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(itemData), 
+          body: JSON.stringify(itemData),
         });
-  
+
         const itemResult = await itemResponse.json();
-        
+
         if (itemResult.success) {
           console.log("Item created successfully:", itemResult.data);
           console.log("Message:", itemResult.message);
         } else {
           console.error("Error creating item:", itemResult.error);
           console.error("Details:", itemResult.details);
-          alert("Error creating item: " + (itemResult.error || "Unknown error"));
+          alert(
+            "Error creating item: " + (itemResult.error || "Unknown error")
+          );
           return false;
         }
       }
-  
+
       alert("Box and all items created successfully!");
       return true;
-  
     } catch (error) {
       console.error("Network error:", error);
       alert("Network error: " + error.message);
@@ -375,678 +390,723 @@ const AddBox = ({box}) => {
     }
   }
 
-  async function handleDelete() {
+  async function handleDelete(opt) {
     try {
-      // Delete the box first
+      if (opt === "all") {
+        // Delete all items in the box
+        for (const item of contents) {
+          if(item._id) {
+            const itemResponse = await fetch(
+              `/api/inventory/item/${item._id}`,
+              {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            const itemResult = await itemResponse.json();
+
+            if (!itemResult.success) {
+              console.error("Error deleting item:", itemResult.error);
+              // Continue deleting other items even if one fails
+            }
+          }
+        }
+      }
+
       const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
       });
-  
-      const deleteResult = await boxResponse.json(); // Fixed: use boxResponse instead of itemResponse
-  
+
+      const deleteResult = await boxResponse.json(); 
+
       if (!deleteResult.success) {
         console.error("Error deleting box:", deleteResult.error);
         alert("Error deleting box: " + (deleteResult.error || "Unknown error"));
         return;
       }
-  
-      // Delete all items in the box
-      for (const item of contents) { 
-        if (item._id) { 
-          const itemResponse = await fetch(`/api/inventory/item/${item._id}`, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-  
-          const itemResult = await itemResponse.json();
-          
-          if (!itemResult.success) {
-            console.error("Error deleting item:", itemResult.error);
-            // Continue deleting other items even if one fails
-          }
-        }
-      }
-  
+
       alert("Box and all items deleted successfully!");
-      
+
       // Refresh the inventory and close the modal
       refresh();
       onClose();
-  
     } catch (error) {
       console.error("Network error:", error);
       alert("Network error: " + error.message);
     }
   }
 
-  return(
-    <div  style={{overflowX:"scroll", color: "black"}}>
-        <div>
-            <h2>Add Box to Inventory</h2>
-            <form className={styles.form} style={{ marginTop: "30px" }} onSubmit={handleSubmitBox}>
-              <div className={styles.formInput} style={{ flexGrow: 1 }}>
-                <label>Box Description</label>
-                <textarea
-                  className={styles.input}
-                  style={{ resize: "vertical", minHeight: "90px" }}
-                  value={boxDescription}
-                  onChange={(e) => setBoxDescription(e.target.value)}
-                  required
+  const generateDescription = (e) => {
+    e.preventDefault();
+
+    let retString = "";
+
+    contents.forEach((item) => {
+      retString =
+        retString +
+        "• " +
+        item.quantity.toString() +
+        " " +
+        item.size +
+        " " +
+        item.description +
+        "\n";
+    });
+
+    setBoxDescription(retString);
+  };
+
+  return (
+    <div style={{ overflowX: "scroll", color: "black" }}>
+      <div>
+        <h2>Add Box to Inventory</h2>
+        <form
+          className={styles.form}
+          style={{ marginTop: "30px" }}
+          onSubmit={handleSubmitBox}
+        >
+          <div className={styles.formInput} style={{ flexGrow: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <label>Box Description</label>
+              <button
+                className={styles.button}
+                onClick={(e) => generateDescription(e)}
+                style={{
+                  padding: "2px 10px",
+                  minHeight: "0",
+                  backgroundColor: "white",
+                  border: "1px solid green",
+                  color: "green",
+                }}
+              >
+                Autogenerate Description
+              </button>
+            </div>
+            <textarea
+              className={styles.input}
+              style={{ resize: "vertical", minHeight: "90px" }}
+              value={boxDescription}
+              onChange={(e) => setBoxDescription(e.target.value)}
+              required
+            />
+          </div>
+          <div className={styles.imageAndLocation}>
+            <div className={styles.formInput}>
+              <label>Image</label>
+              <div className={styles.uploadSection}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileSelect(e, "box")}
+                  className={styles.fileInput}
+                  id="file-upload"
                 />
+                <label htmlFor="file-upload" className={styles.fileLabel}>
+                  <FaUpload /> Choose Image File
+                </label>
               </div>
-              <div className={styles.imageAndLocation}>
-                <div className={styles.formInput}>
-                  <label>Image</label>
-                  <div className={styles.uploadSection}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileSelect(e, "box")}
-                      className={styles.fileInput}
-                      id="file-upload"
-                    />
-                    <label htmlFor="file-upload" className={styles.fileLabel}>
-                      <FaUpload /> Choose Image File
-                    </label>
-                  </div>
-                </div>
-                <div className={styles.formInput}>
-                  <label>Box Location</label>
-                  <input
-                    className={styles.input}
-                    value={boxLocation}
-                    onChange={(e) => setBoxLocation(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-              {imageUrl && (
-                <div className={styles.imagePreview}>
-                  <div style={{ position: "relative" }}>
-                    <img
-                      src={imageUrl}
-                      alt="Uploaded"
-                      className={styles.previewImage}
-                    />
-                    <button
-                      type="button"
-                      onClick={removeUploadedImage}
-                      className={styles.removeButton}
-                    >
-                      <FaTimes />
-                    </button>
-                  </div>
-                </div>
-              )}
-              <div className={styles.formInput}>
-                <label>Box Inventory</label>
-                <table
-                  className={styles.boxTable}
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    borderCollapse: "collapse",
-                    borderRadius: "10px",
-                    overflow: "hidden",
-                  }}
+            </div>
+            <div className={styles.formInput}>
+              <label>Box Location</label>
+              <input
+                className={styles.input}
+                value={boxLocation}
+                onChange={(e) => setBoxLocation(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          {imageUrl && (
+            <div className={styles.imagePreview}>
+              <div style={{ position: "relative" }}>
+                <img
+                  src={imageUrl}
+                  alt="Uploaded"
+                  className={styles.previewImage}
+                />
+                <button
+                  type="button"
+                  onClick={removeUploadedImage}
+                  className={styles.removeButton}
                 >
-                  <thead>
-                    <tr
-                      className={styles.row}
-                      style={{ backgroundColor: "#ccd5e0" }}
+                  <FaTimes />
+                </button>
+              </div>
+            </div>
+          )}
+          <div className={styles.formInput}>
+            <label>Box Inventory</label>
+            <table
+              className={styles.boxTable}
+              style={{
+                width: "100%",
+                textAlign: "left",
+                borderCollapse: "collapse",
+                borderRadius: "10px",
+                overflow: "hidden",
+              }}
+            >
+              <thead>
+                <tr
+                  className={styles.row}
+                  style={{ backgroundColor: "#ccd5e0" }}
+                >
+                  <th className={styles.tableSm} style={{ fontWeight: "bold" }}>
+                    Image
+                  </th>
+                  <th
+                    className={styles.tableLg}
+                    style={{ border: "none", fontWeight: "bold" }}
+                  >
+                    Description
+                  </th>
+                  <th
+                    className={styles.tableMed}
+                    style={{ border: "none", fontWeight: "bold" }}
+                  >
+                    Style
+                  </th>
+                  <th
+                    className={styles.tableReg}
+                    style={{ border: "none", fontWeight: "bold" }}
+                  >
+                    Size
+                  </th>
+                  <th
+                    className={styles.tableReg}
+                    style={{ border: "none", fontWeight: "bold" }}
+                  >
+                    Color
+                  </th>
+                  <th
+                    className={styles.tableReg}
+                    style={{ border: "none", fontWeight: "bold" }}
+                  >
+                    Quantity
+                  </th>
+                  <th
+                    className={styles.tableReg}
+                    style={{ border: "none", fontWeight: "bold" }}
+                  >
+                    Price
+                  </th>
+                  <th className={styles.tableTiny}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {contents.map((item, index) => (
+                  <tr
+                    key={index}
+                    style={{
+                      height: "60px",
+                      width: "100%",
+                      backgroundColor: index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
+                    }}
+                  >
+                    <td
+                      className={styles.tableSm}
+                      style={{ position: "relative" }}
                     >
-                      <th
-                        className={styles.tableSm}
-                        style={{ fontWeight: "bold" }}
-                      >
-                        Image
-                      </th>
-                      <th
-                        className={styles.tableLg}
-                        style={{ border: "none", fontWeight: "bold" }}
-                      >
-                        Description
-                      </th>
-                      <th
-                        className={styles.tableMed}
-                        style={{ border: "none", fontWeight: "bold" }}
-                      >
-                        Style
-                      </th>
-                      <th
-                        className={styles.tableReg}
-                        style={{ border: "none", fontWeight: "bold" }}
-                      >
-                        Size
-                      </th>
-                      <th
-                        className={styles.tableReg}
-                        style={{ border: "none", fontWeight: "bold" }}
-                      >
-                        Color
-                      </th>
-                      <th
-                        className={styles.tableReg}
-                        style={{ border: "none", fontWeight: "bold" }}
-                      >
-                        Quantity
-                      </th>
-                      <th
-                        className={styles.tableReg}
-                        style={{ border: "none", fontWeight: "bold" }}
-                      >
-                        Price
-                      </th>
-                      <th className={styles.tableTiny}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contents.map((item, index) => (
-                      <tr
-                        key={index}
+                      <img
+                        src={item.image}
+                        alt={`Item ${index + 1}`}
+                        onClick={() => handleThumbnailClick(index)}
                         style={{
-                          height: "60px",
+                          cursor: "pointer",
+                          opacity:
+                            selectedItemIndex === index && imageUploading
+                              ? 0.5
+                              : 1,
+                          transition: "opacity 0.2s",
+                        }}
+                        title="Click to change image"
+                      />
+                      {selectedItemIndex === index && imageUploading && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            color: "#007bff",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Uploading...
+                        </div>
+                      )}
+                    </td>
+                    <td className={styles.tableLg}>
+                      <input
+                        value={item.description}
+                        onChange={(e) =>
+                          updateExistingContent(
+                            index,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
                           width: "100%",
-                          backgroundColor:
-                            index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
+                        }}
+                      />
+                    </td>
+                    <td className={styles.tableMed}>
+                      <input
+                        value={item.style}
+                        onChange={(e) =>
+                          updateExistingContent(index, "style", e.target.value)
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                        }}
+                      />
+                    </td>
+                    <td className={styles.tableReg}>
+                      <input
+                        value={item.size}
+                        onChange={(e) =>
+                          updateExistingContent(index, "size", e.target.value)
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                        }}
+                      />
+                    </td>
+                    <td className={styles.tableReg}>
+                      <input
+                        value={item.color}
+                        onChange={(e) =>
+                          updateExistingContent(index, "color", e.target.value)
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                        }}
+                      />
+                    </td>
+                    <td className={styles.tableReg}>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateExistingContent(
+                            index,
+                            "quantity",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                        }}
+                      />
+                    </td>
+                    <td className={styles.tableReg}>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={item.price}
+                        onChange={(e) =>
+                          updateExistingContent(
+                            index,
+                            "price",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                        }}
+                      />
+                    </td>
+                    <td className={styles.tableTiny}>
+                      <div
+                        className={styles.trash}
+                        onClick={() => removeItem(index, item._id)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <FaRegTrashAlt />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div
+              style={{
+                color: "gray",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "row",
+                gap: "15px",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onClick={() => {
+                newItemOpen && cancelNewItem();
+                setNewItemOpen(!newItemOpen);
+              }}
+            >
+              <IoIosAddCircle style={{ color: "green", fontSize: "30px" }} />
+            </div>
+            {newItemOpen && (
+              <div>
+                <table style={{ width: "100%", textAlign: "left" }}>
+                  <tbody>
+                    <tr
+                      style={{
+                        height: "60px",
+                        width: "100%",
+                      }}
+                    >
+                      <td
+                        className={styles.tableSm}
+                        style={{
+                          position: "relative",
+                          width: currentItem.imageUrl !== "" ? "50px" : "150px",
                         }}
                       >
-                        <td
-                          className={styles.tableSm}
-                          style={{ position: "relative" }}
-                        >
+                        {currentItem.imageUrl !== "" ? (
                           <img
-                            src={item.image}
-                            alt={`Item ${index + 1}`}
-                            onClick={() => handleThumbnailClick(index)}
+                            src={currentItem.imageUrl}
+                            alt="New Item"
+                            onClick={handleNewItemThumbnailClick}
                             style={{
                               cursor: "pointer",
-                              opacity:
-                                selectedItemIndex === index && imageUploading
-                                  ? 0.5
-                                  : 1,
+                              opacity: imageUploading ? 0.5 : 1,
                               transition: "opacity 0.2s",
                             }}
                             title="Click to change image"
                           />
-                          {selectedItemIndex === index && imageUploading && (
+                        ) : showUrlInput ? (
+                          <div>
+                            <input
+                              type="text"
+                              value={imageUrlInput}
+                              onChange={(e) => setImageUrlInput(e.target.value)}
+                              placeholder="url..."
+                              className={styles.input}
+                              style={{
+                                margin: 0,
+                                padding: 0,
+                                width: "100%",
+                              }}
+                            />
                             <div
                               style={{
                                 position: "absolute",
-                                top: "50%",
-                                left: "50%",
-                                transform: "translate(-50%, -50%)",
-                                color: "#007bff",
-                                fontSize: "12px",
-                                fontWeight: "bold",
+                                right: "0",
+                                top: "0",
                               }}
                             >
-                              Uploading...
+                              <button
+                                onClick={() => handleUrlSubmit("content")}
+                                style={{ padding: "5px" }}
+                              >
+                                Use
+                              </button>
+                              <button
+                                onClick={() => setShowUrlInput(false)}
+                                className={styles.urlCancelButton}
+                              >
+                                <FaTimes />
+                              </button>
                             </div>
-                          )}
-                        </td>
-                        <td className={styles.tableLg}>
-                          <input
-                            value={item.description}
-                            onChange={(e) =>
-                              updateExistingContent(
-                                index,
-                                "description",
-                                e.target.value
-                              )
-                            }
-                            className={styles.input}
-                            style={{
-                              margin: 0,
-                              minHeight: "auto",
-                              width: "100%",
-                            }}
-                          />
-                        </td>
-                        <td className={styles.tableMed}>
-                          <input
-                            value={item.style}
-                            onChange={(e) =>
-                              updateExistingContent(
-                                index,
-                                "style",
-                                e.target.value
-                              )
-                            }
-                            className={styles.input}
-                            style={{
-                              margin: 0,
-                              minHeight: "auto",
-                              width: "100%",
-                            }}
-                          />
-                        </td>
-                        <td className={styles.tableReg}>
-                          <input
-                            value={item.size}
-                            onChange={(e) =>
-                              updateExistingContent(
-                                index,
-                                "size",
-                                e.target.value
-                              )
-                            }
-                            className={styles.input}
-                            style={{
-                              margin: 0,
-                              minHeight: "auto",
-                              width: "100%",
-                            }}
-                          />
-                        </td>
-                        <td className={styles.tableReg}>
-                          <input
-                            value={item.color}
-                            onChange={(e) =>
-                              updateExistingContent(
-                                index,
-                                "color",
-                                e.target.value
-                              )
-                            }
-                            className={styles.input}
-                            style={{
-                              margin: 0,
-                              minHeight: "auto",
-                              width: "100%",
-                            }}
-                          />
-                        </td>
-                        <td className={styles.tableReg}>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              updateExistingContent(
-                                index,
-                                "quantity",
-                                parseInt(e.target.value) || 0
-                              )
-                            }
-                            className={styles.input}
-                            style={{
-                              margin: 0,
-                              minHeight: "auto",
-                              width: "100%",
-                            }}
-                          />
-                        </td>
-                        <td className={styles.tableReg}>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={item.price}
-                            onChange={(e) =>
-                              updateExistingContent(
-                                index,
-                                "price",
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            className={styles.input}
-                            style={{
-                              margin: 0,
-                              minHeight: "auto",
-                              width: "100%",
-                            }}
-                          />
-                        </td>
-                        <td className={styles.tableTiny}>
-                          <div
-                            className={styles.trash}
-                            onClick={() => removeItem(index)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <FaRegTrashAlt />
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div
-                  style={{ color: "gray", cursor: "pointer", display: "flex", flexDirection: "row", gap: "15px", alignItems: "center", justifyContent: "center"}}
-                  onClick={() => {
-                    newItemOpen && cancelNewItem();
-                    setNewItemOpen(!newItemOpen);
-                  }}
-                >
-                  <IoIosAddCircle style={{color: "green", fontSize: "30px"}}/>
-                </div>
-                {newItemOpen && (
-                  <div>
-                    <table style={{ width: "100%", textAlign: "left" }}>
-                      <tbody>
-                        <tr
+                        ) : (
+                          <div className={styles.uploadOptions}>
+                            <div className={styles.uploadSection}>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleFileSelect(e, "content")}
+                                className={styles.fileInput}
+                                id="file-upload-new"
+                              />
+                              <label
+                                htmlFor="file-upload-new"
+                                className={styles.fileLabel}
+                                title="Upload from computer"
+                              >
+                                <FaUpload />
+                              </label>
+                            </div>
+                            <button
+                              className={styles.fileLabel}
+                              onClick={handleNewItemThumbnailClick}
+                              title="Enter image URL"
+                            >
+                              <FaLink color="black" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className={styles.tableLg}>
+                        <input
+                          value={currentItem.description}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              description: e.target.value,
+                            })
+                          }
+                          className={styles.input}
                           style={{
-                            height: "60px",
+                            margin: 0,
+                            minHeight: "auto",
                             width: "100%",
                           }}
+                        />
+                      </td>
+                      <td className={styles.tableMed}>
+                        <input
+                          value={currentItem.style}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              style: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          value={currentItem.size}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              size: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          value={currentItem.color}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              color: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          type="number"
+                          value={currentItem.quantity}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              quantity: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={currentItem.price}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              price: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableTiny}>
+                        <div
+                          className={`${styles.trash} ${styles.add}`}
+                          onClick={addNewItem}
+                          style={{ cursor: "pointer", fontSize: "25px" }}
                         >
-                          <td
-                            className={styles.tableSm}
-                            style={{
-                              position: "relative",
-                              width:
-                                currentItem.imageUrl !== "" ? "50px" : "150px",
-                            }}
-                          >
-                            {currentItem.imageUrl !== "" ? (
-                              <img
-                                src={currentItem.imageUrl}
-                                alt="New Item"
-                                onClick={handleNewItemThumbnailClick}
-                                style={{
-                                  cursor: "pointer",
-                                  opacity: imageUploading ? 0.5 : 1,
-                                  transition: "opacity 0.2s",
-                                }}
-                                title="Click to change image"
-                              />
-                            ) : showUrlInput ? (
-                              <div>
-                                <input
-                                  type="text"
-                                  value={imageUrlInput}
-                                  onChange={(e) =>
-                                    setImageUrlInput(e.target.value)
-                                  }
-                                  placeholder="url..."
-                                  className={styles.input}
-                                  style={{
-                                    margin: 0,
-                                    padding: 0,
-                                    width: "100%",
-                                  }}
-                                />
-                                <div
-                                  style={{
-                                    position: "absolute",
-                                    right: "0",
-                                    top: "0",
-                                  }}
-                                >
-                                  <button
-                                    onClick={() => handleUrlSubmit("content")}
-                                    style={{ padding: "5px" }}
-                                  >
-                                    Use
-                                  </button>
-                                  <button
-                                    onClick={() => setShowUrlInput(false)}
-                                    className={styles.urlCancelButton}
-                                  >
-                                    <FaTimes />
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className={styles.uploadOptions}>
-                                <div className={styles.uploadSection}>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) =>
-                                      handleFileSelect(e, "content")
-                                    }
-                                    className={styles.fileInput}
-                                    id="file-upload-new"
-                                  />
-                                  <label
-                                    htmlFor="file-upload-new"
-                                    className={styles.fileLabel}
-                                    title="Upload from computer"
-                                  >
-                                    <FaUpload />
-                                  </label>
-                                </div>
-                                <button
-                                  className={styles.fileLabel}
-                                  onClick={handleNewItemThumbnailClick}
-                                  title="Enter image URL"
-                          
-                                >
-                                  <FaLink color="black"/>
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                          <td className={styles.tableLg}>
-                            <input
-                              value={currentItem.description}
-                              onChange={(e) =>
-                                setCurrentItem({
-                                  ...currentItem,
-                                  description: e.target.value,
-                                })
-                              }
-                              className={styles.input}
-                              style={{
-                                margin: 0,
-                                minHeight: "auto",
-                                width: "100%",
-                              }}
-                            />
-                          </td>
-                          <td className={styles.tableMed}>
-                            <input
-                              value={currentItem.style}
-                              onChange={(e) =>
-                                setCurrentItem({
-                                  ...currentItem,
-                                  style: e.target.value,
-                                })
-                              }
-                              className={styles.input}
-                              style={{
-                                margin: 0,
-                                minHeight: "auto",
-                                width: "100%",
-                              }}
-                            />
-                          </td>
-                          <td className={styles.tableReg}>
-                            <input
-                              value={currentItem.size}
-                              onChange={(e) =>
-                                setCurrentItem({
-                                  ...currentItem,
-                                  size: e.target.value,
-                                })
-                              }
-                              className={styles.input}
-                              style={{
-                                margin: 0,
-                                minHeight: "auto",
-                                width: "100%",
-                              }}
-                            />
-                          </td>
-                          <td className={styles.tableReg}>
-                            <input
-                              value={currentItem.color}
-                              onChange={(e) =>
-                                setCurrentItem({
-                                  ...currentItem,
-                                  color: e.target.value,
-                                })
-                              }
-                              className={styles.input}
-                              style={{
-                                margin: 0,
-                                minHeight: "auto",
-                                width: "100%",
-                              }}
-                            />
-                          </td>
-                          <td className={styles.tableReg}>
-                            <input
-                              type="number"
-                              value={currentItem.quantity}
-                              onChange={(e) =>
-                                setCurrentItem({
-                                  ...currentItem,
-                                  quantity: parseInt(e.target.value) || 0,
-                                })
-                              }
-                              className={styles.input}
-                              style={{
-                                margin: 0,
-                                minHeight: "auto",
-                                width: "100%",
-                              }}
-                            />
-                          </td>
-                          <td className={styles.tableReg}>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={currentItem.price}
-                              onChange={(e) =>
-                                setCurrentItem({
-                                  ...currentItem,
-                                  price: parseFloat(e.target.value) || 0,
-                                })
-                              }
-                              className={styles.input}
-                              style={{
-                                margin: 0,
-                                minHeight: "auto",
-                                width: "100%",
-                              }}
-                            />
-                          </td>
-                          <td className={styles.tableTiny}>
-                            <div
-                              className={`${styles.trash} ${styles.add}`}
-                              onClick={addNewItem}
-                              style={{ cursor: "pointer", fontSize: "25px"}}
-                            >
-                              <IoIosCheckmarkCircle />
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                          <IoIosCheckmarkCircle />
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+          <div className={styles.formInput}>
+            <label>Visibility</label>
+            <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
+              <div>
+                <input
+                  type="radio"
+                  id="radio1"
+                  name="radioGroup"
+                  value="admin"
+                  checked
+                />
+                <label for="radio1" style={{ marginLeft: "5px" }}>
+                  Admin
+                </label>
+                <br />
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  id="checkbox1"
+                  name="public"
+                  value="public"
+                  checked={visibility.includes("public")}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setVisibility([...visibility, "public"]);
+                    } else {
+                      setVisibility(
+                        visibility.filter((item) => item !== "public")
+                      );
+                    }
+                  }}
+                />
+                <label for="checkbox1" style={{ marginLeft: "5px" }}>
+                  Public
+                </label>
+                <br />
+              </div>
+
+              <div>
+                <input
+                  type="checkbox"
+                  id="checkbox2"
+                  name="sale"
+                  value="sale"
+                  checked={visibility.includes("sale")}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setVisibility([...visibility, "sale"]);
+                    } else {
+                      setVisibility(
+                        visibility.filter((item) => item !== "sale")
+                      );
+                    }
+                  }}
+                />
+
+                <label for="checkbox2" style={{ marginLeft: "5px" }}>
+                  Sale
+                </label>
+              </div>
+            </div>
+          </div>
+          {visibility.includes("sale") && (
+            <div className={styles.horizontal}>
+              <div className={styles.formInput}>
+                <label>Discount</label>
+                <input
+                  className={styles.input}
+                  onChange={(e) =>
+                    setBoxDiscount(e.target.value.replace(/[^0-9.]/g, ""))
+                  }
+                  value={`${boxDiscount}%`}
+                  required
+                />
               </div>
               <div className={styles.formInput}>
-                <label>Visibility</label>
-                <div
-                  style={{ display: "flex", flexDirection: "row", gap: "20px" }}
-                >
-                  <div>
-                    <input
-                      type="radio"
-                      id="radio1"
-                      name="radioGroup"
-                      value="admin"
-                      checked
-                    />
-                    <label for="radio1" style={{ marginLeft: "5px" }}>
-                      Admin
-                    </label>
-                    <br />
-                  </div>
-                  <div>
-                    <input
-                      type="checkbox"
-                      id="checkbox1"
-                      name="public"
-                      value="public"
-                      checked={visibility.includes("public")}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setVisibility([...visibility, "public"]);
-                        } else {
-                          setVisibility(
-                            visibility.filter((item) => item !== "public")
-                          );
-                        }
-                      }}
-                    />
-                    <label for="checkbox1" style={{ marginLeft: "5px" }}>
-                      Public
-                    </label>
-                    <br />
-                  </div>
-
-                  <div>
-                    <input
-                      type="checkbox"
-                      id="checkbox2"
-                      name="sale"
-                      value="sale"
-                      checked={visibility.includes("sale")}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setVisibility([...visibility, "sale"]);
-                        } else {
-                          setVisibility(
-                            visibility.filter((item) => item !== "sale")
-                          );
-                        }
-                      }}
-                    />
-
-                    <label for="checkbox2" style={{ marginLeft: "5px" }}>
-                      Sale
-                    </label>
-                  </div>
-                </div>
+                <label>Minimum Purchase</label>
+                <input
+                  className={styles.input}
+                  onChange={(e) =>
+                    setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
+                  }
+                  value={`$${minimumPrice}`}
+                  required
+                />
               </div>
-              {
-                visibility.includes("sale") && 
-                <div className={styles.horizontal}>
-                <div className={styles.formInput}>
-                  <label>Discount</label>
-                  <input
-                    className={styles.input}
-                    onChange={(e) =>
-                        setBoxDiscount(e.target.value.replace(/[^0-9.]/g, ""))
-                      }
-                    value={`${boxDiscount}%`}
-                    required
-                  />
-                </div>
-                <div className={styles.formInput}>
-                  <label>Minimum Purchase</label>
-                  <input
-                    className={styles.input}
-                    onChange={(e) =>
-                        setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
-                      }
-                    value={`$${minimumPrice}`}
-                    required
-                  />
-                </div>
-              </div>
-              }
-              {uploadError && <div className={styles.error}>{uploadError}</div>}
-              <div style={{width: "100%", display: "flex", justifyContent: "space-between"}}>
-                <button className={styles.button} style={{backgroundColor:"#a83a32"}} onClick={handleDelete}>
-                    Delete
-                </button>
-                <button className={styles.button} type="submit">
-                    Save
-                </button>
-
-              </div>
-            </form>
+            </div>
+          )}
+          {uploadError && <div className={styles.error}>{uploadError}</div>}
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
+              <button
+                className={styles.button}
+                style={{ backgroundColor: "#a83a32" }}
+                onClick={() => handleDelete("all")}
+              >
+                Delete All
+              </button>
+              <button
+                className={styles.button}
+                style={{
+                  backgroundColor: "white",
+                  color: "#a83a32",
+                  border: "2px solid #a83a32",
+                }}
+                onClick={() => handleDelete("box")}
+              >
+                Delete Box
+              </button>
+            </div>
+            <button className={styles.button} type="submit">
+              Save
+            </button>
           </div>
+        </form>
+      </div>
     </div>
-
-  )
-
-}
+  );
+};

@@ -305,9 +305,9 @@ function Inventory() {
                 <td onClick={() => setEditBoxOpen(box)}>
                   {contentDict[box._id.toString()]?.length || 0}
                 </td>
-                <td onClick={() => setEditBoxOpen(box)}>{contentDict[box._id][0].sale ? "Yes" : "No"}</td>
-                <td onClick={() => setEditBoxOpen(box)}>{contentDict[box._id][0].sale ? `${box.discount}%` : "N/A"}</td>
-                <td onClick={() => setEditBoxOpen(box)}>{contentDict[box._id][0].sale ? `$${box.minPrice}` : "N/A"}</td>
+                <td onClick={() => setEditBoxOpen(box)}>{contentDict[box._id] ? contentDict[box._id][0].sale ? "Yes" : "No" : "No"}</td>
+                <td onClick={() => setEditBoxOpen(box)}>{contentDict[box._id] ? contentDict[box._id][0].sale ? `${box.discount}%` : "N/A" : "N/A"}</td>
+                <td onClick={() => setEditBoxOpen(box)}>{contentDict[box._id] ? contentDict[box._id][0].sale ? `$${box.minPrice}` : "N/A" : "N/A"}</td>
                 <td><FaRegCopy onClick={() => duplicateBox(box)}/></td>
               </tr>
             ))}

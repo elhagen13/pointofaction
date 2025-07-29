@@ -98,7 +98,7 @@ export async function POST(request) {
     
     // Prepare document for insertion
     const saleItemDocument = {
-      boxId: sequentialId,
+      boxId: sequentialId.toString().padStart(4, "0"),
       description: body.description.trim(),
       qrCode: qrCodeUrl,
       image: body.imageLink.trim(),
