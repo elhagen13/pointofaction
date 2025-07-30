@@ -93,7 +93,7 @@ export async function POST(request) {
     const body = await request.json();
     const sequentialId = await getNextSequenceId('box_id');
 
-    const websiteUrl = `https://www.pointofaction.com/admin/box/${sequentialId}`;
+    const websiteUrl = `https://www.pointofaction.com/admin/box/${sequentialId.toString().padStart(4, "0")}`;
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(websiteUrl)}`;
     
     // Prepare document for insertion

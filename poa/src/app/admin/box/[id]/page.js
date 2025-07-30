@@ -69,7 +69,7 @@ export default function Box() {
         if (index === i) {
           return {
             ...item,
-            quantity: val,
+            quantity: parseInt(val) ? parseInt(val) : 0,
           };
         } else return item;
       })
@@ -77,6 +77,12 @@ export default function Box() {
   };
 
   const handleChanges = async () => {
+    for(const item of items){
+      if(!item.quantity){
+        alert("Item quantity not valid");
+        return;
+      }
+    }
     for (const item of items) {
       try {
         const newData = {

@@ -7,7 +7,7 @@ import {
   FaTimes,
   FaRegTrashAlt,
   FaLink,
-  FaDownload,
+  FaRegCopy,
 } from "react-icons/fa";
 import { FaRegSquarePlus } from "react-icons/fa6";
 import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
@@ -29,23 +29,24 @@ export default function EditItem({ box, onClose, refresh }) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        <AddBox box={box} onClose={onClose} />
+        <AddBox box={box} onClose={onClose} refresh={refresh}/>
       </div>
     </div>
   );
 }
 
-const AddBox = ({ box, onClose }) => {
+const AddBox = ({ box, onClose, refresh }) => {
   const [boxDescription, setBoxDescription] = useState(box.description);
   const [boxLocation, setBoxLocation] = useState(box.location);
   const [contents, setContents] = useState([]);
+  const [originalContents, setOriginalContents] = useState([]);
   const [imageUrl, setImageUrl] = useState(box.image);
   const [minimumPrice, setMinimumPrice] = useState(box.minPrice);
   /*admin (always clicked), public inventory, sale*/
   const [visibility, setVisibility] = useState(["admin"]);
   const [boxDiscount, setBoxDiscount] = useState(box.discount ?? 20);
   const [currentItem, setCurrentItem] = useState({
-    imageUrl: "",
+    image: "",
     description: "",
     style: "",
     size: "",
@@ -60,6 +61,7 @@ const AddBox = ({ box, onClose }) => {
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  let acknowledgement = false;
 
   useEffect(() => {
     const getContent = async () => {
@@ -72,6 +74,7 @@ const AddBox = ({ box, onClose }) => {
         (item) => item.boxId === box._id
       );
       setContents(matchingItems);
+      setOriginalContents(matchingItems)
     };
     getContent();
   }, []);
@@ -90,23 +93,60 @@ const AddBox = ({ box, onClose }) => {
         unit: "in",
         format: [4, 6],
       });
-
+  
+      // Constants
+      const pageWidth = 4;
+      const pageHeight = 6;
+      const qrSize = 2;
+      const bottomMargin = 0.5; 
+      const textStartY = 1.6;
+      const lineHeight = 0.2; 
+      
       // Title
       pdf.setFontSize(24);
       pdf.setFont(undefined, "bold");
       pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
-
+      
+      const maxQrY = pageHeight - qrSize - bottomMargin; 
+      
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
-      pdf.text(`${box.description.length >= 50 ? box.description.substring(0, 50) : box.description}`, 2, 1.6, {
+      console.log("new", box.description)
+      let description = box.description;
+      let currentQrY = 2.2; 
+      
+      const textLines = pdf.splitTextToSize(description, 3.5);
+      const textHeight = textLines.length * lineHeight;
+      const idealQrY = textStartY + textHeight + 0.3; 
+      
+      // If QR would go past bottom, truncate text
+      if (idealQrY + qrSize > pageHeight - bottomMargin) {
+        const availableHeight = maxQrY - textStartY - 0.3; 
+        const maxLines = Math.floor(availableHeight / lineHeight);
+        
+        // Truncate text to fit
+        let truncatedText = description;
+        let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+        
+        while (truncatedLines.length > maxLines && truncatedText.length > 0) {
+          truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+        }
+        
+        description = truncatedText;
+        currentQrY = maxQrY;
+      } else {
+        currentQrY = idealQrY;
+      }
+      
+      pdf.text(description, 2, textStartY, {
         align: "center",
         maxWidth: 3.5,
       });
-
-      const qrSize = 2;
-      const qrX = (4 - qrSize) / 2;
-      const qrY = 2.2;
-      pdf.addImage(box.qrCode, "PNG", qrX, qrY, qrSize, qrSize);
+      
+      const qrX = (pageWidth - qrSize) / 2;
+      pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
+      
       pdf.save(`box-${box.boxId}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -147,16 +187,17 @@ const AddBox = ({ box, onClose }) => {
 
     if (type === "content" && itemIndex !== null) {
       // Update specific item's image
+      console.log(contents)
       setContents((prevContents) =>
         prevContents.map((item, index) =>
-          index === itemIndex ? { ...item, imageUrl: imageUrlInput } : item
+          index === itemIndex ? { ...item, image: imageUrlInput } : item
         )
       );
     } else if (type === "content") {
       // Update current item being added
       setCurrentItem({
         ...currentItem,
-        imageUrl: imageUrlInput,
+        image: imageUrlInput,
       });
     } else {
       // Update box image
@@ -240,11 +281,18 @@ const AddBox = ({ box, onClose }) => {
     );
   };
 
-  const removeItem = async (indexToRemove, id) => {
+  const removeItem = async (indexToRemove) => {
     setContents((prevContents) =>
       prevContents.filter((_, index) => index !== indexToRemove)
     );
+  };
+  
+  const copyItem = async (indexToCopy) => {
+    const { _id, ...itemToCopy } = contents[indexToCopy]; 
+    setContents([...contents, itemToCopy]);
+  };
 
+  const removeItemDB = async(id) => {
     const itemResponse = await fetch(`/api/inventory/item/${id}`, {
       method: "DELETE",
       headers: {
@@ -263,13 +311,16 @@ const AddBox = ({ box, onClose }) => {
 
     console.log("Box created successfully:", data.data);
     console.log("Message:", data.message);
-  };
+
+  }
 
   const addNewItem = () => {
     if (currentItem.description.trim() === "") {
       setUploadError("Please enter a description for the item");
       return;
     }
+    console.log("contents",contents)
+    console.log("current", currentItem)
 
     setContents((prevContents) => [...prevContents, { ...currentItem }]);
     setCurrentItem({
@@ -319,6 +370,12 @@ const AddBox = ({ box, onClose }) => {
       }
     }
 
+    if(!acknowledgement && (currentItem.color || currentItem.description || currentItem.image || currentItem.price || currentItem.quantity || currentItem.size || currentItem.style)){
+      alert("Warning: New item not finalized, click the checkmark to the right of the item to add.");
+      acknowledgement = true;
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -348,6 +405,22 @@ const AddBox = ({ box, onClose }) => {
 
   async function uploadBox() {
     try {
+      /*Go through original contents, if there is an id that exists
+      that is not in the current contents, then it needs to be deleted*/
+      for(const original of originalContents){
+        let match = false
+        for(const item of contents){
+          if(!item._id) break;
+          if(item._id == original._id){
+            match = true;
+            break;
+          }
+        }
+        if(!match){
+          removeItemDB(original._id)
+        }
+      }
+
       const boxData = {
         imageLink: imageUrl,
         location: boxLocation,
@@ -385,7 +458,7 @@ const AddBox = ({ box, onClose }) => {
       for (const content of contents) {
         const itemData = {
           box_id: boxId,
-          image: content.imageUrl,
+          image: content.image,
           description: content.description,
           style: content.style,
           size: content.size,
@@ -396,13 +469,26 @@ const AddBox = ({ box, onClose }) => {
           public: visibility.includes("public"),
         };
 
-        const itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(itemData),
-        });
+        let itemResponse;
+        if(!content._id){
+          itemResponse = await fetch(`/api/inventory/item`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(itemData),
+          });
+        }
+        else{
+          itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(itemData),
+          });
+        }
+        
 
         const itemResult = await itemResponse.json();
 
@@ -428,7 +514,8 @@ const AddBox = ({ box, onClose }) => {
     }
   }
 
-  async function handleDelete(opt) {
+  async function handleDelete(opt, e) {
+    e.preventDefault()
     try {
       if (opt === "all") {
         // Delete all items in the box
@@ -489,12 +576,11 @@ const AddBox = ({ box, onClose }) => {
       retString =
         retString +
         "• " +
-        item.description + " " + 
+        item.quantity.toString() + " " + 
         item.size + " " + 
         item.color + " " + 
-        item.quantity.toString() +
-        " (" + 
-        item.style
+        item.description + " (" + 
+        item.style + 
         ")\n";
     });
 
@@ -636,8 +722,9 @@ const AddBox = ({ box, onClose }) => {
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Price
+                    Unit Price
                   </th>
+                  <th className={styles.tableTiny}></th>
                   <th className={styles.tableTiny}></th>
                 </tr>
               </thead>
@@ -776,9 +863,17 @@ const AddBox = ({ box, onClose }) => {
                           updateExistingContent(
                             index,
                             "price",
-                            parseFloat(e.target.value) || ""
+                            e.target.value
                           )
                         }
+                        onBlur={(e) => {
+                          const numValue = parseFloat(e.target.value);
+                          updateExistingContent(
+                            index,
+                            "price",
+                            isNaN(numValue) ? 0 : numValue.toFixed(2)
+                          );
+                        }}
                         className={styles.input}
                         style={{
                           margin: 0,
@@ -790,7 +885,16 @@ const AddBox = ({ box, onClose }) => {
                     <td className={styles.tableTiny}>
                       <div
                         className={styles.trash}
-                        onClick={() => removeItem(index, item._id)}
+                        onClick={() => copyItem(index)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <FaRegCopy/>
+                      </div>
+                    </td>
+                    <td className={styles.tableTiny}>
+                      <div
+                        className={styles.trash}
+                        onClick={() => removeItem(index)}
                         style={{ cursor: "pointer" }}
                       >
                         <FaRegTrashAlt />
@@ -831,12 +935,12 @@ const AddBox = ({ box, onClose }) => {
                         className={styles.tableSm}
                         style={{
                           position: "relative",
-                          width: currentItem.imageUrl !== "" ? "50px" : "150px",
+                          width: currentItem.image !== "" ? "50px" : "150px",
                         }}
                       >
-                        {currentItem.imageUrl !== "" ? (
+                        {currentItem.image !== "" ? (
                           <img
-                            src={currentItem.imageUrl}
+                            src={currentItem.image}
                             alt="New Item"
                             onClick={handleNewItemThumbnailClick}
                             style={{
@@ -1006,9 +1110,16 @@ const AddBox = ({ box, onClose }) => {
                           onChange={(e) =>
                             setCurrentItem({
                               ...currentItem,
-                              price: parseFloat(e.target.value) || "",
+                              price: e.target.value,
                             })
                           }
+                          onBlur={(e) => {
+                            const numValue = parseFloat(e.target.value);
+                            setCurrentItem({
+                              ...currentItem,
+                              price: isNaN(numValue) ? 0 : numValue.toFixed(2),
+                            });
+                          }}
                           className={styles.input}
                           style={{
                             margin: 0,
@@ -1133,7 +1244,7 @@ const AddBox = ({ box, onClose }) => {
               <button
                 className={styles.button}
                 style={{ backgroundColor: "#a83a32" }}
-                onClick={() => handleDelete("all")}
+                onClick={(e) => handleDelete("all", e)}
               >
                 Delete All
               </button>
@@ -1144,7 +1255,7 @@ const AddBox = ({ box, onClose }) => {
                   color: "#a83a32",
                   border: "2px solid #a83a32",
                 }}
-                onClick={() => handleDelete("box")}
+                onClick={(e) => handleDelete("box", e)}
               >
                 Delete Box
               </button>

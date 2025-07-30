@@ -2,12 +2,12 @@
 import styles from "./inventory.module.css";
 import { useState, useEffect } from "react";
 import {
-  FaRegEdit,
   FaUpload,
   FaTimes,
   FaRegTrashAlt,
   FaLink,
   FaDownload,
+  FaRegCopy,
 } from "react-icons/fa";
 import { FaRegSquarePlus } from "react-icons/fa6";
 import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
@@ -46,23 +46,60 @@ const QrPopup = ({ box }) => {
         unit: "in",
         format: [4, 6],
       });
-
+  
+      // Constants
+      const pageWidth = 4;
+      const pageHeight = 6;
+      const qrSize = 2;
+      const bottomMargin = 0.5; 
+      const textStartY = 1.6;
+      const lineHeight = 0.2; 
+      
       // Title
       pdf.setFontSize(24);
       pdf.setFont(undefined, "bold");
       pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
-
+      
+      const maxQrY = pageHeight - qrSize - bottomMargin; 
+      
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
-      pdf.text(`${box.description.length >= 50 ? box.description.substring(0, 50) : box.description}`, 2, 1.6, {
+      console.log("new", box.description)
+      let description = box.description;
+      let currentQrY = 2.2; 
+      
+      const textLines = pdf.splitTextToSize(description, 3.5);
+      const textHeight = textLines.length * lineHeight;
+      const idealQrY = textStartY + textHeight + 0.3; 
+      
+      // If QR would go past bottom, truncate text
+      if (idealQrY + qrSize > pageHeight - bottomMargin) {
+        const availableHeight = maxQrY - textStartY - 0.3; 
+        const maxLines = Math.floor(availableHeight / lineHeight);
+        
+        // Truncate text to fit
+        let truncatedText = description;
+        let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+        
+        while (truncatedLines.length > maxLines && truncatedText.length > 0) {
+          truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+        }
+        
+        description = truncatedText;
+        currentQrY = maxQrY;
+      } else {
+        currentQrY = idealQrY;
+      }
+      
+      pdf.text(description, 2, textStartY, {
         align: "center",
         maxWidth: 3.5,
       });
-
-      const qrSize = 2;
-      const qrX = (4 - qrSize) / 2;
-      const qrY = 2.2;
-      pdf.addImage(box.qrCode, "PNG", qrX, qrY, qrSize, qrSize);
+      
+      const qrX = (pageWidth - qrSize) / 2;
+      pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
+      
       pdf.save(`box-${box.boxId}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -121,6 +158,7 @@ const AddBox = ({ setPage, setBox }) => {
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  let acknowledgement = false;
 
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
@@ -254,6 +292,10 @@ const AddBox = ({ setPage, setBox }) => {
       prevContents.filter((_, index) => index !== indexToRemove)
     );
   };
+  const copyItem = (indexToCopy) => {
+    const itemToCopy = contents[indexToCopy]
+    setContents([...contents, itemToCopy])
+  };
 
   const addNewItem = () => {
     if (currentItem.description.trim() === "") {
@@ -272,6 +314,7 @@ const AddBox = ({ setPage, setBox }) => {
       price: 0.0,
     });
     setNewItemOpen(false);
+    acknowledgement = false;
   };
 
   const cancelNewItem = () => {
@@ -307,6 +350,12 @@ const AddBox = ({ setPage, setBox }) => {
         alert("One of the items in the box is missing a field");
         return;
       }
+    }
+
+    if(!acknowledgement && (currentItem.color || currentItem.description || currentItem.imageUrl || currentItem.price || currentItem.quantity || currentItem.size || currentItem.style)){
+      alert("Warning: New item not finalized, click the checkmark to the right of the item to add.");
+      acknowledgement = true;
+      return;
     }
 
     setIsSubmitting(true);
@@ -429,12 +478,12 @@ const AddBox = ({ setPage, setBox }) => {
       retString =
         retString +
         "• " +
-        item.quantity.toString() +
-        " " +
-        item.size +
-        " " +
-        item.description +
-        "\n";
+        item.quantity.toString() + " " + 
+        item.size + " " + 
+        item.color + " " + 
+        item.description + " (" + 
+        item.style + 
+        ")\n";
     });
 
     setBoxDescription(retString);
@@ -568,8 +617,9 @@ const AddBox = ({ setPage, setBox }) => {
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Price
+                    Unit Price
                   </th>
+                  <th className={styles.tableTiny}></th>
                   <th className={styles.tableTiny}></th>
                 </tr>
               </thead>
@@ -708,9 +758,18 @@ const AddBox = ({ setPage, setBox }) => {
                           updateExistingContent(
                             index,
                             "price",
-                            (parseFloat(e.target.value) || "")
+                            e.target.value
                           )
                         }
+                        onBlur={(e) => {
+                          const numValue = parseFloat(e.target.value);
+                          updateExistingContent(
+                            index,
+                            "price",
+                            isNaN(numValue) ? 0 : numValue.toFixed(2)
+                          );
+                        }}
+                        
                         className={styles.input}
                         style={{
                           margin: 0,
@@ -718,6 +777,15 @@ const AddBox = ({ setPage, setBox }) => {
                           width: "100%",
                         }}
                       />
+                    </td>
+                    <td className={styles.tableTiny}>
+                      <div
+                        className={styles.trash}
+                        onClick={() => copyItem(index)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <FaRegCopy />
+                      </div>
                     </td>
                     <td className={styles.tableTiny}>
                       <div
@@ -938,9 +1006,16 @@ const AddBox = ({ setPage, setBox }) => {
                           onChange={(e) =>
                             setCurrentItem({
                               ...currentItem,
-                              price: parseFloat(e.target.value) || "",
+                              price: e.target.value,
                             })
                           }
+                          onBlur={(e) => {
+                            const numValue = parseFloat(e.target.value);
+                            setCurrentItem({
+                              ...currentItem,
+                              price: isNaN(numValue) ? 0 : numValue.toFixed(2),
+                            });
+                          }}
                           className={styles.input}
                           style={{
                             margin: 0,

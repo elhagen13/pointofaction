@@ -165,7 +165,7 @@ export async function DELETE(request, { params }) {
     try {
       const { db } = await connectToDatabase();
       const collection = db.collection(COLLECTION_NAME);
-      const { id } = params;
+      const { id } = await params;
   
       // Validate ObjectId format
       if (!ObjectId.isValid(id)) {
