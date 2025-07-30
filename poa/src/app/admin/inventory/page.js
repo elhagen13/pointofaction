@@ -7,6 +7,7 @@ import { MdPublic, MdOutlinePublicOff } from "react-icons/md";
 import { HiCash } from "react-icons/hi";
 
 import AddItem from "./AddItem.js";
+import AddBox from "./AddBox.js";
 import EditItem from "./EditItem.js";
 import EditBox from "./EditBox.js";
 
@@ -17,6 +18,7 @@ function Inventory() {
   const [filter, setFilter] = useState("line items");
   const colors = ["#BDCE67", "#93A537", "#6B7B15"];
 
+  const [addBoxOpen, setAddBoxOpen] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [editItemOpen, setEditItemOpen] = useState(null);
   const [editBoxOpen, setEditBoxOpen] = useState(null);
@@ -25,7 +27,7 @@ function Inventory() {
   const [boxes, setBoxes] = useState([]);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState("");
   const dropdownRef = useRef(null);
   const searchOptions = [
     "all",
@@ -93,12 +95,12 @@ function Inventory() {
     }
 
     // Apply search filter
-    if (searchValue.trim() === '') {
+    if (searchValue.trim() === "") {
       return items;
     }
 
     const searchTerm = searchValue.toLowerCase().trim();
-    
+
     return items.filter((item) => {
       switch (selectedSearchOption) {
         case "style":
@@ -122,8 +124,12 @@ function Inventory() {
             item.color?.toLowerCase().includes(searchTerm) ||
             item.description?.toLowerCase().includes(searchTerm) ||
             item.quantity?.toString().includes(searchTerm) ||
-            boxDict[item.boxId?.toString()]?.boxId?.toLowerCase().includes(searchTerm) ||
-            boxDict[item.boxId?.toString()]?.location?.toLowerCase().includes(searchTerm)
+            boxDict[item.boxId?.toString()]?.boxId
+              ?.toLowerCase()
+              .includes(searchTerm) ||
+            boxDict[item.boxId?.toString()]?.location
+              ?.toLowerCase()
+              .includes(searchTerm)
           );
       }
     });
@@ -150,12 +156,12 @@ function Inventory() {
     }
 
     // Apply search filter to boxes
-    if (searchValue.trim() === '') {
+    if (searchValue.trim() === "") {
       return boxItems;
     }
 
     const searchTerm = searchValue.toLowerCase().trim();
-    
+
     return boxItems.filter((box) => {
       switch (selectedSearchOption) {
         case "description":
@@ -294,9 +300,9 @@ function Inventory() {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -320,38 +326,43 @@ function Inventory() {
         <button className={styles.button} onClick={() => setAddItemOpen(true)}>
           Add Item
         </button>
+        <button className={styles.button} onClick={() => setAddBoxOpen(true)}>
+          Add Box
+        </button>
       </div>
       <div className={styles.filters}>
-      <div className={styles.searchContainer} ref={dropdownRef}>
-      <IoSearch className={styles.search} />
-      <input 
-        className={styles.searchInput} 
-        value={searchValue}
-        onChange={(e) => setSearchValue(e.target.value)}
-        placeholder={`Search ${selectedSearchOption === 'all' ? 'everything' : selectedSearchOption}...`}
-      />
-      <div 
-        className={styles.searchOption}
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-      >
-        {selectedSearchOption}
-        <IoChevronDown className={`${styles.chevron} ${isDropdownOpen ? styles.open : ''}`} />
-      </div>
-      
-      {isDropdownOpen && (
-        <div className={styles.dropdown}>
-          {searchOptions.map((option, index) => (
-            <div
-              key={index}
-              className={`${styles.dropdownItem} ${selectedSearchOption === option ? styles.selected : ''}`}
-              onClick={() => handleOptionSelect(option)}
-            >
-              {option}
+        <div className={styles.searchContainer} ref={dropdownRef}>
+          <IoSearch className={styles.search} />
+          <input
+            className={styles.searchInput}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            placeholder={`Search ${selectedSearchOption === "all" ? "everything" : selectedSearchOption}...`}
+          />
+          <div
+            className={styles.searchOption}
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            {selectedSearchOption}
+            <IoChevronDown
+              className={`${styles.chevron} ${isDropdownOpen ? styles.open : ""}`}
+            />
+          </div>
+
+          {isDropdownOpen && (
+            <div className={styles.dropdown}>
+              {searchOptions.map((option, index) => (
+                <div
+                  key={index}
+                  className={`${styles.dropdownItem} ${selectedSearchOption === option ? styles.selected : ""}`}
+                  onClick={() => handleOptionSelect(option)}
+                >
+                  {option}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      )}
-      </div>
         <div className={styles.pageSelection}>
           <div
             style={{
@@ -447,9 +458,24 @@ function Inventory() {
                 </td>
                 <td>{item.style}</td>
                 <td>{item.color}</td>
-                <td>{item.description}</td>
+                <td>
+                  {item.description.length > 50
+                    ? item.description.slice(0, 50) + "..."
+                    : item.description}
+                </td>
                 <td>{item.quantity}</td>
-                <td>{boxDict[item.boxId.toString()]?.boxId || "No box"}</td>
+                {boxDict[item.boxId.toString()] ? (
+                  <td
+                    onClick={() =>
+                      setEditBoxOpen(boxDict[item.boxId.toString()])
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    {boxDict[item.boxId.toString()]?.boxId}
+                  </td>
+                ) : (
+                  <td>N/A</td>
+                )}
                 <td>{boxDict[item.boxId.toString()]?.location}</td>
                 <td>${item.price}</td>
                 <td>
@@ -462,7 +488,11 @@ function Inventory() {
                 </td>
                 <td>
                   <FaEye
-                    onClick={() => setEditItemOpen(item)}
+                    onClick={() => {
+                      boxDict[item.boxId.toString()]
+                        ? setEditBoxOpen(boxDict[item.boxId.toString()])
+                        : setEditItemOpen(item);
+                    }}
                     style={{ cursor: "pointer" }}
                   />
                 </td>
@@ -477,15 +507,15 @@ function Inventory() {
           style={{ borderCollapse: "collapse" }}
         >
           <thead style={{ textAlign: "left" }}>
-            <tr>
+            <tr style={{ backgroundColor: "#ebebeb" }}>
               <th className={styles.tableSm}>Box</th>
               <th>Box Id</th>
               <th>Description</th>
               <th>Location</th>
               <th>Content Quantity</th>
-              <th>Sale</th>
               <th>Discount</th>
               <th>Min Purchase</th>
+              <th>Visibility</th>
               <th></th>
             </tr>
           </thead>
@@ -495,7 +525,7 @@ function Inventory() {
                 key={index}
                 style={{
                   width: "100%",
-                  backgroundColor: index % 2 == 0 ? "#ebebeb" : "#f2f2f2",
+                  backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
                   cursor: "pointer",
                 }}
               >
@@ -507,17 +537,14 @@ function Inventory() {
                   <img src={box.image} alt={`Item ${index + 1}`} />
                 </td>
                 <td onClick={() => setEditBoxOpen(box)}>{box.boxId}</td>
-                <td onClick={() => setEditBoxOpen(box)}>{box.description}</td>
+                <td onClick={() => setEditBoxOpen(box)}>
+                  {box.description.length > 80
+                    ? box.description.slice(0, 80) + "..."
+                    : box.description}
+                </td>
                 <td onClick={() => setEditBoxOpen(box)}>{box.location}</td>
                 <td onClick={() => setEditBoxOpen(box)}>
                   {contentDict[box._id.toString()]?.length || 0}
-                </td>
-                <td onClick={() => setEditBoxOpen(box)}>
-                  {contentDict[box._id]
-                    ? contentDict[box._id][0].sale
-                      ? "Yes"
-                      : "No"
-                    : "No"}
                 </td>
                 <td onClick={() => setEditBoxOpen(box)}>
                   {contentDict[box._id]
@@ -533,6 +560,26 @@ function Inventory() {
                       : "N/A"
                     : "N/A"}
                 </td>
+                <td onClick={() => setEditBoxOpen(box)}>
+                  {contentDict[box._id] ? (
+                    contentDict[box._id][0].public ? (
+                      <MdPublic color="green" />
+                    ) : (
+                      <MdOutlinePublicOff color="red" />
+                    )
+                  ) : (
+                    <MdOutlinePublicOff color="red" />
+                  )}
+                  {contentDict[box._id] ? (
+                    contentDict[box._id][0].sale ? (
+                      <HiCash color="blue" />
+                    ) : (
+                      ""
+                    )
+                  ) : (
+                    "N"
+                  )}
+                </td>
                 <td>
                   <FaRegCopy onClick={() => duplicateBox(box)} />
                 </td>
@@ -544,6 +591,9 @@ function Inventory() {
 
       {addItemOpen && (
         <AddItem onClose={() => setAddItemOpen(false)} refresh={getInventory} />
+      )}
+      {addBoxOpen && (
+        <AddBox onClose={() => setAddBoxOpen(false)} refresh={getInventory} />
       )}
       {editItemOpen !== null && (
         <EditItem

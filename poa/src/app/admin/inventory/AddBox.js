@@ -2,19 +2,20 @@
 import styles from "./inventory.module.css";
 import { useState, useEffect } from "react";
 import {
-  FaRegEdit,
   FaUpload,
   FaTimes,
   FaRegTrashAlt,
   FaLink,
+  FaDownload,
   FaRegCopy,
 } from "react-icons/fa";
-import { FaRegSquarePlus } from "react-icons/fa6";
 import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
 import jsPDF from "jspdf";
 
+export default function AddItem({ onClose, refresh }) {
+  const [page, setPage] = useState("box");
+  const [box, setBox] = useState({});
 
-export default function EditItem({ box, onClose, refresh }) {
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       refresh();
@@ -29,63 +30,14 @@ export default function EditItem({ box, onClose, refresh }) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        <AddBox box={box} onClose={onClose} refresh={refresh}/>
+        {page === "box" && <AddBox setPage={setPage} setBox={setBox} />}
+        {page === "qr" && <QrPopup setPage={setPage} box={box} />}
       </div>
     </div>
   );
 }
 
-const AddBox = ({ box, onClose, refresh }) => {
-  const [boxDescription, setBoxDescription] = useState(box.description);
-  const [boxLocation, setBoxLocation] = useState(box.location);
-  const [contents, setContents] = useState([]);
-  const [originalContents, setOriginalContents] = useState([]);
-  const [imageUrl, setImageUrl] = useState(box.image);
-  const [minimumPrice, setMinimumPrice] = useState(box.minPrice);
-  /*admin (always clicked), public inventory, sale*/
-  const [visibility, setVisibility] = useState(["admin"]);
-  const [boxDiscount, setBoxDiscount] = useState(box.discount ?? 20);
-  const [currentItem, setCurrentItem] = useState({
-    image: "",
-    description: "",
-    style: "",
-    size: "",
-    color: "",
-    quantity: 0,
-    price: 0.0,
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageUploading, setImageUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(false);
-  const [selectedItemIndex, setSelectedItemIndex] = useState(null);
-  const [newItemOpen, setNewItemOpen] = useState(false);
-  const [showUrlInput, setShowUrlInput] = useState(false);
-  const [imageUrlInput, setImageUrlInput] = useState("");
-  let acknowledgement = false;
-
-  useEffect(() => {
-    const getContent = async () => {
-      const response = await fetch("/api/inventory/item", {
-        method: "GET",
-      });
-      const result = await response.json();
-
-      const matchingItems = result.data.filter(
-        (item) => item.boxId === box._id
-      );
-      setContents(matchingItems);
-      setOriginalContents(matchingItems)
-    };
-    getContent();
-  }, []);
-
-  useEffect(() => {
-    const newVisibility = [];
-    if (contents[0]?.public) newVisibility.push("public");
-    if (contents[0]?.sale) newVisibility.push("sale");
-    setVisibility(newVisibility);
-  }, [contents]);
-
+const QrPopup = ({ box }) => {
   const downloadBoxPDF = async () => {
     try {
       const pdf = new jsPDF({
@@ -153,6 +105,60 @@ const AddBox = ({ box, onClose, refresh }) => {
     }
   };
 
+  return (
+    <div
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "20px",
+      }}
+    >
+      <div style={{ fontWeight: "bold", fontSize: "32px" }}>
+        Box {box.boxId}
+      </div>
+      <div>
+        <img src={box.qrCode} alt={`QR Code for Box ${box.boxId}`} />
+      </div>
+      <div style={{ width: "100%", display: "flex", justifyContent: "end" }}>
+        <button className={styles.button} onClick={downloadBoxPDF}>
+          <span>
+            Download PDF <FaDownload />
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const AddBox = ({ setPage, setBox }) => {
+  const [boxDescription, setBoxDescription] = useState("");
+  const [boxLocation, setBoxLocation] = useState("");
+  const [contents, setContents] = useState([]);
+  const [imageUrl, setImageUrl] = useState("");
+  const [minimumPrice, setMinimumPrice] = useState(0);
+  /*admin (always clicked), public inventory, sale*/
+  const [visibility, setVisibility] = useState(["admin"]);
+  const [boxDiscount, setBoxDiscount] = useState(20);
+  const [currentItem, setCurrentItem] = useState({
+    imageUrl: "",
+    description: "",
+    style: "",
+    size: "",
+    color: "",
+    quantity: 0,
+    price: 0.0,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(false);
+  const [selectedItemIndex, setSelectedItemIndex] = useState(null);
+  const [newItemOpen, setNewItemOpen] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  let acknowledgement = false;
+
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
     if (file) {
@@ -187,17 +193,16 @@ const AddBox = ({ box, onClose, refresh }) => {
 
     if (type === "content" && itemIndex !== null) {
       // Update specific item's image
-      console.log(contents)
       setContents((prevContents) =>
         prevContents.map((item, index) =>
-          index === itemIndex ? { ...item, image: imageUrlInput } : item
+          index === itemIndex ? { ...item, imageUrl: imageUrlInput } : item
         )
       );
     } else if (type === "content") {
       // Update current item being added
       setCurrentItem({
         ...currentItem,
-        image: imageUrlInput,
+        imageUrl: imageUrlInput,
       });
     } else {
       // Update box image
@@ -281,46 +286,21 @@ const AddBox = ({ box, onClose, refresh }) => {
     );
   };
 
-  const removeItem = async (indexToRemove) => {
+  const removeItem = (indexToRemove) => {
     setContents((prevContents) =>
       prevContents.filter((_, index) => index !== indexToRemove)
     );
   };
-  
-  const copyItem = async (indexToCopy) => {
-    const { _id, ...itemToCopy } = contents[indexToCopy]; 
-    setContents([...contents, itemToCopy]);
+  const copyItem = (indexToCopy) => {
+    const itemToCopy = contents[indexToCopy]
+    setContents([...contents, itemToCopy])
   };
-
-  const removeItemDB = async(id) => {
-    const itemResponse = await fetch(`/api/inventory/item/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await itemResponse.json();
-
-    if (!data.success) {
-      console.error("Error deleting item:", data.error);
-      console.error("Details:", data.details);
-      alert("Error creating item: " + (data.error || "Unknown error"));
-      return false;
-    }
-
-    console.log("Box created successfully:", data.data);
-    console.log("Message:", data.message);
-
-  }
 
   const addNewItem = () => {
     if (currentItem.description.trim() === "") {
       setUploadError("Please enter a description for the item");
       return;
     }
-    console.log("contents",contents)
-    console.log("current", currentItem)
 
     setContents((prevContents) => [...prevContents, { ...currentItem }]);
     setCurrentItem({
@@ -333,6 +313,7 @@ const AddBox = ({ box, onClose, refresh }) => {
       price: 0.0,
     });
     setNewItemOpen(false);
+    acknowledgement = false;
   };
 
   const cancelNewItem = () => {
@@ -370,7 +351,7 @@ const AddBox = ({ box, onClose, refresh }) => {
       }
     }
 
-    if(!acknowledgement && (currentItem.color || currentItem.description || currentItem.image || currentItem.price || currentItem.quantity || currentItem.size || currentItem.style)){
+    if(!acknowledgement && (currentItem.color || currentItem.description || currentItem.imageUrl || currentItem.price || currentItem.quantity || currentItem.size || currentItem.style)){
       alert("Warning: New item not finalized, click the checkmark to the right of the item to add.");
       acknowledgement = true;
       return;
@@ -395,7 +376,7 @@ const AddBox = ({ box, onClose, refresh }) => {
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
-      onClose();
+      setIsSubmitting(false);
     }
   };
 
@@ -405,22 +386,6 @@ const AddBox = ({ box, onClose, refresh }) => {
 
   async function uploadBox() {
     try {
-      /*Go through original contents, if there is an id that exists
-      that is not in the current contents, then it needs to be deleted*/
-      for(const original of originalContents){
-        let match = false
-        for(const item of contents){
-          if(!item._id) break;
-          if(item._id == original._id){
-            match = true;
-            break;
-          }
-        }
-        if(!match){
-          removeItemDB(original._id)
-        }
-      }
-
       const boxData = {
         imageLink: imageUrl,
         location: boxLocation,
@@ -433,8 +398,8 @@ const AddBox = ({ box, onClose, refresh }) => {
       };
 
       // Create the box first
-      const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
-        method: "PATCH",
+      const boxResponse = await fetch("/api/inventory/box", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -453,12 +418,14 @@ const AddBox = ({ box, onClose, refresh }) => {
       console.log("Box created successfully:", data.data);
       console.log("Message:", data.message);
 
+      setBox(data.data);
+
       const boxId = data.data._id;
 
       for (const content of contents) {
         const itemData = {
           box_id: boxId,
-          image: content.image,
+          image: content.imageUrl,
           description: content.description,
           style: content.style,
           size: content.size,
@@ -469,26 +436,13 @@ const AddBox = ({ box, onClose, refresh }) => {
           public: visibility.includes("public"),
         };
 
-        let itemResponse;
-        if(!content._id){
-          itemResponse = await fetch(`/api/inventory/item`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(itemData),
-          });
-        }
-        else{
-          itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(itemData),
-          });
-        }
-        
+        const itemResponse = await fetch("/api/inventory/item", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(itemData), // Fixed: was boxData
+        });
 
         const itemResult = await itemResponse.json();
 
@@ -514,59 +468,6 @@ const AddBox = ({ box, onClose, refresh }) => {
     }
   }
 
-  async function handleDelete(opt, e) {
-    e.preventDefault()
-    try {
-      if (opt === "all") {
-        // Delete all items in the box
-        for (const item of contents) {
-          if(item._id) {
-            const itemResponse = await fetch(
-              `/api/inventory/item/${item._id}`,
-              {
-                method: "DELETE",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-
-            const itemResult = await itemResponse.json();
-
-            if (!itemResult.success) {
-              console.error("Error deleting item:", itemResult.error);
-              // Continue deleting other items even if one fails
-            }
-          }
-        }
-      }
-
-      const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const deleteResult = await boxResponse.json(); 
-
-      if (!deleteResult.success) {
-        console.error("Error deleting box:", deleteResult.error);
-        alert("Error deleting box: " + (deleteResult.error || "Unknown error"));
-        return;
-      }
-
-      alert("Box and all items deleted successfully!");
-
-      // Refresh the inventory and close the modal
-      refresh();
-      onClose();
-    } catch (error) {
-      console.error("Network error:", error);
-      alert("Network error: " + error.message);
-    }
-  }
-
   const generateDescription = (e) => {
     e.preventDefault();
 
@@ -589,15 +490,8 @@ const AddBox = ({ box, onClose, refresh }) => {
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
-        <div style={{display: "flex", flexDirection:"row", justifyContent:"space-between"}}>
         <h2>Add Box to Inventory</h2>
-        <button className={styles.button} onClick={downloadBoxPDF}>Download QR </button>
-        </div>
-        <form
-          className={styles.form}
-          style={{ marginTop: "30px" }}
-          onSubmit={handleSubmitBox}
-        >
+        <form className={styles.form} style={{ marginTop: "30px" }}>
           <div className={styles.formInput} style={{ flexGrow: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <label>Box Description</label>
@@ -742,7 +636,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                       style={{ position: "relative" }}
                     >
                       <img
-                        src={item.image}
+                        src={item.imageUrl}
                         alt={`Item ${index + 1}`}
                         onClick={() => handleThumbnailClick(index)}
                         style={{
@@ -835,13 +729,13 @@ const AddBox = ({ box, onClose, refresh }) => {
                       <input
                         type="text"
                         pattern="[0-9]*"
-                        inputMode="numeric"
+                        inputmode="numeric"
                         value={item.quantity}
                         onChange={(e) =>
                           updateExistingContent(
                             index,
                             "quantity",
-                            parseInt(e.target.value) || ""
+                            (parseInt(e.target.value) || "")
                           )
                         }
                         className={styles.input}
@@ -856,7 +750,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                       <input
                         type="text"
                         pattern="^\d*\.?\d*$"
-                        inputMode="decimal"
+                        inputmode="decimal"
                         value={item.price}
                         onChange={(e) =>
                           updateExistingContent(
@@ -873,6 +767,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                             isNaN(numValue) ? 0 : numValue.toFixed(2)
                           );
                         }}
+                        
                         className={styles.input}
                         style={{
                           margin: 0,
@@ -887,7 +782,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                         onClick={() => copyItem(index)}
                         style={{ cursor: "pointer" }}
                       >
-                        <FaRegCopy/>
+                        <FaRegCopy />
                       </div>
                     </td>
                     <td className={styles.tableTiny}>
@@ -934,12 +829,12 @@ const AddBox = ({ box, onClose, refresh }) => {
                         className={styles.tableSm}
                         style={{
                           position: "relative",
-                          width: currentItem.image !== "" ? "50px" : "150px",
+                          width: currentItem.imageUrl !== "" ? "50px" : "150px",
                         }}
                       >
-                        {currentItem.image !== "" ? (
+                        {currentItem.imageUrl !== "" ? (
                           <img
-                            src={currentItem.image}
+                            src={currentItem.imageUrl}
                             alt="New Item"
                             onClick={handleNewItemThumbnailClick}
                             style={{
@@ -1082,9 +977,9 @@ const AddBox = ({ box, onClose, refresh }) => {
                       </td>
                       <td className={styles.tableReg}>
                         <input
-                           type="text"
-                           pattern="[0-9]*"
-                           inputMode="numeric"
+                          type="text"
+                          pattern="[0-9]*"
+                          inputmode="numeric"
                           value={currentItem.quantity}
                           onChange={(e) =>
                             setCurrentItem({
@@ -1104,7 +999,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                         <input
                           type="text"
                           pattern="^\d*\.?\d*$"
-                          inputMode="decimal"
+                          inputmode="decimal"
                           value={currentItem.price}
                           onChange={(e) =>
                             setCurrentItem({
@@ -1233,34 +1128,10 @@ const AddBox = ({ box, onClose, refresh }) => {
           )}
           {uploadError && <div className={styles.error}>{uploadError}</div>}
           <div
-            style={{
-              width: "100%",
-              display: "flex",
-              justifyContent: "space-between",
-            }}
+            style={{ width: "100%", display: "flex", justifyContent: "end" }}
           >
-            <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
-              <button
-                className={styles.button}
-                style={{ backgroundColor: "#a83a32" }}
-                onClick={(e) => handleDelete("all", e)}
-              >
-                Delete All
-              </button>
-              <button
-                className={styles.button}
-                style={{
-                  backgroundColor: "white",
-                  color: "#a83a32",
-                  border: "2px solid #a83a32",
-                }}
-                onClick={(e) => handleDelete("box", e)}
-              >
-                Delete Box
-              </button>
-            </div>
-            <button className={styles.button} type="submit">
-              Save
+            <button className={styles.button} onClick={handleSubmitBox}>
+              Upload & Finalize
             </button>
           </div>
         </form>

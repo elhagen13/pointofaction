@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: row;
   justify-content: end;
-  gap: 20px;
+  gap: 10px;
 }
 
 .pageSelection div {
@@ -23,7 +23,7 @@
   border-radius: 30px;
   cursor: pointer;
   font-size: 14px;
-  min-height: 44px; /* Touch-friendly minimum size */
+  min-height: 44px; 
   min-width: 44px;
   display: flex;
   align-items: center;
@@ -453,4 +453,121 @@
   }
 }
 
-/*Delete options*/
+/* Desktop table - show by default */
+.desktopTable {
+  display: table;
+}
+
+/* Mobile table - hide by default */
+.mobileTable {
+  display: none;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  /* Hide desktop table on mobile */
+  .desktopTable {
+    display: none !important;
+  }
+  
+  /* Show mobile table on mobile */
+  .mobileTable {
+    display: block;
+    width: 100%;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .mobileRow {
+    padding: 15px;
+  }
+  
+  .mobileField {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    min-height: 40px;
+  }
+  
+  .mobileField:last-child {
+    margin-bottom: 0;
+  }
+  
+  .mobileLabel {
+    flex: 0 0 30%;
+    font-weight: bold;
+    color: #374151;
+    padding-right: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+  
+  .mobileValue {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Adjust upload options for mobile */
+  .mobileValue .uploadOptions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  /* Make inputs full width in mobile view */
+  .mobileValue .input {
+    width: 100% !important;
+    margin: 0 !important;
+    min-height: 40px;
+  }
+  
+  /* Image styling for mobile */
+  .mobileValue img {
+    max-width: 100px;
+    max-height: 100px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
+  }
+  
+  /* URL input container for mobile */
+  .mobileValue > div {
+    width: 100%;
+  }
+}
+
+/* Smaller mobile devices */
+@media (max-width: 480px) {
+  .mobileField {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .mobileLabel {
+    flex: none;
+    margin-bottom: 5px;
+    margin-top: 0;
+    padding-right: 0;
+  }
+  
+  .mobileValue {
+    width: 100%;
+  }
+  
+  /* Stack upload options vertically on very small screens */
+  .mobileValue .uploadOptions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+  }
+  
+  .mobileValue .fileLabel {
+    width: 100%;
+    justify-content: center;
+  }
+}

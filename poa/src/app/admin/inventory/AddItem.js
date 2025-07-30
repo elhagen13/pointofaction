@@ -9,7 +9,6 @@ import {
   FaDownload,
   FaRegCopy,
 } from "react-icons/fa";
-import { FaRegSquarePlus } from "react-icons/fa6";
 import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
 import jsPDF from "jspdf";
 
@@ -134,14 +133,12 @@ const QrPopup = ({ box }) => {
 };
 
 const AddBox = ({ setPage, setBox }) => {
-  const [boxDescription, setBoxDescription] = useState("");
-  const [boxLocation, setBoxLocation] = useState("");
-  const [contents, setContents] = useState([]);
+  const [location, setLocation] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [minimumPrice, setMinimumPrice] = useState(0);
   /*admin (always clicked), public inventory, sale*/
   const [visibility, setVisibility] = useState(["admin"]);
-  const [boxDiscount, setBoxDiscount] = useState(20);
+  const [discount, setDiscount] = useState(20);
   const [currentItem, setCurrentItem] = useState({
     imageUrl: "",
     description: "",
@@ -151,14 +148,10 @@ const AddBox = ({ setPage, setBox }) => {
     quantity: 0,
     price: 0.0,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
-  const [selectedItemIndex, setSelectedItemIndex] = useState(null);
-  const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
-  let acknowledgement = false;
 
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
@@ -178,7 +171,7 @@ const AddBox = ({ setPage, setBox }) => {
     }
   };
 
-  const handleUrlSubmit = (type, itemIndex = null) => {
+  const handleUrlSubmit = (type) => {
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
       return;
@@ -192,22 +185,11 @@ const AddBox = ({ setPage, setBox }) => {
       return;
     }
 
-    if (type === "content" && itemIndex !== null) {
-      // Update specific item's image
-      setContents((prevContents) =>
-        prevContents.map((item, index) =>
-          index === itemIndex ? { ...item, imageUrl: imageUrlInput } : item
-        )
-      );
-    } else if (type === "content") {
-      // Update current item being added
+    if (type === "content") {
       setCurrentItem({
         ...currentItem,
         imageUrl: imageUrlInput,
       });
-    } else {
-      // Update box image
-      setImageUrl(imageUrlInput);
     }
 
     setImageUrlInput("");
@@ -259,314 +241,83 @@ const AddBox = ({ setPage, setBox }) => {
     }
   };
 
-  // Handle clicking on thumbnail to select new image
-  const handleThumbnailClick = (index) => {
-    setSelectedItemIndex(index);
-    // Create a temporary file input and trigger it
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.onchange = (e) => handleFileSelect(e, "content", index);
-    fileInput.click();
-  };
 
   // Handle clicking on new item thumbnail
   const handleNewItemThumbnailClick = () => {
     setShowUrlInput(true);
   };
 
-  const removeUploadedImage = () => {
-    setImageUrl("");
-  };
+  const submitItem = () => {
 
-  const updateExistingContent = (idToUpdate, field, newValue) => {
-    setContents((prevContents) =>
-      prevContents.map((item, index) =>
-        index === idToUpdate ? { ...item, [field]: newValue } : item
-      )
-    );
-  };
-
-  const removeItem = (indexToRemove) => {
-    setContents((prevContents) =>
-      prevContents.filter((_, index) => index !== indexToRemove)
-    );
-  };
-  const copyItem = (indexToCopy) => {
-    const itemToCopy = contents[indexToCopy]
-    setContents([...contents, itemToCopy])
-  };
-
-  const addNewItem = () => {
-    if (currentItem.description.trim() === "") {
-      setUploadError("Please enter a description for the item");
-      return;
-    }
-
-    setContents((prevContents) => [...prevContents, { ...currentItem }]);
-    setCurrentItem({
-      imageUrl: "",
-      description: "",
-      style: "",
-      size: "",
-      color: "",
-      quantity: 0,
-      price: 0.0,
-    });
-    setNewItemOpen(false);
-    acknowledgement = false;
-  };
-
-  const cancelNewItem = () => {
-    setCurrentItem({
-      imageUrl: "",
-      description: "",
-      style: "",
-      size: "",
-      color: "",
-      quantity: 0,
-      price: 0.0,
-    });
-    setNewItemOpen(false);
-  };
-
-  const handleSubmitBox = async (e) => {
-    e.preventDefault();
-
-    // Basic validation
-    if (
-      !boxDescription ||
-      !boxLocation ||
-      !imageUrl ||
-      contents.length < 1 ||
-      (visibility.includes("sale") && !(boxDiscount && minimumPrice))
-    ) {
-      alert("Please fill in all fields and upload an image");
-      return;
-    }
-
-    for(const item of contents){
-      if(!item.description || !item.style || !item.size || !item.color || !item.quantity || !item.price){
-        alert("One of the items in the box is missing a field");
-        return;
-      }
-    }
-
-    if(!acknowledgement && (currentItem.color || currentItem.description || currentItem.imageUrl || currentItem.price || currentItem.quantity || currentItem.size || currentItem.style)){
-      alert("Warning: New item not finalized, click the checkmark to the right of the item to add.");
-      acknowledgement = true;
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const success = await uploadBox();
-      if (success) {
-        // Clear form
-        setBoxDescription("");
-        setBoxDiscount(20);
-        setBoxLocation("");
-        setImageUrl("");
-        setContents([]);
-        setVisibility(["admin"]);
-
-        // Close modal
-        setPage("qr");
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  useEffect(() => {
-    console.log(visibility);
-  }, [visibility]);
-
-  async function uploadBox() {
-    try {
-      const boxData = {
-        imageLink: imageUrl,
-        location: boxLocation,
-        description: boxDescription,
-        ...(visibility.includes("sale") && {
-          discount: boxDiscount,
-          minPrice: minimumPrice,
-        }),
-        contents: contents,
-      };
-
-      // Create the box first
-      const boxResponse = await fetch("/api/inventory/box", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(boxData),
-      });
-
-      const data = await boxResponse.json();
-
-      if (!data.success) {
-        console.error("Error creating box:", data.error);
-        console.error("Details:", data.details);
-        alert("Error creating box: " + (data.error || "Unknown error"));
-        return false;
-      }
-
-      console.log("Box created successfully:", data.data);
-      console.log("Message:", data.message);
-
-      setBox(data.data);
-
-      const boxId = data.data._id;
-
-      for (const content of contents) {
-        const itemData = {
-          box_id: boxId,
-          image: content.imageUrl,
-          description: content.description,
-          style: content.style,
-          size: content.size,
-          color: content.color,
-          quantity: content.quantity,
-          price: content.price,
-          sale: visibility.includes("sale"),
-          public: visibility.includes("public"),
-        };
-
-        const itemResponse = await fetch("/api/inventory/item", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(itemData), // Fixed: was boxData
-        });
-
-        const itemResult = await itemResponse.json();
-
-        if (itemResult.success) {
-          console.log("Item created successfully:", itemResult.data);
-          console.log("Message:", itemResult.message);
-        } else {
-          console.error("Error creating item:", itemResult.error);
-          console.error("Details:", itemResult.details);
-          alert(
-            "Error creating item: " + (itemResult.error || "Unknown error")
-          );
-          return false;
-        }
-      }
-
-      alert("Box and all items created successfully!");
-      return true;
-    } catch (error) {
-      console.error("Network error:", error);
-      alert("Network error: " + error.message);
-      return false;
-    }
   }
 
-  const generateDescription = (e) => {
-    e.preventDefault();
+  const submitDb = async () => {
+    const itemData = {
+      image: currentItem.imageUrl,
+      description: currentItem.description,
+      style: currentItem.style,
+      size: currentItem.size,
+      color: currentItem.color,
+      quantity: currentItem.quantity,
+      price: currentItem.price,
+      sale: visibility.includes("sale"),
+      public: visibility.includes("public"),
+    };
+    if(visibility.includes("sale")){
+      itemData.discount = discount;
+      itemData.minPrice = minimumPrice
+    } 
 
-    let retString = "";
-
-    contents.forEach((item) => {
-      retString =
-        retString +
-        "• " +
-        item.quantity.toString() + " " + 
-        item.size + " " + 
-        item.color + " " + 
-        item.description + " (" + 
-        item.style + 
-        ")\n";
+    const itemResponse = await fetch("/api/inventory/item", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(itemData), // Fixed: was boxData
     });
 
-    setBoxDescription(retString);
-  };
+    const itemResult = await itemResponse.json();
+
+    if (itemResult.success) {
+      console.log("Item created successfully:", itemResult.data);
+      console.log("Message:", itemResult.message);
+    } else {
+      console.error("Error creating item:", itemResult.error);
+      console.error("Details:", itemResult.details);
+      alert(
+        "Error creating item: " + (itemResult.error || "Unknown error")
+      );
+      return false;
+    }
+  
+
+    alert("Box and all items created successfully!");
+    return true;
+  }
+
 
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
-        <h2>Add Box to Inventory</h2>
+        <h2>Add Item to Inventory</h2>
         <form className={styles.form} style={{ marginTop: "30px" }}>
-          <div className={styles.formInput} style={{ flexGrow: 1 }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <label>Box Description</label>
-              <button
-                className={styles.button}
-                onClick={(e) => generateDescription(e)}
-                style={{
-                  padding: "2px 10px",
-                  minHeight: "0",
-                  backgroundColor: "white",
-                  border: "1px solid green",
-                  color: "green",
-                }}
-              >
-                Autogenerate Description
-              </button>
-            </div>
-            <textarea
-              className={styles.input}
-              style={{ resize: "vertical", minHeight: "90px" }}
-              value={boxDescription}
-              onChange={(e) => setBoxDescription(e.target.value)}
-              required
-            />
-          </div>
           <div className={styles.imageAndLocation}>
             <div className={styles.formInput}>
-              <label>Image</label>
-              <div className={styles.uploadSection}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileSelect(e, "box")}
-                  className={styles.fileInput}
-                  id="file-upload"
-                />
-                <label htmlFor="file-upload" className={styles.fileLabel}>
-                  <FaUpload /> Choose Image File
-                </label>
-              </div>
-            </div>
-            <div className={styles.formInput}>
-              <label>Box Location</label>
+              <label>Item Location</label>
               <input
                 className={styles.input}
-                value={boxLocation}
-                onChange={(e) => setBoxLocation(e.target.value)}
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
                 required
               />
             </div>
           </div>
-          {imageUrl && (
-            <div className={styles.imagePreview}>
-              <div style={{ position: "relative" }}>
-                <img
-                  src={imageUrl}
-                  alt="Uploaded"
-                  className={styles.previewImage}
-                />
-                <button
-                  type="button"
-                  onClick={removeUploadedImage}
-                  className={styles.removeButton}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-            </div>
-          )}
           <div className={styles.formInput}>
-            <label>Box Inventory</label>
+            <label>Item Details</label>
+            
+            {/* Desktop Table View */}
             <table
-              className={styles.boxTable}
+              className={`${styles.boxTable} ${styles.desktopTable}`}
               style={{
                 width: "100%",
                 textAlign: "left",
@@ -619,426 +370,430 @@ const AddBox = ({ setPage, setBox }) => {
                   >
                     Unit Price
                   </th>
-                  <th className={styles.tableTiny}></th>
-                  <th className={styles.tableTiny}></th>
                 </tr>
               </thead>
               <tbody>
-                {contents.map((item, index) => (
-                  <tr
-                    key={index}
+                <tr
+                  style={{
+                    height: "60px",
+                    width: "100%",
+                  }}
+                >
+                  <td
+                    className={styles.tableSm}
                     style={{
-                      height: "60px",
-                      width: "100%",
-                      backgroundColor: index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
+                      position: "relative",
+                      width: currentItem.imageUrl !== "" ? "50px" : "150px",
                     }}
                   >
-                    <td
-                      className={styles.tableSm}
-                      style={{ position: "relative" }}
-                    >
+                    {currentItem.imageUrl !== "" ? (
                       <img
-                        src={item.imageUrl}
-                        alt={`Item ${index + 1}`}
-                        onClick={() => handleThumbnailClick(index)}
+                        src={currentItem.imageUrl}
+                        alt="New Item"
+                        onClick={handleNewItemThumbnailClick}
                         style={{
                           cursor: "pointer",
-                          opacity:
-                            selectedItemIndex === index && imageUploading
-                              ? 0.5
-                              : 1,
+                          opacity: imageUploading ? 0.5 : 1,
                           transition: "opacity 0.2s",
                         }}
                         title="Click to change image"
                       />
-                      {selectedItemIndex === index && imageUploading && (
+                    ) : showUrlInput ? (
+                      <div>
+                        <input
+                          type="text"
+                          value={imageUrlInput}
+                          onChange={(e) => setImageUrlInput(e.target.value)}
+                          placeholder="url..."
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            padding: 0,
+                            width: "100%",
+                          }}
+                        />
                         <div
                           style={{
                             position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            color: "#007bff",
-                            fontSize: "12px",
-                            fontWeight: "bold",
+                            right: "0",
+                            top: "0",
                           }}
                         >
-                          Uploading...
+                          <button
+                            onClick={() => handleUrlSubmit("content")}
+                            style={{ padding: "5px" }}
+                          >
+                            Use
+                          </button>
+                          <button
+                            onClick={() => setShowUrlInput(false)}
+                            className={styles.urlCancelButton}
+                          >
+                            <FaTimes />
+                          </button>
                         </div>
-                      )}
-                    </td>
-                    <td className={styles.tableLg}>
-                      <input
-                        value={item.description}
-                        onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableMed}>
-                      <input
-                        value={item.style}
-                        onChange={(e) =>
-                          updateExistingContent(index, "style", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.size}
-                        onChange={(e) =>
-                          updateExistingContent(index, "size", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.color}
-                        onChange={(e) =>
-                          updateExistingContent(index, "color", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        type="text"
-                        pattern="[0-9]*"
-                        inputmode="numeric"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "quantity",
-                            (parseInt(e.target.value) || "")
-                          )
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        type="text"
-                        pattern="^\d*\.?\d*$"
-                        inputmode="decimal"
-                        value={item.price}
-                        onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "price",
-                            e.target.value
-                          )
-                        }
-                        onBlur={(e) => {
-                          const numValue = parseFloat(e.target.value);
-                          updateExistingContent(
-                            index,
-                            "price",
-                            isNaN(numValue) ? 0 : numValue.toFixed(2)
-                          );
-                        }}
-                        
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableTiny}>
-                      <div
-                        className={styles.trash}
-                        onClick={() => copyItem(index)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <FaRegCopy />
                       </div>
-                    </td>
-                    <td className={styles.tableTiny}>
-                      <div
-                        className={styles.trash}
-                        onClick={() => removeItem(index)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <FaRegTrashAlt />
+                    ) : (
+                      <div className={styles.uploadOptions}>
+                        <div className={styles.uploadSection}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileSelect(e, "content")}
+                            className={styles.fileInput}
+                            id="file-upload-new"
+                          />
+                          <label
+                            htmlFor="file-upload-new"
+                            className={styles.fileLabel}
+                            title="Upload from computer"
+                          >
+                            <FaUpload />
+                          </label>
+                        </div>
+                        <button
+                          className={styles.fileLabel}
+                          onClick={handleNewItemThumbnailClick}
+                          title="Enter image URL"
+                        >
+                          <FaLink color="black" />
+                        </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div
-              style={{
-                color: "gray",
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "row",
-                gap: "15px",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              onClick={() => {
-                newItemOpen && cancelNewItem();
-                setNewItemOpen(!newItemOpen);
-              }}
-            >
-              <IoIosAddCircle style={{ color: "green", fontSize: "30px" }} />
-            </div>
-            {newItemOpen && (
-              <div>
-                <table style={{ width: "100%", textAlign: "left" }}>
-                  <tbody>
-                    <tr
+                    )}
+                  </td>
+                  <td className={styles.tableLg}>
+                    <input
+                      value={currentItem.description}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          description: e.target.value,
+                        })
+                      }
+                      className={styles.input}
                       style={{
-                        height: "60px",
+                        margin: 0,
+                        minHeight: "auto",
                         width: "100%",
                       }}
-                    >
-                      <td
-                        className={styles.tableSm}
+                    />
+                  </td>
+                  <td className={styles.tableMed}>
+                    <input
+                      value={currentItem.style}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          style: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        minHeight: "auto",
+                        width: "100%",
+                      }}
+                    />
+                  </td>
+                  <td className={styles.tableReg}>
+                    <input
+                      value={currentItem.size}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          size: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        minHeight: "auto",
+                        width: "100%",
+                      }}
+                    />
+                  </td>
+                  <td className={styles.tableReg}>
+                    <input
+                      value={currentItem.color}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          color: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        minHeight: "auto",
+                        width: "100%",
+                      }}
+                    />
+                  </td>
+                  <td className={styles.tableReg}>
+                    <input
+                      type="text"
+                      pattern="[0-9]*"
+                      inputmode="numeric"
+                      value={currentItem.quantity}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          quantity: parseInt(e.target.value) || "",
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        minHeight: "auto",
+                        width: "100%",
+                      }}
+                    />
+                  </td>
+                  <td className={styles.tableReg}>
+                    <input
+                      type="text"
+                      pattern="^\d*\.?\d*$"
+                      inputmode="decimal"
+                      value={currentItem.price}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          price: e.target.value,
+                        })
+                      }
+                      onBlur={(e) => {
+                        const numValue = parseFloat(e.target.value);
+                        setCurrentItem({
+                          ...currentItem,
+                          price: isNaN(numValue) ? 0 : numValue.toFixed(2),
+                        });
+                      }}
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        minHeight: "auto",
+                        width: "100%",
+                      }}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* Mobile Vertical Layout */}
+            <div className={`${styles.mobileTable}`}>
+              <div className={styles.mobileRow} >
+                <div className={styles.mobileField}>
+                  <label className={styles.mobileLabel}>Image</label>
+                  <div className={styles.mobileValue}>
+                    {currentItem.imageUrl !== "" ? (
+                      <img
+                        src={currentItem.imageUrl}
+                        alt="New Item"
+                        onClick={handleNewItemThumbnailClick}
                         style={{
-                          position: "relative",
-                          width: currentItem.imageUrl !== "" ? "50px" : "150px",
+                          cursor: "pointer",
+                          opacity: imageUploading ? 0.5 : 1,
+                          transition: "opacity 0.2s",
+                          maxWidth: "100px",
+                          maxHeight: "100px",
                         }}
-                      >
-                        {currentItem.imageUrl !== "" ? (
-                          <img
-                            src={currentItem.imageUrl}
-                            alt="New Item"
-                            onClick={handleNewItemThumbnailClick}
-                            style={{
-                              cursor: "pointer",
-                              opacity: imageUploading ? 0.5 : 1,
-                              transition: "opacity 0.2s",
-                            }}
-                            title="Click to change image"
-                          />
-                        ) : showUrlInput ? (
-                          <div>
-                            <input
-                              type="text"
-                              value={imageUrlInput}
-                              onChange={(e) => setImageUrlInput(e.target.value)}
-                              placeholder="url..."
-                              className={styles.input}
-                              style={{
-                                margin: 0,
-                                padding: 0,
-                                width: "100%",
-                              }}
-                            />
-                            <div
-                              style={{
-                                position: "absolute",
-                                right: "0",
-                                top: "0",
-                              }}
-                            >
-                              <button
-                                onClick={() => handleUrlSubmit("content")}
-                                style={{ padding: "5px" }}
-                              >
-                                Use
-                              </button>
-                              <button
-                                onClick={() => setShowUrlInput(false)}
-                                className={styles.urlCancelButton}
-                              >
-                                <FaTimes />
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className={styles.uploadOptions}>
-                            <div className={styles.uploadSection}>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleFileSelect(e, "content")}
-                                className={styles.fileInput}
-                                id="file-upload-new"
-                              />
-                              <label
-                                htmlFor="file-upload-new"
-                                className={styles.fileLabel}
-                                title="Upload from computer"
-                              >
-                                <FaUpload />
-                              </label>
-                            </div>
-                            <button
-                              className={styles.fileLabel}
-                              onClick={handleNewItemThumbnailClick}
-                              title="Enter image URL"
-                            >
-                              <FaLink color="black" />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                      <td className={styles.tableLg}>
-                        <input
-                          value={currentItem.description}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              description: e.target.value,
-                            })
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
-                      </td>
-                      <td className={styles.tableMed}>
-                        <input
-                          value={currentItem.style}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              style: e.target.value,
-                            })
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
-                      </td>
-                      <td className={styles.tableReg}>
-                        <input
-                          value={currentItem.size}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              size: e.target.value,
-                            })
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
-                      </td>
-                      <td className={styles.tableReg}>
-                        <input
-                          value={currentItem.color}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              color: e.target.value,
-                            })
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
-                      </td>
-                      <td className={styles.tableReg}>
+                        title="Click to change image"
+                      />
+                    ) : showUrlInput ? (
+                      <div style={{ position: "relative" }}>
                         <input
                           type="text"
-                          pattern="[0-9]*"
-                          inputmode="numeric"
-                          value={currentItem.quantity}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              quantity: parseInt(e.target.value) || "",
-                            })
-                          }
+                          value={imageUrlInput}
+                          onChange={(e) => setImageUrlInput(e.target.value)}
+                          placeholder="Enter image URL..."
                           className={styles.input}
                           style={{
                             margin: 0,
-                            minHeight: "auto",
                             width: "100%",
                           }}
                         />
-                      </td>
-                      <td className={styles.tableReg}>
-                        <input
-                          type="text"
-                          pattern="^\d*\.?\d*$"
-                          inputmode="decimal"
-                          value={currentItem.price}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              price: e.target.value,
-                            })
-                          }
-                          onBlur={(e) => {
-                            const numValue = parseFloat(e.target.value);
-                            setCurrentItem({
-                              ...currentItem,
-                              price: isNaN(numValue) ? 0 : numValue.toFixed(2),
-                            });
-                          }}
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
-                      </td>
-                      <td className={styles.tableTiny}>
-                        <div
-                          className={`${styles.trash} ${styles.add}`}
-                          onClick={addNewItem}
-                          style={{ cursor: "pointer", fontSize: "25px" }}
-                        >
-                          <IoIosCheckmarkCircle />
+                        <div style={{ marginTop: "5px" }}>
+                          <button
+                            onClick={() => handleUrlSubmit("content")}
+                            style={{ padding: "5px", marginRight: "5px" }}
+                          >
+                            Use
+                          </button>
+                          <button
+                            onClick={() => setShowUrlInput(false)}
+                            className={styles.urlCancelButton}
+                          >
+                            <FaTimes />
+                          </button>
                         </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                      </div>
+                    ) : (
+                      <div className={styles.uploadOptions}>
+                        <div className={styles.uploadSection}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileSelect(e, "content")}
+                            className={styles.fileInput}
+                            id="file-upload-new-mobile"
+                          />
+                          <label
+                            htmlFor="file-upload-new-mobile"
+                            className={styles.fileLabel}
+                            title="Upload from computer"
+                          >
+                            <FaUpload />
+                          </label>
+                        </div>
+                        <button
+                          className={styles.fileLabel}
+                          onClick={handleNewItemThumbnailClick}
+                          title="Enter image URL"
+                        >
+                          <FaLink color="black" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.mobileField}>
+                  <label className={styles.mobileLabel}>Description</label>
+                  <div className={styles.mobileValue}>
+                    <input
+                      value={currentItem.description}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          description: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        width: "100%",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.mobileField}>
+                  <label className={styles.mobileLabel}>Style</label>
+                  <div className={styles.mobileValue}>
+                    <input
+                      value={currentItem.style}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          style: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        width: "100%",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.mobileField}>
+                  <label className={styles.mobileLabel}>Size</label>
+                  <div className={styles.mobileValue}>
+                    <input
+                      value={currentItem.size}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          size: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        width: "100%",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.mobileField}>
+                  <label className={styles.mobileLabel}>Color</label>
+                  <div className={styles.mobileValue}>
+                    <input
+                      value={currentItem.color}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          color: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        width: "100%",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.mobileField}>
+                  <label className={styles.mobileLabel}>Quantity</label>
+                  <div className={styles.mobileValue}>
+                    <input
+                      type="text"
+                      pattern="[0-9]*"
+                      inputmode="numeric"
+                      value={currentItem.quantity}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          quantity: parseInt(e.target.value) || "",
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        width: "100%",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.mobileField}>
+                  <label className={styles.mobileLabel}>Unit Price</label>
+                  <div className={styles.mobileValue}>
+                    <input
+                      type="text"
+                      pattern="^\d*\.?\d*$"
+                      inputmode="decimal"
+                      value={currentItem.price}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          price: e.target.value,
+                        })
+                      }
+                      onBlur={(e) => {
+                        const numValue = parseFloat(e.target.value);
+                        setCurrentItem({
+                          ...currentItem,
+                          price: isNaN(numValue) ? 0 : numValue.toFixed(2),
+                        });
+                      }}
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        width: "100%",
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
           </div>
+          
           <div className={styles.formInput}>
             <label>Visibility</label>
             <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
@@ -1109,9 +864,9 @@ const AddBox = ({ setPage, setBox }) => {
                 <input
                   className={styles.input}
                   onChange={(e) =>
-                    setBoxDiscount(e.target.value.replace(/[^0-9.]/g, ""))
+                    setDiscount(e.target.value.replace(/[^0-9.]/g, ""))
                   }
-                  value={`${boxDiscount}%`}
+                  value={`${discount}%`}
                   required
                 />
               </div>
@@ -1132,7 +887,7 @@ const AddBox = ({ setPage, setBox }) => {
           <div
             style={{ width: "100%", display: "flex", justifyContent: "end" }}
           >
-            <button className={styles.button} onClick={handleSubmitBox}>
+            <button className={styles.button} onClick={submitItem}>
               Upload & Finalize
             </button>
           </div>
