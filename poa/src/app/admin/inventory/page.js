@@ -463,7 +463,7 @@ function Inventory() {
       {filter === "line items" && (
         <table
           className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse" }}
+          style={{ borderCollapse: "collapse", borderRadius:"10px", overflow:"auto" }}
         >
           <thead>
             <tr style={{ backgroundColor: "#ebebeb" }}>
@@ -539,17 +539,17 @@ function Inventory() {
       {filter === "boxes" && (
         <table
           className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse" }}
+          style={{ borderCollapse: "collapse", borderRadius:"10px", overflow:"auto"  }}
         >
           <thead style={{ textAlign: "left" }}>
             <tr style={{ backgroundColor: "#ebebeb" }}>
-              <th className={styles.tableSm}>Box</th>
+              <th>Box</th>
               <th>Box Id</th>
-              <th>Description</th>
+              <th style={{width:"40%"}}>Description</th>
               <th>Location</th>
-              <th>Content Quantity</th>
+              <th>Quant.</th>
               <th>Discount</th>
-              <th>Min Purchase</th>
+              <th>Min.</th>
               <th>Visibility</th>
               <th></th>
             </tr>
@@ -565,14 +565,15 @@ function Inventory() {
                 }}
               >
                 <td
-                  className={styles.tableSm}
                   style={{ position: "relative" }}
                   onClick={() => setEditBoxOpen(box)}
                 >
+                  <div className={styles.tableSm}>
                   <img src={box.image} alt={`Item ${index + 1}`} />
+                  </div>
                 </td>
                 <td onClick={() => setEditBoxOpen(box)}>{box.boxId}</td>
-                <td onClick={() => setEditBoxOpen(box)}>
+                <td onClick={() => setEditBoxOpen(box)} style={{width:"40%"}}>
                   {box.description.length > 80
                     ? box.description.slice(0, 80) + "..."
                     : box.description}
@@ -612,7 +613,7 @@ function Inventory() {
                       ""
                     )
                   ) : (
-                    "N"
+                    ""
                   )}
                 </td>
                 <td>

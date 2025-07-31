@@ -477,21 +477,24 @@
   white-space: nowrap;
   border-collapse: collapse;
   text-align: left;
+  
 
 }
 
+
 .inventoryTable thead,
 .inventoryTable tbody {
+  
   display: table;
   width: 100%;
 }
 
-.inventoryTable tbody td {
-  white-space: normal; /* Allow text wrapping in cells */
+.inventoryTable tbody tr td {
+  white-space: normal;
   min-width: 100px
 }
 
-.inventoryTable thead th {
+.inventoryTable thead tr th {
   white-space: normal;
   min-width: 100px
 
