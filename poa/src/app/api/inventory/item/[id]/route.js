@@ -108,13 +108,39 @@ export async function PATCH(request, { params }) {
       if (body.public !== undefined) {
         updateDocument.public = body.public;
       }
-      
-  
+      if (body.location !== undefined) {
+        updateDocument.location = body.location;
+      }
+      if (body.discount !== undefined) {
+        updateDocument.discount = body.discount;
+      }
+      if (body.minPrice !== undefined) {
+        updateDocument.minPrice= body.minPrice;
+      }
+
+      //if a location is in the body, it means that it is not in a box,
+      //so the boxId needs to be removed, and it should have a qr code
+      const toRemove = {} 
+      if(body.location){ 
+        toRemove.boxId =  ""
+        const websiteUrl = `https://www.pointofaction.com/admin/item/${id}`;
+        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(websiteUrl)}`
+        updateDocument.qrCode = qrCodeUrl
+      }
+      //if a box id has been included in the body, that means it is in a box
+      // so the location needs to be removed, along with the QR Code
+      if(body.box_id){ 
+        toRemove.location =  "";
+        toRemove.discount = "";
+        toRemove.minPrice = "";
+        toRemove.qrCode = "";
+      }
       
       // Update the document
       const result = await collection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: updateDocument }
+        { $set: updateDocument,
+          $unset: toRemove  }
       );
   
       if (result.matchedCount === 0) {

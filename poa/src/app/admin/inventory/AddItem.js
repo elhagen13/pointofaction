@@ -14,7 +14,7 @@ import jsPDF from "jspdf";
 
 export default function AddItem({ onClose, refresh }) {
   const [page, setPage] = useState("box");
-  const [box, setBox] = useState({});
+  const [item, setItem] = useState({});
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -30,15 +30,15 @@ export default function AddItem({ onClose, refresh }) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        {page === "box" && <AddBox setPage={setPage} setBox={setBox} />}
-        {page === "qr" && <QrPopup setPage={setPage} box={box} />}
+        {page === "box" && <AddBox setPage={setPage} setItem={setItem} refresh={refresh}/>}
+        {page === "qr" && <QrPopup setPage={setPage} item={item} />}
       </div>
     </div>
   );
 }
 
-const QrPopup = ({ box }) => {
-  const downloadBoxPDF = async () => {
+const QrPopup = ({ item }) => {
+  const downloadItemPDF = async () => {
     try {
       const pdf = new jsPDF({
         orientation: "portrait",
@@ -54,17 +54,13 @@ const QrPopup = ({ box }) => {
       const textStartY = 1.6;
       const lineHeight = 0.2; 
       
-      // Title
-      pdf.setFontSize(24);
-      pdf.setFont(undefined, "bold");
-      pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
       
       const maxQrY = pageHeight - qrSize - bottomMargin; 
       
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
-      console.log("new", box.description)
-      let description = box.description;
+      console.log("new", item.description)
+      let description = item.description + "(" + item.style + ")";
       let currentQrY = 2.2; 
       
       const textLines = pdf.splitTextToSize(description, 3.5);
@@ -97,9 +93,9 @@ const QrPopup = ({ box }) => {
       });
       
       const qrX = (pageWidth - qrSize) / 2;
-      pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
+      pdf.addImage(item.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
       
-      pdf.save(`box-${box.boxId}.pdf`);
+      pdf.save(`item-${item.description}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
     }
@@ -116,13 +112,13 @@ const QrPopup = ({ box }) => {
       }}
     >
       <div style={{ fontWeight: "bold", fontSize: "32px" }}>
-        Box {box.boxId}
+        {item.description} {"("}{item.style}{")"}
       </div>
       <div>
-        <img src={box.qrCode} alt={`QR Code for Box ${box.boxId}`} />
+        <img src={item.qrCode} alt={`QR Code for ${item.description}`} />
       </div>
       <div style={{ width: "100%", display: "flex", justifyContent: "end" }}>
-        <button className={styles.button} onClick={downloadBoxPDF}>
+        <button className={styles.button} onClick={downloadItemPDF}>
           <span>
             Download PDF <FaDownload />
           </span>
@@ -132,11 +128,9 @@ const QrPopup = ({ box }) => {
   );
 };
 
-const AddBox = ({ setPage, setBox }) => {
+const AddBox = ({ setPage, setItem, refresh }) => {
   const [location, setLocation] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [minimumPrice, setMinimumPrice] = useState(0);
-  /*admin (always clicked), public inventory, sale*/
   const [visibility, setVisibility] = useState(["admin"]);
   const [discount, setDiscount] = useState(20);
   const [currentItem, setCurrentItem] = useState({
@@ -152,6 +146,9 @@ const AddBox = ({ setPage, setBox }) => {
   const [uploadError, setUploadError] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  
+  // Add this missing state variable
+  const [selectedItemIndex, setSelectedItemIndex] = useState(null);
 
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
@@ -213,22 +210,12 @@ const AddBox = ({ setPage, setBox }) => {
       });
       const result = await response.json();
       if (result.success) {
-        if (type === "content" && itemIndex !== null) {
-          // Update specific item's image
-          setContents((prevContents) =>
-            prevContents.map((item, index) =>
-              index === itemIndex ? { ...item, imageUrl: result.url } : item
-            )
-          );
-        } else if (type === "content") {
+        if (type === "content") {
           // Update current item being added
           setCurrentItem({
             ...currentItem,
             imageUrl: result.url,
           });
-        } else {
-          // Update box image
-          setImageUrl(result.url);
         }
       } else {
         setUploadError(result.error || "Upload failed");
@@ -241,18 +228,32 @@ const AddBox = ({ setPage, setBox }) => {
     }
   };
 
-
   // Handle clicking on new item thumbnail
-  const handleNewItemThumbnailClick = () => {
+  const handleNewItemThumbnailClick = (e) => {
+    e.preventDefault();
+    console.log("hello");
     setShowUrlInput(true);
   };
 
-  const submitItem = () => {
-
-  }
+  const submitItem = async (e) => {
+    e.preventDefault(); // Prevent form submission
+    await submitDb();
+  };
 
   const submitDb = async () => {
+    // Validate required fields
+    if (!currentItem.description.trim()) {
+      setUploadError("Please enter a description for the item");
+      return false;
+    }
+
+    if (!location.trim()) {
+      setUploadError("Please enter an item location");
+      return false;
+    }
+
     const itemData = {
+      location: location, 
       image: currentItem.imageUrl,
       description: currentItem.description,
       style: currentItem.style,
@@ -263,44 +264,63 @@ const AddBox = ({ setPage, setBox }) => {
       sale: visibility.includes("sale"),
       public: visibility.includes("public"),
     };
-    if(visibility.includes("sale")){
+    
+    if (visibility.includes("sale")) {
       itemData.discount = discount;
-      itemData.minPrice = minimumPrice
-    } 
+      itemData.minPrice = minimumPrice;
+    }
 
-    const itemResponse = await fetch("/api/inventory/item", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(itemData), // Fixed: was boxData
-    });
+    try {
+      const itemResponse = await fetch("/api/inventory/item", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(itemData),
+      });
 
-    const itemResult = await itemResponse.json();
+      const itemResult = await itemResponse.json();
 
-    if (itemResult.success) {
-      console.log("Item created successfully:", itemResult.data);
-      console.log("Message:", itemResult.message);
-    } else {
-      console.error("Error creating item:", itemResult.error);
-      console.error("Details:", itemResult.details);
-      alert(
-        "Error creating item: " + (itemResult.error || "Unknown error")
-      );
+      if (itemResult.success) {
+        console.log("Item created successfully:", itemResult.data);
+        console.log("Message:", itemResult.message);
+        alert("Item created successfully!");
+        
+        // Reset form
+        setCurrentItem({
+          imageUrl: "",
+          description: "",
+          style: "",
+          size: "",
+          color: "",
+          quantity: 0,
+          price: 0.0,
+        });
+        setLocation("");
+        setUploadError("");
+        
+        setPage("qr")
+        setItem(itemResult.data)
+        refresh();
+        return true;
+      } else {
+        console.error("Error creating item:", itemResult.error);
+        console.error("Details:", itemResult.details);
+        setUploadError(itemResult.error || "Unknown error occurred");
+        return false;
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      setUploadError("Network error: " + error.message);
       return false;
     }
-  
-
-    alert("Box and all items created successfully!");
-    return true;
-  }
-
+  };
 
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
         <h2>Add Item to Inventory</h2>
-        <form className={styles.form} style={{ marginTop: "30px" }}>
+        <form className={styles.form} style={{ marginTop: "30px" }} onSubmit={submitItem}>
           <div className={styles.imageAndLocation}>
             <div className={styles.formInput}>
               <label>Item Location</label>
@@ -420,12 +440,14 @@ const AddBox = ({ setPage, setBox }) => {
                           }}
                         >
                           <button
+                            type="button"
                             onClick={() => handleUrlSubmit("content")}
                             style={{ padding: "5px" }}
                           >
                             Use
                           </button>
                           <button
+                            type="button"
                             onClick={() => setShowUrlInput(false)}
                             className={styles.urlCancelButton}
                           >
@@ -452,6 +474,7 @@ const AddBox = ({ setPage, setBox }) => {
                           </label>
                         </div>
                         <button
+                          type="button"
                           className={styles.fileLabel}
                           onClick={handleNewItemThumbnailClick}
                           title="Enter image URL"
@@ -533,7 +556,7 @@ const AddBox = ({ setPage, setBox }) => {
                     <input
                       type="text"
                       pattern="[0-9]*"
-                      inputmode="numeric"
+                      inputMode="numeric"
                       value={currentItem.quantity}
                       onChange={(e) =>
                         setCurrentItem({
@@ -553,7 +576,7 @@ const AddBox = ({ setPage, setBox }) => {
                     <input
                       type="text"
                       pattern="^\d*\.?\d*$"
-                      inputmode="decimal"
+                      inputMode="decimal"
                       value={currentItem.price}
                       onChange={(e) =>
                         setCurrentItem({
@@ -582,7 +605,7 @@ const AddBox = ({ setPage, setBox }) => {
 
             {/* Mobile Vertical Layout */}
             <div className={`${styles.mobileTable}`}>
-              <div className={styles.mobileRow} >
+              <div className={styles.mobileRow}>
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Image</label>
                   <div className={styles.mobileValue}>
@@ -615,12 +638,14 @@ const AddBox = ({ setPage, setBox }) => {
                         />
                         <div style={{ marginTop: "5px" }}>
                           <button
+                            type="button"
                             onClick={() => handleUrlSubmit("content")}
                             style={{ padding: "5px", marginRight: "5px" }}
                           >
                             Use
                           </button>
                           <button
+                            type="button"
                             onClick={() => setShowUrlInput(false)}
                             className={styles.urlCancelButton}
                           >
@@ -647,6 +672,7 @@ const AddBox = ({ setPage, setBox }) => {
                           </label>
                         </div>
                         <button
+                          type="button"
                           className={styles.fileLabel}
                           onClick={handleNewItemThumbnailClick}
                           title="Enter image URL"
@@ -744,7 +770,7 @@ const AddBox = ({ setPage, setBox }) => {
                     <input
                       type="text"
                       pattern="[0-9]*"
-                      inputmode="numeric"
+                      inputMode="numeric"
                       value={currentItem.quantity}
                       onChange={(e) =>
                         setCurrentItem({
@@ -767,7 +793,7 @@ const AddBox = ({ setPage, setBox }) => {
                     <input
                       type="text"
                       pattern="^\d*\.?\d*$"
-                      inputmode="decimal"
+                      inputMode="decimal"
                       value={currentItem.price}
                       onChange={(e) =>
                         setCurrentItem({
@@ -804,8 +830,9 @@ const AddBox = ({ setPage, setBox }) => {
                   name="radioGroup"
                   value="admin"
                   checked
+                  readOnly
                 />
-                <label for="radio1" style={{ marginLeft: "5px" }}>
+                <label htmlFor="radio1" style={{ marginLeft: "5px" }}>
                   Admin
                 </label>
                 <br />
@@ -827,7 +854,7 @@ const AddBox = ({ setPage, setBox }) => {
                     }
                   }}
                 />
-                <label for="checkbox1" style={{ marginLeft: "5px" }}>
+                <label htmlFor="checkbox1" style={{ marginLeft: "5px" }}>
                   Public
                 </label>
                 <br />
@@ -851,7 +878,7 @@ const AddBox = ({ setPage, setBox }) => {
                   }}
                 />
 
-                <label for="checkbox2" style={{ marginLeft: "5px" }}>
+                <label htmlFor="checkbox2" style={{ marginLeft: "5px" }}>
                   Sale
                 </label>
               </div>
@@ -887,8 +914,8 @@ const AddBox = ({ setPage, setBox }) => {
           <div
             style={{ width: "100%", display: "flex", justifyContent: "end" }}
           >
-            <button className={styles.button} onClick={submitItem}>
-              Upload & Finalize
+            <button type="submit" className={styles.button}>
+              Save
             </button>
           </div>
         </form>

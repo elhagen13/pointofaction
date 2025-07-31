@@ -2,22 +2,31 @@
 import styles from "./inventory.module.css";
 import { useState, useEffect } from "react";
 import {
-  FaRegEdit,
   FaUpload,
   FaTimes,
   FaRegTrashAlt,
   FaLink,
   FaRegCopy,
+  FaBoxOpen,
+  FaSearch,
 } from "react-icons/fa";
-import { FaRegSquarePlus } from "react-icons/fa6";
 import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
+import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
+
 import jsPDF from "jspdf";
 
-
-export default function EditItem({ box, onClose, refresh }) {
+export default function EditItem({
+  box,
+  onClose,
+  refresh,
+  selectedItem,
+  setSelectedItem,
+  boxes,
+}) {
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       refresh();
+      setSelectedItem(null);
       onClose();
     }
   };
@@ -29,13 +38,19 @@ export default function EditItem({ box, onClose, refresh }) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        <AddBox box={box} onClose={onClose} refresh={refresh}/>
+        <AddBox
+          box={box}
+          onClose={onClose}
+          refresh={refresh}
+          selectedItem={selectedItem}
+          boxes={boxes}
+        />
       </div>
     </div>
   );
 }
 
-const AddBox = ({ box, onClose, refresh }) => {
+const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
   const [boxDescription, setBoxDescription] = useState(box.description);
   const [boxLocation, setBoxLocation] = useState(box.location);
   const [contents, setContents] = useState([]);
@@ -61,7 +76,10 @@ const AddBox = ({ box, onClose, refresh }) => {
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(null);
+  const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
   let acknowledgement = false;
+  const [boxDict, setBoxDict] = useState({});
 
   useEffect(() => {
     const getContent = async () => {
@@ -74,7 +92,17 @@ const AddBox = ({ box, onClose, refresh }) => {
         (item) => item.boxId === box._id
       );
       setContents(matchingItems);
-      setOriginalContents(matchingItems)
+      setOriginalContents(matchingItems);
+
+      const newBoxDict = {};
+      for (const item of result.data) {
+        if (item.boxId && !newBoxDict[item.boxId]) {
+          newBoxDict[item.boxId] = {};
+          newBoxDict[item.boxId].public = item.public;
+          newBoxDict[item.boxId].sale = item.sale;
+        }
+      }
+      setBoxDict(newBoxDict);
     };
     getContent();
   }, []);
@@ -86,6 +114,13 @@ const AddBox = ({ box, onClose, refresh }) => {
     setVisibility(newVisibility);
   }, [contents]);
 
+  // Filter boxes based on search term
+  const filteredBoxes = boxes.filter(b => 
+    b.boxId.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
+    b.description?.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
+    b.location?.toLowerCase().includes(dropdownSearchTerm.toLowerCase())
+  );
+
   const downloadBoxPDF = async () => {
     try {
       const pdf = new jsPDF({
@@ -93,60 +128,61 @@ const AddBox = ({ box, onClose, refresh }) => {
         unit: "in",
         format: [4, 6],
       });
-  
+
       // Constants
       const pageWidth = 4;
       const pageHeight = 6;
       const qrSize = 2;
-      const bottomMargin = 0.5; 
+      const bottomMargin = 0.5;
       const textStartY = 1.6;
-      const lineHeight = 0.2; 
-      
+      const lineHeight = 0.2;
+
       // Title
       pdf.setFontSize(24);
       pdf.setFont(undefined, "bold");
       pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
-      
-      const maxQrY = pageHeight - qrSize - bottomMargin; 
-      
+
+      const maxQrY = pageHeight - qrSize - bottomMargin;
+
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
-      console.log("new", box.description)
+      console.log("new", box.description);
       let description = box.description;
-      let currentQrY = 2.2; 
-      
+      let currentQrY = 2.2;
+
       const textLines = pdf.splitTextToSize(description, 3.5);
       const textHeight = textLines.length * lineHeight;
-      const idealQrY = textStartY + textHeight + 0.3; 
-      
+      const idealQrY = textStartY + textHeight + 0.3;
+
       // If QR would go past bottom, truncate text
       if (idealQrY + qrSize > pageHeight - bottomMargin) {
-        const availableHeight = maxQrY - textStartY - 0.3; 
+        const availableHeight = maxQrY - textStartY - 0.3;
         const maxLines = Math.floor(availableHeight / lineHeight);
-        
+
         // Truncate text to fit
         let truncatedText = description;
         let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
-        
+
         while (truncatedLines.length > maxLines && truncatedText.length > 0) {
-          truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedText =
+            truncatedText.substring(0, truncatedText.length - 4) + "...";
           truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
         }
-        
+
         description = truncatedText;
         currentQrY = maxQrY;
       } else {
         currentQrY = idealQrY;
       }
-      
+
       pdf.text(description, 2, textStartY, {
         align: "center",
         maxWidth: 3.5,
       });
-      
+
       const qrX = (pageWidth - qrSize) / 2;
       pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
-      
+
       pdf.save(`box-${box.boxId}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -171,7 +207,8 @@ const AddBox = ({ box, onClose, refresh }) => {
     }
   };
 
-  const handleUrlSubmit = (type, itemIndex = null) => {
+  const handleUrlSubmit = (e, type, itemIndex = null) => {
+    e.preventDefault()
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
       return;
@@ -187,7 +224,7 @@ const AddBox = ({ box, onClose, refresh }) => {
 
     if (type === "content" && itemIndex !== null) {
       // Update specific item's image
-      console.log(contents)
+      console.log(contents);
       setContents((prevContents) =>
         prevContents.map((item, index) =>
           index === itemIndex ? { ...item, image: imageUrlInput } : item
@@ -286,13 +323,13 @@ const AddBox = ({ box, onClose, refresh }) => {
       prevContents.filter((_, index) => index !== indexToRemove)
     );
   };
-  
+
   const copyItem = async (indexToCopy) => {
-    const { _id, ...itemToCopy } = contents[indexToCopy]; 
+    const { _id, ...itemToCopy } = contents[indexToCopy];
     setContents([...contents, itemToCopy]);
   };
 
-  const removeItemDB = async(id) => {
+  const removeItemDB = async (id) => {
     const itemResponse = await fetch(`/api/inventory/item/${id}`, {
       method: "DELETE",
       headers: {
@@ -311,16 +348,15 @@ const AddBox = ({ box, onClose, refresh }) => {
 
     console.log("Box created successfully:", data.data);
     console.log("Message:", data.message);
-
-  }
+  };
 
   const addNewItem = () => {
     if (currentItem.description.trim() === "") {
       setUploadError("Please enter a description for the item");
       return;
     }
-    console.log("contents",contents)
-    console.log("current", currentItem)
+    console.log("contents", contents);
+    console.log("current", currentItem);
 
     setContents((prevContents) => [...prevContents, { ...currentItem }]);
     setCurrentItem({
@@ -363,15 +399,33 @@ const AddBox = ({ box, onClose, refresh }) => {
       return;
     }
 
-    for(const item of contents){
-      if(!item.description || !item.style || !item.size || !item.color || !item.quantity || !item.price){
+    for (const item of contents) {
+      if (
+        !item.description ||
+        !item.style ||
+        !item.size ||
+        !item.color ||
+        !item.quantity ||
+        !item.price
+      ) {
         alert("One of the items in the box is missing a field");
         return;
       }
     }
 
-    if(!acknowledgement && (currentItem.color || currentItem.description || currentItem.image || currentItem.price || currentItem.quantity || currentItem.size || currentItem.style)){
-      alert("Warning: New item not finalized, click the checkmark to the right of the item to add.");
+    if (
+      !acknowledgement &&
+      (currentItem.color ||
+        currentItem.description ||
+        currentItem.image ||
+        currentItem.price ||
+        currentItem.quantity ||
+        currentItem.size ||
+        currentItem.style)
+    ) {
+      alert(
+        "Warning: New item not finalized, click the checkmark to the right of the item to add."
+      );
       acknowledgement = true;
       return;
     }
@@ -388,13 +442,11 @@ const AddBox = ({ box, onClose, refresh }) => {
         setImageUrl("");
         setContents([]);
         setVisibility(["admin"]);
-
-        // Close modal
-        setPage("qr");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
+      refresh();
       onClose();
     }
   };
@@ -407,17 +459,17 @@ const AddBox = ({ box, onClose, refresh }) => {
     try {
       /*Go through original contents, if there is an id that exists
       that is not in the current contents, then it needs to be deleted*/
-      for(const original of originalContents){
-        let match = false
-        for(const item of contents){
-          if(!item._id) break;
-          if(item._id == original._id){
+      for (const original of originalContents) {
+        let match = false;
+        for (const item of contents) {
+          if (!item._id) break;
+          if (item._id == original._id) {
             match = true;
             break;
           }
         }
-        if(!match){
-          removeItemDB(original._id)
+        if (!match) {
+          removeItemDB(original._id);
         }
       }
 
@@ -432,7 +484,6 @@ const AddBox = ({ box, onClose, refresh }) => {
         contents: contents,
       };
 
-      // Create the box first
       const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
         method: "PATCH",
         headers: {
@@ -456,56 +507,67 @@ const AddBox = ({ box, onClose, refresh }) => {
       const boxId = data.data._id;
 
       for (const content of contents) {
-        const itemData = {
-          box_id: boxId,
-          image: content.image,
-          description: content.description,
-          style: content.style,
-          size: content.size,
-          color: content.color,
-          quantity: content.quantity,
-          price: content.price,
-          sale: visibility.includes("sale"),
-          public: visibility.includes("public"),
-        };
-
-        let itemResponse;
-        if(!content._id){
-          itemResponse = await fetch(`/api/inventory/item`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(itemData),
-          });
-        }
-        else{
-          itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(itemData),
-          });
-        }
-        
-
-        const itemResult = await itemResponse.json();
-
-        if (itemResult.success) {
-          console.log("Item created successfully:", itemResult.data);
-          console.log("Message:", itemResult.message);
+        if (content.removed) {
+          //if a removed tag has been added to the item meaning that it has
+          //been taken out of the box
+          removeFromBox(content);
         } else {
-          console.error("Error creating item:", itemResult.error);
-          console.error("Details:", itemResult.details);
-          alert(
-            "Error creating item: " + (itemResult.error || "Unknown error")
-          );
-          return false;
+          const itemData = {
+            box_id: content.boxId ? content.boxId : boxId,
+            image: content.image,
+            description: content.description,
+            style: content.style,
+            size: content.size,
+            color: content.color,
+            quantity: content.quantity,
+            price: content.price,
+            sale:
+              content.boxId === boxId
+                ? visibility.includes("sale")
+                : boxDict[content.boxId].sale,
+            public:
+              content.boxId === boxId
+                ? visibility.includes("public")
+                : boxDict[content.boxId].public,
+          };
+          console.log(itemData);
+
+          let itemResponse;
+          if (!content._id) {
+            itemResponse = await fetch(`/api/inventory/item`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(itemData),
+            });
+          } else {
+            itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(itemData),
+            });
+          }
+
+          const itemResult = await itemResponse.json();
+
+          if (itemResult.success) {
+            console.log("Item created successfully:", itemResult.data);
+            console.log("Message:", itemResult.message);
+          } else {
+            console.error("Error creating item:", itemResult.error);
+            console.error("Details:", itemResult.details);
+            alert(
+              "Error creating item: " + (itemResult.error || "Unknown error")
+            );
+            return false;
+          }
         }
       }
 
-      alert("Box and all items created successfully!");
+      alert("Box and all items updated successfully!");
       return true;
     } catch (error) {
       console.error("Network error:", error);
@@ -515,12 +577,12 @@ const AddBox = ({ box, onClose, refresh }) => {
   }
 
   async function handleDelete(opt, e) {
-    e.preventDefault()
+    e.preventDefault();
     try {
       if (opt === "all") {
         // Delete all items in the box
         for (const item of contents) {
-          if(item._id) {
+          if (item._id) {
             const itemResponse = await fetch(
               `/api/inventory/item/${item._id}`,
               {
@@ -539,6 +601,10 @@ const AddBox = ({ box, onClose, refresh }) => {
             }
           }
         }
+      } else {
+        for (const content of contents) {
+          removeFromBox(content);
+        }
       }
 
       const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
@@ -548,7 +614,7 @@ const AddBox = ({ box, onClose, refresh }) => {
         },
       });
 
-      const deleteResult = await boxResponse.json(); 
+      const deleteResult = await boxResponse.json();
 
       if (!deleteResult.success) {
         console.error("Error deleting box:", deleteResult.error);
@@ -556,7 +622,8 @@ const AddBox = ({ box, onClose, refresh }) => {
         return;
       }
 
-      alert("Box and all items deleted successfully!");
+      if (opt === "all") alert("Box and all items deleted successfully!");
+      else alert("Box and all items deleted successfully!");
 
       // Refresh the inventory and close the modal
       refresh();
@@ -567,6 +634,59 @@ const AddBox = ({ box, onClose, refresh }) => {
     }
   }
 
+  const removeFromBox = async (content) => {
+    const itemData = {
+      image: content.image,
+      description: content.description,
+      style: content.style,
+      size: content.size,
+      color: content.color,
+      quantity: content.quantity,
+      price: content.price,
+      sale: visibility.includes("sale"),
+      public: visibility.includes("public"),
+      location: boxLocation,
+    };
+
+    if (visibility.includes("sale")) {
+      itemData.discount = boxDiscount;
+      itemData.minPrice = minimumPrice;
+    }
+
+    let itemResponse;
+    if (!content._id) {
+      itemResponse = await fetch(`/api/inventory/item`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(itemData),
+      });
+    } else {
+      itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(itemData),
+      });
+    }
+
+    const itemResult = await itemResponse.json();
+
+    if (itemResult.success) {
+      console.log("Items successfully removed from box:", itemResult.data);
+      console.log("Message:", itemResult.message);
+    } else {
+      console.error("Error creating item:", itemResult.error);
+      console.error("Details:", itemResult.details);
+      alert(
+        "Error removing from box: " + (itemResult.error || "Unknown error")
+      );
+      return false;
+    }
+  };
+
   const generateDescription = (e) => {
     e.preventDefault();
 
@@ -576,22 +696,60 @@ const AddBox = ({ box, onClose, refresh }) => {
       retString =
         retString +
         "• " +
-        item.size + " " + 
-        item.color + " " + 
-        item.description + " (" + 
-        item.style + 
+        item.size +
+        " " +
+        item.color +
+        " " +
+        item.description +
+        " (" +
+        item.style +
         ")\n";
     });
 
     setBoxDescription(retString);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
+        setIsDropdownOpen(null);
+        setDropdownSearchTerm(""); // Clear search when closing dropdown
+      }
+    };
+
+    if (isDropdownOpen !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  const handleDropdownToggle = (index) => {
+    if (isDropdownOpen === index) {
+      setIsDropdownOpen(null);
+      setDropdownSearchTerm("");
+    } else {
+      setIsDropdownOpen(index);
+      setDropdownSearchTerm("");
+    }
+  };
+
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
-        <div style={{display: "flex", flexDirection:"row", justifyContent:"space-between"}}>
-        <h2>Add Box to Inventory</h2>
-        <button className={styles.button} onClick={downloadBoxPDF}>Download QR </button>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <h2>Edit Box {box.boxId}</h2>
+          <button className={styles.button} onClick={downloadBoxPDF}>
+            Download QR{" "}
+          </button>
         </div>
         <form
           className={styles.form}
@@ -675,8 +833,6 @@ const AddBox = ({ box, onClose, refresh }) => {
                 width: "100%",
                 textAlign: "left",
                 borderCollapse: "collapse",
-                borderRadius: "10px",
-                overflow: "hidden",
               }}
             >
               <thead>
@@ -725,6 +881,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                   </th>
                   <th className={styles.tableTiny}></th>
                   <th className={styles.tableTiny}></th>
+                  <th className={styles.tableTiny}></th>
                 </tr>
               </thead>
               <tbody>
@@ -734,7 +891,12 @@ const AddBox = ({ box, onClose, refresh }) => {
                     style={{
                       height: "60px",
                       width: "100%",
-                      backgroundColor: index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
+                      backgroundColor:
+                        selectedItem === item._id
+                          ? "#466fb3"
+                          : index % 2 === 0
+                            ? "#dae2eb"
+                            : "#ccd5e0",
                     }}
                   >
                     <td
@@ -859,11 +1021,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                         inputMode="decimal"
                         value={item.price}
                         onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "price",
-                            e.target.value
-                          )
+                          updateExistingContent(index, "price", e.target.value)
                         }
                         onBlur={(e) => {
                           const numValue = parseFloat(e.target.value);
@@ -881,20 +1039,145 @@ const AddBox = ({ box, onClose, refresh }) => {
                         }}
                       />
                     </td>
+                    <td
+                      className={styles.tableTiny}
+                      style={{ position: "relative" }}
+                    >
+                      <div
+                        className={styles.trash}
+                        onClick={() => handleDropdownToggle(index)}
+                        style={{
+                          cursor: "pointer",
+                          color: selectedItem === item._id ? "white" : "black",
+                        }}
+                        data-dropdown
+                      >
+                        {item.removed ? 
+                          <FaBoxOpen/>
+                         :
+                        item.boxId === box._id || !item.boxId ? 
+                          <RiSwapBoxLine />
+                         : 
+                          <RiSwapBoxFill />
+                        }
+                      </div>
+
+                      {isDropdownOpen === index && (
+                        <div className={styles.dropdown} data-dropdown>
+                          {/* Search input */}
+                          <div 
+                            className={styles.dropdownSearchContainer}
+                            style={{
+                              padding: "8px",
+                              borderBottom: "1px solid #ccc",
+                              position: "sticky",
+                              top: 0,
+                              backgroundColor: "white",
+                              zIndex: 1
+                            }}
+                            data-dropdown
+                          >
+                            <div style={{ position: "relative" }} data-dropdown>
+                              <FaSearch 
+                                style={{
+                                  position: "absolute",
+                                  left: "8px",
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  color: "#666",
+                                  fontSize: "12px"
+                                }}
+                              />
+                              <input
+                                type="text"
+                                placeholder="Search boxes..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className={styles.input}
+                                style={{
+                                  margin: 0,
+                                  padding: "4px 4px 4px 24px",
+                                  fontSize: "12px",
+                                  minHeight: "auto",
+                                  width: "100%",
+                                  border: "1px solid #ddd",
+                                  borderRadius: "4px"
+                                }}
+                                data-dropdown
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Remove from box option */}
+                          <div
+                            key="removed"
+                            className={`${styles.dropdownItem} ${item.removed ? styles.selected : ""}`}
+                            onClick={() => {
+                              updateExistingContent(index, "removed", true);
+                              updateExistingContent(index, "boxId", null);
+                              setIsDropdownOpen(null);
+                              setDropdownSearchTerm("");
+                            }}
+                            data-dropdown
+                          >
+                            Remove from Box
+                          </div>
+                          {filteredBoxes.length > 0 ? (
+                            filteredBoxes.map((b, boxIndex) => (
+                              <div
+                                key={boxIndex}
+                                className={`${styles.dropdownItem} ${
+                                  !item.removed && ((!item.boxId && b.boxId === box.boxId) || item.boxId === b._id)
+                                    ? styles.selected
+                                    : ""
+                                }`}
+                                onClick={() => {
+                                  updateExistingContent(index, "removed", false);
+                                  updateExistingContent(index, "boxId", b._id);
+                                  setIsDropdownOpen(null);
+                                  setDropdownSearchTerm("");
+                                }}
+                                data-dropdown
+                                title={`${b.boxId} - ${b.description || ''} (${b.location || ''})`}
+                              >
+                                <div data-dropdown>
+                                  <strong>{b.boxId}</strong>
+                                </div>
+                              </div>
+                            ))
+                          ) : dropdownSearchTerm ? (
+                            <div 
+                              className={styles.dropdownItem} 
+                              style={{ color: "#999", fontStyle: "italic" }}
+                              data-dropdown
+                            >
+                              No boxes found matching "{dropdownSearchTerm}"
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+                    </td>
                     <td className={styles.tableTiny}>
                       <div
                         className={styles.trash}
                         onClick={() => copyItem(index)}
-                        style={{ cursor: "pointer" }}
+                        style={{
+                          cursor: "pointer",
+                          color: selectedItem === item._id ? "white" : "black",
+                        }}
                       >
-                        <FaRegCopy/>
+                        <FaRegCopy />
                       </div>
                     </td>
                     <td className={styles.tableTiny}>
                       <div
                         className={styles.trash}
                         onClick={() => removeItem(index)}
-                        style={{ cursor: "pointer" }}
+                        style={{
+                          cursor: "pointer",
+                          color: selectedItem === item._id ? "white" : "black",
+                        }}
                       >
                         <FaRegTrashAlt />
                       </div>
@@ -971,7 +1254,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                               }}
                             >
                               <button
-                                onClick={() => handleUrlSubmit("content")}
+                                onClick={(e) => handleUrlSubmit(e, "content")}
                                 style={{ padding: "5px" }}
                               >
                                 Use
@@ -1082,9 +1365,9 @@ const AddBox = ({ box, onClose, refresh }) => {
                       </td>
                       <td className={styles.tableReg}>
                         <input
-                           type="text"
-                           pattern="[0-9]*"
-                           inputMode="numeric"
+                          type="text"
+                          pattern="[0-9]*"
+                          inputMode="numeric"
                           value={currentItem.quantity}
                           onChange={(e) =>
                             setCurrentItem({
@@ -1225,7 +1508,7 @@ const AddBox = ({ box, onClose, refresh }) => {
                   onChange={(e) =>
                     setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
                   }
-                  value={`$${minimumPrice}`}
+                  value={`${minimumPrice}`}
                   required
                 />
               </div>

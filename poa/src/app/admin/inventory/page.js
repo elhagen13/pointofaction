@@ -18,6 +18,8 @@ function Inventory() {
   const [filter, setFilter] = useState("line items");
   const colors = ["#BDCE67", "#93A537", "#6B7B15"];
 
+  const [selectedItem, setSelectedItem] = useState(null);
+
   const [addBoxOpen, setAddBoxOpen] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [editItemOpen, setEditItemOpen] = useState(null);
@@ -57,12 +59,11 @@ function Inventory() {
     getInventory();
   }, []);
 
-  // Fix: Use useMemo to create contentDict properly
   const contentDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
       if (item.boxId) {
-        const boxIdStr = item.boxId.toString();
+        const boxIdStr = item.boxId?.toString();
         if (!dict[boxIdStr]) {
           dict[boxIdStr] = [];
         }
@@ -102,36 +103,48 @@ function Inventory() {
     const searchTerm = searchValue.toLowerCase().trim();
 
     return items.filter((item) => {
-      switch (selectedSearchOption) {
-        case "style":
-          return item.style?.toLowerCase().includes(searchTerm);
-        case "color":
-          return item.color?.toLowerCase().includes(searchTerm);
-        case "description":
-          return item.description?.toLowerCase().includes(searchTerm);
-        case "quantity":
-          return item.quantity?.toString().includes(searchTerm);
-        case "box":
-          const boxId = boxDict[item.boxId?.toString()]?.boxId;
-          return boxId?.toLowerCase().includes(searchTerm);
-        case "location":
-          const location = boxDict[item.boxId?.toString()]?.location;
-          return location?.toLowerCase().includes(searchTerm);
-        case "all":
-        default:
-          return (
-            item.style?.toLowerCase().includes(searchTerm) ||
-            item.color?.toLowerCase().includes(searchTerm) ||
-            item.description?.toLowerCase().includes(searchTerm) ||
-            item.quantity?.toString().includes(searchTerm) ||
-            boxDict[item.boxId?.toString()]?.boxId
-              ?.toLowerCase()
-              .includes(searchTerm) ||
-            boxDict[item.boxId?.toString()]?.location
-              ?.toLowerCase()
-              .includes(searchTerm)
-          );
+      if (selectedSearchOption !== "all") {
+        // Keep existing single-field search logic
+        switch (selectedSearchOption) {
+          case "style":
+            return item.style?.toLowerCase().includes(searchTerm);
+          case "color":
+            return item.color?.toLowerCase().includes(searchTerm);
+          case "description":
+            return item.description?.toLowerCase().includes(searchTerm);
+          case "quantity":
+            return item.quantity?.toString().includes(searchTerm);
+          case "box":
+            const boxId = boxDict[item.boxId?.toString()]?.boxId;
+            return boxId?.toLowerCase().includes(searchTerm);
+          case "location":
+            const location = boxDict[item.boxId?.toString()]?.location;
+            return location?.toLowerCase().includes(searchTerm);
+        }
       }
+
+      // For "all" search - multi-word logic
+      const searchWords = searchTerm
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      if (searchWords.length === 0) return true;
+
+      // Combine all searchable text for this item
+      const itemText = [
+        item.style || "",
+        item.color || "",
+        item.description || "",
+        item.quantity?.toString() || "",
+        boxDict[item.boxId?.toString()]?.boxId || "",
+        boxDict[item.boxId?.toString()]?.location || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      // Check if ALL search words are found in the combined text
+      return searchWords.every((word) => itemText.includes(word));
     });
   }, [inventory, page, searchValue, selectedSearchOption, boxDict]);
 
@@ -162,22 +175,43 @@ function Inventory() {
 
     const searchTerm = searchValue.toLowerCase().trim();
 
-    return boxItems.filter((box) => {
-      switch (selectedSearchOption) {
-        case "description":
-          return box.description?.toLowerCase().includes(searchTerm);
-        case "location":
-          return box.location?.toLowerCase().includes(searchTerm);
-        case "box":
-          return box.boxId?.toLowerCase().includes(searchTerm);
-        case "all":
-        default:
-          return (
-            box.description?.toLowerCase().includes(searchTerm) ||
-            box.location?.toLowerCase().includes(searchTerm) ||
-            box.boxId?.toLowerCase().includes(searchTerm)
-          );
+    return boxItems.filter((item) => {
+      if (selectedSearchOption !== "all") {
+        switch (selectedSearchOption) {
+          case "style":
+            return item.style?.toLowerCase().includes(searchTerm);
+          case "color":
+            return item.color?.toLowerCase().includes(searchTerm);
+          case "description":
+            return item.description?.toLowerCase().includes(searchTerm);
+          case "quantity":
+            return item.quantity?.toString().includes(searchTerm);
+          case "box":
+            const boxId = boxDict[item.boxId?.toString()]?.boxId;
+            return boxId?.toLowerCase().includes(searchTerm);
+          case "location":
+            const location = boxDict[item.boxId?.toString()]?.location;
+            return location?.toLowerCase().includes(searchTerm);
+        }
       }
+    
+      // For "all" search - multi-word logic
+      const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+      
+      if (searchWords.length === 0) return true;
+    
+      // Combine all searchable text for this item
+      const itemText = [
+        item.style || '',
+        item.color || '',
+        item.description || '',
+        item.quantity?.toString() || '',
+        boxDict[item.boxId?.toString()]?.boxId || '',
+        boxDict[item.boxId?.toString()]?.location || ''
+      ].join(' ').toLowerCase();
+    
+      // Check if ALL search words are found in the combined text
+      return searchWords.every(word => itemText.includes(word));
     });
   }, [boxes, contentDict, page, searchValue, selectedSearchOption]);
 
@@ -236,7 +270,7 @@ function Inventory() {
 
       // Fix: Use === for comparison and convert both to string for safety
       contentData.data.forEach((item) => {
-        if (item.boxId.toString() === box._id.toString()) {
+        if (item.boxId?.toString() === box._id.toString()) {
           // Fix: Use original box._id and strict equality
           contents.push(item);
         }
@@ -429,7 +463,7 @@ function Inventory() {
       {filter === "line items" && (
         <table
           className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse" }}
+          style={{ borderCollapse: "collapse", borderRadius: "10px", overflow:"hidden" }}
         >
           <thead style={{ textAlign: "left" }}>
             <tr style={{ backgroundColor: "#ebebeb" }}>
@@ -442,7 +476,6 @@ function Inventory() {
               <th>Location</th>
               <th>Price</th>
               <th>Visibility</th>
-              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -451,6 +484,14 @@ function Inventory() {
                 key={index}
                 style={{
                   backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                }}
+                onClick={() => {
+                  if (boxDict[item.boxId?.toString()]) {
+                    setSelectedItem(item._id);
+                    setEditBoxOpen(boxDict[item.boxId?.toString()]);
+                  } else {
+                    setEditItemOpen(item);
+                  }
                 }}
               >
                 <td className={styles.tableSm} style={{ position: "relative" }}>
@@ -464,19 +505,21 @@ function Inventory() {
                     : item.description}
                 </td>
                 <td>{item.quantity}</td>
-                {boxDict[item.boxId.toString()] ? (
+                {boxDict[item.boxId?.toString()] ? (
                   <td
                     onClick={() =>
-                      setEditBoxOpen(boxDict[item.boxId.toString()])
+                      setEditBoxOpen(boxDict[item.boxId?.toString()])
                     }
                     style={{ cursor: "pointer" }}
                   >
-                    {boxDict[item.boxId.toString()]?.boxId}
+                    {boxDict[item.boxId?.toString()]?.boxId}
                   </td>
                 ) : (
                   <td>N/A</td>
                 )}
-                <td>{boxDict[item.boxId.toString()]?.location}</td>
+                <td>
+                  {boxDict[item.boxId?.toString()]?.location || item.location}
+                </td>
                 <td>${item.price}</td>
                 <td>
                   {item.public ? (
@@ -486,16 +529,7 @@ function Inventory() {
                   )}{" "}
                   {item.sale ? <HiCash color="blue" /> : <></>}
                 </td>
-                <td>
-                  <FaEye
-                    onClick={() => {
-                      boxDict[item.boxId.toString()]
-                        ? setEditBoxOpen(boxDict[item.boxId.toString()])
-                        : setEditItemOpen(item);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  />
-                </td>
+                <td></td>
               </tr>
             ))}
           </tbody>
@@ -504,7 +538,7 @@ function Inventory() {
       {filter === "boxes" && (
         <table
           className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse" }}
+          style={{ borderCollapse: "collapse", borderRadius: "10px", overflow:"hidden" }}
         >
           <thead style={{ textAlign: "left" }}>
             <tr style={{ backgroundColor: "#ebebeb" }}>
@@ -600,6 +634,8 @@ function Inventory() {
           item={editItemOpen}
           onClose={() => setEditItemOpen(null)}
           refresh={getInventory}
+          boxes={boxes}
+          items={inventory}
         />
       )}
       {editBoxOpen !== null && (
@@ -607,6 +643,9 @@ function Inventory() {
           box={editBoxOpen}
           onClose={() => setEditBoxOpen(null)}
           refresh={getInventory}
+          selectedItem={selectedItem}
+          setSelectedItem={setSelectedItem}
+          boxes={boxes}
         />
       )}
     </div>
