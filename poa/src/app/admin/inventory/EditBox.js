@@ -827,6 +827,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
           )}
           <div className={styles.formInput}>
             <label>Box Inventory</label>
+            <div style={{width:"100%", maxWidth: "100%", overflowX: "auto"}}>
             <table
               className={styles.boxTable}
               style={{
@@ -879,9 +880,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                   >
                     Unit Price
                   </th>
-                  <th className={styles.tableTiny}></th>
-                  <th className={styles.tableTiny}></th>
-                  <th className={styles.tableTiny}></th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -1039,11 +1038,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                         }}
                       />
                     </td>
-                    <td
-                      className={styles.tableTiny}
-                      style={{ position: "relative" }}
-                    >
-                      <div
+                    <td style={{display:"flex", flexDirection:"row", height:"60px", alignItems:"center"}}>
+                    <div
                         className={styles.trash}
                         onClick={() => handleDropdownToggle(index)}
                         style={{
@@ -1157,8 +1153,6 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                           ) : null}
                         </div>
                       )}
-                    </td>
-                    <td className={styles.tableTiny}>
                       <div
                         className={styles.trash}
                         onClick={() => copyItem(index)}
@@ -1169,8 +1163,6 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                       >
                         <FaRegCopy />
                       </div>
-                    </td>
-                    <td className={styles.tableTiny}>
                       <div
                         className={styles.trash}
                         onClick={() => removeItem(index)}
@@ -1182,10 +1174,12 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                         <FaRegTrashAlt />
                       </div>
                     </td>
+                    
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
             <div
               style={{
                 color: "gray",
@@ -1205,7 +1199,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
             </div>
             {newItemOpen && (
               <div>
-                <table style={{ width: "100%", textAlign: "left" }}>
+                <table style={{ width: "100%", textAlign: "left" }}
+                className={`${styles.boxTable} ${styles.desktopTable}`}>
                   <tbody>
                     <tr
                       style={{
@@ -1422,6 +1417,228 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                     </tr>
                   </tbody>
                 </table>
+                {/*Mobile Styles*/}
+                <div className={`${styles.mobileTable}`}>
+                  <div className={styles.mobileRow}>
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Image</label>
+                      <div className={styles.mobileValue}>
+                        {currentItem.image !== "" ? (
+                          <img
+                            src={currentItem.image}
+                            alt="New Item"
+                            onClick={handleNewItemThumbnailClick}
+                            style={{
+                              cursor: "pointer",
+                              opacity: imageUploading ? 0.5 : 1,
+                              transition: "opacity 0.2s",
+                              maxWidth: "100px",
+                              maxHeight: "100px",
+                            }}
+                            title="Click to change image"
+                          />
+                        ) : showUrlInput ? (
+                          <div style={{ position: "relative" }}>
+                            <input
+                              type="text"
+                              value={imageUrlInput}
+                              onChange={(e) => setImageUrlInput(e.target.value)}
+                              placeholder="Enter image URL..."
+                              className={styles.input}
+                              style={{
+                                margin: 0,
+                                width: "100%",
+                              }}
+                            />
+                            <div style={{ marginTop: "5px" }}>
+                              <button
+                                type="button"
+                                onClick={(e) => handleUrlSubmit(e, "content")}
+                                style={{ padding: "5px", marginRight: "5px" }}
+                              >
+                                Use
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowUrlInput(false)}
+                                className={styles.urlCancelButton}
+                              >
+                                <FaTimes />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className={styles.uploadOptions}>
+                            <div className={styles.uploadSection}>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleFileSelect(e, "content")}
+                                className={styles.fileInput}
+                                id="file-upload-new-mobile"
+                              />
+                              <label
+                                htmlFor="file-upload-new-mobile"
+                                className={styles.fileLabel}
+                                title="Upload from computer"
+                              >
+                                <FaUpload />
+                              </label>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.fileLabel}
+                              onClick={handleNewItemThumbnailClick}
+                              title="Enter image URL"
+                            >
+                              <FaLink color="black" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Description</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.description}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              description: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Style</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.style}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              style: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Size</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.size}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              size: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Color</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.color}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              color: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Quantity</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          type="text"
+                          pattern="[0-9]*"
+                          inputMode="numeric"
+                          value={currentItem.quantity}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              quantity: parseInt(e.target.value) || "",
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Unit Price</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          type="text"
+                          pattern="^\d*\.?\d*$"
+                          inputMode="decimal"
+                          value={currentItem.price}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              price: e.target.value,
+                            })
+                          }
+                          onBlur={(e) => {
+                            const numValue = parseFloat(e.target.value);
+                            setCurrentItem({
+                              ...currentItem,
+                              price: isNaN(numValue) ? 0 : numValue.toFixed(2),
+                            });
+                          }}
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div
+                          className={`${styles.trash} ${styles.add}`}
+                          onClick={addNewItem}
+                          style={{ cursor: "pointer", fontSize: "25px" }}
+                        >
+                          <IoIosCheckmarkCircle />
+                        </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

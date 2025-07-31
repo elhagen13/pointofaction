@@ -409,7 +409,7 @@ export default function Box() {
               <input
                 type="text"
                 pattern="^\d*\.?\d*$"
-                inputmode="decimal"
+                inputMode="decimal"
                 className={styles.input}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}

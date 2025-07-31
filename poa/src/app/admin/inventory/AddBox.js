@@ -45,60 +45,61 @@ const QrPopup = ({ box }) => {
         unit: "in",
         format: [4, 6],
       });
-  
+
       // Constants
       const pageWidth = 4;
       const pageHeight = 6;
       const qrSize = 2;
-      const bottomMargin = 0.5; 
+      const bottomMargin = 0.5;
       const textStartY = 1.6;
-      const lineHeight = 0.2; 
-      
+      const lineHeight = 0.2;
+
       // Title
       pdf.setFontSize(24);
       pdf.setFont(undefined, "bold");
       pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
-      
-      const maxQrY = pageHeight - qrSize - bottomMargin; 
-      
+
+      const maxQrY = pageHeight - qrSize - bottomMargin;
+
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
-      console.log("new", box.description)
+      console.log("new", box.description);
       let description = box.description;
-      let currentQrY = 2.2; 
-      
+      let currentQrY = 2.2;
+
       const textLines = pdf.splitTextToSize(description, 3.5);
       const textHeight = textLines.length * lineHeight;
-      const idealQrY = textStartY + textHeight + 0.3; 
-      
+      const idealQrY = textStartY + textHeight + 0.3;
+
       // If QR would go past bottom, truncate text
       if (idealQrY + qrSize > pageHeight - bottomMargin) {
-        const availableHeight = maxQrY - textStartY - 0.3; 
+        const availableHeight = maxQrY - textStartY - 0.3;
         const maxLines = Math.floor(availableHeight / lineHeight);
-        
+
         // Truncate text to fit
         let truncatedText = description;
         let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
-        
+
         while (truncatedLines.length > maxLines && truncatedText.length > 0) {
-          truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedText =
+            truncatedText.substring(0, truncatedText.length - 4) + "...";
           truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
         }
-        
+
         description = truncatedText;
         currentQrY = maxQrY;
       } else {
         currentQrY = idealQrY;
       }
-      
+
       pdf.text(description, 2, textStartY, {
         align: "center",
         maxWidth: 3.5,
       });
-      
+
       const qrX = (pageWidth - qrSize) / 2;
       pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
-      
+
       pdf.save(`box-${box.boxId}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -292,8 +293,8 @@ const AddBox = ({ setPage, setBox }) => {
     );
   };
   const copyItem = (indexToCopy) => {
-    const itemToCopy = contents[indexToCopy]
-    setContents([...contents, itemToCopy])
+    const itemToCopy = contents[indexToCopy];
+    setContents([...contents, itemToCopy]);
   };
 
   const addNewItem = () => {
@@ -344,15 +345,33 @@ const AddBox = ({ setPage, setBox }) => {
       return;
     }
 
-    for(const item of contents){
-      if(!item.description || !item.style || !item.size || !item.color || !item.quantity || !item.price){
+    for (const item of contents) {
+      if (
+        !item.description ||
+        !item.style ||
+        !item.size ||
+        !item.color ||
+        !item.quantity ||
+        !item.price
+      ) {
         alert("One of the items in the box is missing a field");
         return;
       }
     }
 
-    if(!acknowledgement && (currentItem.color || currentItem.description || currentItem.imageUrl || currentItem.price || currentItem.quantity || currentItem.size || currentItem.style)){
-      alert("Warning: New item not finalized, click the checkmark to the right of the item to add.");
+    if (
+      !acknowledgement &&
+      (currentItem.color ||
+        currentItem.description ||
+        currentItem.imageUrl ||
+        currentItem.price ||
+        currentItem.quantity ||
+        currentItem.size ||
+        currentItem.style)
+    ) {
+      alert(
+        "Warning: New item not finalized, click the checkmark to the right of the item to add."
+      );
       acknowledgement = true;
       return;
     }
@@ -477,10 +496,13 @@ const AddBox = ({ setPage, setBox }) => {
       retString =
         retString +
         "• " +
-        item.size + " " + 
-        item.color + " " + 
-        item.description + " (" + 
-        item.style + 
+        item.size +
+        " " +
+        item.color +
+        " " +
+        item.description +
+        " (" +
+        item.style +
         ")\n";
     });
 
@@ -563,6 +585,7 @@ const AddBox = ({ setPage, setBox }) => {
           )}
           <div className={styles.formInput}>
             <label>Box Inventory</label>
+            <div style={{width:"100%", maxWidth: "100%", overflowX: "auto"}}>
             <table
               className={styles.boxTable}
               style={{
@@ -617,8 +640,7 @@ const AddBox = ({ setPage, setBox }) => {
                   >
                     Unit Price
                   </th>
-                  <th className={styles.tableTiny}></th>
-                  <th className={styles.tableTiny}></th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -729,13 +751,13 @@ const AddBox = ({ setPage, setBox }) => {
                       <input
                         type="text"
                         pattern="[0-9]*"
-                        inputmode="numeric"
+                        inputMode="numeric"
                         value={item.quantity}
                         onChange={(e) =>
                           updateExistingContent(
                             index,
                             "quantity",
-                            (parseInt(e.target.value) || "")
+                            parseInt(e.target.value) || ""
                           )
                         }
                         className={styles.input}
@@ -750,14 +772,10 @@ const AddBox = ({ setPage, setBox }) => {
                       <input
                         type="text"
                         pattern="^\d*\.?\d*$"
-                        inputmode="decimal"
+                        inputMode="decimal"
                         value={item.price}
                         onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "price",
-                            e.target.value
-                          )
+                          updateExistingContent(index, "price", e.target.value)
                         }
                         onBlur={(e) => {
                           const numValue = parseFloat(e.target.value);
@@ -767,7 +785,6 @@ const AddBox = ({ setPage, setBox }) => {
                             isNaN(numValue) ? 0 : numValue.toFixed(2)
                           );
                         }}
-                        
                         className={styles.input}
                         style={{
                           margin: 0,
@@ -776,28 +793,27 @@ const AddBox = ({ setPage, setBox }) => {
                         }}
                       />
                     </td>
-                    <td className={styles.tableTiny}>
+                    <td style={{display:"flex", flexDirection:"row", justifyContent:"center", alignItems:"center", width:"100%", height:"60px", gap:"20px"}}>
                       <div
-                        className={styles.trash}
                         onClick={() => copyItem(index)}
                         style={{ cursor: "pointer" }}
                       >
                         <FaRegCopy />
-                      </div>
-                    </td>
-                    <td className={styles.tableTiny}>
-                      <div
-                        className={styles.trash}
+                        </div>
+
+                        <div
                         onClick={() => removeItem(index)}
                         style={{ cursor: "pointer" }}
                       >
                         <FaRegTrashAlt />
                       </div>
                     </td>
+                    
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
             <div
               style={{
                 color: "gray",
@@ -817,7 +833,10 @@ const AddBox = ({ setPage, setBox }) => {
             </div>
             {newItemOpen && (
               <div>
-                <table style={{ width: "100%", textAlign: "left" }}>
+                <table
+                  style={{ width: "100%", textAlign: "left" }}
+                  className={`${styles.boxTable} ${styles.desktopTable}`}
+                >
                   <tbody>
                     <tr
                       style={{
@@ -979,7 +998,7 @@ const AddBox = ({ setPage, setBox }) => {
                         <input
                           type="text"
                           pattern="[0-9]*"
-                          inputmode="numeric"
+                          inputMode="numeric"
                           value={currentItem.quantity}
                           onChange={(e) =>
                             setCurrentItem({
@@ -999,7 +1018,7 @@ const AddBox = ({ setPage, setBox }) => {
                         <input
                           type="text"
                           pattern="^\d*\.?\d*$"
-                          inputmode="decimal"
+                          inputMode="decimal"
                           value={currentItem.price}
                           onChange={(e) =>
                             setCurrentItem({
@@ -1034,6 +1053,228 @@ const AddBox = ({ setPage, setBox }) => {
                     </tr>
                   </tbody>
                 </table>
+                {/*Mobile Inputs*/}
+                <div className={`${styles.mobileTable}`}>
+                  <div className={styles.mobileRow}>
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Image</label>
+                      <div className={styles.mobileValue}>
+                        {currentItem.imageUrl !== "" ? (
+                          <img
+                            src={currentItem.imageUrl}
+                            alt="New Item"
+                            onClick={handleNewItemThumbnailClick}
+                            style={{
+                              cursor: "pointer",
+                              opacity: imageUploading ? 0.5 : 1,
+                              transition: "opacity 0.2s",
+                              maxWidth: "100px",
+                              maxHeight: "100px",
+                            }}
+                            title="Click to change image"
+                          />
+                        ) : showUrlInput ? (
+                          <div style={{ position: "relative" }}>
+                            <input
+                              type="text"
+                              value={imageUrlInput}
+                              onChange={(e) => setImageUrlInput(e.target.value)}
+                              placeholder="Enter image URL..."
+                              className={styles.input}
+                              style={{
+                                margin: 0,
+                                width: "100%",
+                              }}
+                            />
+                            <div style={{ marginTop: "5px" }}>
+                              <button
+                                type="button"
+                                onClick={() => handleUrlSubmit("content")}
+                                style={{ padding: "5px", marginRight: "5px" }}
+                              >
+                                Use
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowUrlInput(false)}
+                                className={styles.urlCancelButton}
+                              >
+                                <FaTimes />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className={styles.uploadOptions}>
+                            <div className={styles.uploadSection}>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleFileSelect(e, "content")}
+                                className={styles.fileInput}
+                                id="file-upload-new-mobile"
+                              />
+                              <label
+                                htmlFor="file-upload-new-mobile"
+                                className={styles.fileLabel}
+                                title="Upload from computer"
+                              >
+                                <FaUpload />
+                              </label>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.fileLabel}
+                              onClick={handleNewItemThumbnailClick}
+                              title="Enter image URL"
+                            >
+                              <FaLink color="black" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Description</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.description}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              description: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Style</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.style}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              style: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Size</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.size}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              size: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Color</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.color}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              color: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Quantity</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          type="text"
+                          pattern="[0-9]*"
+                          inputMode="numeric"
+                          value={currentItem.quantity}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              quantity: parseInt(e.target.value) || "",
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Unit Price</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          type="text"
+                          pattern="^\d*\.?\d*$"
+                          inputMode="decimal"
+                          value={currentItem.price}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              price: e.target.value,
+                            })
+                          }
+                          onBlur={(e) => {
+                            const numValue = parseFloat(e.target.value);
+                            setCurrentItem({
+                              ...currentItem,
+                              price: isNaN(numValue) ? 0 : numValue.toFixed(2),
+                            });
+                          }}
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div
+                          className={`${styles.trash} ${styles.add}`}
+                          onClick={addNewItem}
+                          style={{ cursor: "pointer", fontSize: "25px" }}
+                        >
+                          <IoIosCheckmarkCircle />
+                        </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

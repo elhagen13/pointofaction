@@ -61,7 +61,7 @@
   background-color: white;
   padding: 30px;
   border-radius: 20px;
-  width: max(95%, 800px);
+  width: 95%;
 }
 
 .form {
@@ -208,7 +208,7 @@
 }
 
 .tableTiny {
-  width: 20px;
+  max-width: 20px !important;
 }
 
 .tableLg {
@@ -329,6 +329,10 @@
 
 .boxTable {
   width: 1000px;
+}
+
+.boxTable td{
+  min-width: 100px;
 }
 .searchContainer{
   position: relative;
@@ -463,6 +467,40 @@
   display: none;
 }
 
+
+
+.inventoryTable {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+  white-space: nowrap;
+  border-collapse: collapse;
+  text-align: left;
+
+}
+
+.inventoryTable thead,
+.inventoryTable tbody {
+  display: table;
+  width: 100%;
+}
+
+.inventoryTable tbody td {
+  white-space: normal; /* Allow text wrapping in cells */
+  min-width: 100px
+}
+
+.inventoryTable thead th {
+  white-space: normal;
+  min-width: 100px
+
+}
+
+.tableTiny{
+  min-width: 20px !important
+}
+
 /* Mobile styles */
 @media (max-width: 768px) {
   /* Hide desktop table on mobile */
@@ -511,7 +549,6 @@
     align-items: center;
   }
   
-  /* Adjust upload options for mobile */
   .mobileValue .uploadOptions {
     display: flex;
     gap: 10px;
@@ -519,7 +556,6 @@
     flex-wrap: wrap;
   }
   
-  /* Make inputs full width in mobile view */
   .mobileValue .input {
     width: 100% !important;
     margin: 0 !important;
@@ -539,6 +575,7 @@
   .mobileValue > div {
     width: 100%;
   }
+
 }
 
 /* Smaller mobile devices */
@@ -571,3 +608,5 @@
     justify-content: center;
   }
 }
+
+

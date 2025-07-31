@@ -463,14 +463,15 @@ function Inventory() {
       {filter === "line items" && (
         <table
           className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse", borderRadius: "10px", overflow:"hidden" }}
+          style={{ borderCollapse: "collapse" }}
         >
-          <thead style={{ textAlign: "left" }}>
+          <thead>
             <tr style={{ backgroundColor: "#ebebeb" }}>
               <th className={styles.tableSm}>Item</th>
               <th>Style</th>
               <th>Color</th>
               <th>Description</th>
+              <th>Size</th>
               <th>Quantity</th>
               <th>Box</th>
               <th>Location</th>
@@ -504,6 +505,7 @@ function Inventory() {
                     ? item.description.slice(0, 50) + "..."
                     : item.description}
                 </td>
+                <td>{item.size}</td>
                 <td>{item.quantity}</td>
                 {boxDict[item.boxId?.toString()] ? (
                   <td
@@ -529,7 +531,6 @@ function Inventory() {
                   )}{" "}
                   {item.sale ? <HiCash color="blue" /> : <></>}
                 </td>
-                <td></td>
               </tr>
             ))}
           </tbody>
@@ -538,7 +539,7 @@ function Inventory() {
       {filter === "boxes" && (
         <table
           className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse", borderRadius: "10px", overflow:"hidden" }}
+          style={{ borderCollapse: "collapse" }}
         >
           <thead style={{ textAlign: "left" }}>
             <tr style={{ backgroundColor: "#ebebeb" }}>
