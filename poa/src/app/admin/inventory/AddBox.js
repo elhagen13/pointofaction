@@ -365,7 +365,6 @@ const AddBox = ({ setPage, setBox }) => {
       !acknowledgement &&
       (currentItem.color ||
         currentItem.description ||
-        currentItem.imageUrl ||
         currentItem.price ||
         currentItem.quantity ||
         currentItem.size ||

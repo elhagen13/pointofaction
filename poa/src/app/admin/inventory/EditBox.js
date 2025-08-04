@@ -73,6 +73,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
   const [imageUploading, setImageUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState(null);
+  const [showImageOptions, setShowImageOptions] = useState(null); // New state for showing options
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -207,6 +208,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
       handleUploadImage(file, type, itemIndex);
       setUploadError("");
     }
+    // Hide image options after selection
+    setShowImageOptions(null);
   };
 
   const handleUrlSubmit = (e, type, itemIndex = null) => {
@@ -245,6 +248,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
 
     setImageUrlInput("");
     setShowUrlInput(false);
+    setShowImageOptions(null); // Hide options after URL submission
     setUploadError("");
   };
 
@@ -292,15 +296,24 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
     }
   };
 
-  // Handle clicking on thumbnail to select new image
+  // Handle clicking on thumbnail to show options
   const handleThumbnailClick = (index) => {
     setSelectedItemIndex(index);
-    // Create a temporary file input and trigger it
+    setShowImageOptions(index);
+  };
+
+  // Handle file upload option for existing items
+  const handleFileUploadOption = (index) => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = "image/*";
     fileInput.onchange = (e) => handleFileSelect(e, "content", index);
     fileInput.click();
+  };
+
+  // Handle URL input option for existing items
+  const handleUrlOption = (index) => {
+    setShowUrlInput(index);
   };
 
   // Handle clicking on new item thumbnail
@@ -419,7 +432,6 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
       !acknowledgement &&
       (currentItem.color ||
         currentItem.description ||
-        currentItem.image ||
         currentItem.price ||
         currentItem.quantity ||
         currentItem.size ||
@@ -717,16 +729,20 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
         setIsDropdownOpen(null);
         setDropdownSearchTerm(""); // Clear search when closing dropdown
       }
+      // Close image options when clicking outside
+      if (showImageOptions !== null && !event.target.closest("[data-image-options]")) {
+        setShowImageOptions(null);
+      }
     };
 
-    if (isDropdownOpen !== null) {
+    if (isDropdownOpen !== null || showImageOptions !== null) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, showImageOptions]);
 
   const handleDropdownToggle = (index) => {
     if (isDropdownOpen === index) {
@@ -737,7 +753,6 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
       setDropdownSearchTerm("");
     }
   };
-
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
@@ -900,7 +915,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                             : "#ccd5e0",
                     }}
                   >
-                    <td
+                     <td
                       className={styles.tableSm}
                       style={{ position: "relative" }}
                     >
@@ -931,6 +946,130 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                           }}
                         >
                           Uploading...
+                        </div>
+                      )}
+                      
+                      {/* Image upload options dropdown */}
+                      {showImageOptions === index && (
+                        <div 
+                          className={styles.imageOptionsDropdown}
+                          style={{
+                            position: "absolute",
+                            top: "100%",
+                            left: "0",
+                            backgroundColor: "white",
+                            border: "1px solid #ccc",
+                            borderRadius: "4px",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                            zIndex: 1000,
+                            minWidth: "150px"
+                          }}
+                          data-image-options
+                        >
+                          <div
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #eee",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px"
+                            }}
+                            onClick={() => handleFileUploadOption(index)}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = "#f5f5f5"}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
+                            data-image-options
+                          >
+                            <FaUpload style={{ fontSize: "14px" }} />
+                            Upload from Computer
+                          </div>
+                          <div
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px"
+                            }}
+                            onClick={() => handleUrlOption(index)}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = "#f5f5f5"}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
+                            data-image-options
+                          >
+                            <FaLink style={{ fontSize: "14px" }} />
+                            Enter Image URL
+                          </div>
+                        </div>
+                      )}
+
+                      {/* URL input for existing items */}
+                      {showUrlInput === index && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "100%",
+                            left: "0",
+                            backgroundColor: "white",
+                            border: "1px solid #ccc",
+                            borderRadius: "4px",
+                            padding: "8px",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                            zIndex: 1000,
+                            minWidth: "200px"
+                          }}
+                          data-image-options
+                        >
+                          <input
+                            type="text"
+                            value={imageUrlInput}
+                            onChange={(e) => setImageUrlInput(e.target.value)}
+                            placeholder="Enter image URL..."
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              width: "100%",
+                              marginBottom: "8px"
+                            }}
+                            data-image-options
+                          />
+                          <div style={{ display: "flex", gap: "4px" }} data-image-options>
+                            <button
+                              type="button"
+                              onClick={(e) => handleUrlSubmit(e, "content", index)}
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: "12px",
+                                backgroundColor: "#007bff",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "3px",
+                                cursor: "pointer"
+                              }}
+                              data-image-options
+                            >
+                              Use
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowUrlInput(false);
+                                setImageUrlInput("");
+                                setShowImageOptions(null);
+                              }}
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: "12px",
+                                backgroundColor: "#6c757d",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "3px",
+                                cursor: "pointer"
+                              }}
+                              data-image-options
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       )}
                     </td>
@@ -1048,6 +1187,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                           cursor: "pointer",
                           color: selectedItem === item._id ? "white" : "black",
                         }}
+
                         data-dropdown
                       >
                         {item.removed ? 
