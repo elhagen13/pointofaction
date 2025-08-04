@@ -124,12 +124,12 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
   const downloadBoxPDF = async () => {
     try {
       const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "in",
-        format: [4, 6],
-        putOnlyUsedFonts: true,
-        compress: true
-      });
+  orientation: "portrait",
+  unit: "in",
+  format: [4, 6],
+  putOnlyUsedFonts: true,
+  compress: true
+});
 
       // Constants
       const pageWidth = 4;
@@ -183,8 +183,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
       });
 
       const qrX = (pageWidth - qrSize) / 2;
-      const qrCodeData = box.qrCode.startsWith('data:') ? box.qrCode : `data:image/png;base64,${box.qrCode}`;
-      pdf.addImage(qrCodeData, "PNG", qrX, currentQrY, qrSize, qrSize);
+      pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
 
       pdf.save(`box-${box.boxId}.pdf`);
     } catch (error) {

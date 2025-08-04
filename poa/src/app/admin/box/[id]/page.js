@@ -109,10 +109,11 @@ export default function Box() {
         return;
       }
     }
-    for (const item of items) {
+    for(const [index, item] of items.entries()) {
       try {
         const newData = {
-          quantity: item.quantity,
+          quantity: item.quantity +
+          (negatives[index] ? 1 : -1) * changes[index]
         };
 
         // Create the box first
@@ -128,6 +129,9 @@ export default function Box() {
         return false;
       }
     }
+    alert("Updated quantity successful")
+    setChanges([])
+    setNegatives([])
     getItems();
     setEdit(false);
   };
@@ -237,7 +241,7 @@ export default function Box() {
   useEffect(() => {
     setChanges(Array(items.length).fill(0));
     setNegatives(Array(items.length).fill(false));
-  }, [items.length]);
+  }, [items]);
 
   return (
     <>
