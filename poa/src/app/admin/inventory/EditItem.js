@@ -477,13 +477,13 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Code
+                    Style Code 
                   </th>
                   <th
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                   Brand
+                   Brand Style
                   </th>
                   <th
                     className={styles.tableReg}
@@ -845,7 +845,7 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                 </div>
 
                 <div className={styles.mobileField}>
-                  <label className={styles.mobileLabel}>Code</label>
+                  <label className={styles.mobileLabel}>Style Code</label>
                   <div className={styles.mobileValue}>
                     <input
                       value={currentItem.style}
@@ -864,7 +864,7 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                   </div>
                 </div>
                 <div className={styles.mobileField}>
-                  <label className={styles.mobileLabel}>Brand</label>
+                  <label className={styles.mobileLabel}>Brand Style</label>
                   <div className={styles.mobileValue}>
                     <input
                       value={currentItem.brand}

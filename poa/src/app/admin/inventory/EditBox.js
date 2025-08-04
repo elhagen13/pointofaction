@@ -1246,7 +1246,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                         }}
                       />
                     </td>
-                    <td style={{display:"flex", flexDirection:"row", height:"60px", alignItems:"center"}}>
+                    <td className={styles.tableReg} style={{display:"flex", flexDirection:"row", height:"60px", alignItems:"center"}}>
                     <div
                         className={styles.trash}
                         onClick={() => handleDropdownToggle(index)}
@@ -1636,7 +1636,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                           }}
                         />
                       </td>
-                      <td className={styles.tableTiny}>
+                      <td className={styles.tableReg}>
                         <div
                           className={`${styles.trash} ${styles.add}`}
                           onClick={addNewItem}

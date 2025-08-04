@@ -460,17 +460,19 @@ function Inventory() {
           ))}
         </div>
       </div>
+      <div style={{overflowX:"scroll"}}>
       {filter === "line items" && (
         <table
           className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse", borderRadius:"10px", overflow:"auto" }}
+          style={{ borderCollapse: "collapse", borderRadius:"10px"}}
         >
           <thead>
             <tr style={{ backgroundColor: "#ebebeb" }}>
               <th className={styles.tableSm}>Item</th>
-              <th>Style</th>
+              <th style={{minWidth:"200px"}}>Description</th>
+              <th>Style Code</th>
+              <th>Brand Style</th>
               <th>Color</th>
-              <th>Description</th>
               <th>Size</th>
               <th>Quantity</th>
               <th>Box</th>
@@ -496,16 +498,17 @@ function Inventory() {
                   }
                 }}
               >
-                <td className={styles.tableSm} style={{ position: "relative", minWidth:"100px" }}>
+                <td className={styles.tableSm} style={{ position: "relative"}}>
                   <img src={item.image} alt={`Item ${index + 1}`} />
                 </td>
-                <td style={{minWidth:"100px"}}>{item.style}</td>
-                <td  style={{minWidth:"100px"}}>{item.color}</td>
                 <td  style={{minWidth:"100px"}}>
                   {item.description.length > 50
                     ? item.description.slice(0, 50) + "..."
                     : item.description}
                 </td>
+                <td style={{minWidth:"100px"}}>{item.style}</td>
+                <td style={{minWidth:"100px"}}>{item.brand ? item.brand : "N/A"}</td>
+                <td  style={{minWidth:"100px"}}>{item.color}</td>
                 <td  style={{minWidth:"100px"}}>{item.size}</td>
                 <td  style={{minWidth:"100px"}}>{item.quantity}</td>
                 {boxDict[item.boxId?.toString()] ? (
@@ -625,6 +628,7 @@ function Inventory() {
           </tbody>
         </table>
       )}
+      </div>
 
       {addItemOpen && (
         <AddItem onClose={() => setAddItemOpen(false)} refresh={getInventory} />
