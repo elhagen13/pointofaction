@@ -408,10 +408,13 @@
   z-index: 100000;
   min-width: 150px;
   max-height: 300px; 
-  overflow-y: auto; 
-  
+  overflow-y: auto;   
 }
 
+
+.searchDropdown{
+  right: 60%;
+}
 
 
 .dropdownItem {
@@ -462,6 +465,10 @@
 
   .searchContainer{
     width: 100%;
+  }
+
+  .searchDropdown{
+    right: 30px
   }
 }
 

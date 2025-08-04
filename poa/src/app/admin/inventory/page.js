@@ -368,7 +368,7 @@ function Inventory() {
           Add Box
         </button>
       </div>
-      <div className={styles.filters}>
+      <div className={styles.filters} >
         <div className={styles.searchContainer} ref={dropdownRef}>
           <IoSearch className={styles.search} />
           <input
@@ -388,7 +388,7 @@ function Inventory() {
           </div>
 
           {isDropdownOpen && (
-            <div className={styles.dropdown}>
+            <div className={`${styles.dropdown} ${styles.searchDropdown}`} >
               {searchOptions.map((option, index) => (
                 <div
                   key={index}
