@@ -1224,6 +1224,25 @@ const AddBox = ({ setPage, setBox }) => {
                         />
                       </div>
                     </div>
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Brand</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.brand}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              brand: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
 
                     <div className={styles.mobileField}>
                       <label className={styles.mobileLabel}>Size</label>

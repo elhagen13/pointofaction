@@ -44,6 +44,7 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
     imageUrl: item.image,
     description: item.description,
     style: item.style,
+    brand: item.brand,
     size: item.size,
     color: item.color,
     quantity: item.quantity,
@@ -187,6 +188,7 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
       image: currentItem.imageUrl,
       description: currentItem.description,
       style: currentItem.style,
+      brand: currentItem.brand,
       size: currentItem.size,
       color: currentItem.color,
       quantity: currentItem.quantity,
@@ -232,6 +234,7 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
           imageUrl: "",
           description: "",
           style: "",
+          brand: "",
           size: "",
           color: "",
           quantity: 0,
@@ -471,10 +474,16 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                     Description
                   </th>
                   <th
-                    className={styles.tableMed}
+                    className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Style
+                    Code
+                  </th>
+                  <th
+                    className={styles.tableReg}
+                    style={{ border: "none", fontWeight: "bold" }}
+                  >
+                   Brand
                   </th>
                   <th
                     className={styles.tableReg}
@@ -611,13 +620,30 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                       }}
                     />
                   </td>
-                  <td className={styles.tableMed}>
+                  <td className={styles.tableReg}>
                     <input
                       value={currentItem.style}
                       onChange={(e) =>
                         setCurrentItem({
                           ...currentItem,
                           style: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        minHeight: "auto",
+                        width: "100%",
+                      }}
+                    />
+                  </td>
+                  <td className={styles.tableReg}>
+                    <input
+                      value={currentItem.brand}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          brand: e.target.value,
                         })
                       }
                       className={styles.input}
@@ -819,7 +845,7 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                 </div>
 
                 <div className={styles.mobileField}>
-                  <label className={styles.mobileLabel}>Style</label>
+                  <label className={styles.mobileLabel}>Code</label>
                   <div className={styles.mobileValue}>
                     <input
                       value={currentItem.style}
@@ -827,6 +853,25 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                         setCurrentItem({
                           ...currentItem,
                           style: e.target.value,
+                        })
+                      }
+                      className={styles.input}
+                      style={{
+                        margin: 0,
+                        width: "100%",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className={styles.mobileField}>
+                  <label className={styles.mobileLabel}>Brand</label>
+                  <div className={styles.mobileValue}>
+                    <input
+                      value={currentItem.brand}
+                      onChange={(e) =>
+                        setCurrentItem({
+                          ...currentItem,
+                          brand: e.target.value,
                         })
                       }
                       className={styles.input}

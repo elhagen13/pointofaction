@@ -580,6 +580,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
             image: content.image,
             description: content.description,
             style: content.style,
+            brand: content.brand,
             size: content.size,
             color: content.color,
             quantity: content.quantity,
@@ -702,6 +703,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       image: content.image,
       description: content.description,
       style: content.style,
+      brand: content.brand,
       size: content.size,
       color: content.color,
       quantity: content.quantity,
@@ -927,7 +929,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Style
+                    Code
                   </th>
                   <th
                     className={styles.tableReg}
@@ -1743,6 +1745,25 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                             setCurrentItem({
                               ...currentItem,
                               style: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.mobileField}>
+                      <label className={styles.mobileLabel}>Brand</label>
+                      <div className={styles.mobileValue}>
+                        <input
+                          value={currentItem.brand}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              brand: e.target.value,
                             })
                           }
                           className={styles.input}
