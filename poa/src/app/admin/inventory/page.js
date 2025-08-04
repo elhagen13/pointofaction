@@ -405,7 +405,7 @@ function Inventory() {
           <div
             style={{
               display: "flex",
-              gap: "20px",
+              gap: "10px",
               fontWeight: "bold",
               color: "black",
             }}
@@ -445,6 +445,7 @@ function Inventory() {
               Boxes
             </label>
           </div>
+          <div style={{display:"flex", flexDirection:"row", gap:"10px"}}>
           {pageOptions.map((opt, index) => (
             <button
               key={index}
@@ -462,6 +463,7 @@ function Inventory() {
               {opt}
             </button>
           ))}
+          </div>
         </div>
       </div>
       <div style={{overflowX:"scroll"}}>

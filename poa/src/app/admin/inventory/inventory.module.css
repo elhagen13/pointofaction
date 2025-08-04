@@ -501,6 +501,9 @@
 
 /* Mobile styles */
 @media (max-width: 768px) {
+  .pageSelection {
+    flex-direction: column;
+  }
   /* Hide desktop table on mobile */
   .desktopTable {
     display: none !important;
