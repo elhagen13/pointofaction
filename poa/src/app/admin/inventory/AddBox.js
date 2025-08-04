@@ -9,7 +9,9 @@ import {
   FaDownload,
   FaRegCopy,
 } from "react-icons/fa";
-import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
+import { IoIosAddCircle, IoIosRemoveCircle, IoIosCheckmarkCircle } from "react-icons/io";
+
+import { CiCircleRemove } from "react-icons/ci";
 import jsPDF from "jspdf";
 
 export default function AddItem({ onClose, refresh }) {
@@ -143,7 +145,7 @@ const AddBox = ({ setPage, setBox }) => {
   const [visibility, setVisibility] = useState(["admin"]);
   const [boxDiscount, setBoxDiscount] = useState(20);
   const [currentItem, setCurrentItem] = useState({
-    imageUrl: "",
+    imageUrl: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
     description: "",
     style: "",
     size: "",
@@ -319,7 +321,7 @@ const AddBox = ({ setPage, setBox }) => {
 
   const cancelNewItem = () => {
     setCurrentItem({
-      imageUrl: "",
+      imageUrl: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
       description: "",
       style: "",
       size: "",
@@ -852,6 +854,7 @@ const AddBox = ({ setPage, setBox }) => {
                         }}
                       >
                         {currentItem.imageUrl !== "" ? (
+                          <div style={{position:"relative"}}>
                           <img
                             src={currentItem.imageUrl}
                             alt="New Item"
@@ -863,6 +866,9 @@ const AddBox = ({ setPage, setBox }) => {
                             }}
                             title="Click to change image"
                           />
+                          <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"0px", fontSize:"30px", color:"red"}}
+                          onClick={() => setCurrentItem({...currentItem, imageUrl: ""})}/>
+                          </div>
                         ) : showUrlInput ? (
                           <div>
                             <input
@@ -1060,6 +1066,7 @@ const AddBox = ({ setPage, setBox }) => {
                       <label className={styles.mobileLabel}>Image</label>
                       <div className={styles.mobileValue}>
                         {currentItem.imageUrl !== "" ? (
+                          <div style={{position:"relative", width:"auto"}}>
                           <img
                             src={currentItem.imageUrl}
                             alt="New Item"
@@ -1073,6 +1080,9 @@ const AddBox = ({ setPage, setBox }) => {
                             }}
                             title="Click to change image"
                           />
+                          <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"-15px", fontSize:"30px", color:"red"}}
+                          onClick={() => setCurrentItem({...currentItem, imageUrl: ""})}/>
+                          </div>
                         ) : showUrlInput ? (
                           <div style={{ position: "relative" }}>
                             <input

@@ -10,7 +10,7 @@ import {
   FaBoxOpen,
   FaSearch,
 } from "react-icons/fa";
-import { IoIosAddCircle, IoIosCheckmarkCircle } from "react-icons/io";
+import { IoIosAddCircle, IoIosCheckmarkCircle, IoIosRemoveCircle } from "react-icons/io";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
 
 import jsPDF from "jspdf";
@@ -61,7 +61,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
   const [visibility, setVisibility] = useState(["admin"]);
   const [boxDiscount, setBoxDiscount] = useState(box.discount ?? 20);
   const [currentItem, setCurrentItem] = useState({
-    image: "",
+    image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
     description: "",
     style: "",
     size: "",
@@ -275,7 +275,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
           // Update current item being added
           setCurrentItem({
             ...currentItem,
-            imageUrl: result.url,
+            image: result.url,
           });
         } else {
           // Update box image
@@ -362,7 +362,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
 
     setContents((prevContents) => [...prevContents, { ...currentItem }]);
     setCurrentItem({
-      imageUrl: "",
+      image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
       description: "",
       style: "",
       size: "",
@@ -375,7 +375,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
 
   const cancelNewItem = () => {
     setCurrentItem({
-      imageUrl: "",
+      image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
       description: "",
       style: "",
       size: "",
@@ -1218,6 +1218,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                         }}
                       >
                         {currentItem.image !== "" ? (
+                          <div style={{position:"relative", width:"auto"}}>
+                            
                           <img
                             src={currentItem.image}
                             alt="New Item"
@@ -1229,6 +1231,9 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                             }}
                             title="Click to change image"
                           />
+                          <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"0px", fontSize:"30px", color:"red"}}
+                          onClick={() => setCurrentItem({...currentItem, image: ""})}/>
+                          </div>
                         ) : showUrlInput ? (
                           <div>
                             <input
@@ -1426,6 +1431,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                       <label className={styles.mobileLabel}>Image</label>
                       <div className={styles.mobileValue}>
                         {currentItem.image !== "" ? (
+                          <div style={{position:"relative", width:"auto"}}>
                           <img
                             src={currentItem.image}
                             alt="New Item"
@@ -1439,6 +1445,9 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                             }}
                             title="Click to change image"
                           />
+                          <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"-15px", fontSize:"30px", color:"red"}}
+                          onClick={() => setCurrentItem({...currentItem, image: ""})}/>
+                          </div>
                         ) : showUrlInput ? (
                           <div style={{ position: "relative" }}>
                             <input
