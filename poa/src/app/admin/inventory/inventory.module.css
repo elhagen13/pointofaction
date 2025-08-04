@@ -237,6 +237,7 @@
   display: inline-block;
   margin: 10px 0;
   width: 10%;
+  min-width:100px
 }
 
 .previewImage {

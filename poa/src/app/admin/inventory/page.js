@@ -33,7 +33,8 @@ function Inventory() {
   const dropdownRef = useRef(null);
   const searchOptions = [
     "all",
-    "style",
+    "style code",
+    "brand style",
     "color",
     "description",
     "quantity",
@@ -106,8 +107,10 @@ function Inventory() {
       if (selectedSearchOption !== "all") {
         // Keep existing single-field search logic
         switch (selectedSearchOption) {
-          case "style":
+          case "style code":
             return item.style?.toLowerCase().includes(searchTerm);
+          case "brand style":
+            return item.brand?.toLowerCase().includes(searchTerm);
           case "color":
             return item.color?.toLowerCase().includes(searchTerm);
           case "description":
@@ -134,6 +137,7 @@ function Inventory() {
       // Combine all searchable text for this item
       const itemText = [
         item.style || "",
+        item.brand || "",
         item.color || "",
         item.description || "",
         item.quantity?.toString() || "",
