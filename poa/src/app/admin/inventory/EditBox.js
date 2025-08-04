@@ -469,6 +469,39 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
     console.log(visibility);
   }, [visibility]);
 
+  const positionDropdown = (dropdownElement, triggerElement) => {
+    if (!dropdownElement || !triggerElement) return;
+    
+    const triggerRect = triggerElement.getBoundingClientRect();
+    const dropdownRect = dropdownElement.getBoundingClientRect();
+    const viewport = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    };
+    
+    // Check if there's enough space below
+    const spaceBelow = viewport.height - triggerRect.bottom;
+    const spaceAbove = triggerRect.top;
+    const dropdownHeight = dropdownRect.height || 200; // fallback height
+    
+    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+      // Position above
+      dropdownElement.classList.add('dropdown-up');
+      dropdownElement.style.top = 'auto';
+      dropdownElement.style.bottom = '100%';
+      dropdownElement.style.marginTop = '0';
+      dropdownElement.style.marginBottom = '5px';
+    } else {
+      // Position below (default)
+      dropdownElement.classList.remove('dropdown-up');
+      dropdownElement.style.top = '100%';
+      dropdownElement.style.bottom = 'auto';
+      dropdownElement.style.marginTop = '5px';
+      dropdownElement.style.marginBottom = '0';
+    }
+  };
+  
+
   async function uploadBox() {
     try {
       /*Go through original contents, if there is an id that exists
@@ -751,6 +784,13 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
     } else {
       setIsDropdownOpen(index);
       setDropdownSearchTerm("");
+      
+      // Position the dropdown after it renders
+      setTimeout(() => {
+        const dropdown = document.querySelector(`[data-dropdown-index="${index}"] .dropdown`);
+        const trigger = document.querySelector(`[data-dropdown-index="${index}"]`);
+        positionDropdown(dropdown, trigger);
+      }, 0);
     }
   };
   return (
@@ -952,18 +992,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                       {/* Image upload options dropdown */}
                       {showImageOptions === index && (
                         <div 
-                          className={styles.imageOptionsDropdown}
-                          style={{
-                            position: "absolute",
-                            top: "100%",
-                            left: "0",
-                            backgroundColor: "white",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            zIndex: 1000,
-                            minWidth: "150px"
-                          }}
+                          className={styles.dropdown}
+                          
                           data-image-options
                         >
                           <div
