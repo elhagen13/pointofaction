@@ -87,7 +87,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
   const [imageUploading, setImageUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState(null);
-  const [showImageOptions, setShowImageOptions] = useState(null); // New state for showing options
+  const [showImageOptions, setShowImageOptions] = useState(null); 
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -286,7 +286,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
           // Update specific item's image
           setContents((prevContents) =>
             prevContents.map((item, index) =>
-              index === itemIndex ? { ...item, imageUrl: result.url } : item
+              index === itemIndex ? { ...item, image: result.url } : item
             )
           );
         } else if (type === "content") {

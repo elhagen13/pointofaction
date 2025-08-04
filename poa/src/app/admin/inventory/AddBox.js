@@ -163,6 +163,10 @@ const AddBox = ({ setPage, setBox }) => {
   const [imageUrlInput, setImageUrlInput] = useState("");
   let acknowledgement = false;
 
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(null);
+  const [showImageOptions, setShowImageOptions] = useState(null); 
+
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
     if (file) {
@@ -181,7 +185,9 @@ const AddBox = ({ setPage, setBox }) => {
     }
   };
 
-  const handleUrlSubmit = (type, itemIndex = null) => {
+  const handleUrlSubmit = (e, type, itemIndex = null) => {
+    e.preventDefault()
+    console.log(type, itemIndex)
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
       return;
@@ -265,12 +271,22 @@ const AddBox = ({ setPage, setBox }) => {
   // Handle clicking on thumbnail to select new image
   const handleThumbnailClick = (index) => {
     setSelectedItemIndex(index);
-    // Create a temporary file input and trigger it
+    setShowImageOptions(index);
+  };
+
+  // Handle file upload option for existing items
+  const handleFileUploadOption = (index) => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = "image/*";
     fileInput.onchange = (e) => handleFileSelect(e, "content", index);
     fileInput.click();
+  };
+
+  // Handle URL input option for existing items
+  const handleUrlOption = (index) => {
+    setShowImageOptions(null);
+    setShowUrlInput(index);
   };
 
   // Handle clicking on new item thumbnail
@@ -513,6 +529,43 @@ const AddBox = ({ setPage, setBox }) => {
 
     setBoxDescription(retString);
   };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
+        setIsDropdownOpen(null);
+        setDropdownSearchTerm(""); // Clear search when closing dropdown
+      }
+      // Close image options when clicking outside
+      if (showImageOptions !== null && !event.target.closest("[data-image-options]")) {
+        setShowImageOptions(null);
+      }
+    };
+
+    if (isDropdownOpen !== null || showImageOptions !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen, showImageOptions]);
+
+  const handleDropdownToggle = (index) => {
+    if (isDropdownOpen === index) {
+      setIsDropdownOpen(null);
+      setDropdownSearchTerm("");
+    } else {
+      setIsDropdownOpen(index);
+      setDropdownSearchTerm("");
+      
+      // Position the dropdown after it renders
+      setTimeout(() => {
+        const dropdown = document.querySelector(`[data-dropdown-index="${index}"] .dropdown`);
+        const trigger = document.querySelector(`[data-dropdown-index="${index}"]`);
+        positionDropdown(dropdown, trigger);
+      }, 0);
+    }
+  };
 
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
@@ -695,6 +748,119 @@ const AddBox = ({ setPage, setBox }) => {
                           }}
                         >
                           Uploading...
+                        </div>
+                      )}
+                      
+                      {/* Image upload options dropdown */}
+                      {showImageOptions === index && (
+                        <div 
+                          className={styles.dropdown}
+                          
+                          data-image-options
+                        >
+                          <div
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #eee",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px"
+                            }}
+                            onClick={() => handleFileUploadOption(index)}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = "#f5f5f5"}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
+                            data-image-options
+                          >
+                            <FaUpload style={{ fontSize: "14px" }} />
+                            Upload from Computer
+                          </div>
+                          <div
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px"
+                            }}
+                            onClick={() => handleUrlOption(index)}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = "#f5f5f5"}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
+                            data-image-options
+                          >
+                            <FaLink style={{ fontSize: "14px" }} />
+                            Enter Image URL
+                          </div>
+                        </div>
+                      )}
+
+                      {/* URL input for existing items */}
+                      {showUrlInput === index && (
+                        <div
+                          className={styles.dropdown}
+                          style={{
+              
+                            backgroundColor: "white",
+                            border: "1px solid #ccc",
+                            borderRadius: "4px",
+                            padding: "8px",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                            zIndex: 9999,
+                            minWidth: "200px"
+                          }}
+                          data-image-options
+                        >
+                          <input
+                            type="text"
+                            value={imageUrlInput}
+                            onChange={(e) => setImageUrlInput(e.target.value)}
+                            placeholder="Enter image URL..."
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              width: "100%",
+                              marginBottom: "8px"
+                            }}
+                            data-image-options
+                          />
+                          <div style={{ display: "flex", gap: "4px" }} data-image-options>
+                            <button
+                              type="button"
+                              onClick={(e) => handleUrlSubmit(e, "content", index)}
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: "12px",
+                                backgroundColor: "#007bff",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "3px",
+                                cursor: "pointer"
+                              }}
+                              data-image-options
+                            >
+                              Use
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowUrlInput(false);
+                                setImageUrlInput("");
+                                setShowImageOptions(null);
+                              }}
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: "12px",
+                                backgroundColor: "#6c757d",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "3px",
+                                cursor: "pointer"
+                              }}
+                              data-image-options
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       )}
                     </td>
@@ -1347,8 +1513,8 @@ const AddBox = ({ setPage, setBox }) => {
               </div>
             )}
           </div>
-          <div className={styles.formInput}>
-            <label>Visibility</label>
+          <div>
+            <label style={{fontWeight:"bold"}}>Visibility</label>
             <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <div>
                 <input
