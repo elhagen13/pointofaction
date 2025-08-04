@@ -15,6 +15,7 @@ import jsPDF from "jspdf";
 
 
 export default function EditItem({ item, onClose, refresh, boxes, items }) {
+  const [page, setPage] = useState("edit")
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       refresh();
@@ -29,13 +30,25 @@ export default function EditItem({ item, onClose, refresh, boxes, items }) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        <Edit item={item} onClose={onClose} refresh={refresh} boxes={boxes} items={items}/>
+        {page === "edit" && <Edit item={item} onClose={onClose} refresh={refresh} boxes={boxes} items={items} setPage={setPage}/>}
+        {page === "success" && <Success/>}
+
       </div>
     </div>
   );
 }
 
-const Edit = ({ item, onClose, refresh, boxes, items }) => {
+const Success = () => {
+  return(
+    <div style={{width:"100%", minHeight:"300px", display:"flex", flexDirection:"column",gap:"20px", justifyContent:"center", alignItems:"center"}}>
+      <IoIosCheckmarkCircle style={{fontSize:"64px", color:"green"}}/>
+      <div style={{fontSize:"2rem"}}>Item successfully edited!</div>
+    </div>
+  )
+}
+
+
+const Edit = ({ item, onClose, refresh, boxes, items, setPage }) => {
   const [location, setLocation] = useState(item.location);
   const [minimumPrice, setMinimumPrice] = useState(item.minPrice || 0);
   const [visibility, setVisibility] = useState(["admin"]);
@@ -227,7 +240,7 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
       if (itemResult.success) {
         console.log("Item edited successfully:", itemResult.data);
         console.log("Message:", itemResult.message);
-        alert("Item edited successfully!");
+        setPage("success")
 
         // Reset form
         setCurrentItem({
@@ -282,7 +295,6 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
 
       // Refresh the inventory and close the modal
       refresh();
-      onClose();
     } catch (error) {
       console.error("Network error:", error);
       alert("Network error: " + error.message);

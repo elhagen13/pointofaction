@@ -549,9 +549,9 @@ function Inventory() {
             <tr style={{ backgroundColor: "#ebebeb" }}>
               <th>Box</th>
               <th>Box Id</th>
-              <th style={{width:"40%"}}>Description</th>
+              <th>Description</th>
               <th>Location</th>
-              <th>Quant.</th>
+              <th>Total Quant.</th>
               <th>Discount</th>
               <th>Min.</th>
               <th>Visibility</th>
@@ -576,31 +576,31 @@ function Inventory() {
                   <img src={box.image} alt={`Item ${index + 1}`} />
                   </div>
                 </td>
-                <td onClick={() => setEditBoxOpen(box)}>{box.boxId}</td>
-                <td onClick={() => setEditBoxOpen(box)} style={{width:"40%"}}>
+                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>{box.boxId}</td>
+                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
                   {box.description.length > 80
                     ? box.description.slice(0, 80) + "..."
                     : box.description}
                 </td>
-                <td onClick={() => setEditBoxOpen(box)}>{box.location}</td>
-                <td onClick={() => setEditBoxOpen(box)}>
-                  {contentDict[box._id.toString()]?.length || 0}
+                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>{box.location}</td>
+                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
+                  {contentDict[box._id.toString()]?.reduce((acc, cur) => acc + cur.quantity, 0)|| 0}
                 </td>
-                <td onClick={() => setEditBoxOpen(box)}>
+                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
                   {contentDict[box._id]
                     ? contentDict[box._id][0].sale
                       ? `${box.discount}%`
                       : "N/A"
                     : "N/A"}
                 </td>
-                <td onClick={() => setEditBoxOpen(box)}>
+                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
                   {contentDict[box._id]
                     ? contentDict[box._id][0].sale
                       ? `$${box.minPrice}`
                       : "N/A"
                     : "N/A"}
                 </td>
-                <td onClick={() => setEditBoxOpen(box)}>
+                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
                   {contentDict[box._id] ? (
                     contentDict[box._id][0].public ? (
                       <MdPublic color="green" />
