@@ -929,13 +929,13 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Code
+                    Style Code
                   </th>
                   <th
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Brand
+                    Brand Style
                   </th>
                   <th
                     className={styles.tableReg}
@@ -1521,13 +1521,30 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                           }}
                         />
                       </td>
-                      <td className={styles.tableMed}>
+                      <td className={styles.tableReg}>
                         <input
                           value={currentItem.style}
                           onChange={(e) =>
                             setCurrentItem({
                               ...currentItem,
                               style: e.target.value,
+                            })
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          value={currentItem.brand}
+                          onChange={(e) =>
+                            setCurrentItem({
+                              ...currentItem,
+                              brand: e.target.value,
                             })
                           }
                           className={styles.input}
@@ -1737,7 +1754,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                     </div>
 
                     <div className={styles.mobileField}>
-                      <label className={styles.mobileLabel}>Style</label>
+                      <label className={styles.mobileLabel}>Style Code</label>
                       <div className={styles.mobileValue}>
                         <input
                           value={currentItem.style}
@@ -1756,7 +1773,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                       </div>
                     </div>
                     <div className={styles.mobileField}>
-                      <label className={styles.mobileLabel}>Brand</label>
+                      <label className={styles.mobileLabel}>Brand Style</label>
                       <div className={styles.mobileValue}>
                         <input
                           value={currentItem.brand}
@@ -1879,8 +1896,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
               </div>
             )}
           </div>
-          <div className={styles.formInput}>
-            <label>Visibility</label>
+          <div>
+            <label style={{fontWeight:"bold"}}>Visibility</label>
             <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <div>
                 <input

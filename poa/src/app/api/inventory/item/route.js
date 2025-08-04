@@ -68,7 +68,6 @@ export async function POST(request) {
       description: body.description.trim(),
       image: body.image,
       style: body.style.trim(),
-      brand: body.brand.trim(),
       size: body.size.trim(),
       color: body.color.trim(),
       quantity: body.quantity,
@@ -79,6 +78,7 @@ export async function POST(request) {
       updatedAt: new Date(),
     };
     // optional fields: if it is not in a box it should have the following
+    if(body.brand) itemDocument.brand = body.brand.trim()
     if (body.box_id) itemDocument.boxId = body.box_id;
     if (body.location) itemDocument.location = body.location;
     if (body.discount) itemDocument.discount = body.discount;

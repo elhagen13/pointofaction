@@ -366,13 +366,13 @@ const AddBox = ({ setPage, setItem, refresh }) => {
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Code
+                    Style Code
                   </th>
                   <th
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Brand
+                    Brand Style
                   </th>
                   <th
                     className={styles.tableReg}

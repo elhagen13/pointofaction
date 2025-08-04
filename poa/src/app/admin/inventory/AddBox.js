@@ -355,7 +355,6 @@ const AddBox = ({ setPage, setBox }) => {
         !item.description ||
         !item.style ||
         !item.size ||
-        !item.brand ||
         !item.color ||
         !item.quantity ||
         !item.price
@@ -620,13 +619,13 @@ const AddBox = ({ setPage, setBox }) => {
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Code
+                    Style Code
                   </th>
                   <th
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Brand
+                    Brand Style
                   </th>
                   <th
                     className={styles.tableReg}
@@ -1206,7 +1205,7 @@ const AddBox = ({ setPage, setBox }) => {
                     </div>
 
                     <div className={styles.mobileField}>
-                      <label className={styles.mobileLabel}>Style</label>
+                      <label className={styles.mobileLabel}>Style Code</label>
                       <div className={styles.mobileValue}>
                         <input
                           value={currentItem.style}
@@ -1225,7 +1224,7 @@ const AddBox = ({ setPage, setBox }) => {
                       </div>
                     </div>
                     <div className={styles.mobileField}>
-                      <label className={styles.mobileLabel}>Brand</label>
+                      <label className={styles.mobileLabel}>Brand Style</label>
                       <div className={styles.mobileValue}>
                         <input
                           value={currentItem.brand}
