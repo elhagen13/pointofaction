@@ -137,7 +137,7 @@ const AddBox = ({ setPage, setBox }) => {
   const [boxDescription, setBoxDescription] = useState("");
   const [boxLocation, setBoxLocation] = useState("");
   const [contents, setContents] = useState([]);
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("https://companystores.s3.us-east-1.amazonaws.com/sale-items/corrugated-cube_52a4bb18-a30d-468d-baa7-61b0c7a2f842.jpg.webp");
   const [minimumPrice, setMinimumPrice] = useState(0);
   /*admin (always clicked), public inventory, sale*/
   const [visibility, setVisibility] = useState(["admin"]);
@@ -336,8 +336,8 @@ const AddBox = ({ setPage, setBox }) => {
     // Basic validation
     if (
       !boxDescription ||
-      !boxLocation ||
       !imageUrl ||
+      !boxLocation ||
       contents.length < 1 ||
       (visibility.includes("sale") && !(boxDiscount && minimumPrice))
     ) {
