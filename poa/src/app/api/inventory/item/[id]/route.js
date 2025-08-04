@@ -90,6 +90,9 @@ export async function PATCH(request, { params }) {
       if (body.style !== undefined) {
         updateDocument.style = body.style.trim();
       }
+      if (body.brand !== undefined) {
+        updateDocument.brand = body.brand.trim();
+      }
       if (body.size !== undefined) {
         updateDocument.size = body.size.trim();
       }

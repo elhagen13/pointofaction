@@ -9,6 +9,8 @@ import {
   FaBox,
   FaBoxOpen,
 } from "react-icons/fa";
+import { IoIosRemoveCircle} from "react-icons/io";
+
 import jsPDF from "jspdf";
 
 
@@ -718,6 +720,7 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                   <label className={styles.mobileLabel}>Image</label>
                   <div className={styles.mobileValue}>
                     {currentItem.imageUrl !== "" ? (
+                      <div style={{position:"relative", width:"auton"}}>
                       <img
                         src={currentItem.imageUrl}
                         alt="New Item"
@@ -731,6 +734,9 @@ const Edit = ({ item, onClose, refresh, boxes, items }) => {
                         }}
                         title="Click to change image"
                       />
+                       <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"0", fontSize:"30px", color:"red"}}
+                          onClick={() => setCurrentItem({...currentItem, imageUrl: ""})}/>
+                      </div>
                     ) : showUrlInput ? (
                       <div style={{ position: "relative" }}>
                         <input

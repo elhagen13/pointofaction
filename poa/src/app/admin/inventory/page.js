@@ -485,6 +485,7 @@ function Inventory() {
                 key={index}
                 style={{
                   backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                  overflow:"scroll"
                 }}
                 onClick={() => {
                   if (boxDict[item.boxId?.toString()]) {
@@ -495,35 +496,35 @@ function Inventory() {
                   }
                 }}
               >
-                <td className={styles.tableSm} style={{ position: "relative" }}>
+                <td className={styles.tableSm} style={{ position: "relative", minWidth:"100px" }}>
                   <img src={item.image} alt={`Item ${index + 1}`} />
                 </td>
-                <td>{item.style}</td>
-                <td>{item.color}</td>
-                <td>
+                <td style={{minWidth:"100px"}}>{item.style}</td>
+                <td  style={{minWidth:"100px"}}>{item.color}</td>
+                <td  style={{minWidth:"100px"}}>
                   {item.description.length > 50
                     ? item.description.slice(0, 50) + "..."
                     : item.description}
                 </td>
-                <td>{item.size}</td>
-                <td>{item.quantity}</td>
+                <td  style={{minWidth:"100px"}}>{item.size}</td>
+                <td  style={{minWidth:"100px"}}>{item.quantity}</td>
                 {boxDict[item.boxId?.toString()] ? (
                   <td
                     onClick={() =>
                       setEditBoxOpen(boxDict[item.boxId?.toString()])
                     }
-                    style={{ cursor: "pointer" }}
+                    style={{ cursor: "pointer", minWidth:"100px" }}
                   >
                     {boxDict[item.boxId?.toString()]?.boxId}
                   </td>
                 ) : (
-                  <td>N/A</td>
+                  <td style={{minWidth:"100px"}}>N/A</td>
                 )}
-                <td>
+                <td  style={{minWidth:"100px"}}>
                   {boxDict[item.boxId?.toString()]?.location || item.location}
                 </td>
-                <td>${item.price}</td>
-                <td>
+                <td  style={{minWidth:"100px"}}>${item.price}</td>
+                <td  style={{minWidth:"100px"}}>
                   {item.public ? (
                     <MdPublic color="green" />
                   ) : (

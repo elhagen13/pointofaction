@@ -77,6 +77,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
     image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
     description: "",
     style: "",
+    brand: "",
     size: "",
     color: "",
     quantity: 0,
@@ -392,6 +393,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
       description: "",
       style: "",
+      brand: "",
       size: "",
       color: "",
       quantity: 0,
@@ -405,6 +407,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
       description: "",
       style: "",
+      brand: "",
       size: "",
       color: "",
       quantity: 0,
@@ -921,10 +924,16 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                     Description
                   </th>
                   <th
-                    className={styles.tableMed}
+                    className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
                     Style
+                  </th>
+                  <th
+                    className={styles.tableReg}
+                    style={{ border: "none", fontWeight: "bold" }}
+                  >
+                    Brand
                   </th>
                   <th
                     className={styles.tableReg}
@@ -1133,11 +1142,25 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                         }}
                       />
                     </td>
-                    <td className={styles.tableMed}>
+                    <td className={styles.tablReg}>
                       <input
                         value={item.style}
                         onChange={(e) =>
                           updateExistingContent(index, "style", e.target.value)
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                        }}
+                      />
+                    </td>
+                    <td className={styles.tableReg}>
+                      <input
+                        value={item.brand || item.brand === "" ? item.brand : "N/A"}
+                        onChange={(e) =>
+                          updateExistingContent(index, "brand", e.target.value)
                         }
                         className={styles.input}
                         style={{

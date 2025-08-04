@@ -68,6 +68,7 @@ export async function POST(request) {
       description: body.description.trim(),
       image: body.image,
       style: body.style.trim(),
+      brand: body.brand.trim(),
       size: body.size.trim(),
       color: body.color.trim(),
       quantity: body.quantity,

@@ -215,7 +215,7 @@
 }
 
 .tableLg {
-  width: calc(35% + 80px);
+  width: calc(30% + 80px);
   height: 60px;
 }
 
@@ -482,26 +482,24 @@
 .inventoryTable {
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
-  display: block;
   white-space: nowrap;
   border-collapse: collapse;
+  table-layout: fixed;
   text-align: left;
+  display: table;
+  overflow-x: scroll;
   
-
 }
 
 
 .inventoryTable thead,
-.inventoryTable tbody {
-  
-  display: table;
+.inventoryTable tbody { 
   width: 100%;
 }
 
 .inventoryTable tbody tr td {
   white-space: normal;
-  min-width: 100px
+  min-width: 200px
 }
 
 .inventoryTable thead tr th {
