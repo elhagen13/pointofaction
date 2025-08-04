@@ -326,6 +326,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
 
   // Handle URL input option for existing items
   const handleUrlOption = (index) => {
+    setShowImageOptions(null);
     setShowUrlInput(index);
   };
 
@@ -1047,16 +1048,15 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                       {/* URL input for existing items */}
                       {showUrlInput === index && (
                         <div
+                          className={styles.dropdown}
                           style={{
-                            position: "absolute",
-                            top: "100%",
-                            left: "0",
+              
                             backgroundColor: "white",
                             border: "1px solid #ccc",
                             borderRadius: "4px",
                             padding: "8px",
                             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            zIndex: 1000,
+                            zIndex: 9999,
                             minWidth: "200px"
                           }}
                           data-image-options
