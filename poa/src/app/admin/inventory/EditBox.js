@@ -23,6 +23,8 @@ export default function EditItem({
   setSelectedItem,
   boxes,
 }) {
+  const [page, setPage] = useState("add")
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       refresh();
@@ -37,20 +39,31 @@ export default function EditItem({
 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
-      <div className={styles.addItem} onClick={handleModalClick}>
-        <AddBox
+      <div className={styles.addItem} onClick={handleModalClick} style={{width: page == "success" && "auto"}}>
+        {page === "add" && <AddBox
           box={box}
           onClose={onClose}
           refresh={refresh}
           selectedItem={selectedItem}
           boxes={boxes}
-        />
+          setPage={setPage}
+        />}
+        {page === "success" && <Success/>}
       </div>
     </div>
   );
 }
 
-const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
+const Success = () => {
+  return(
+    <div style={{width:"100%", minHeight:"300px", display:"flex", flexDirection:"column",gap:"20px", justifyContent:"center", alignItems:"center"}}>
+      <IoIosCheckmarkCircle style={{fontSize:"64px", color:"green"}}/>
+      <div style={{fontSize:"2rem"}}>Item successfully edited!</div>
+    </div>
+  )
+}
+
+const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
   const [boxDescription, setBoxDescription] = useState(box.description);
   const [boxLocation, setBoxLocation] = useState(box.location);
   const [contents, setContents] = useState([]);
@@ -461,7 +474,6 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
       console.error("Error submitting form:", error);
     } finally {
       refresh();
-      onClose();
     }
   };
 
@@ -614,7 +626,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
         }
       }
 
-      alert("Box and all items updated successfully!");
+      setPage("success")
       return true;
     } catch (error) {
       console.error("Network error:", error);

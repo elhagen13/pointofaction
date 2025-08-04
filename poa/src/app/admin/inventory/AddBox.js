@@ -479,7 +479,6 @@ const AddBox = ({ setPage, setBox }) => {
         }
       }
 
-      alert("Box and all items created successfully!");
       return true;
     } catch (error) {
       console.error("Network error:", error);
