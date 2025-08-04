@@ -127,6 +127,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
         orientation: "portrait",
         unit: "in",
         format: [4, 6],
+        putOnlyUsedFonts: true,
+        compress: true
       });
 
       // Constants
@@ -181,7 +183,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
       });
 
       const qrX = (pageWidth - qrSize) / 2;
-      pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
+      const qrCodeData = box.qrCode.startsWith('data:') ? box.qrCode : `data:image/png;base64,${box.qrCode}`;
+      pdf.addImage(qrCodeData, "PNG", qrX, currentQrY, qrSize, qrSize);
 
       pdf.save(`box-${box.boxId}.pdf`);
     } catch (error) {
@@ -1725,7 +1728,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes }) => {
                   onChange={(e) =>
                     setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
                   }
-                  value={`${minimumPrice}`}
+                  value={`${minimumPrice || "0"}`}
                   required
                 />
               </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { IoAddCircleOutline, IoRemoveCircleOutline } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
 import { FaUpload, FaTimes } from "react-icons/fa";
+import { CiCirclePlus, CiCircleMinus } from "react-icons/ci";
 
 import styles from "./page.module.css";
 export default function Box() {
@@ -20,8 +21,33 @@ export default function Box() {
   const [color, setColor] = useState("");
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
-  const [pub, setPublic] = useState("");
-  const [sale, setSale] = useState("");
+
+  const [changes, setChanges] = useState([]);
+  const [negatives, setNegatives] = useState([]);
+
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const [movedIndex, setMovedIndex] = useState(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    e.preventDefault();
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEnd = (e, index) => {
+    e.preventDefault();
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isRightSwipe) setMovedIndex(null);
+    if (isLeftSwipe) setMovedIndex(index);
+  };
 
   useEffect(() => {
     const getBoxId = async () => {
@@ -63,7 +89,7 @@ export default function Box() {
       })
     );
   };
-  const changeQuantity= (index, val) => {
+  const changeQuantity = (index, val) => {
     setItems(
       items.map((item, i) => {
         if (index === i) {
@@ -77,8 +103,8 @@ export default function Box() {
   };
 
   const handleChanges = async () => {
-    for(const item of items){
-      if(!item.quantity){
+    for (const item of items) {
+      if (!item.quantity) {
         alert("Item quantity not valid");
         return;
       }
@@ -107,7 +133,6 @@ export default function Box() {
   };
 
   const handleFileSelect = (e) => {
-    console.log("hello");
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
@@ -157,48 +182,62 @@ export default function Box() {
     setQuantity(0);
     setPrice(0);
     setPublic("");
-    setSale("")
-  }
+    setSale("");
+  };
 
   const addItem = async () => {
     const itemData = {
-        box_id: boxId,
-        image: image || imageUrl,
-        description: description,
-        style: style,
-        size: size,
-        color: color,
-        quantity: parseInt(quantity),
-        price: parseInt(price),
-        sale: items.length > 0 ? items[0].sale : false,
-        public: items.length > 0 ? items[0].public : false,
-      };
+      box_id: boxId,
+      image: image || imageUrl,
+      description: description,
+      style: style,
+      size: size,
+      color: color,
+      quantity: parseInt(quantity),
+      price: parseInt(price),
+      sale: items.length > 0 ? items[0].sale : false,
+      public: items.length > 0 ? items[0].public : false,
+    };
 
-      const itemResponse = await fetch("/api/inventory/item", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(itemData), 
-      });
+    const itemResponse = await fetch("/api/inventory/item", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(itemData),
+    });
 
-      const itemResult = await itemResponse.json();
+    const itemResult = await itemResponse.json();
 
-      if (itemResult.success) {
-        console.log("Item created successfully:", itemResult.data);
-        console.log("Message:", itemResult.message);
-      } else {
-        console.error("Error creating item:", itemResult.error);
-        console.error("Details:", itemResult.details);
-        alert(
-          "Error creating item: " + (itemResult.error || "Unknown error")
-        );
-        return false;
-      }
-      getItems()
-      setAdd(false)
+    if (itemResult.success) {
+      console.log("Item created successfully:", itemResult.data);
+      console.log("Message:", itemResult.message);
+    } else {
+      console.error("Error creating item:", itemResult.error);
+      console.error("Details:", itemResult.details);
+      alert("Error creating item: " + (itemResult.error || "Unknown error"));
+      return false;
+    }
+    getItems();
+    setAdd(false);
+  };
 
-  }
+  const onChanges = (e, index) => {
+    const newChanges = [...changes];
+    newChanges[index] = e.target.value;
+    setChanges(newChanges);
+  };
+
+  const onPosNeg = (index) => {
+    const newNegatives = [...negatives];
+    newNegatives[index] = !newNegatives[index];
+    setNegatives(newNegatives);
+  };
+
+  useEffect(() => {
+    setChanges(Array(items.length).fill(0));
+    setNegatives(Array(items.length).fill(false));
+  }, [items.length]);
 
   return (
     <>
@@ -216,48 +255,114 @@ export default function Box() {
             </div>
           </h2>
           {items.map((item, index) => (
-            <div className={`${styles.separateRow} ${styles.box}`}>
-              <div key={index} className={styles.inventoryRow}>
-                <div className={styles.imagePreview}>
-                  <img src={item.image} className={styles.previewImage} />
+            <div
+              key={index}
+              style={{ position: "relative", marginBottom: "10px" }}
+            >
+              <div
+                className={`${styles.separateRow} ${styles.box} ${index === movedIndex ? styles.moved : ""}`}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={(e) => onTouchEnd(e, index)}
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  transform:
+                    index === movedIndex ? "translateX(-50%)" : "translateX(0)",
+                  transition: "transform 0.3s ease",
+                }}
+              >
+                <div className={styles.inventoryRow}>
+                  <div className={styles.imagePreview}>
+                    <img src={item.image} className={styles.previewImage} />
+                  </div>
+                  <div className={styles.rowObjectInfo}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Description:</span>{" "}
+                      {item.description}{" "}
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Color:</span>{" "}
+                      {item.color}
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Size:</span>{" "}
+                      {item.size}
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>Style:</span>{" "}
+                      {item.style}
+                    </div>
+                  </div>
                 </div>
-                <div className={styles.rowObjectInfo}>
-                  <div>
-                    <span style={{ fontWeight: "bold" }}>Description:</span>{" "}
-                    {item.description}{" "}
+                {edit ? (
+                  <div className={styles.separate} style={{ color: "#c2c2c2" }}>
+                    <div onClick={() => incDecQuant(index, -1)}>
+                      <IoRemoveCircleOutline fontSize="32px" />
+                    </div>
+                    <input
+                      className={styles.numberInput}
+                      value={item.quantity}
+                      onChange={(e) => changeQuantity(index, e.target.value)}
+                    />
+
+                    <div onClick={() => incDecQuant(index, 1)}>
+                      <IoAddCircleOutline fontSize="32px" />
+                    </div>
                   </div>
-                  <div>
-                    <span style={{ fontWeight: "bold" }}>Color:</span>{" "}
-                    {item.color}
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: "bold" }}>Size:</span>{" "}
-                    {item.size}
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: "bold" }}>Style:</span>{" "}
-                    {item.style}
-                  </div>
-                </div>
+                ) : (
+                  <h1 style={{ color: "#c2c2c2", minWidth: "15%" }}>
+                    <span
+                      style={{
+                        textDecoration:
+                          changes[index] !== 0 && changes[index] !== ""
+                            ? "line-through"
+                            : "none",
+                      }}
+                    >
+                      {item.quantity}
+                    </span>{" "}
+                    {changes[index] !== 0 && changes[index] !== ""
+                      ? item.quantity +
+                        (negatives[index] ? 1 : -1) * changes[index]
+                      : ""}{" "}
+                    left
+                  </h1>
+                )}
               </div>
-              {edit ? (
-                <div className={styles.separate} style={{ color: "#c2c2c2" }}>
-                  <div onClick={() => incDecQuant(index, -1)}>
-                    <IoRemoveCircleOutline fontSize="32px" />
-                  </div>
+
+              <div
+                className={styles.mobileEdit}
+                style={{
+                  width: index === movedIndex ? "50%" : "0%",
+                }}
+              >
+                <div
+                  className={styles.mobileEditContents}
+                  style={{
+                    display: index === movedIndex ? "flex" : "none",
+                  }}
+                >
+                  {negatives[index] ? (
+                    <CiCirclePlus
+                      fontSize="32px"
+                      color="#c2c2c2"
+                      onClick={() => onPosNeg(index)}
+                    />
+                  ) : (
+                    <CiCircleMinus
+                      fontSize="32px"
+                      color="#c2c2c2"
+                      onClick={() => onPosNeg(index)}
+                    />
+                  )}
                   <input
                     className={styles.numberInput}
-                    value={item.quantity}
-                    onChange={(e) => changeQuantity(index, e.target.value)}
+                    value={changes[index]}
+                    onChange={(e) => onChanges(e, index)}
                   />
-                  
-                  <div onClick={() => incDecQuant(index, 1)}>
-                    <IoAddCircleOutline fontSize="32px" />
-                  </div>
                 </div>
-              ) : (
-                <h1 style={{ color: "#c2c2c2", minWidth:"15%" }}>{item.quantity} left</h1>
-              )}
+              </div>
             </div>
           ))}
           <div className={styles.saveChanges} onClick={handleChanges}>
