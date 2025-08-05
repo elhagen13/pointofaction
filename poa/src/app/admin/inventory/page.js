@@ -75,6 +75,7 @@ function Inventory() {
   }, [inventory]);
 
   const boxDict = useMemo(() => {
+    console.log(boxes)
     const dict = {};
     boxes.forEach((box) => {
       dict[box._id.toString()] = box;
@@ -228,6 +229,7 @@ function Inventory() {
 
     setInventory(result.data);
   };
+
 
   async function duplicateBox(box) {
     try {

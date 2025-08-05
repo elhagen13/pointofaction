@@ -1,6 +1,7 @@
-// app/api/upload/route.js
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
+import heicConvert from 'heic-convert';
 
 const s3Client = new S3Client({
   region: process.env.REGION,
@@ -9,6 +10,39 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
   },
 });
+
+const MAX_FILE_SIZE = 100 * 1024; // 100 KB
+
+async function compressToUnder100KB(inputBuffer) {
+  let quality = 80;
+  let resized = sharp(inputBuffer).rotate().jpeg({ quality });
+
+  while (quality >= 30) {
+    const outputBuffer = await resized.toBuffer();
+    if (outputBuffer.length <= MAX_FILE_SIZE) {
+      return outputBuffer;
+    }
+    quality -= 10;
+    resized = sharp(inputBuffer).rotate().jpeg({ quality });
+  }
+
+  // If still too big, resize image
+  let width = 1000;
+  while (width >= 200) {
+    const resizedBuffer = await sharp(inputBuffer)
+      .resize({ width, withoutEnlargement: true })
+      .rotate()
+      .jpeg({ quality: 60 })
+      .toBuffer();
+    if (resizedBuffer.length <= MAX_FILE_SIZE) {
+      return resizedBuffer;
+    }
+    width -= 200;
+  }
+
+  // As last resort, return smallest compressed version
+  return await sharp(inputBuffer).rotate().resize({ width: 200 }).jpeg({ quality: 40 }).toBuffer();
+}
 
 export async function POST(request) {
   try {
@@ -19,45 +53,61 @@ export async function POST(request) {
       return Response.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+    const originalName = file.name;
+    const originalType = file.type;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (!originalType.startsWith('image/')) {
       return Response.json({ error: 'File must be an image' }, { status: 400 });
     }
 
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      return Response.json({ error: 'File size must be less than 5MB' }, { status: 400 });
+    let finalBuffer;
+    let finalFileName = `sale-items/${uuidv4()}-${originalName.replace(/[^a-zA-Z0-9.-]/g, '_').replace(/\.\w+$/, '')}.jpg`;
+    let finalContentType = 'image/jpeg';
+    let wasConverted = false;
+
+    // If HEIC, convert to JPEG buffer
+    if (originalType === 'image/heic' || originalName.toLowerCase().endsWith('.heic')) {
+      const jpegBuffer = await heicConvert({
+        buffer,
+        format: 'JPEG',
+        quality: 1,
+      });
+      finalBuffer = await compressToUnder100KB(jpegBuffer);
+      wasConverted = true;
+    } else {
+      // Convert all to JPEG and compress
+      finalBuffer = await compressToUnder100KB(buffer);
+      wasConverted = originalType !== 'image/jpeg';
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const fileName = `sale-items/${uuidv4()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    
     const uploadParams = {
       Bucket: process.env.S3_BUCKET_NAME,
-      Key: fileName,
-      Body: buffer,
-      ContentType: file.type,
+      Key: finalFileName,
+      Body: finalBuffer,
+      ContentType: finalContentType,
     };
 
     const command = new PutObjectCommand(uploadParams);
     await s3Client.send(command);
 
-    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${fileName}`;
+    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${finalFileName}`;
 
     return Response.json({
       success: true,
       url: fileUrl,
-      fileName: fileName,
-      message: 'File uploaded successfully'
+      fileName: finalFileName,
+      message: 'File uploaded and compressed to under 100 KB',
+      size: finalBuffer.length,
+      converted: wasConverted
     });
 
   } catch (error) {
     console.error('Upload error:', error);
-    return Response.json({ 
+    return Response.json({
       success: false,
       error: 'Upload failed',
-      details: error.message 
+      details: error.message
     }, { status: 500 });
   }
 }

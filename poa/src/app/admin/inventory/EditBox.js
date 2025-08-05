@@ -588,7 +588,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
             sale:
               content.boxId === boxId
                 ? visibility.includes("sale")
-                : boxDict[content.boxId].sale,
+                : boxDict[content.boxId] ? boxDict[content.boxId].sale : "false",
             public:
               content.boxId === boxId
                 ? visibility.includes("public")
