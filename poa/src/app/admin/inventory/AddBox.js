@@ -252,25 +252,29 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
   }, [options?.sizes, sizeSearch]);
 
   // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest("[data-description-dropdown]")) {
-        setCurrentItem((prev) => ({ ...prev, descriptionOpen: false }));
-        setDescriptionSearch("");
-      }
-      if (!event.target.closest("[data-size-dropdown]")) {
-        setCurrentItem((prev) => ({ ...prev, sizeOpen: false }));
-        setSizeSearch("");
-      }
-      if (!event.target.closest("[data-brand-dropdown]")) {
-        setCurrentItem((prev) => ({ ...prev, brandOpen: false }));
-        setBrandSearch("");
-      }
-      if (!event.target.closest("[data-image-options]")) {
-        setShowImageOptions(null);
-        setShowUrlInput(false);
-      }
-    };
+    useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (!event.target.closest("[data-description-dropdown]")) {
+      setContents(prevContents => 
+        prevContents.map(item => ({ ...item, descriptionOpen: false })))
+      setDescriptionSearch("");
+    }
+    if (!event.target.closest("[data-size-dropdown]")) {
+      setContents(prevContents => 
+        prevContents.map(item => ({ ...item, sizeOpen: false })))
+      setSizeSearch("");
+    }
+    if (!event.target.closest("[data-brand-dropdown]")) {
+      setContents(prevContents => 
+        prevContents.map(item => ({ ...item, brandOpen: false })))
+      setBrandSearch("");
+    }
+    if (!event.target.closest("[data-image-options]")) {
+      setShowImageOptions(null);
+      setShowUrlInput(false);
+    }
+  };
+
 
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
@@ -434,7 +438,9 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
   const updateExistingContent = (idToUpdate, field, newValue) => {
     setContents((prevContents) =>
       prevContents.map((item, index) =>
-        index === idToUpdate ? { ...item, [field]: newValue } : item
+        index === idToUpdate
+          ? { ...item, [field]: newValue }
+          : { ...item, descriptionOpen: false }
       )
     );
   };
@@ -552,7 +558,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
       (currentItem.color ||
         currentItem.description ||
         currentItem.price ||
-        currentItem.size || 
+        currentItem.size ||
         currentItem.brand ||
         currentItem.quantity ||
         currentItem.style)
@@ -1014,22 +1020,135 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                         )}
                       </td>
                       <td className={styles.tableLg}>
-                        <input
-                          value={item.description}
-                          onChange={(e) =>
-                            updateExistingContent(
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
+                        <div
+                          style={{ position: "relative" }}
+                          data-description-dropdown
+                        >
+                          <input
+                            value={item.description}
+                            onClick={() => {
+                              updateExistingContent(
+                                index,
+                                "descriptionOpen",
+                                true
+                              );
+                              setDescriptionSearch(item.description);
+                            }}
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              minHeight: "auto",
+                              width: "100%",
+                              caretColor: "transparent",
+                            }}
+                            data-description-dropdown
+                          />
+                          {item.descriptionOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-description-dropdown
+                              style={{ maxWidth: "250px" }}
+                            >
+                              <div
+                                style={{
+                                  padding: "8px",
+                                  borderBottom: "1px solid #eee",
+                                  backgroundColor: "#f8f9fa",
+                                }}
+                                data-description-dropdown
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <FaSearch
+                                    style={{ color: "#999", fontSize: "14px" }}
+                                  />
+                                  <input
+                                    type="text"
+                                    value={descriptionSearch}
+                                    onChange={(e) =>
+                                      setDescriptionSearch(e.target.value)
+                                    }
+                                    placeholder="Search descriptions..."
+                                    className={styles.input}
+                                    style={{
+                                      margin: 0,
+                                      padding: "4px 8px",
+                                      fontSize: "14px",
+                                      border: "1px solid #ddd",
+                                      borderRadius: "4px",
+                                      flex: 1,
+                                    }}
+                                    data-description-dropdown
+                                  />
+                                </div>
+                              </div>
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                }}
+                                data-description-dropdown
+                              >
+                                {filteredDescriptions.length > 0 ? (
+                                  filteredDescriptions.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        updateExistingContent(
+                                          index,
+                                          "description",
+                                          opt.description
+                                        );
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex <
+                                          filteredDescriptions.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-description-dropdown
+                                    >
+                                      <strong>{opt.description}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-description-dropdown
+                                  >
+                                    No descriptions found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className={styles.tableReg}>
                         <input
@@ -1050,41 +1169,259 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                         />
                       </td>
                       <td className={styles.tableReg}>
-                        <input
-                          value={item.brand}
-                          onChange={(e) =>
-                            updateExistingContent(
-                              index,
-                              "brand",
-                              e.target.value
-                            )
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
-                      </td>
-                      <td className={styles.tableReg}>
-                        <div style={{ position: "relative" }}>
+                      <div
+                          style={{ position: "relative" }}
+                          data-brand-dropdown
+                        >
                           <input
-                            value={item.size}
-                            onChange={(e) =>
+                            value={item.brand}
+                            onClick={() => {
                               updateExistingContent(
                                 index,
-                                "size",
-                                e.target.value
-                              )
-                            }
+                                "brandOpen",
+                                true
+                              );
+                              setBrandSearch(item.brand);
+                            }}
                             className={styles.input}
                             style={{
                               margin: 0,
                               minHeight: "auto",
                               width: "100%",
+                              caretColor: "transparent",
                             }}
+                            data-brand-dropdown
                           />
+                          {item.brandOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-brand-dropdown
+                              style={{ maxWidth: "250px" }}
+                            >
+                              <div
+                                style={{
+                                  padding: "8px",
+                                  borderBottom: "1px solid #eee",
+                                  backgroundColor: "#f8f9fa",
+                                }}
+                                data-brand-dropdown
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <input
+                                    type="text"
+                                    value={brandSearch}
+                                    onChange={(e) =>
+                                      setBrandSearch(e.target.value)
+                                    }
+                                    placeholder="Search brands..."
+                                    className={styles.input}
+                                    style={{
+                                      margin: 0,
+                                      padding: "4px 8px",
+                                      fontSize: "14px",
+                                      border: "1px solid #ddd",
+                                      borderRadius: "4px",
+                                      flex: 1,
+                                    }}
+                                    data-brand-dropdown
+                                  />
+                                </div>
+                              </div>
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                }}
+                                data-brand-dropdown
+                              >
+                                {filteredBrands.length > 0 ? (
+                                  filteredBrands.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        updateExistingContent(
+                                          index,
+                                          "brand",
+                                          opt.brand
+                                        );
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex <
+                                          filteredDescriptions.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-brand-dropdown
+                                    >
+                                      <strong>{opt.brand}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-description-dropdown
+                                  >
+                                    No brands found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className={styles.tableReg}>
+                      <div
+                          style={{ position: "relative" }}
+                          data-size-dropdown
+                        >
+                          <input
+                            value={item.size}
+                            onClick={() => {
+                              updateExistingContent(
+                                index,
+                                "sizeOpen",
+                                true
+                              );
+                              setDescriptionSearch(item.size);
+                            }}
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              minHeight: "auto",
+                              width: "100%",
+                              caretColor: "transparent",
+                            }}
+                            data-size-dropdown
+                          />
+                          {item.sizeOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-size-dropdown
+                              style={{ maxWidth: "250px" }}
+                            >
+                              <div
+                                style={{
+                                  padding: "8px",
+                                  borderBottom: "1px solid #eee",
+                                  backgroundColor: "#f8f9fa",
+                                }}
+                                data-size-dropdown
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <input
+                                    type="text"
+                                    value={sizeSearch}
+                                    onChange={(e) =>
+                                      setSizeSearch(e.target.value)
+                                    }
+                                    placeholder="Search sizes..."
+                                    className={styles.input}
+                                    style={{
+                                      margin: 0,
+                                      padding: "4px 8px",
+                                      fontSize: "14px",
+                                      border: "1px solid #ddd",
+                                      borderRadius: "4px",
+                                      flex: 1,
+                                    }}
+                                    data-size-dropdown
+                                  />
+                                </div>
+                              </div>
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                }}
+                                data-size-dropdown
+                              >
+                                {filteredSizes.length > 0 ? (
+                                  filteredSizes.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        updateExistingContent(
+                                          index,
+                                          "size",
+                                          opt.size
+                                        );
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex <
+                                          filteredDescriptions.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-size-dropdown
+                                    >
+                                      <strong>{opt.size}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-description-dropdown
+                                  >
+                                    No sizes found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className={styles.tableReg}>
@@ -1324,13 +1661,12 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                 descriptionOpen: true,
                               })
                             }
-                            
                             className={styles.input}
                             style={{
                               margin: 0,
                               minHeight: "auto",
                               width: "100%",
-                              caretColor:"transparent"
+                              caretColor: "transparent",
                             }}
                             data-description-dropdown
                           />
@@ -1427,7 +1763,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                       padding: "8px 12px",
                                       textAlign: "center",
                                     }}
-                                    onClick={()=> setPage("option")}
+                                    onClick={() => setPage("option")}
                                     data-description-dropdown
                                   >
                                     No descriptions found
@@ -1457,7 +1793,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                         />
                       </td>
                       <td className={styles.tableReg}>
-                      <div
+                        <div
                           style={{ position: "relative", width: "100%" }}
                           data-brand-dropdown
                         >
@@ -1474,7 +1810,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                               margin: 0,
                               minHeight: "auto",
                               width: "100%",
-                              caretColor:"transparent"
+                              caretColor: "transparent",
                             }}
                             data-brand-dropdown
                           />
@@ -1515,7 +1851,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                       border: "1px solid #ddd",
                                       borderRadius: "4px",
                                       flex: 1,
-                                      maxWidth: "100%"
+                                      maxWidth: "100%",
                                     }}
                                     data-brand-dropdown
                                   />
@@ -1542,8 +1878,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                         padding: "8px 12px",
                                         cursor: "pointer",
                                         borderBottom:
-                                          oIndex <
-                                          filteredBrands.length - 1
+                                          oIndex < filteredBrands.length - 1
                                             ? "1px solid #eee"
                                             : "none",
                                       }}
@@ -1569,7 +1904,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                       padding: "8px 12px",
                                       textAlign: "center",
                                     }}
-                                    onClick={()=> setPage("option")}
+                                    onClick={() => setPage("option")}
                                     data-brand-dropdown
                                   >
                                     No brands found
@@ -1594,13 +1929,12 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                 sizeOpen: true,
                               })
                             }
-                        
                             className={styles.input}
                             style={{
                               margin: 0,
                               minHeight: "auto",
                               width: "100%",
-                              caretColor:"transparent"
+                              caretColor: "transparent",
                             }}
                             data-size-dropdown
                           />
@@ -1641,7 +1975,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                       border: "1px solid #ddd",
                                       borderRadius: "4px",
                                       flex: 1,
-                                      maxWidth: "100%"
+                                      maxWidth: "100%",
                                     }}
                                     data-size-dropdown
                                   />
@@ -1661,15 +1995,12 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                     <div
                                       key={oIndex}
                                       className={styles.dropdownItem}
-                                      onClick={() =>
-                                        handleSizeSelect(opt.size)
-                                      }
+                                      onClick={() => handleSizeSelect(opt.size)}
                                       style={{
                                         padding: "8px 12px",
                                         cursor: "pointer",
                                         borderBottom:
-                                          oIndex <
-                                          filteredSizes.length - 1
+                                          oIndex < filteredSizes.length - 1
                                             ? "1px solid #eee"
                                             : "none",
                                       }}
@@ -1695,7 +2026,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                       padding: "8px 12px",
                                       textAlign: "center",
                                     }}
-                                    onClick={()=> setPage("option")}
+                                    onClick={() => setPage("option")}
                                     data-size-dropdown
                                   >
                                     No sizes found
