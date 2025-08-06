@@ -9,18 +9,25 @@ import {
   FaDownload,
   FaRegCopy,
 } from "react-icons/fa";
-import { IoIosAddCircle, IoIosRemoveCircle, IoIosCheckmarkCircle } from "react-icons/io";
+import {
+  IoIosAddCircle,
+  IoIosRemoveCircle,
+  IoIosCheckmarkCircle,
+} from "react-icons/io";
+import { MdFormatSize } from "react-icons/md";
 
 import { CiCircleRemove } from "react-icons/ci";
 import jsPDF from "jspdf";
 
-export default function AddItem({ onClose, refresh }) {
+import AddOption from "@/app/components/admin/addOptions/AddOption";
+
+export default function AddItem({ onClose, refresh, options, savedInfo, setSavedInfo }) {
   const [page, setPage] = useState("box");
   const [box, setBox] = useState({});
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
-      refresh();
+      refresh()
       onClose();
     }
   };
@@ -32,13 +39,16 @@ export default function AddItem({ onClose, refresh }) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        {page === "box" && <AddBox setPage={setPage} setBox={setBox} />}
+        {page === "box" && (
+          <AddBox setPage={setPage} setBox={setBox} options={options} savedInfo={savedInfo} setSavedInfo={setSavedInfo}/>
+        )}
         {page === "qr" && <QrPopup setPage={setPage} box={box} />}
+        {page === "option" && <AddOption options={options} />}
+
       </div>
     </div>
   );
 }
-
 const QrPopup = ({ box }) => {
   const downloadBoxPDF = async () => {
     try {
@@ -135,21 +145,25 @@ const QrPopup = ({ box }) => {
   );
 };
 
-const AddBox = ({ setPage, setBox }) => {
-  const [boxDescription, setBoxDescription] = useState("");
-  const [boxLocation, setBoxLocation] = useState("");
-  const [contents, setContents] = useState([]);
-  const [imageUrl, setImageUrl] = useState("https://companystores.s3.us-east-1.amazonaws.com/sale-items/corrugated-cube_52a4bb18-a30d-468d-baa7-61b0c7a2f842.jpg.webp");
-  const [minimumPrice, setMinimumPrice] = useState(0);
+const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo}) => {
+  const [boxDescription, setBoxDescription] = useState(savedInfo.addBox.boxDescription || "");
+  const [boxLocation, setBoxLocation] = useState(savedInfo.addBox.boxLocation || "");
+  const [contents, setContents] = useState(savedInfo.addBox.contents || []);
+  const [imageUrl, setImageUrl] = useState( savedInfo.addBox.imageUrl ||
+    "https://companystores.s3.us-east-1.amazonaws.com/sale-items/corrugated-cube_52a4bb18-a30d-468d-baa7-61b0c7a2f842.jpg.webp"
+  );
+  const [minimumPrice, setMinimumPrice] = useState(savedInfo.addBox.minimumPrice || 0);
   /*admin (always clicked), public inventory, sale*/
-  const [visibility, setVisibility] = useState(["admin"]);
-  const [boxDiscount, setBoxDiscount] = useState(20);
+  const [visibility, setVisibility] = useState(savedInfo.addBox.visibility || ["admin"]);
+  const [boxDiscount, setBoxDiscount] = useState(savedInfo.addBox.boxDiscount || 20);
   const [currentItem, setCurrentItem] = useState({
-    imageUrl: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
+    imageUrl:
+      "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
     description: "",
     style: "",
     brand: "",
-    size: "",
+    sizesStandard: true,
+    size: "XXS",
     color: "",
     quantity: 0,
     price: 0.0,
@@ -163,9 +177,29 @@ const AddBox = ({ setPage, setBox }) => {
   const [imageUrlInput, setImageUrlInput] = useState("");
   let acknowledgement = false;
 
+  const sizes = ["XXS", "XS", "SM", "MD", "LG", "XL", "XXL", "XXXL"];
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(null);
-  const [showImageOptions, setShowImageOptions] = useState(null); 
+  const [showImageOptions, setShowImageOptions] = useState(null);
+
+  /**
+   * Save information the user puts in
+   */
+  useEffect(() => {
+    setSavedInfo({
+      ...savedInfo,
+      addBox: {
+        boxDescription: boxDescription,
+        boxLocation: boxLocation,
+        contents: contents, 
+        imageUrl: imageUrl,
+        visibility: visibility,
+        boxDiscount: boxDiscount,
+        minimumPrice: minimumPrice
+      }}
+    )
+
+  }, [boxDescription, boxLocation, contents, imageUrl, visibility, boxDiscount, minimumPrice])
 
   const handleFileSelect = (e, type, itemIndex = null) => {
     const file = e.target.files[0];
@@ -186,8 +220,8 @@ const AddBox = ({ setPage, setBox }) => {
   };
 
   const handleUrlSubmit = (e, type, itemIndex = null) => {
-    e.preventDefault()
-    console.log(type, itemIndex)
+    e.preventDefault();
+    console.log(type, itemIndex);
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
       return;
@@ -328,7 +362,8 @@ const AddBox = ({ setPage, setBox }) => {
       description: "",
       style: "",
       brand: "",
-      size: "",
+      sizesStandard: true,
+      size: "XXS",
       color: "",
       quantity: 0,
       price: 0.0,
@@ -339,11 +374,13 @@ const AddBox = ({ setPage, setBox }) => {
 
   const cancelNewItem = () => {
     setCurrentItem({
-      imageUrl: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
+      imageUrl:
+        "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
       description: "",
       style: "",
       brand: "",
-      size: "",
+      sizesStandard: true,
+      size: "XXS",
       color: "",
       quantity: 0,
       price: 0.0,
@@ -385,9 +422,8 @@ const AddBox = ({ setPage, setBox }) => {
       (currentItem.color ||
         currentItem.description ||
         currentItem.price ||
-        currentItem.brand || 
+        currentItem.brand ||
         currentItem.quantity ||
-        currentItem.size ||
         currentItem.style)
     ) {
       alert(
@@ -500,6 +536,11 @@ const AddBox = ({ setPage, setBox }) => {
         }
       }
 
+      setSavedInfo({
+        ...savedInfo,
+        addBox: {}
+      })
+
       return true;
     } catch (error) {
       console.error("Network error:", error);
@@ -536,7 +577,10 @@ const AddBox = ({ setPage, setBox }) => {
         setDropdownSearchTerm(""); // Clear search when closing dropdown
       }
       // Close image options when clicking outside
-      if (showImageOptions !== null && !event.target.closest("[data-image-options]")) {
+      if (
+        showImageOptions !== null &&
+        !event.target.closest("[data-image-options]")
+      ) {
         setShowImageOptions(null);
       }
     };
@@ -557,11 +601,15 @@ const AddBox = ({ setPage, setBox }) => {
     } else {
       setIsDropdownOpen(index);
       setDropdownSearchTerm("");
-      
+
       // Position the dropdown after it renders
       setTimeout(() => {
-        const dropdown = document.querySelector(`[data-dropdown-index="${index}"] .dropdown`);
-        const trigger = document.querySelector(`[data-dropdown-index="${index}"]`);
+        const dropdown = document.querySelector(
+          `[data-dropdown-index="${index}"] .dropdown`
+        );
+        const trigger = document.querySelector(
+          `[data-dropdown-index="${index}"]`
+        );
         positionDropdown(dropdown, trigger);
       }, 0);
     }
@@ -643,367 +691,409 @@ const AddBox = ({ setPage, setBox }) => {
           )}
           <div className={styles.formInput}>
             <label>Box Inventory</label>
-            <div style={{width:"100%", maxWidth: "100%", overflowX: "auto"}}>
-            <table
-              className={styles.boxTable}
-              style={{
-                width: "100%",
-                textAlign: "left",
-                borderCollapse: "collapse",
-                borderRadius: "10px",
-                overflow: "hidden",
-              }}
-            >
-              <thead>
-                <tr
-                  className={styles.row}
-                  style={{ backgroundColor: "#ccd5e0" }}
-                >
-                  <th className={styles.tableSm} style={{ fontWeight: "bold" }}>
-                    Image
-                  </th>
-                  <th
-                    className={styles.tableLg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Description
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Style Code
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Brand Style
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Size
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Color
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Quantity
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Unit Price
-                  </th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {contents.map((item, index) => (
+            <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+              <table
+                className={styles.boxTable}
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  borderCollapse: "collapse",
+                  borderRadius: "10px",
+                  overflow: "hidden",
+                }}
+              >
+                <thead>
                   <tr
-                    key={index}
-                    style={{
-                      height: "60px",
-                      width: "100%",
-                      backgroundColor: index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
-                    }}
+                    className={styles.row}
+                    style={{ backgroundColor: "#ccd5e0" }}
                   >
-                    <td
+                    <th
                       className={styles.tableSm}
-                      style={{ position: "relative" }}
+                      style={{ fontWeight: "bold" }}
                     >
-                      <img
-                        src={item.imageUrl}
-                        alt={`Item ${index + 1}`}
-                        onClick={() => handleThumbnailClick(index)}
-                        style={{
-                          cursor: "pointer",
-                          opacity:
-                            selectedItemIndex === index && imageUploading
-                              ? 0.5
-                              : 1,
-                          transition: "opacity 0.2s",
-                        }}
-                        title="Click to change image"
-                      />
-                      {selectedItemIndex === index && imageUploading && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            color: "#007bff",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Uploading...
-                        </div>
-                      )}
-                      
-                      {/* Image upload options dropdown */}
-                      {showImageOptions === index && (
-                        <div 
-                          className={styles.dropdown}
-                          
-                          data-image-options
-                        >
-                          <div
-                            style={{
-                              padding: "8px 12px",
-                              cursor: "pointer",
-                              borderBottom: "1px solid #eee",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px"
-                            }}
-                            onClick={() => handleFileUploadOption(index)}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = "#f5f5f5"}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
-                            data-image-options
-                          >
-                            <FaUpload style={{ fontSize: "14px" }} />
-                            Upload from Computer
-                          </div>
-                          <div
-                            style={{
-                              padding: "8px 12px",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px"
-                            }}
-                            onClick={() => handleUrlOption(index)}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = "#f5f5f5"}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
-                            data-image-options
-                          >
-                            <FaLink style={{ fontSize: "14px" }} />
-                            Enter Image URL
-                          </div>
-                        </div>
-                      )}
-
-                      {/* URL input for existing items */}
-                      {showUrlInput === index && (
-                        <div
-                          className={styles.dropdown}
-                          style={{
-              
-                            backgroundColor: "white",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                            padding: "8px",
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            zIndex: 9999,
-                            minWidth: "200px"
-                          }}
-                          data-image-options
-                        >
-                          <input
-                            type="text"
-                            value={imageUrlInput}
-                            onChange={(e) => setImageUrlInput(e.target.value)}
-                            placeholder="Enter image URL..."
-                            className={styles.input}
-                            style={{
-                              margin: 0,
-                              width: "100%",
-                              marginBottom: "8px"
-                            }}
-                            data-image-options
-                          />
-                          <div style={{ display: "flex", gap: "4px" }} data-image-options>
-                            <button
-                              type="button"
-                              onClick={(e) => handleUrlSubmit(e, "content", index)}
-                              style={{
-                                padding: "4px 8px",
-                                fontSize: "12px",
-                                backgroundColor: "#007bff",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "3px",
-                                cursor: "pointer"
-                              }}
-                              data-image-options
-                            >
-                              Use
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowUrlInput(false);
-                                setImageUrlInput("");
-                                setShowImageOptions(null);
-                              }}
-                              style={{
-                                padding: "4px 8px",
-                                fontSize: "12px",
-                                backgroundColor: "#6c757d",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "3px",
-                                cursor: "pointer"
-                              }}
-                              data-image-options
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                    <td className={styles.tableLg}>
-                      <input
-                        value={item.description}
-                        onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.style}
-                        onChange={(e) =>
-                          updateExistingContent(index, "style", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.brand}
-                        onChange={(e) =>
-                          updateExistingContent(index, "style", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.size}
-                        onChange={(e) =>
-                          updateExistingContent(index, "size", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.color}
-                        onChange={(e) =>
-                          updateExistingContent(index, "color", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        type="text"
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "quantity",
-                            parseInt(e.target.value) || ""
-                          )
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        type="text"
-                        pattern="^\d*\.?\d*$"
-                        inputMode="decimal"
-                        value={item.price}
-                        onChange={(e) =>
-                          updateExistingContent(index, "price", e.target.value)
-                        }
-                        onBlur={(e) => {
-                          const numValue = parseFloat(e.target.value);
-                          updateExistingContent(
-                            index,
-                            "price",
-                            isNaN(numValue) ? 0 : numValue.toFixed(2)
-                          );
-                        }}
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td style={{display:"flex", flexDirection:"row", justifyContent:"center", alignItems:"center", width:"100%", height:"60px", gap:"20px"}}>
-                      <div
-                        onClick={() => copyItem(index)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <FaRegCopy />
-                        </div>
-
-                        <div
-                        onClick={() => removeItem(index)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <FaRegTrashAlt />
-                      </div>
-                    </td>
-                    
+                      Image
+                    </th>
+                    <th
+                      className={styles.tableLg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Description
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Style Code
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Brand Style
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Size
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Color
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Quantity
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Unit Price
+                    </th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {contents.map((item, index) => (
+                    <tr
+                      key={index}
+                      style={{
+                        height: "60px",
+                        width: "100%",
+                        backgroundColor:
+                          index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
+                      }}
+                    >
+                      <td
+                        className={styles.tableSm}
+                        style={{ position: "relative" }}
+                      >
+                        <img
+                          src={item.imageUrl}
+                          alt={`Item ${index + 1}`}
+                          onClick={() => handleThumbnailClick(index)}
+                          style={{
+                            cursor: "pointer",
+                            opacity:
+                              selectedItemIndex === index && imageUploading
+                                ? 0.5
+                                : 1,
+                            transition: "opacity 0.2s",
+                          }}
+                          title="Click to change image"
+                        />
+                        {selectedItemIndex === index && imageUploading && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              color: "#007bff",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            Uploading...
+                          </div>
+                        )}
+
+                        {/* Image upload options dropdown */}
+                        {showImageOptions === index && (
+                          <div className={styles.dropdown} data-image-options>
+                            <div
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                borderBottom: "1px solid #eee",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                              onClick={() => handleFileUploadOption(index)}
+                              onMouseEnter={(e) =>
+                                (e.target.style.backgroundColor = "#f5f5f5")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.target.style.backgroundColor = "white")
+                              }
+                              data-image-options
+                            >
+                              <FaUpload style={{ fontSize: "14px" }} />
+                              Upload from Computer
+                            </div>
+                            <div
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                              onClick={() => handleUrlOption(index)}
+                              onMouseEnter={(e) =>
+                                (e.target.style.backgroundColor = "#f5f5f5")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.target.style.backgroundColor = "white")
+                              }
+                              data-image-options
+                            >
+                              <FaLink style={{ fontSize: "14px" }} />
+                              Enter Image URL
+                            </div>
+                          </div>
+                        )}
+
+                        {/* URL input for existing items */}
+                        {showUrlInput === index && (
+                          <div
+                            className={styles.dropdown}
+                            style={{
+                              backgroundColor: "white",
+                              border: "1px solid #ccc",
+                              borderRadius: "4px",
+                              padding: "8px",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                              zIndex: 9999,
+                              minWidth: "200px",
+                            }}
+                            data-image-options
+                          >
+                            <input
+                              type="text"
+                              value={imageUrlInput}
+                              onChange={(e) => setImageUrlInput(e.target.value)}
+                              placeholder="Enter image URL..."
+                              className={styles.input}
+                              style={{
+                                margin: 0,
+                                width: "100%",
+                                marginBottom: "8px",
+                              }}
+                              data-image-options
+                            />
+                            <div
+                              style={{ display: "flex", gap: "4px" }}
+                              data-image-options
+                            >
+                              <button
+                                type="button"
+                                onClick={(e) =>
+                                  handleUrlSubmit(e, "content", index)
+                                }
+                                style={{
+                                  padding: "4px 8px",
+                                  fontSize: "12px",
+                                  backgroundColor: "#007bff",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "3px",
+                                  cursor: "pointer",
+                                }}
+                                data-image-options
+                              >
+                                Use
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowUrlInput(false);
+                                  setImageUrlInput("");
+                                  setShowImageOptions(null);
+                                }}
+                                style={{
+                                  padding: "4px 8px",
+                                  fontSize: "12px",
+                                  backgroundColor: "#6c757d",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "3px",
+                                  cursor: "pointer",
+                                }}
+                                data-image-options
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                      <td className={styles.tableLg}>
+                        <input
+                          value={item.description}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "description",
+                              e.target.value
+                            )
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          value={item.style}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "style",
+                              e.target.value
+                            )
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          value={item.brand}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "style",
+                              e.target.value
+                            )
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                          <div style={{ position: "relative" }}>
+                            <input
+                              value={item.size}
+                              onChange={(e) =>
+                                updateExistingContent(
+                                  index, "size", e.target.value
+                                )
+                              }
+                              className={styles.input}
+                              style={{
+                                margin: 0,
+                                minHeight: "auto",
+                                width: "100%",
+                              }}
+                            />
+                            
+                          </div>
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          value={item.color}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "color",
+                              e.target.value
+                            )
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          type="text"
+                          pattern="[0-9]*"
+                          inputMode="numeric"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "quantity",
+                              parseInt(e.target.value) || ""
+                            )
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          type="text"
+                          pattern="^\d*\.?\d*$"
+                          inputMode="decimal"
+                          value={item.price}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "price",
+                              e.target.value
+                            )
+                          }
+                          onBlur={(e) => {
+                            const numValue = parseFloat(e.target.value);
+                            updateExistingContent(
+                              index,
+                              "price",
+                              isNaN(numValue) ? 0 : numValue.toFixed(2)
+                            );
+                          }}
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          width: "100%",
+                          height: "60px",
+                          gap: "20px",
+                        }}
+                      >
+                        <div
+                          onClick={() => copyItem(index)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <FaRegCopy />
+                        </div>
+
+                        <div
+                          onClick={() => removeItem(index)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <FaRegTrashAlt />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             <div
               style={{
@@ -1043,20 +1133,30 @@ const AddBox = ({ setPage, setBox }) => {
                         }}
                       >
                         {currentItem.imageUrl !== "" ? (
-                          <div style={{position:"relative"}}>
-                          <img
-                            src={currentItem.imageUrl}
-                            alt="New Item"
-                            onClick={handleNewItemThumbnailClick}
-                            style={{
-                              cursor: "pointer",
-                              opacity: imageUploading ? 0.5 : 1,
-                              transition: "opacity 0.2s",
-                            }}
-                            title="Click to change image"
-                          />
-                          <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"0px", fontSize:"30px", color:"red"}}
-                          onClick={() => setCurrentItem({...currentItem, imageUrl: ""})}/>
+                          <div style={{ position: "relative" }}>
+                            <img
+                              src={currentItem.imageUrl}
+                              alt="New Item"
+                              onClick={handleNewItemThumbnailClick}
+                              style={{
+                                cursor: "pointer",
+                                opacity: imageUploading ? 0.5 : 1,
+                                transition: "opacity 0.2s",
+                              }}
+                              title="Click to change image"
+                            />
+                            <IoIosRemoveCircle
+                              style={{
+                                position: "absolute",
+                                top: "-15px",
+                                right: "0px",
+                                fontSize: "30px",
+                                color: "red",
+                              }}
+                              onClick={() =>
+                                setCurrentItem({ ...currentItem, imageUrl: "" })
+                              }
+                            />
                           </div>
                         ) : showUrlInput ? (
                           <div>
@@ -1173,21 +1273,68 @@ const AddBox = ({ setPage, setBox }) => {
                         />
                       </td>
                       <td className={styles.tableReg}>
-                        <input
-                          value={currentItem.size}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              size: e.target.value,
-                            })
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
+                        {currentItem.sizesStandard ? (
+                          <select
+                            name="sizes"
+                            id="sizes"
+                            className={styles.input}
+                            onChange={(e) =>
+                              e.target.value !== "other"
+                                ? setCurrentItem({
+                                    ...currentItem,
+                                    size: e.target.value,
+                                  })
+                                : setCurrentItem({
+                                    ...currentItem,
+                                    size: "",
+                                    sizesStandard: false,
+                                  })
+                            }
+                            style={{
+                              margin: 0,
+                              minHeight: "auto",
+                              width: "100%",
+                            }}
+                          >
+                            {sizes.map((size) => (
+                              <option value={size}>{size}</option>
+                            ))}
+                            <option value="other">Other</option>
+                          </select>
+                        ) : (
+                          <div style={{ position: "relative" }}>
+                            <input
+                              value={currentItem.size}
+                              onChange={(e) =>
+                                setCurrentItem({
+                                  ...currentItem,
+                                  size: e.target.value,
+                                })
+                              }
+                              className={styles.input}
+                              style={{
+                                margin: 0,
+                                minHeight: "auto",
+                                width: "100%",
+                              }}
+                            />
+                            <MdFormatSize
+                              style={{
+                                position: "absolute",
+                                right: "3px",
+                                top: "3px",
+                                color: "gray",
+                              }}
+                              onClick={() =>
+                                setCurrentItem({
+                                  ...currentItem,
+                                  size: "XXS",
+                                  sizesStandard: true,
+                                })
+                              }
+                            />
+                          </div>
+                        )}
                       </td>
                       <td className={styles.tableReg}>
                         <input
@@ -1272,22 +1419,32 @@ const AddBox = ({ setPage, setBox }) => {
                       <label className={styles.mobileLabel}>Image</label>
                       <div className={styles.mobileValue}>
                         {currentItem.imageUrl !== "" ? (
-                          <div style={{position:"relative", width:"auto"}}>
-                          <img
-                            src={currentItem.imageUrl}
-                            alt="New Item"
-                            onClick={handleNewItemThumbnailClick}
-                            style={{
-                              cursor: "pointer",
-                              opacity: imageUploading ? 0.5 : 1,
-                              transition: "opacity 0.2s",
-                              maxWidth: "100px",
-                              maxHeight: "100px",
-                            }}
-                            title="Click to change image"
-                          />
-                          <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"-15px", fontSize:"30px", color:"red"}}
-                          onClick={() => setCurrentItem({...currentItem, imageUrl: ""})}/>
+                          <div style={{ position: "relative", width: "auto" }}>
+                            <img
+                              src={currentItem.imageUrl}
+                              alt="New Item"
+                              onClick={handleNewItemThumbnailClick}
+                              style={{
+                                cursor: "pointer",
+                                opacity: imageUploading ? 0.5 : 1,
+                                transition: "opacity 0.2s",
+                                maxWidth: "100px",
+                                maxHeight: "100px",
+                              }}
+                              title="Click to change image"
+                            />
+                            <IoIosRemoveCircle
+                              style={{
+                                position: "absolute",
+                                top: "-15px",
+                                right: "-15px",
+                                fontSize: "30px",
+                                color: "red",
+                              }}
+                              onClick={() =>
+                                setCurrentItem({ ...currentItem, imageUrl: "" })
+                              }
+                            />
                           </div>
                         ) : showUrlInput ? (
                           <div style={{ position: "relative" }}>
@@ -1502,19 +1659,19 @@ const AddBox = ({ setPage, setBox }) => {
                       </div>
                     </div>
                     <div
-                          className={`${styles.trash} ${styles.add}`}
-                          onClick={addNewItem}
-                          style={{ cursor: "pointer", fontSize: "25px" }}
-                        >
-                          <IoIosCheckmarkCircle />
-                        </div>
+                      className={`${styles.trash} ${styles.add}`}
+                      onClick={addNewItem}
+                      style={{ cursor: "pointer", fontSize: "25px" }}
+                    >
+                      <IoIosCheckmarkCircle />
+                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
           <div>
-            <label style={{fontWeight:"bold"}}>Visibility</label>
+            <label style={{ fontWeight: "bold" }}>Visibility</label>
             <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <div>
                 <input

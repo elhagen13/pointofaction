@@ -43,6 +43,12 @@ function Inventory() {
   ];
   const [selectedSearchOption, setSelectedSearchOption] = useState("all");
 
+  const [options, setOptions] = useState({});
+  const [savedInfo, setSavedInfo] = useState({
+    addBox: {},
+    addItem: {}
+  })
+
   useEffect(() => {
     const getBoxes = async () => {
       const response = await fetch("/api/inventory/box", {
@@ -58,7 +64,35 @@ function Inventory() {
 
   useEffect(() => {
     getInventory();
+    getItemOptions();
   }, []);
+
+  const getItemOptions = async () => {
+    let response = await fetch("/api/details/brands", {
+      method: "GET",
+    });
+
+    let result = await response.json();
+
+    setOptions({...options, brands: result.data});
+
+    response = await fetch("/api/details/sizes", {
+      method: "GET",
+    });
+
+    result = await response.json();
+
+    setOptions({...options, sizes: result.data});
+
+    
+    response = await fetch("/api/details/descriptions", {
+      method: "GET",
+    });
+
+    result = await response.json();
+
+    setOptions({...options, descriptions: result.data});
+  }
 
   const contentDict = useMemo(() => {
     const dict = {};
@@ -639,10 +673,10 @@ function Inventory() {
       </div>
 
       {addItemOpen && (
-        <AddItem onClose={() => setAddItemOpen(false)} refresh={getInventory} />
+        <AddItem onClose={() => setAddItemOpen(false)} refresh={getInventory} savedInfo={savedInfo} setSavedInfo={setSavedInfo} />
       )}
       {addBoxOpen && (
-        <AddBox onClose={() => setAddBoxOpen(false)} refresh={getInventory} />
+        <AddBox onClose={() => setAddBoxOpen(false)} refresh={getInventory} options={options} savedInfo={savedInfo} setSavedInfo={setSavedInfo}/>
       )}
       {editItemOpen !== null && (
         <EditItem

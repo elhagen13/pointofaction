@@ -103,6 +103,9 @@
   box-sizing: border-box;
   background-color: white;
   color: black;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none,
 }
 
 .input:focus {
