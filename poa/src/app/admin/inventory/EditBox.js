@@ -366,18 +366,18 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
         "Content-Type": "application/json",
       },
     });
-
+  
     const data = await itemResponse.json();
-
+  
     if (!data.success) {
       console.error("Error deleting item:", data.error);
       console.error("Details:", data.details);
-      alert("Error creating item: " + (data.error || "Unknown error"));
-      return false;
+      throw new Error(data.error || "Unknown error deleting item");
     }
-
-    console.log("Box created successfully:", data.data);
+  
+    console.log("Item deleted successfully:", data.data);
     console.log("Message:", data.message);
+    return data;
   };
 
   const addNewItem = () => {
@@ -418,8 +418,11 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
 
   const handleSubmitBox = async (e) => {
     e.preventDefault();
-
-    // Basic validation
+  
+    if (isSubmitting) {
+      return;
+    }
+  
     if (
       !boxDescription ||
       !boxLocation ||
@@ -430,7 +433,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       alert("Please fill in all fields and upload an image");
       return;
     }
-
+  
     for (const item of contents) {
       if (
         !item.description ||
@@ -444,7 +447,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
         return;
       }
     }
-
+  
     if (
       !acknowledgement &&
       (currentItem.color ||
@@ -460,9 +463,9 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       acknowledgement = true;
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
       const success = await uploadBox();
       if (success) {
@@ -476,10 +479,13 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       }
     } catch (error) {
       console.error("Error submitting form:", error);
+      alert("Error submitting form: " + error.message);
     } finally {
+      setIsSubmitting(false); // Always reset, even on error
       refresh();
     }
   };
+  
 
   useEffect(() => {
     console.log(visibility);
@@ -520,22 +526,18 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
 
   async function uploadBox() {
     try {
-      /*Go through original contents, if there is an id that exists
-      that is not in the current contents, then it needs to be deleted*/
-      for (const original of originalContents) {
-        let match = false;
-        for (const item of contents) {
-          if (!item._id) break;
-          if (item._id == original._id) {
-            match = true;
-            break;
-          }
-        }
-        if (!match) {
-          removeItemDB(original._id);
+      const itemsToDelete = originalContents.filter(original => {
+        return !contents.some(current => current._id && current._id === original._id);
+      });
+  
+      for (const itemToDelete of itemsToDelete) {
+        try {
+          await removeItemDB(itemToDelete._id);
+        } catch (error) {
+          console.error(`Failed to delete item ${itemToDelete._id}:`, error);
         }
       }
-
+  
       const boxData = {
         imageLink: imageUrl,
         location: boxLocation,
@@ -546,7 +548,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
         }),
         contents: contents,
       };
-
+  
       const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
         method: "PATCH",
         headers: {
@@ -554,89 +556,82 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
         },
         body: JSON.stringify(boxData),
       });
-
+  
       const data = await boxResponse.json();
-
+  
       if (!data.success) {
-        console.error("Error creating box:", data.error);
+        console.error("Error updating box:", data.error);
         console.error("Details:", data.details);
-        alert("Error creating box: " + (data.error || "Unknown error"));
-        return false;
+        throw new Error(data.error || "Unknown error updating box");
       }
-
-      console.log("Box created successfully:", data.data);
-      console.log("Message:", data.message);
-
+  
+      console.log("Box updated successfully:", data.data);
       const boxId = data.data._id;
-
+  
       for (const content of contents) {
-        if (content.removed) {
-          //if a removed tag has been added to the item meaning that it has
-          //been taken out of the box
-          removeFromBox(content);
-        } else {
-          const itemData = {
-            box_id: content.boxId ? content.boxId : boxId,
-            image: content.image,
-            description: content.description,
-            style: content.style,
-            brand: content.brand,
-            size: content.size,
-            color: content.color,
-            quantity: content.quantity,
-            price: content.price,
-            sale:
-              content.boxId === boxId
-                ? visibility.includes("sale")
-                : boxDict[content.boxId] ? boxDict[content.boxId].sale : "false",
-            public:
-              content.boxId === boxId
-                ? visibility.includes("public")
-                : boxDict[content.boxId].public,
-          };
-          console.log(itemData);
-
-          let itemResponse;
-          if (!content._id) {
-            itemResponse = await fetch(`/api/inventory/item`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(itemData),
-            });
+        try {
+          if (content.removed) {
+            await removeFromBox(content);
           } else {
-            itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(itemData),
-            });
+            const itemData = {
+              box_id: content.boxId ? content.boxId : boxId,
+              image: content.image,
+              description: content.description,
+              style: content.style,
+              brand: content.brand,
+              size: content.size,
+              color: content.color,
+              quantity: content.quantity,
+              price: content.price,
+              sale:
+                content.boxId === boxId
+                  ? visibility.includes("sale")
+                  : boxDict[content.boxId] ? boxDict[content.boxId].sale : false,
+              public:
+                content.boxId === boxId
+                  ? visibility.includes("public")
+                  : boxDict[content.boxId] ? boxDict[content.boxId].public : false,
+            };
+  
+            let itemResponse;
+            if (!content._id) {
+              itemResponse = await fetch(`/api/inventory/item`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(itemData),
+              });
+            } else {
+              itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(itemData),
+              });
+            }
+  
+            const itemResult = await itemResponse.json();
+  
+            if (!itemResult.success) {
+              console.error("Error with item:", itemResult.error);
+              throw new Error(itemResult.error || "Unknown error with item");
+            }
+  
+            console.log("Item processed successfully:", itemResult.data);
           }
-
-          const itemResult = await itemResponse.json();
-
-          if (itemResult.success) {
-            console.log("Item created successfully:", itemResult.data);
-            console.log("Message:", itemResult.message);
-          } else {
-            console.error("Error creating item:", itemResult.error);
-            console.error("Details:", itemResult.details);
-            alert(
-              "Error creating item: " + (itemResult.error || "Unknown error")
-            );
-            return false;
-          }
+        } catch (error) {
+          console.error(`Error processing item:`, error);
+          throw error; 
         }
       }
-
-      setPage("success")
+  
+      setPage("success");
       return true;
     } catch (error) {
       console.error("Network error:", error);
-      alert("Network error: " + error.message);
-      return false;
+      throw error; 
     }
   }
 
@@ -644,7 +639,6 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
     e.preventDefault();
     try {
       if (opt === "all") {
-        // Delete all items in the box
         for (const item of contents) {
           if (item._id) {
             const itemResponse = await fetch(
@@ -661,7 +655,6 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
 
             if (!itemResult.success) {
               console.error("Error deleting item:", itemResult.error);
-              // Continue deleting other items even if one fails
             }
           }
         }
@@ -689,7 +682,6 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       if (opt === "all") alert("Box and all items deleted successfully!");
       else alert("Box and all items deleted successfully!");
 
-      // Refresh the inventory and close the modal
       refresh();
       onClose();
     } catch (error) {

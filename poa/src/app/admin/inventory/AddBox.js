@@ -43,7 +43,7 @@ export default function AddItem({ onClose, refresh, options, savedInfo, setSaved
           <AddBox setPage={setPage} setBox={setBox} options={options} savedInfo={savedInfo} setSavedInfo={setSavedInfo}/>
         )}
         {page === "qr" && <QrPopup setPage={setPage} box={box} />}
-        {page === "option" && <AddOption options={options} />}
+        {page === "option" && <AddOption options={options} prevPage="box" setPage={setPage} refresh={refresh}/>}
 
       </div>
     </div>
@@ -390,9 +390,11 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo}) => {
 
   const handleSubmitBox = async (e) => {
     e.preventDefault();
-
-    // Basic validation
-    if (
+  
+    if (isSubmitting) {
+      return;
+    }
+      if (
       !boxDescription ||
       !imageUrl ||
       !boxLocation ||
@@ -402,7 +404,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo}) => {
       alert("Please fill in all fields and upload an image");
       return;
     }
-
+  
     for (const item of contents) {
       if (
         !item.description ||
@@ -416,7 +418,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo}) => {
         return;
       }
     }
-
+  
     if (
       !acknowledgement &&
       (currentItem.color ||
@@ -432,25 +434,25 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo}) => {
       acknowledgement = true;
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
       const success = await uploadBox();
       if (success) {
-        // Clear form
         setBoxDescription("");
         setBoxDiscount(20);
         setBoxLocation("");
         setImageUrl("");
         setContents([]);
         setVisibility(["admin"]);
-
-        // Close modal
+        setMinimumPrice(0);
+  
         setPage("qr");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
+      alert("Error submitting form: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -472,7 +474,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo}) => {
         }),
         contents: contents,
       };
-
+  
       // Create the box first
       const boxResponse = await fetch("/api/inventory/box", {
         method: "POST",
@@ -481,71 +483,73 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo}) => {
         },
         body: JSON.stringify(boxData),
       });
-
+  
       const data = await boxResponse.json();
-
+  
       if (!data.success) {
         console.error("Error creating box:", data.error);
         console.error("Details:", data.details);
-        alert("Error creating box: " + (data.error || "Unknown error"));
-        return false;
+        throw new Error(data.error || "Unknown error creating box");
       }
-
+  
       console.log("Box created successfully:", data.data);
       console.log("Message:", data.message);
-
+  
       setBox(data.data);
-
+  
       const boxId = data.data._id;
-
+  
+      // Create all items with proper error handling
       for (const content of contents) {
-        const itemData = {
-          box_id: boxId,
-          image: content.imageUrl,
-          description: content.description,
-          style: content.style,
-          brand: content.brand,
-          size: content.size,
-          color: content.color,
-          quantity: content.quantity,
-          price: content.price,
-          sale: visibility.includes("sale"),
-          public: visibility.includes("public"),
-        };
-
-        const itemResponse = await fetch("/api/inventory/item", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(itemData), // Fixed: was boxData
-        });
-
-        const itemResult = await itemResponse.json();
-
-        if (itemResult.success) {
+        try {
+          const itemData = {
+            box_id: boxId,
+            image: content.imageUrl,
+            description: content.description,
+            style: content.style,
+            brand: content.brand,
+            size: content.size,
+            color: content.color,
+            quantity: content.quantity,
+            price: content.price,
+            sale: visibility.includes("sale"),
+            public: visibility.includes("public"),
+          };
+  
+          const itemResponse = await fetch("/api/inventory/item", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(itemData),
+          });
+  
+          const itemResult = await itemResponse.json();
+  
+          if (!itemResult.success) {
+            console.error("Error creating item:", itemResult.error);
+            console.error("Details:", itemResult.details);
+            throw new Error(itemResult.error || "Unknown error creating item");
+          }
+  
           console.log("Item created successfully:", itemResult.data);
           console.log("Message:", itemResult.message);
-        } else {
-          console.error("Error creating item:", itemResult.error);
-          console.error("Details:", itemResult.details);
-          alert(
-            "Error creating item: " + (itemResult.error || "Unknown error")
-          );
-          return false;
+        } catch (itemError) {
+          console.error(`Error processing item:`, itemError);
+          throw itemError; 
         }
       }
-
+  
+      // Clear saved info only after successful submission
       setSavedInfo({
         ...savedInfo,
         addBox: {}
-      })
-
+      });
+  
       return true;
     } catch (error) {
       console.error("Network error:", error);
-      alert("Network error: " + error.message);
-      return false;
+      throw error; 
     }
   }
 

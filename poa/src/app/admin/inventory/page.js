@@ -67,33 +67,34 @@ function Inventory() {
     getItemOptions();
   }, []);
 
-  const getItemOptions = async () => {
-    let response = await fetch("/api/details/brands", {
-      method: "GET",
-    });
-
-    let result = await response.json();
-
-    setOptions({...options, brands: result.data});
-
-    response = await fetch("/api/details/sizes", {
-      method: "GET",
-    });
-
-    result = await response.json();
-
-    setOptions({...options, sizes: result.data});
-
-    
-    response = await fetch("/api/details/descriptions", {
-      method: "GET",
-    });
-
-    result = await response.json();
-
-    setOptions({...options, descriptions: result.data});
+  const refresh = () => {
+    getInventory();
+    getItemOptions();
   }
 
+  const getItemOptions = async () => {
+    let response = await fetch("/api/details/brands", {
+        method: "GET",
+    });
+    let resultBrands = await response.json();
+
+    response = await fetch("/api/details/sizes", {
+        method: "GET",
+    });
+    let resultSizes = await response.json();
+
+    response = await fetch("/api/details/descriptions", {
+        method: "GET",
+    });
+    let resultDescriptions = await response.json();
+
+    setOptions({
+        ...options,
+        brands: resultBrands.data,
+        sizes: resultSizes.data,
+        descriptions: resultDescriptions.data,
+    });
+};
   const contentDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
@@ -673,16 +674,16 @@ function Inventory() {
       </div>
 
       {addItemOpen && (
-        <AddItem onClose={() => setAddItemOpen(false)} refresh={getInventory} savedInfo={savedInfo} setSavedInfo={setSavedInfo} />
+        <AddItem onClose={() => setAddItemOpen(false)} refresh={refresh} savedInfo={savedInfo} setSavedInfo={setSavedInfo} />
       )}
       {addBoxOpen && (
-        <AddBox onClose={() => setAddBoxOpen(false)} refresh={getInventory} options={options} savedInfo={savedInfo} setSavedInfo={setSavedInfo}/>
+        <AddBox onClose={() => setAddBoxOpen(false)} refresh={refresh} options={options} savedInfo={savedInfo} setSavedInfo={setSavedInfo}/>
       )}
       {editItemOpen !== null && (
         <EditItem
           item={editItemOpen}
           onClose={() => setEditItemOpen(null)}
-          refresh={getInventory}
+          refresh={refresh}
           boxes={boxes}
           items={inventory}
         />
@@ -691,7 +692,7 @@ function Inventory() {
         <EditBox
           box={editBoxOpen}
           onClose={() => setEditBoxOpen(null)}
-          refresh={getInventory}
+          refresh={refresh}
           selectedItem={selectedItem}
           setSelectedItem={setSelectedItem}
           boxes={boxes}
