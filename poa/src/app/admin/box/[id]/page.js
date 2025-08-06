@@ -255,7 +255,7 @@ export default function Box() {
                 style={{ marginRight: "15px" }}
                 onClick={() => setAdd(!add)}
               />
-              <MdEdit fontSize="32px" onClick={() => setEdit(!edit)} />
+              <MdEdit fontSize="32px" className={styles.mobileInvisible}onClick={() => setEdit(!edit)} />
             </div>
           </h2>
           {items.map((item, index) => (
