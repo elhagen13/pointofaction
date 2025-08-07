@@ -81,20 +81,11 @@ export async function PATCH(request, { params }) {
       if (body.box_id !== undefined) {
         updateDocument.boxId = body.box_id.trim();
       }
-      if (body.description !== undefined) {
-        updateDocument.description = body.description.trim();
-      }
       if (body.image !== undefined) {
           updateDocument.image = body.image.trim();
       }
       if (body.style !== undefined) {
         updateDocument.style = body.style.trim();
-      }
-      if (body.brand !== undefined) {
-        updateDocument.brand = body.brand.trim();
-      }
-      if (body.size !== undefined) {
-        updateDocument.size = body.size.trim();
       }
       if (body.color !== undefined) {
         updateDocument.color = body.color.trim();
@@ -138,7 +129,37 @@ export async function PATCH(request, { params }) {
         toRemove.minPrice = "";
         toRemove.qrCode = "";
       }
-      
+
+      //if a descriptionID has been provided then remove the description,
+      //if it has not been provided remove the descriptionId
+      if(body.descriptionId && !body.description){ 
+        toRemove.description =  "";
+        updateDocument.descriptionId = body.descriptionId
+      }
+      else{
+        toRemove.descriptionId = ""
+        updateDocument.description = body.description.trim();
+      }
+
+      if(body.brandId && !body.brand){ 
+        toRemove.brand =  "";
+        updateDocument.brandId = body.brandId
+      }
+      else{
+        toRemove.brandId = ""
+        updateDocument.brand = body.brand.trim();
+      }
+
+      if(body.sizeId && !body.size){ 
+        toRemove.size =  "";
+        updateDocument.sizeId = body.sizeId
+      }
+      else{
+        toRemove.sizeId = ""
+        updateDocument.size = body.size.trim();
+      }
+
+
       // Update the document
       const result = await collection.updateOne(
         { _id: new ObjectId(id) },

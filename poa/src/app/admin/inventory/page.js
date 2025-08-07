@@ -109,6 +109,34 @@ function Inventory() {
     return dict;
   }, [inventory]);
 
+  const sizeDict = useMemo(() => {
+    const dict = {};
+    if(!options.sizes) return {}
+    options.sizes.forEach((item) => {
+     dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const descriptionDict = useMemo(() => {
+    const dict = {};
+    if(!options.descriptions) return {}
+
+    options.descriptions.forEach((item) => {
+     dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const brandDict = useMemo(() => {
+    if(!options.brands) return {}
+    const dict = {};
+    options.brands.forEach((item) => {
+     dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
   const boxDict = useMemo(() => {
     console.log(boxes)
     const dict = {};
@@ -386,6 +414,33 @@ function Inventory() {
     setIsDropdownOpen(false);
   };
 
+  const getDescription = (item) => {
+    let des = ""
+    if(item.descriptionId && descriptionDict[item.descriptionId.toString()]) des = descriptionDict[item.descriptionId.toString()].description
+    
+    else if(item.description) des = item.description;
+    else return "N/A"
+    return des.length > 50 ? des.slice(0, 50) + "..." : des
+  }
+  
+  const getBrand = (item) => {
+    let brand = ""
+    if(item.brandId && brandDict[item.brandId.toString()])
+      brand = brandDict[item.brandId.toString()].brand
+    else if(item.brand) brand = item.brand;
+    else return "N/A"
+    return brand
+  }
+
+  const getSize = (item) => {
+    let size = ""
+    if(item.sizeId && sizeDict[item.sizeId.toString()])
+      size = sizeDict[item.sizeId.toString()].size
+    else if(item.size) size = item.size;
+    else return "N/A"
+    return size
+  }
+
   return (
     <div
       style={{
@@ -545,14 +600,12 @@ function Inventory() {
                   <img src={item.image} alt={`Item ${index + 1}`} />
                 </td>
                 <td  style={{minWidth:"100px"}}>
-                  {item.description.length > 50
-                    ? item.description.slice(0, 50) + "..."
-                    : item.description}
+                  {getDescription(item)}
                 </td>
                 <td style={{minWidth:"100px"}}>{item.style}</td>
-                <td style={{minWidth:"100px"}}>{item.brand ? item.brand : "N/A"}</td>
+                <td style={{minWidth:"100px"}}>{getBrand(item)}</td>
                 <td  style={{minWidth:"100px"}}>{item.color}</td>
-                <td  style={{minWidth:"100px"}}>{item.size}</td>
+                <td  style={{minWidth:"100px"}}>{getSize(item)}</td>
                 <td  style={{minWidth:"100px"}}>{item.quantity}</td>
                 {boxDict[item.boxId?.toString()] ? (
                   <td
@@ -696,6 +749,7 @@ function Inventory() {
           selectedItem={selectedItem}
           setSelectedItem={setSelectedItem}
           boxes={boxes}
+          options={options}
         />
       )}
     </div>

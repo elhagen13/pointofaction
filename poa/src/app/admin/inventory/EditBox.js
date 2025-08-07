@@ -1,6 +1,6 @@
 "use client";
 import styles from "./inventory.module.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FaUpload,
   FaTimes,
@@ -10,7 +10,11 @@ import {
   FaBoxOpen,
   FaSearch,
 } from "react-icons/fa";
-import { IoIosAddCircle, IoIosCheckmarkCircle, IoIosRemoveCircle } from "react-icons/io";
+import {
+  IoIosAddCircle,
+  IoIosCheckmarkCircle,
+  IoIosRemoveCircle,
+} from "react-icons/io";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
 
 import jsPDF from "jspdf";
@@ -22,8 +26,9 @@ export default function EditItem({
   selectedItem,
   setSelectedItem,
   boxes,
+  options,
 }) {
-  const [page, setPage] = useState("add")
+  const [page, setPage] = useState("add");
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -39,31 +44,56 @@ export default function EditItem({
 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
-      <div className={styles.addItem} onClick={handleModalClick} style={{width: page == "success" && "auto"}}>
-        {page === "add" && <AddBox
-          box={box}
-          onClose={onClose}
-          refresh={refresh}
-          selectedItem={selectedItem}
-          boxes={boxes}
-          setPage={setPage}
-        />}
-        {page === "success" && <Success/>}
+      <div
+        className={styles.addItem}
+        onClick={handleModalClick}
+        style={{ width: page == "success" && "auto" }}
+      >
+        {page === "add" && (
+          <AddBox
+            box={box}
+            onClose={onClose}
+            refresh={refresh}
+            selectedItem={selectedItem}
+            boxes={boxes}
+            setPage={setPage}
+            options={options}
+          />
+        )}
+        {page === "success" && <Success />}
       </div>
     </div>
   );
 }
 
 const Success = () => {
-  return(
-    <div style={{width:"100%", minHeight:"300px", display:"flex", flexDirection:"column",gap:"20px", justifyContent:"center", alignItems:"center"}}>
-      <IoIosCheckmarkCircle style={{fontSize:"64px", color:"green"}}/>
-      <div style={{fontSize:"2rem"}}>Item successfully edited!</div>
+  return (
+    <div
+      style={{
+        width: "100%",
+        minHeight: "300px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "20px",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <IoIosCheckmarkCircle style={{ fontSize: "64px", color: "green" }} />
+      <div style={{ fontSize: "2rem" }}>Item successfully edited!</div>
     </div>
-  )
-}
+  );
+};
 
-const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
+const AddBox = ({
+  box,
+  onClose,
+  refresh,
+  selectedItem,
+  boxes,
+  setPage,
+  options,
+}) => {
   const [boxDescription, setBoxDescription] = useState(box.description);
   const [boxLocation, setBoxLocation] = useState(box.location);
   const [contents, setContents] = useState([]);
@@ -74,7 +104,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
   const [visibility, setVisibility] = useState(["admin"]);
   const [boxDiscount, setBoxDiscount] = useState(box.discount ?? 20);
   const [currentItem, setCurrentItem] = useState({
-    image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
+    image:
+      "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
     description: "",
     style: "",
     brand: "",
@@ -87,7 +118,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
   const [imageUploading, setImageUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState(null);
-  const [showImageOptions, setShowImageOptions] = useState(null); 
+  const [showImageOptions, setShowImageOptions] = useState(null);
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -95,6 +126,48 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
   let acknowledgement = false;
   const [boxDict, setBoxDict] = useState({});
+
+  // New state for description search
+  const [descriptionSearch, setDescriptionSearch] = useState("");
+  const [brandSearch, setBrandSearch] = useState("");
+  const [sizeSearch, setSizeSearch] = useState("");
+
+  const filteredDescriptions = useMemo(() => {
+    console.log("options", options);
+    if (!options?.descriptions) return [];
+
+    if (!descriptionSearch || !descriptionSearch.trim()) {
+      return options.descriptions;
+    }
+
+    return options.descriptions.filter((desc) =>
+      desc.description.toLowerCase().includes(descriptionSearch.toLowerCase())
+    );
+  }, [options?.descriptions, descriptionSearch]);
+
+  const filteredBrands = useMemo(() => {
+    if (!options?.brands) return [];
+
+    if (!brandSearch || !brandSearch.trim()) {
+      return options.brands;
+    }
+
+    return options.brands.filter((desc) =>
+      desc.brand.toLowerCase().includes(brandSearch.toLowerCase())
+    );
+  }, [options?.brands, brandSearch]);
+
+  const filteredSizes = useMemo(() => {
+    if (!options?.sizes) return [];
+
+    if (!sizeSearch || !sizeSearch.trim()) {
+      return options.sizes;
+    }
+
+    return options.sizes.filter((desc) =>
+      desc.size.toLowerCase().includes(sizeSearch.toLowerCase())
+    );
+  }, [options?.sizes, sizeSearch]);
 
   useEffect(() => {
     const getContent = async () => {
@@ -130,21 +203,77 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
   }, [contents]);
 
   // Filter boxes based on search term
-  const filteredBoxes = boxes.filter(b => 
-    b.boxId.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
-    b.description?.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
-    b.location?.toLowerCase().includes(dropdownSearchTerm.toLowerCase())
+  const filteredBoxes = boxes.filter(
+    (b) =>
+      b.boxId.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
+      b.description?.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
+      b.location?.toLowerCase().includes(dropdownSearchTerm.toLowerCase())
   );
+
+  const sizeDict = useMemo(() => {
+    const dict = {};
+    if (!options.sizes) return {};
+    options.sizes.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const descriptionDict = useMemo(() => {
+    const dict = {};
+    if (!options.descriptions) return {};
+
+    options.descriptions.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const brandDict = useMemo(() => {
+    if (!options.brands) return {};
+    const dict = {};
+    options.brands.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const getDescription = (item) => {
+    let des = "";
+    if (item.descriptionId && descriptionDict[item.descriptionId.toString()])
+      des = descriptionDict[item.descriptionId.toString()].description;
+    else if (item.description) des = item.description;
+    else return "N/A";
+    return des.length > 50 ? des.slice(0, 50) + "..." : des;
+  };
+
+  const getBrand = (item) => {
+    let brand = "";
+    if (item.brandId && brandDict[item.brandId.toString()])
+      brand = brandDict[item.brandId.toString()].brand;
+    else if (item.brand) brand = item.brand;
+    else return "N/A";
+    return brand;
+  };
+
+  const getSize = (item) => {
+    let size = "";
+    if (item.sizeId && sizeDict[item.sizeId.toString()])
+      size = sizeDict[item.sizeId.toString()].size;
+    else if (item.size) size = item.size;
+    else return "N/A";
+    return size;
+  };
 
   const downloadBoxPDF = async () => {
     try {
       const pdf = new jsPDF({
-  orientation: "portrait",
-  unit: "in",
-  format: [4, 6],
-  putOnlyUsedFonts: true,
-  compress: true
-});
+        orientation: "portrait",
+        unit: "in",
+        format: [4, 6],
+        putOnlyUsedFonts: true,
+        compress: true,
+      });
 
       // Constants
       const pageWidth = 4;
@@ -227,7 +356,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
   };
 
   const handleUrlSubmit = (e, type, itemIndex = null) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
       return;
@@ -316,6 +445,10 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
     setShowImageOptions(index);
   };
 
+  useEffect(() => {
+    console.log(selectedItemIndex, showImageOptions);
+  }, [selectedItemIndex, showImageOptions]);
+
   // Handle file upload option for existing items
   const handleFileUploadOption = (index) => {
     const fileInput = document.createElement("input");
@@ -366,15 +499,15 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
         "Content-Type": "application/json",
       },
     });
-  
+
     const data = await itemResponse.json();
-  
+
     if (!data.success) {
       console.error("Error deleting item:", data.error);
       console.error("Details:", data.details);
       throw new Error(data.error || "Unknown error deleting item");
     }
-  
+
     console.log("Item deleted successfully:", data.data);
     console.log("Message:", data.message);
     return data;
@@ -385,12 +518,11 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       setUploadError("Please enter a description for the item");
       return;
     }
-    console.log("contents", contents);
-    console.log("current", currentItem);
 
     setContents((prevContents) => [...prevContents, { ...currentItem }]);
     setCurrentItem({
-      image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
+      image:
+        "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
       description: "",
       style: "",
       brand: "",
@@ -404,7 +536,8 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
 
   const cancelNewItem = () => {
     setCurrentItem({
-      image: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
+      image:
+        "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
       description: "",
       style: "",
       brand: "",
@@ -418,11 +551,11 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
 
   const handleSubmitBox = async (e) => {
     e.preventDefault();
-  
+
     if (isSubmitting) {
       return;
     }
-  
+
     if (
       !boxDescription ||
       !boxLocation ||
@@ -433,12 +566,13 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       alert("Please fill in all fields and upload an image");
       return;
     }
-  
+
     for (const item of contents) {
       if (
-        !item.description ||
+        (!item.description && !item.descriptionId) ||
         !item.style ||
-        !item.size ||
+        (!item.size && !item.sizeId) ||
+        (!item.brand && !item.brandId) ||
         !item.color ||
         !item.quantity ||
         !item.price
@@ -447,7 +581,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
         return;
       }
     }
-  
+
     if (
       !acknowledgement &&
       (currentItem.color ||
@@ -463,9 +597,9 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       acknowledgement = true;
       return;
     }
-  
+
     setIsSubmitting(true);
-  
+
     try {
       const success = await uploadBox();
       if (success) {
@@ -485,51 +619,47 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       refresh();
     }
   };
-  
-
-  useEffect(() => {
-    console.log(visibility);
-  }, [visibility]);
 
   const positionDropdown = (dropdownElement, triggerElement) => {
     if (!dropdownElement || !triggerElement) return;
-    
+
     const triggerRect = triggerElement.getBoundingClientRect();
     const dropdownRect = dropdownElement.getBoundingClientRect();
     const viewport = {
       width: window.innerWidth,
-      height: window.innerHeight
+      height: window.innerHeight,
     };
-    
+
     // Check if there's enough space below
     const spaceBelow = viewport.height - triggerRect.bottom;
     const spaceAbove = triggerRect.top;
     const dropdownHeight = dropdownRect.height || 200; // fallback height
-    
+
     if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
       // Position above
-      dropdownElement.classList.add('dropdown-up');
-      dropdownElement.style.top = 'auto';
-      dropdownElement.style.bottom = '100%';
-      dropdownElement.style.marginTop = '0';
-      dropdownElement.style.marginBottom = '5px';
+      dropdownElement.classList.add("dropdown-up");
+      dropdownElement.style.top = "auto";
+      dropdownElement.style.bottom = "100%";
+      dropdownElement.style.marginTop = "0";
+      dropdownElement.style.marginBottom = "5px";
     } else {
       // Position below (default)
-      dropdownElement.classList.remove('dropdown-up');
-      dropdownElement.style.top = '100%';
-      dropdownElement.style.bottom = 'auto';
-      dropdownElement.style.marginTop = '5px';
-      dropdownElement.style.marginBottom = '0';
+      dropdownElement.classList.remove("dropdown-up");
+      dropdownElement.style.top = "100%";
+      dropdownElement.style.bottom = "auto";
+      dropdownElement.style.marginTop = "5px";
+      dropdownElement.style.marginBottom = "0";
     }
   };
-  
 
   async function uploadBox() {
     try {
-      const itemsToDelete = originalContents.filter(original => {
-        return !contents.some(current => current._id && current._id === original._id);
+      const itemsToDelete = originalContents.filter((original) => {
+        return !contents.some(
+          (current) => current._id && current._id === original._id
+        );
       });
-  
+
       for (const itemToDelete of itemsToDelete) {
         try {
           await removeItemDB(itemToDelete._id);
@@ -537,7 +667,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
           console.error(`Failed to delete item ${itemToDelete._id}:`, error);
         }
       }
-  
+
       const boxData = {
         imageLink: imageUrl,
         location: boxLocation,
@@ -548,7 +678,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
         }),
         contents: contents,
       };
-  
+
       const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
         method: "PATCH",
         headers: {
@@ -556,19 +686,20 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
         },
         body: JSON.stringify(boxData),
       });
-  
+
       const data = await boxResponse.json();
-  
+
       if (!data.success) {
         console.error("Error updating box:", data.error);
         console.error("Details:", data.details);
         throw new Error(data.error || "Unknown error updating box");
       }
-  
+
       console.log("Box updated successfully:", data.data);
       const boxId = data.data._id;
-  
+
       for (const content of contents) {
+        console.log("content", content);
         try {
           if (content.removed) {
             await removeFromBox(content);
@@ -576,23 +707,34 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
             const itemData = {
               box_id: content.boxId ? content.boxId : boxId,
               image: content.image,
-              description: content.description,
               style: content.style,
-              brand: content.brand,
-              size: content.size,
               color: content.color,
               quantity: content.quantity,
               price: content.price,
               sale:
                 content.boxId === boxId
                   ? visibility.includes("sale")
-                  : boxDict[content.boxId] ? boxDict[content.boxId].sale : false,
+                  : boxDict[content.boxId]
+                    ? boxDict[content.boxId].sale
+                    : false,
               public:
                 content.boxId === boxId
                   ? visibility.includes("public")
-                  : boxDict[content.boxId] ? boxDict[content.boxId].public : false,
+                  : boxDict[content.boxId]
+                    ? boxDict[content.boxId].public
+                    : false,
             };
-  
+
+            if (content.descriptionId)
+              itemData.descriptionId = content.descriptionId;
+            else itemData.description = content.description;
+
+            if (content.sizeId) itemData.sizeId = content.sizeId;
+            else itemData.size = content.size;
+
+            if (content.brandId) itemData.brandId = content.brandId;
+            else itemData.brand = content.brand;
+
             let itemResponse;
             if (!content._id) {
               itemResponse = await fetch(`/api/inventory/item`, {
@@ -611,27 +753,27 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                 body: JSON.stringify(itemData),
               });
             }
-  
+
             const itemResult = await itemResponse.json();
-  
+
             if (!itemResult.success) {
               console.error("Error with item:", itemResult.error);
               throw new Error(itemResult.error || "Unknown error with item");
             }
-  
+
             console.log("Item processed successfully:", itemResult.data);
           }
         } catch (error) {
           console.error(`Error processing item:`, error);
-          throw error; 
+          throw error;
         }
       }
-  
+
       setPage("success");
       return true;
     } catch (error) {
       console.error("Network error:", error);
-      throw error; 
+      throw error;
     }
   }
 
@@ -693,10 +835,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
   const removeFromBox = async (content) => {
     const itemData = {
       image: content.image,
-      description: content.description,
       style: content.style,
-      brand: content.brand,
-      size: content.size,
       color: content.color,
       quantity: content.quantity,
       price: content.price,
@@ -705,12 +844,20 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
       location: boxLocation,
     };
 
+    if (content.descriptionId) itemData.descriptionId = content.descriptionId;
+    else itemData.description = content.description;
+    if (content.brandId) itemData.brandId = content.brandId;
+    else itemData.brand = content.brand;
+    if (content.sizeId) itemData.sizeId = content.sizeId;
+    else itemData.size = content.size;
+
     if (visibility.includes("sale")) {
       itemData.discount = boxDiscount;
       itemData.minPrice = minimumPrice;
     }
 
     let itemResponse;
+    //if it doesn't have an id, its an added item
     if (!content._id) {
       itemResponse = await fetch(`/api/inventory/item`, {
         method: "POST",
@@ -766,24 +913,53 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
     setBoxDescription(retString);
   };
 
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Close description/brand/size dropdowns
+      if (!event.target.closest("[data-description-dropdown]")) {
+        setContents((prevContents) =>
+          prevContents.map((item) => ({ ...item, descriptionOpen: false }))
+        );
+        setCurrentItem((prevItem) => ({ ...prevItem, descriptionOpen: false }));
+        setDescriptionSearch("");
+      }
+  
+      if (!event.target.closest("[data-size-dropdown]")) {
+        setContents((prevContents) =>
+          prevContents.map((item) => ({ ...item, sizeOpen: false }))
+        );
+        setCurrentItem((prevItem) => ({ ...prevItem, sizeOpen: false }));
+        setSizeSearch("");
+      }
+  
+      if (!event.target.closest("[data-brand-dropdown]")) {
+        setContents((prevContents) =>
+          prevContents.map((item) => ({ ...item, brandOpen: false }))
+        );
+        setCurrentItem((prevItem) => ({ ...prevItem, brandOpen: false }));
+        setBrandSearch("");
+      }
+  
+      // Close box-swapping dropdown
       if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
         setIsDropdownOpen(null);
-        setDropdownSearchTerm(""); // Clear search when closing dropdown
+        setDropdownSearchTerm("");
       }
-      // Close image options when clicking outside
-      if (showImageOptions !== null && !event.target.closest("[data-image-options]")) {
+  
+      // Close image options dropdown
+      if (
+        showImageOptions !== null &&
+        !event.target.closest("[data-image-options]")
+      ) {
         setShowImageOptions(null);
       }
     };
-
-    if (isDropdownOpen !== null || showImageOptions !== null) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
+  
+    document.addEventListener("click", handleClickOutside);
+  
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [isDropdownOpen, showImageOptions]);
 
@@ -794,11 +970,15 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
     } else {
       setIsDropdownOpen(index);
       setDropdownSearchTerm("");
-      
+
       // Position the dropdown after it renders
       setTimeout(() => {
-        const dropdown = document.querySelector(`[data-dropdown-index="${index}"] .dropdown`);
-        const trigger = document.querySelector(`[data-dropdown-index="${index}"]`);
+        const dropdown = document.querySelector(
+          `[data-dropdown-index="${index}"] .dropdown`
+        );
+        const trigger = document.querySelector(
+          `[data-dropdown-index="${index}"]`
+        );
         positionDropdown(dropdown, trigger);
       }, 0);
     }
@@ -894,492 +1074,840 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
           )}
           <div className={styles.formInput}>
             <label>Box Inventory</label>
-            <div style={{width:"100%", maxWidth: "100%", overflowX: "auto"}}>
-            <table
-              className={styles.boxTable}
-              style={{
-                width: "100%",
-                textAlign: "left",
-                borderCollapse: "collapse",
-              }}
-            >
-              <thead>
-                <tr
-                  className={styles.row}
-                  style={{ backgroundColor: "#ccd5e0" }}
-                >
-                  <th className={styles.tableSm} style={{ fontWeight: "bold" }}>
-                    Image
-                  </th>
-                  <th
-                    className={styles.tableLg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Description
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Style Code
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Brand Style
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Size
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Color
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Quantity
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Unit Price
-                  </th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {contents.map((item, index) => (
+            <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
+              <table
+                className={styles.boxTable}
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  borderCollapse: "collapse",
+                  borderRadius: "10px",
+                  overflow: "hidden",
+                }}
+              >
+                <thead>
                   <tr
-                    key={index}
-                    style={{
-                      height: "60px",
-                      width: "100%",
-                      backgroundColor:
-                        selectedItem === item._id
-                          ? "#466fb3"
-                          : index % 2 === 0
-                            ? "#dae2eb"
-                            : "#ccd5e0",
-                    }}
+                    className={styles.row}
+                    style={{ backgroundColor: "#ccd5e0" }}
                   >
-                     <td
+                    <th
                       className={styles.tableSm}
-                      style={{ position: "relative" }}
+                      style={{ fontWeight: "bold" }}
                     >
-                      <img
-                        src={item.image}
-                        alt={`Item ${index + 1}`}
-                        onClick={() => handleThumbnailClick(index)}
-                        style={{
-                          cursor: "pointer",
-                          opacity:
-                            selectedItemIndex === index && imageUploading
-                              ? 0.5
-                              : 1,
-                          transition: "opacity 0.2s",
-                        }}
-                        title="Click to change image"
-                      />
-                      {selectedItemIndex === index && imageUploading && (
-                        <div
+                      Image
+                    </th>
+                    <th
+                      className={styles.tableLg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Description
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Style Code
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Brand Style
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Size
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Color
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Quantity
+                    </th>
+                    <th
+                      className={styles.tableReg}
+                      style={{ border: "none", fontWeight: "bold" }}
+                    >
+                      Unit Price
+                    </th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contents.map((item, index) => (
+                    <tr
+                      key={index}
+                      style={{
+                        height: "60px",
+                        width: "100%",
+                        backgroundColor:
+                          index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
+                      }}
+                    >
+                      <td
+                        className={styles.tableSm}
+                        style={{ position: "relative" }}
+                      >
+                        <img
+                          src={item.image}
+                          alt={`Item ${index + 1}`}
+                          onClick={() => handleThumbnailClick(index)}
                           style={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            color: "#007bff",
-                            fontSize: "12px",
-                            fontWeight: "bold",
+                            cursor: "pointer",
+                            opacity:
+                              selectedItemIndex === index && imageUploading
+                                ? 0.5
+                                : 1,
+                            transition: "opacity 0.2s",
                           }}
-                        >
-                          Uploading...
-                        </div>
-                      )}
-                      
-                      {/* Image upload options dropdown */}
-                      {showImageOptions === index && (
-                        <div 
-                          className={styles.dropdown}
-                          
-                          data-image-options
-                        >
+                          title="Click to change image"
+                        />
+                        {selectedItemIndex === index && imageUploading && (
                           <div
                             style={{
-                              padding: "8px 12px",
-                              cursor: "pointer",
-                              borderBottom: "1px solid #eee",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px"
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              color: "#007bff",
+                              fontSize: "12px",
+                              fontWeight: "bold",
                             }}
-                            onClick={() => handleFileUploadOption(index)}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = "#f5f5f5"}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
-                            data-image-options
                           >
-                            <FaUpload style={{ fontSize: "14px" }} />
-                            Upload from Computer
+                            Uploading...
                           </div>
-                          <div
-                            style={{
-                              padding: "8px 12px",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px"
-                            }}
-                            onClick={() => handleUrlOption(index)}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = "#f5f5f5"}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
-                            data-image-options
-                          >
-                            <FaLink style={{ fontSize: "14px" }} />
-                            Enter Image URL
-                          </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* URL input for existing items */}
-                      {showUrlInput === index && (
+                        {/* Image upload options dropdown */}
+                        {showImageOptions === index && (
+                          <div className={styles.dropdown} data-image-options>
+                            <div
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                borderBottom: "1px solid #eee",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                              onClick={() => handleFileUploadOption(index)}
+                              onMouseEnter={(e) =>
+                                (e.target.style.backgroundColor = "#f5f5f5")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.target.style.backgroundColor = "white")
+                              }
+                              data-image-options
+                            >
+                              <FaUpload style={{ fontSize: "14px" }} />
+                              Upload from Computer
+                            </div>
+                            <div
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                              onClick={() => handleUrlOption(index)}
+                              onMouseEnter={(e) =>
+                                (e.target.style.backgroundColor = "#f5f5f5")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.target.style.backgroundColor = "white")
+                              }
+                              data-image-options
+                            >
+                              <FaLink style={{ fontSize: "14px" }} />
+                              Enter Image URL
+                            </div>
+                          </div>
+                        )}
+
+                        {/* URL input for existing items */}
+                        {showUrlInput === index && (
+                          <div
+                            className={styles.dropdown}
+                            style={{
+                              backgroundColor: "white",
+                              border: "1px solid #ccc",
+                              borderRadius: "4px",
+                              padding: "8px",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                              zIndex: 9999,
+                              minWidth: "200px",
+                            }}
+                            data-image-options
+                          >
+                            <input
+                              type="text"
+                              value={imageUrlInput}
+                              onChange={(e) => setImageUrlInput(e.target.value)}
+                              placeholder="Enter image URL..."
+                              className={styles.input}
+                              style={{
+                                margin: 0,
+                                width: "100%",
+                                marginBottom: "8px",
+                              }}
+                              data-image-options
+                            />
+                            <div
+                              style={{ display: "flex", gap: "4px" }}
+                              data-image-options
+                            >
+                              <button
+                                type="button"
+                                onClick={(e) =>
+                                  handleUrlSubmit(e, "content", index)
+                                }
+                                style={{
+                                  padding: "4px 8px",
+                                  fontSize: "12px",
+                                  backgroundColor: "#007bff",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "3px",
+                                  cursor: "pointer",
+                                }}
+                                data-image-options
+                              >
+                                Use
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowUrlInput(false);
+                                  setImageUrlInput("");
+                                  setShowImageOptions(null);
+                                }}
+                                style={{
+                                  padding: "4px 8px",
+                                  fontSize: "12px",
+                                  backgroundColor: "#6c757d",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "3px",
+                                  cursor: "pointer",
+                                }}
+                                data-image-options
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                      <td className={styles.tableLg}>
                         <div
-                          className={styles.dropdown}
-                          style={{
-              
-                            backgroundColor: "white",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                            padding: "8px",
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            zIndex: 9999,
-                            minWidth: "200px"
-                          }}
-                          data-image-options
+                          style={{ position: "relative" }}
+                          data-description-dropdown
                         >
                           <input
-                            type="text"
-                            value={imageUrlInput}
-                            onChange={(e) => setImageUrlInput(e.target.value)}
-                            placeholder="Enter image URL..."
+                            value={
+                              item.descriptionOpen
+                                ? descriptionSearch
+                                : getDescription(item)
+                            }
+                            onClick={() => {
+                              updateExistingContent(
+                                index,
+                                "descriptionOpen",
+                                true
+                              );
+                              setDescriptionSearch(item.description);
+                            }}
+                            onChange={(e) => {
+                              if (item.descriptionOpen) {
+                                setDescriptionSearch(e.target.value);
+                              }
+                            }}
+                            onFocus={() => {
+                              updateExistingContent(
+                                index,
+                                "descriptionOpen",
+                                true
+                              );
+                              setDescriptionSearch(item.description);
+                            }}
+                            placeholder={
+                              item.descriptionOpen
+                                ? "Search descriptions..."
+                                : ""
+                            }
                             className={styles.input}
                             style={{
                               margin: 0,
+                              minHeight: "auto",
                               width: "100%",
-                              marginBottom: "8px"
+                              caretColor: item.descriptionOpen
+                                ? "auto"
+                                : "transparent",
                             }}
-                            data-image-options
+                            data-description-dropdown
                           />
-                          <div style={{ display: "flex", gap: "4px" }} data-image-options>
-                            <button
-                              type="button"
-                              onClick={(e) => handleUrlSubmit(e, "content", index)}
-                              style={{
-                                padding: "4px 8px",
-                                fontSize: "12px",
-                                backgroundColor: "#007bff",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "3px",
-                                cursor: "pointer"
-                              }}
-                              data-image-options
+                          {item.descriptionOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-description-dropdown
+                              style={{ maxWidth: "250px" }}
                             >
-                              Use
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowUrlInput(false);
-                                setImageUrlInput("");
-                                setShowImageOptions(null);
-                              }}
-                              style={{
-                                padding: "4px 8px",
-                                fontSize: "12px",
-                                backgroundColor: "#6c757d",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "3px",
-                                cursor: "pointer"
-                              }}
-                              data-image-options
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                    <td className={styles.tableLg}>
-                      <input
-                        value={item.description}
-                        onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tablReg}>
-                      <input
-                        value={item.style}
-                        onChange={(e) =>
-                          updateExistingContent(index, "style", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.brand || item.brand === "" ? item.brand : "N/A"}
-                        onChange={(e) =>
-                          updateExistingContent(index, "brand", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.size}
-                        onChange={(e) =>
-                          updateExistingContent(index, "size", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        value={item.color}
-                        onChange={(e) =>
-                          updateExistingContent(index, "color", e.target.value)
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        type="text"
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateExistingContent(
-                            index,
-                            "quantity",
-                            parseInt(e.target.value) || ""
-                          )
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg}>
-                      <input
-                        type="text"
-                        pattern="^\d*\.?\d*$"
-                        inputMode="decimal"
-                        value={item.price}
-                        onChange={(e) =>
-                          updateExistingContent(index, "price", e.target.value)
-                        }
-                        onBlur={(e) => {
-                          const numValue = parseFloat(e.target.value);
-                          updateExistingContent(
-                            index,
-                            "price",
-                            isNaN(numValue) ? 0 : numValue.toFixed(2)
-                          );
-                        }}
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.tableReg} style={{display:"flex", flexDirection:"row", height:"60px", alignItems:"center"}}>
-                    <div
-                        className={styles.trash}
-                        onClick={() => handleDropdownToggle(index)}
-                        style={{
-                          cursor: "pointer",
-                          color: selectedItem === item._id ? "white" : "black",
-                        }}
-
-                        data-dropdown
-                      >
-                        {item.removed ? 
-                          <FaBoxOpen/>
-                         :
-                        item.boxId === box._id || !item.boxId ? 
-                          <RiSwapBoxLine />
-                         : 
-                          <RiSwapBoxFill />
-                        }
-                      </div>
-
-                      {isDropdownOpen === index && (
-                        <div className={styles.dropdown} data-dropdown>
-                          {/* Search input */}
-                          <div 
-                            className={styles.dropdownSearchContainer}
-                            style={{
-                              padding: "8px",
-                              borderBottom: "1px solid #ccc",
-                              position: "sticky",
-                              top: 0,
-                              backgroundColor: "white",
-                              zIndex: 1
-                            }}
-                            data-dropdown
-                          >
-                            <div style={{ position: "relative" }} data-dropdown>
-                              <FaSearch 
-                                style={{
-                                  position: "absolute",
-                                  left: "8px",
-                                  top: "50%",
-                                  transform: "translateY(-50%)",
-                                  color: "#666",
-                                  fontSize: "12px"
-                                }}
-                              />
-                              <input
-                                type="text"
-                                placeholder="Search boxes..."
-                                value={dropdownSearchTerm}
-                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
-                                className={styles.input}
-                                style={{
-                                  margin: 0,
-                                  padding: "4px 4px 4px 24px",
-                                  fontSize: "12px",
-                                  minHeight: "auto",
-                                  width: "100%",
-                                  border: "1px solid #ddd",
-                                  borderRadius: "4px"
-                                }}
-                                data-dropdown
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* Remove from box option */}
-                          <div
-                            key="removed"
-                            className={`${styles.dropdownItem} ${item.removed ? styles.selected : ""}`}
-                            onClick={() => {
-                              updateExistingContent(index, "removed", true);
-                              updateExistingContent(index, "boxId", null);
-                              setIsDropdownOpen(null);
-                              setDropdownSearchTerm("");
-                            }}
-                            data-dropdown
-                          >
-                            Remove from Box
-                          </div>
-                          {filteredBoxes.length > 0 ? (
-                            filteredBoxes.map((b, boxIndex) => (
                               <div
-                                key={boxIndex}
-                                className={`${styles.dropdownItem} ${
-                                  !item.removed && ((!item.boxId && b.boxId === box.boxId) || item.boxId === b._id)
-                                    ? styles.selected
-                                    : ""
-                                }`}
-                                onClick={() => {
-                                  updateExistingContent(index, "removed", false);
-                                  updateExistingContent(index, "boxId", b._id);
-                                  setIsDropdownOpen(null);
-                                  setDropdownSearchTerm("");
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
                                 }}
-                                data-dropdown
-                                title={`${b.boxId} - ${b.description || ''} (${b.location || ''})`}
+                                data-description-dropdown
                               >
-                                <div data-dropdown>
-                                  <strong>{b.boxId}</strong>
-                                </div>
+                                {filteredDescriptions.length > 0 ? (
+                                  filteredDescriptions.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        updateExistingContent(
+                                          index,
+                                          "description",
+                                          opt.description
+                                        );
+                                        updateExistingContent(
+                                          index,
+                                          "descriptionId",
+                                          opt._id
+                                        );
+                                        updateExistingContent(
+                                          index,
+                                          "descriptionOpen"
+                                        );
+                                        setDescriptionSearch("");
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex <
+                                          filteredDescriptions.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-description-dropdown
+                                    >
+                                      <strong>{opt.description}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-description-dropdown
+                                  >
+                                    No descriptions found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
                               </div>
-                            ))
-                          ) : dropdownSearchTerm ? (
-                            <div 
-                              className={styles.dropdownItem} 
-                              style={{ color: "#999", fontStyle: "italic" }}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          value={item.style}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "style",
+                              e.target.value
+                            )
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <div
+                          style={{ position: "relative" }}
+                          data-brand-dropdown
+                        >
+                          <input
+                            value={
+                              item.brandOpen ? brandSearch : getBrand(item)
+                            }
+                            onClick={() => {
+                              updateExistingContent(index, "brandOpen", true);
+                              setBrandSearch(item.brand);
+                            }}
+                            onChange={(e) => {
+                              if (item.brandOpen) {
+                                setBrandSearch(e.target.value);
+                              }
+                            }}
+                            onFocus={() => {
+                              updateExistingContent(index, "brandOpen", true);
+                              setBrandSearch(item.brand);
+                            }}
+                            placeholder={
+                              item.brandOpen ? "Search brands..." : ""
+                            }
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              minHeight: "auto",
+                              width: "100%",
+                              caretColor: item.brandOpen
+                                ? "auto"
+                                : "transparent",
+                            }}
+                            data-brand-dropdown
+                          />
+                          {item.brandOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-brand-dropdown
+                              style={{ maxWidth: "250px" }}
+                            >
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                }}
+                                data-brand-dropdown
+                              >
+                                {filteredBrands.length > 0 ? (
+                                  filteredBrands.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        updateExistingContent(
+                                          index,
+                                          "brand",
+                                          opt.brand
+                                        );
+                                        updateExistingContent(
+                                          index,
+                                          "brandId",
+                                          opt._id
+                                        );
+                                        updateExistingContent(
+                                          index,
+                                          "brandOpen",
+                                          false
+                                        );
+                                        setBrandSearch("");
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex < filteredBrands.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-brand-dropdown
+                                    >
+                                      <strong>{opt.brand}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-brand-dropdown
+                                  >
+                                    No brands found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className={styles.tableReg}>
+                        <div
+                          style={{ position: "relative" }}
+                          data-size-dropdown
+                        >
+                          <input
+                            value={item.sizeOpen ? sizeSearch : getSize(item)}
+                            onClick={() => {
+                              updateExistingContent(index, "sizeOpen", true);
+                              setSizeSearch(item.size);
+                            }}
+                            onChange={(e) => {
+                              if (item.sizeOpen) {
+                                setSizeSearch(e.target.value);
+                              }
+                            }}
+                            onFocus={() => {
+                              updateExistingContent(index, "sizeOpen", true);
+                              setSizeSearch(item.size);
+                            }}
+                            placeholder={item.sizeOpen ? "Search sizes..." : ""}
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              minHeight: "auto",
+                              width: "100%",
+                              caretColor: item.sizeOpen
+                                ? "auto"
+                                : "transparent",
+                            }}
+                            data-size-dropdown
+                          />
+                          {item.sizeOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-size-dropdown
+                              style={{ maxWidth: "250px" }}
+                            >
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                }}
+                                data-size-dropdown
+                              >
+                                {filteredSizes.length > 0 ? (
+                                  filteredSizes.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        updateExistingContent(
+                                          index,
+                                          "size",
+                                          opt.size
+                                        );
+                                        updateExistingContent(
+                                          index,
+                                          "sizeId",
+                                          opt._id
+                                        );
+                                        updateExistingContent(
+                                          index,
+                                          "sizeOpen",
+                                          false
+                                        );
+                                        setSizeSearch("");
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex < filteredSizes.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-size-dropdown
+                                    >
+                                      <strong>{opt.size}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-size-dropdown
+                                  >
+                                    No sizes found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          value={item.color}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "color",
+                              e.target.value
+                            )
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          type="text"
+                          pattern="[0-9]*"
+                          inputMode="numeric"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "quantity",
+                              parseInt(e.target.value) || ""
+                            )
+                          }
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td className={styles.tableReg}>
+                        <input
+                          type="text"
+                          pattern="^\d*\.?\d*$"
+                          inputMode="decimal"
+                          value={item.price}
+                          onChange={(e) =>
+                            updateExistingContent(
+                              index,
+                              "price",
+                              e.target.value
+                            )
+                          }
+                          onBlur={(e) => {
+                            const numValue = parseFloat(e.target.value);
+                            updateExistingContent(
+                              index,
+                              "price",
+                              isNaN(numValue) ? 0 : numValue.toFixed(2)
+                            );
+                          }}
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            minHeight: "auto",
+                            width: "100%",
+                          }}
+                        />
+                      </td>
+                      <td
+                        className={styles.tableReg}
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          height: "60px",
+                          alignItems: "center",
+                        }}
+                      >
+                        <div
+                          className={styles.trash}
+                          onClick={() => handleDropdownToggle(index)}
+                          style={{
+                            cursor: "pointer",
+                            color:
+                              selectedItem === item._id ? "white" : "black",
+                          }}
+                          data-dropdown
+                        >
+                          {item.removed ? (
+                            <FaBoxOpen />
+                          ) : item.boxId === box._id || !item.boxId ? (
+                            <RiSwapBoxLine />
+                          ) : (
+                            <RiSwapBoxFill />
+                          )}
+                        </div>
+
+                        {isDropdownOpen === index && (
+                          <div className={styles.dropdown} data-dropdown>
+                            {/* Search input */}
+                            <div
+                              className={styles.dropdownSearchContainer}
+                              style={{
+                                padding: "8px",
+                                borderBottom: "1px solid #ccc",
+                                position: "sticky",
+                                top: 0,
+                                backgroundColor: "white",
+                                zIndex: 1,
+                              }}
                               data-dropdown
                             >
-                              No boxes found matching "{dropdownSearchTerm}"
+                              <div
+                                style={{ position: "relative" }}
+                                data-dropdown
+                              >
+                                <FaSearch
+                                  style={{
+                                    position: "absolute",
+                                    left: "8px",
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    color: "#666",
+                                    fontSize: "12px",
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Search boxes..."
+                                  value={dropdownSearchTerm}
+                                  onChange={(e) =>
+                                    setDropdownSearchTerm(e.target.value)
+                                  }
+                                  className={styles.input}
+                                  style={{
+                                    margin: 0,
+                                    padding: "4px 4px 4px 24px",
+                                    fontSize: "12px",
+                                    minHeight: "auto",
+                                    width: "100%",
+                                    border: "1px solid #ddd",
+                                    borderRadius: "4px",
+                                  }}
+                                  data-dropdown
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
                             </div>
-                          ) : null}
+
+                            {/* Remove from box option */}
+                            <div
+                              key="removed"
+                              className={`${styles.dropdownItem} ${item.removed ? styles.selected : ""}`}
+                              onClick={() => {
+                                updateExistingContent(index, "removed", true);
+                                updateExistingContent(index, "boxId", null);
+                                setIsDropdownOpen(null);
+                                setDropdownSearchTerm("");
+                              }}
+                              data-dropdown
+                            >
+                              Remove from Box
+                            </div>
+                            {filteredBoxes.length > 0 ? (
+                              filteredBoxes.map((b, boxIndex) => (
+                                <div
+                                  key={boxIndex}
+                                  className={`${styles.dropdownItem} ${
+                                    !item.removed &&
+                                    ((!item.boxId && b.boxId === box.boxId) ||
+                                      item.boxId === b._id)
+                                      ? styles.selected
+                                      : ""
+                                  }`}
+                                  onClick={() => {
+                                    updateExistingContent(
+                                      index,
+                                      "removed",
+                                      false
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "boxId",
+                                      b._id
+                                    );
+                                    setIsDropdownOpen(null);
+                                    setDropdownSearchTerm("");
+                                  }}
+                                  data-dropdown
+                                  title={`${b.boxId} - ${b.description || ""} (${b.location || ""})`}
+                                >
+                                  <div data-dropdown>
+                                    <strong>{b.boxId}</strong>
+                                  </div>
+                                </div>
+                              ))
+                            ) : dropdownSearchTerm ? (
+                              <div
+                                className={styles.dropdownItem}
+                                style={{ color: "#999", fontStyle: "italic" }}
+                                data-dropdown
+                              >
+                                No boxes found matching "{dropdownSearchTerm}"
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                        <div
+                          className={styles.trash}
+                          onClick={() => copyItem(index)}
+                          style={{
+                            cursor: "pointer",
+                            color:
+                              selectedItem === item._id ? "white" : "black",
+                          }}
+                        >
+                          <FaRegCopy />
                         </div>
-                      )}
-                      <div
-                        className={styles.trash}
-                        onClick={() => copyItem(index)}
-                        style={{
-                          cursor: "pointer",
-                          color: selectedItem === item._id ? "white" : "black",
-                        }}
-                      >
-                        <FaRegCopy />
-                      </div>
-                      <div
-                        className={styles.trash}
-                        onClick={() => removeItem(index)}
-                        style={{
-                          cursor: "pointer",
-                          color: selectedItem === item._id ? "white" : "black",
-                        }}
-                      >
-                        <FaRegTrashAlt />
-                      </div>
-                    </td>
-                    
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        <div
+                          className={styles.trash}
+                          onClick={() => removeItem(index)}
+                          style={{
+                            cursor: "pointer",
+                            color:
+                              selectedItem === item._id ? "white" : "black",
+                          }}
+                        >
+                          <FaRegTrashAlt />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             <div
               style={{
@@ -1400,8 +1928,10 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
             </div>
             {newItemOpen && (
               <div>
-                <table style={{ width: "100%", textAlign: "left" }}
-                className={`${styles.boxTable} ${styles.desktopTable}`}>
+                <table
+                  style={{ width: "100%", textAlign: "left" }}
+                  className={`${styles.boxTable} ${styles.desktopTable}`}
+                >
                   <tbody>
                     <tr
                       style={{
@@ -1417,21 +1947,30 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                         }}
                       >
                         {currentItem.image !== "" ? (
-                          <div style={{position:"relative", width:"auto"}}>
-                            
-                          <img
-                            src={currentItem.image}
-                            alt="New Item"
-                            onClick={handleNewItemThumbnailClick}
-                            style={{
-                              cursor: "pointer",
-                              opacity: imageUploading ? 0.5 : 1,
-                              transition: "opacity 0.2s",
-                            }}
-                            title="Click to change image"
-                          />
-                          <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"0px", fontSize:"30px", color:"red"}}
-                          onClick={() => setCurrentItem({...currentItem, image: ""})}/>
+                          <div style={{ position: "relative" }}>
+                            <img
+                              src={currentItem.image}
+                              alt="New Item"
+                              onClick={handleNewItemThumbnailClick}
+                              style={{
+                                cursor: "pointer",
+                                opacity: imageUploading ? 0.5 : 1,
+                                transition: "opacity 0.2s",
+                              }}
+                              title="Click to change image"
+                            />
+                            <IoIosRemoveCircle
+                              style={{
+                                position: "absolute",
+                                top: "-15px",
+                                right: "0px",
+                                fontSize: "30px",
+                                color: "red",
+                              }}
+                              onClick={() =>
+                                setCurrentItem({ ...currentItem, image: "" })
+                              }
+                            />
                           </div>
                         ) : showUrlInput ? (
                           <div>
@@ -1497,21 +2036,120 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                         )}
                       </td>
                       <td className={styles.tableLg}>
-                        <input
-                          value={currentItem.description}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              description: e.target.value,
-                            })
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
+                        <div
+                          style={{ position: "relative" }}
+                          data-description-dropdown
+                        >
+                          <input
+                            value={
+                              currentItem.descriptionOpen
+                                ? descriptionSearch
+                                : currentItem.description
+                            }
+                            onClick={() => {
+                              setCurrentItem({
+                                ...currentItem,
+                                descriptionOpen: true,
+                              });
+                              setDescriptionSearch(currentItem.description);
+                            }}
+                            onChange={(e) => {
+                              if (currentItem.descriptionOpen) {
+                                setDescriptionSearch(e.target.value);
+                              }
+                            }}
+                            onFocus={() => {
+                              setCurrentItem({
+                                ...currentItem,
+                                descriptionOpen: true,
+                              });
+                              setDescriptionSearch(currentItem.description);
+                            }}
+                            placeholder={
+                              currentItem.descriptionOpen
+                                ? "Search descriptions..."
+                                : ""
+                            }
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              minHeight: "auto",
+                              width: "100%",
+                              caretColor: currentItem.descriptionOpen
+                                ? "auto"
+                                : "transparent",
+                            }}
+                            data-description-dropdown
+                          />
+                          {currentItem.descriptionOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-description-dropdown
+                              style={{ maxWidth: "250px" }}
+                            >
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                }}
+                                data-description-dropdown
+                              >
+                                {filteredDescriptions.length > 0 ? (
+                                  filteredDescriptions.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        setCurrentItem({
+                                          ...currentItem,
+                                          description: opt.description,
+                                          descriptionId: opt._id,
+                                          descriptionOpen: false,
+                                        });
+                                        setDescriptionSearch("");
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex <
+                                          filteredDescriptions.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-description-dropdown
+                                    >
+                                      <strong>{opt.description}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-description-dropdown
+                                  >
+                                    No descriptions found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className={styles.tableReg}>
                         <input
@@ -1531,38 +2169,230 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                         />
                       </td>
                       <td className={styles.tableReg}>
-                        <input
-                          value={currentItem.brand}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              brand: e.target.value,
-                            })
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
+                        <div
+                          style={{ position: "relative" }}
+                          data-brand-dropdown
+                        >
+                          <input
+                            value={
+                              currentItem.brandOpen
+                                ? brandSearch
+                                : currentItem.brand
+                            }
+                            onClick={() => {
+                              setCurrentItem({
+                                ...currentItem,
+                                brandOpen: true,
+                              });
+                              setBrandSearch(currentItem.brand);
+                            }}
+                            onChange={(e) => {
+                              if (currentItem.brandOpen) {
+                                setBrandSearch(e.target.value);
+                              }
+                            }}
+                            onFocus={() => {
+                              setCurrentItem({
+                                ...currentItem,
+                                brandOpen: true,
+                              });
+                              setBrandSearch(currentItem.brand);
+                            }}
+                            placeholder={
+                              currentItem.brandOpen ? "Search brands..." : ""
+                            }
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              minHeight: "auto",
+                              width: "100%",
+                              caretColor: currentItem.brandOpen
+                                ? "auto"
+                                : "transparent",
+                            }}
+                            data-brand-dropdown
+                          />
+                          {currentItem.brandOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-brand-dropdown
+                              style={{ maxWidth: "250px" }}
+                            >
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                }}
+                                data-brand-dropdown
+                              >
+                                {filteredBrands.length > 0 ? (
+                                  filteredBrands.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        setCurrentItem({
+                                          ...currentItem,
+                                          brand: opt.brand,
+                                          brandId: opt._id,
+                                          brandOpen: false,
+                                        });
+                                        setBrandSearch("");
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex < filteredBrands.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-brand-dropdown
+                                    >
+                                      <strong>{opt.brand}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-brand-dropdown
+                                  >
+                                    No brands found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className={styles.tableReg}>
-                        <input
-                          value={currentItem.size}
-                          onChange={(e) =>
-                            setCurrentItem({
-                              ...currentItem,
-                              size: e.target.value,
-                            })
-                          }
-                          className={styles.input}
-                          style={{
-                            margin: 0,
-                            minHeight: "auto",
-                            width: "100%",
-                          }}
-                        />
+                        <div
+                          style={{ position: "relative" }}
+                          data-size-dropdown
+                        >
+                          <input
+                            value={
+                              currentItem.sizeOpen
+                                ? sizeSearch
+                                : currentItem.size
+                            }
+                            onClick={() => {
+                              setCurrentItem({
+                                ...currentItem,
+                                sizeOpen: true,
+                              });
+                              setSizeSearch(currentItem.size);
+                            }}
+                            onChange={(e) => {
+                              if (currentItem.sizeOpen) {
+                                setSizeSearch(e.target.value);
+                              }
+                            }}
+                            onFocus={() => {
+                              setCurrentItem({
+                                ...currentItem,
+                                sizeOpen: true,
+                              });
+                              setSizeSearch(currentItem.size);
+                            }}
+                            placeholder={
+                              currentItem.sizeOpen ? "Search sizes..." : ""
+                            }
+                            className={styles.input}
+                            style={{
+                              margin: 0,
+                              minHeight: "auto",
+                              width: "100%",
+                              caretColor: currentItem.sizeOpen
+                                ? "auto"
+                                : "transparent",
+                            }}
+                            data-size-dropdown
+                          />
+                          {currentItem.sizeOpen && (
+                            <div
+                              className={styles.dropdown}
+                              data-size-dropdown
+                              style={{ maxWidth: "250px" }}
+                            >
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                }}
+                                data-size-dropdown
+                              >
+                                {filteredSizes.length > 0 ? (
+                                  filteredSizes.map((opt, oIndex) => (
+                                    <div
+                                      key={oIndex}
+                                      className={styles.dropdownItem}
+                                      onClick={() => {
+                                        setCurrentItem({
+                                          ...currentItem,
+                                          size: opt.size,
+                                          sizeId: opt._id,
+                                          sizeOpen: false,
+                                        });
+                                        setSizeSearch("");
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                        borderBottom:
+                                          oIndex < filteredSizes.length - 1
+                                            ? "1px solid #eee"
+                                            : "none",
+                                      }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "#f5f5f5")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.backgroundColor =
+                                          "white")
+                                      }
+                                      data-size-dropdown
+                                    >
+                                      <strong>{opt.size}</strong>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      color: "#999",
+                                      fontStyle: "italic",
+                                      padding: "8px 12px",
+                                      textAlign: "center",
+                                    }}
+                                    onClick={() => setPage("option")}
+                                    data-size-dropdown
+                                  >
+                                    No sizes found
+                                    <div>Add one?</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className={styles.tableReg}>
                         <input
@@ -1628,7 +2458,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td className={styles.tableTiny}>
                         <div
                           className={`${styles.trash} ${styles.add}`}
                           onClick={addNewItem}
@@ -1647,22 +2477,32 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                       <label className={styles.mobileLabel}>Image</label>
                       <div className={styles.mobileValue}>
                         {currentItem.image !== "" ? (
-                          <div style={{position:"relative", width:"auto"}}>
-                          <img
-                            src={currentItem.image}
-                            alt="New Item"
-                            onClick={handleNewItemThumbnailClick}
-                            style={{
-                              cursor: "pointer",
-                              opacity: imageUploading ? 0.5 : 1,
-                              transition: "opacity 0.2s",
-                              maxWidth: "100px",
-                              maxHeight: "100px",
-                            }}
-                            title="Click to change image"
-                          />
-                          <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"-15px", fontSize:"30px", color:"red"}}
-                          onClick={() => setCurrentItem({...currentItem, image: ""})}/>
+                          <div style={{ position: "relative", width: "auto" }}>
+                            <img
+                              src={currentItem.image}
+                              alt="New Item"
+                              onClick={handleNewItemThumbnailClick}
+                              style={{
+                                cursor: "pointer",
+                                opacity: imageUploading ? 0.5 : 1,
+                                transition: "opacity 0.2s",
+                                maxWidth: "100px",
+                                maxHeight: "100px",
+                              }}
+                              title="Click to change image"
+                            />
+                            <IoIosRemoveCircle
+                              style={{
+                                position: "absolute",
+                                top: "-15px",
+                                right: "-15px",
+                                fontSize: "30px",
+                                color: "red",
+                              }}
+                              onClick={() =>
+                                setCurrentItem({ ...currentItem, image: "" })
+                              }
+                            />
                           </div>
                         ) : showUrlInput ? (
                           <div style={{ position: "relative" }}>
@@ -1877,19 +2717,19 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                       </div>
                     </div>
                     <div
-                          className={`${styles.trash} ${styles.add}`}
-                          onClick={addNewItem}
-                          style={{ cursor: "pointer", fontSize: "25px" }}
-                        >
-                          <IoIosCheckmarkCircle />
-                        </div>
+                      className={`${styles.trash} ${styles.add}`}
+                      onClick={addNewItem}
+                      style={{ cursor: "pointer", fontSize: "25px" }}
+                    >
+                      <IoIosCheckmarkCircle />
+                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
           <div>
-            <label style={{fontWeight:"bold"}}>Visibility</label>
+            <label style={{ fontWeight: "bold" }}>Visibility</label>
             <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <div>
                 <input
@@ -1898,6 +2738,7 @@ const AddBox = ({ box, onClose, refresh, selectedItem, boxes, setPage }) => {
                   name="radioGroup"
                   value="admin"
                   checked
+                  readOnly
                 />
                 <label for="radio1" style={{ marginLeft: "5px" }}>
                   Admin

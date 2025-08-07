@@ -62,13 +62,11 @@ export async function POST(request) {
 
     // Parse request body
     const body = await request.json();
-
+    console.log(body)
     // Prepare document for insertion
     const itemDocument = {
-      description: body.description.trim(),
       image: body.image,
       style: body.style.trim(),
-      size: body.size.trim(),
       color: body.color.trim(),
       quantity: body.quantity,
       price: body.price,
@@ -78,11 +76,22 @@ export async function POST(request) {
       updatedAt: new Date(),
     };
     // optional fields: if it is not in a box it should have the following
-    if(body.brand) itemDocument.brand = body.brand.trim()
     if (body.box_id) itemDocument.boxId = body.box_id;
     if (body.location) itemDocument.location = body.location;
     if (body.discount) itemDocument.discount = body.discount;
     if (body.minPrice) itemDocument.minPrice = body.minPrice;
+
+    //if it has a description Id, then upload the id, if not upload the description
+    if(body.descriptionId) itemDocument.descriptionId = body.descriptionId;
+    else itemDocument.description = body.description.trim();
+
+    //if it has a brand Id, then upload the brand id, if not upload the brand
+    if(body.brandId) itemDocument.brandId = body.brandId;
+    else itemDocument.brand = body.brand.trim();
+
+    //if it has a size Id, then upload the size id, if not upload the size
+    if(body.sizeId) itemDocument.sizeId = body.sizeId;
+    else itemDocument.size = body.size.trim();
 
     // Insert the document
     const result = await collection.insertOne(itemDocument);
