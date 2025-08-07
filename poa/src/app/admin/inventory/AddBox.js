@@ -9,6 +9,7 @@ import {
   FaBookmark,
   FaDownload,
   FaRegCopy,
+  FaPlus,
 } from "react-icons/fa";
 import {
   IoIosAddCircle,
@@ -50,6 +51,7 @@ export default function AddItem({
             options={options}
             savedInfo={savedInfo}
             setSavedInfo={setSavedInfo}
+            refresh={refresh}
           />
         )}
         {page === "qr" && <QrPopup setPage={setPage} box={box} />}
@@ -160,7 +162,14 @@ const QrPopup = ({ box }) => {
   );
 };
 
-const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
+const AddBox = ({
+  setPage,
+  setBox,
+  options,
+  savedInfo,
+  setSavedInfo,
+  refresh,
+}) => {
   const [boxDescription, setBoxDescription] = useState(
     savedInfo.addBox.boxDescription || ""
   );
@@ -265,7 +274,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
         setCurrentItem((prevItem) => ({ ...prevItem, descriptionOpen: false }));
         setDescriptionSearch("");
       }
-  
+
       if (!event.target.closest("[data-size-dropdown]")) {
         setContents((prevContents) =>
           prevContents.map((item) => ({ ...item, sizeOpen: false }))
@@ -273,7 +282,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
         setCurrentItem((prevItem) => ({ ...prevItem, sizeOpen: false }));
         setSizeSearch("");
       }
-  
+
       if (!event.target.closest("[data-brand-dropdown]")) {
         setContents((prevContents) =>
           prevContents.map((item) => ({ ...item, brandOpen: false }))
@@ -281,7 +290,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
         setCurrentItem((prevItem) => ({ ...prevItem, brandOpen: false }));
         setBrandSearch("");
       }
-  
+
       // Close image options dropdown
       if (
         showImageOptions !== null &&
@@ -290,9 +299,9 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
         setShowImageOptions(null);
       }
     };
-  
+
     document.addEventListener("click", handleClickOutside);
-  
+
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
@@ -425,7 +434,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
 
   // Handle clicking on thumbnail to select new image
   const handleThumbnailClick = (index) => {
-    console.log("hello 1", index)
+    console.log("hello 1", index);
     setSelectedItemIndex(index);
     setShowImageOptions(index);
   };
@@ -441,7 +450,7 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
 
   // Handle URL input option for existing items
   const handleUrlOption = (index) => {
-    console.log("hello")
+    console.log("hello");
     setShowImageOptions(null);
     setShowUrlInput(index);
   };
@@ -626,6 +635,104 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
     }
   };
 
+  const addOptDb = async (selectedOption, newItem, index) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const response = await addOption(selectedOption, newItem);
+
+    if (index) {
+      if (selectedOption === "description") {
+        updateExistingContent(index, "description", response.description);
+        updateExistingContent(index, "descriptionId", response._id);
+        updateExistingContent(index, "descriptionOpen", false);
+      } else if (selectedOption === "brand") {
+        updateExistingContent(index, "brand", response.brand);
+        updateExistingContent(index, "brandId", response._id);
+        updateExistingContent(index, "brandOpen", false);
+      } else if (selectedOption === "size") {
+        updateExistingContent(index, "size", response.size);
+        updateExistingContent(index, "sizeId", response._id);
+        updateExistingContent(index, "sizeOpen", false);
+      }
+    } else {
+      if (selectedOption === "description") {
+        setCurrentItem({
+          ...currentItem,
+          description: response.description,
+          descriptionId: response._id,
+          descriptionOpen: false,
+        });
+      }
+      else if (selectedOption === "brand") {
+        setCurrentItem({
+          ...currentItem,
+          brand: response.brand,
+          brandId: response._id,
+          brandOpen: false,
+        });
+      }
+      else if (selectedOption === "size") {
+        setCurrentItem({
+          ...currentItem,
+          size: response.size,
+          sizeId: response._id,
+          sizeOpen: false,
+        });
+      }
+    }
+
+    setIsSubmitting(false);
+  };
+
+  const addOption = async (selectedOption, newItem) => {
+    try {
+      const itemData = {};
+      let url = "";
+      switch (selectedOption) {
+        case "description":
+          itemData.description = newItem;
+          url = "/api/details/descriptions";
+          break;
+        case "brand":
+          itemData.brand = newItem;
+          url = "/api/details/brands";
+          break;
+        case "size":
+          itemData.size = newItem;
+          url = "/api/details/sizes";
+          break;
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(itemData),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        console.error("Error creating item:", data.error);
+        console.error("Details:", data.details);
+        alert("Error creating item: " + (data.error || "Unknown error"));
+        return false;
+      }
+
+      console.log("Item created successfully:", data.data);
+      console.log("Message:", data.message);
+
+      // Clear form after successful submission
+      refresh();
+      return data.data;
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Network error: " + error.message);
+      return false;
+    }
+  };
+
   useEffect(() => {
     console.log(visibility);
   }, [visibility]);
@@ -754,6 +861,24 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
 
     setBoxDescription(retString);
   };
+
+  const getDescription = (desc) => {
+    for (const description of options.descriptions) {
+      if (description.description == desc) {
+        return description;
+      }
+    }
+  };
+
+  const descriptionDict = useMemo(() => {
+    const dict = {};
+    if (!options.descriptions) return {};
+
+    options.descriptions.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
 
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
@@ -1143,7 +1268,8 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                         );
                                         updateExistingContent(
                                           index,
-                                          "descriptionOpen"
+                                          "descriptionOpen",
+                                          false
                                         );
                                         setDescriptionSearch("");
                                       }}
@@ -1170,7 +1296,6 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                     </div>
                                   ))
                                 ) : (
-                                  <>
                                   <div
                                     className={styles.dropdownItem}
                                     style={{
@@ -1184,10 +1309,58 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                   >
                                     No descriptions found
                                   </div>
-                                  
-                                  </>
-
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb(
+                                      "description",
+                                      descriptionSearch,
+                                      index
+                                    );
+                                    setDescriptionSearch("");
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    updateExistingContent(
+                                      index,
+                                      "description",
+                                      descriptionSearch
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "descriptionId",
+                                      null
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "descriptionOpen",
+                                      false
+                                    );
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1315,9 +1488,55 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                     data-brand-dropdown
                                   >
                                     No brands found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb("brand", brandSearch, index);
+                                    setBrandSearch("");
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    updateExistingContent(
+                                      index,
+                                      "brand",
+                                      brandSearch
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "brandId",
+                                      null
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "brandOpen",
+                                      false
+                                    );
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1425,9 +1644,55 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                     data-size-dropdown
                                   >
                                     No sizes found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb("size", sizeSearch, index);
+                                    setSizeSearch("");
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    updateExistingContent(
+                                      index,
+                                      "size",
+                                      sizeSearch
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "sizeId",
+                                      null
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "sizeOpen",
+                                      false
+                                    );
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1765,9 +2030,50 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                     data-description-dropdown
                                   >
                                     No descriptions found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb(
+                                      "description",
+                                      descriptionSearch,
+                                      null
+                                    );
+                                    setDescriptionSearch("");
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      description: descriptionSearch,
+                                      descriptionId: null,
+                                      descriptionOpen: false,
+                                    });
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1895,9 +2201,50 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                     data-brand-dropdown
                                   >
                                     No brands found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb(
+                                      "brand",
+                                      brandSearch,
+                                      null
+                                    );
+                                    setBrandSearch("");
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      brand: brandSearch,
+                                      brandId: null,
+                                      brandOpen: false,
+                                    });
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -2008,9 +2355,50 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                                     data-size-dropdown
                                   >
                                     No sizes found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb(
+                                      "size",
+                                      sizeSearch,
+                                      null
+                                    );
+                                    setSizeSearch("");
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      size: sizeSearch,
+                                      sizeId: null,
+                                      sizeOpen: false,
+                                    });
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -2220,7 +2608,9 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                             setDescriptionSearch(currentItem.description);
                           }}
                           placeholder={
-                            currentItem.descriptionOpen ? "Search brands..." : ""
+                            currentItem.descriptionOpen
+                              ? "Search brands..."
+                              : ""
                           }
                           className={styles.input}
                           style={{
@@ -2537,7 +2927,6 @@ const AddBox = ({ setPage, setBox, options, savedInfo, setSavedInfo }) => {
                             }}
                             data-size-dropdown
                           >
-
                             {/* Size options */}
                             <div data-size-dropdown>
                               {filteredSizes.length > 0 ? (

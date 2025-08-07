@@ -6,6 +6,8 @@ import {
   FaTimes,
   FaRegTrashAlt,
   FaLink,
+  FaBookmark,
+  FaPlus,
   FaRegCopy,
   FaBoxOpen,
   FaSearch,
@@ -124,7 +126,7 @@ const AddBox = ({
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
-  let acknowledgement = false;
+  const [acknowledgement, setAcknowledgement] = useState(false)
   const [boxDict, setBoxDict] = useState({});
 
   // New state for description search
@@ -594,7 +596,7 @@ const AddBox = ({
       alert(
         "Warning: New item not finalized, click the checkmark to the right of the item to add."
       );
-      acknowledgement = true;
+      setAcknowledgement(true)
       return;
     }
 
@@ -983,6 +985,107 @@ const AddBox = ({
       }, 0);
     }
   };
+
+  const addOptDb = async (selectedOption, newItem, index) => {
+    console.log(selectedOption, newItem, index)
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const response = await addOption(selectedOption, newItem);
+
+    if (index !== null) {
+      if (selectedOption === "description") {
+        updateExistingContent(index, "description", response.description);
+        updateExistingContent(index, "descriptionId", response._id);
+        updateExistingContent(index, "descriptionOpen", false);
+      } else if (selectedOption === "brand") {
+        updateExistingContent(index, "brand", response.brand);
+        updateExistingContent(index, "brandId", response._id);
+        updateExistingContent(index, "brandOpen", false);
+      } else if (selectedOption === "size") {
+        updateExistingContent(index, "size", response.size);
+        updateExistingContent(index, "sizeId", response._id);
+        updateExistingContent(index, "sizeOpen", false);
+      }
+    } else {
+      if (selectedOption === "description") {
+        setCurrentItem({
+          ...currentItem,
+          description: response.description,
+          descriptionId: response._id,
+          descriptionOpen: false,
+        });
+      }
+      else if (selectedOption === "brand") {
+        setCurrentItem({
+          ...currentItem,
+          brand: response.brand,
+          brandId: response._id,
+          brandOpen: false,
+        });
+      }
+      else if (selectedOption === "size") {
+        setCurrentItem({
+          ...currentItem,
+          size: response.size,
+          sizeId: response._id,
+          sizeOpen: false,
+        });
+      }
+    }
+
+    setIsSubmitting(false);
+  };
+
+  const addOption = async (selectedOption, newItem) => {
+    try {
+      const itemData = {};
+      let url = "";
+      switch (selectedOption) {
+        case "description":
+          itemData.description = newItem;
+          url = "/api/details/descriptions";
+          break;
+        case "brand":
+          itemData.brand = newItem;
+          url = "/api/details/brands";
+          break;
+        case "size":
+          itemData.size = newItem;
+          url = "/api/details/sizes";
+          break;
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(itemData),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        console.error("Error creating item:", data.error);
+        console.error("Details:", data.details);
+        alert("Error creating item: " + (data.error || "Unknown error"));
+        return false;
+      }
+
+      console.log("Item created successfully:", data.data);
+      console.log("Message:", data.message);
+
+      // Clear form after successful submission
+      refresh();
+      return data.data;
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Network error: " + error.message);
+      return false;
+    }
+  };
+
+
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
@@ -1425,9 +1528,59 @@ const AddBox = ({
                                     data-description-dropdown
                                   >
                                     No descriptions found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                 <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb(
+                                      "description",
+                                      descriptionSearch,
+                                      index
+                                    );
+                                    setDescriptionSearch("");
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    updateExistingContent(
+                                      index,
+                                      "description",
+                                      descriptionSearch
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "descriptionId",
+                                      null
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "descriptionOpen",
+                                      false
+                                    );
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1557,9 +1710,55 @@ const AddBox = ({
                                     data-brand-dropdown
                                   >
                                     No brands found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                 <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb("brand", brandSearch, index);
+                                    setBrandSearch("");
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    updateExistingContent(
+                                      index,
+                                      "brand",
+                                      brandSearch
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "brandId",
+                                      null
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "brandOpen",
+                                      false
+                                    );
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1667,9 +1866,55 @@ const AddBox = ({
                                     data-size-dropdown
                                   >
                                     No sizes found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb("size", sizeSearch, index);
+                                    setSizeSearch("");
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    updateExistingContent(
+                                      index,
+                                      "size",
+                                      sizeSearch
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "sizeId",
+                                      null
+                                    );
+                                    updateExistingContent(
+                                      index,
+                                      "sizeOpen",
+                                      false
+                                    );
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -2143,9 +2388,50 @@ const AddBox = ({
                                     data-description-dropdown
                                   >
                                     No descriptions found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb(
+                                      "description",
+                                      descriptionSearch,
+                                      null
+                                    );
+                                    setDescriptionSearch("");
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      description: descriptionSearch,
+                                      descriptionId: null,
+                                      descriptionOpen: false,
+                                    });
+                                  }}
+                                  data-description-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -2273,9 +2559,50 @@ const AddBox = ({
                                     data-brand-dropdown
                                   >
                                     No brands found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb(
+                                      "brand",
+                                      brandSearch,
+                                      null
+                                    );
+                                    setBrandSearch("");
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      brand: brandSearch,
+                                      brandId: null,
+                                      brandOpen: false,
+                                    });
+                                  }}
+                                  data-brand-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -2386,9 +2713,50 @@ const AddBox = ({
                                     data-size-dropdown
                                   >
                                     No sizes found
-                                    <div>Add one?</div>
                                   </div>
                                 )}
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    addOptDb(
+                                      "size",
+                                      sizeSearch,
+                                      null
+                                    );
+                                    setSizeSearch("");
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <div>
+                                    Add to inventory? <FaBookmark />
+                                  </div>
+                                </div>
+                                <div
+                                  className={styles.dropdownItem}
+                                  style={{
+                                    color: "#999",
+                                    padding: "8px 12px",
+                                    textAlign: "center",
+                                  }}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      size: sizeSearch,
+                                      sizeId: null,
+                                      sizeOpen: false,
+                                    });
+                                  }}
+                                  data-size-dropdown
+                                >
+                                  <div>
+                                    Add only to item? <FaPlus />
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
