@@ -279,150 +279,163 @@ const AddBox = ({
         // Close existing item dropdowns and apply search value if any were open
         setContents((prevContents) =>
           prevContents.map((item) => {
-            if (
-              item.descriptionOpen &&
-              !descriptionDict[descriptionSearch.toLowerCase().trim()]
-            ) {
-              return {
-                ...item,
-                description: descriptionSearch,
-                descriptionId: null,
-                descriptionOpen: false,
-              };
-            } else if (item.descriptionOpen) {
-              return {
-                ...item,
-                description: null,
-                descriptionId:
-                  descriptionDict[descriptionSearch.toLowerCase().trim()]._id,
-                descriptionOpen: false,
-              };
+            if (item.descriptionOpen) {
+              const searchTerm = descriptionSearch || "";
+              const matchedItem = descriptionDict[searchTerm.toLowerCase().trim()];
+              if (!matchedItem) {
+                // No match found - use the raw search text
+                return {
+                  ...item,
+                  description: searchTerm,
+                  descriptionId: null,
+                  descriptionOpen: false,
+                };
+              } else {
+                // Match found - use the description from the dictionary
+                return {
+                  ...item,
+                  description: matchedItem.description,
+                  descriptionId: matchedItem._id,
+                  descriptionOpen: false,
+                };
+              }
             }
             return { ...item, descriptionOpen: false };
           })
         );
-
+  
         // Close current item dropdown and apply search value if it was open
-        if (
-          currentItem.descriptionOpen &&
-          !descriptionDict[descriptionSearch.toLowerCase().trim()]
-        ) {
-          setCurrentItem({
-            ...currentItem,
-            description: descriptionSearch,
-            descriptionId: null,
-            descriptionOpen: false,
-          });
-        } else if (currentItem.descriptionOpen) {
-          setCurrentItem({
-            ...currentItem,
-            description:
-              descriptionDict[descriptionSearch.toLowerCase().trim()]
-                .description,
-            descriptionId:
-              descriptionDict[descriptionSearch.toLowerCase().trim()]._id,
-            descriptionOpen: false,
-          });
+        if (currentItem.descriptionOpen) {
+          const searchTerm = descriptionSearch || "";
+          const matchedItem = descriptionDict[searchTerm.toLowerCase().trim()];
+          if (!matchedItem) {
+            setCurrentItem({
+              ...currentItem,
+              description: searchTerm,
+              descriptionId: null,
+              descriptionOpen: false,
+            });
+          } else {
+            setCurrentItem({
+              ...currentItem,
+              description: matchedItem.description,
+              descriptionId: matchedItem._id,
+              descriptionOpen: false,
+            });
+          }
         }
-
+        
         setDescriptionSearch("");
       }
-
+  
       // Close size dropdown
       if (!event.target.closest("[data-size-dropdown]")) {
-        setContents((prevContents) =>
+       setContents((prevContents) =>
           prevContents.map((item) => {
-            if (item.sizeOpen && !sizeDict[sizeSearch.toLowerCase().trim()]) {
-              return {
-                ...item,
-                size: sizeSearch,
-                sizeId: null,
-                sizeOpen: false,
-              };
-            } else if (item.sizeOpen) {
-              return {
-                ...item,
-                size: null,
-                sizeId: sizeDict[sizeSearch.toLowerCase().trim()]._id,
-                sizeOpen: false,
-              };
+            if (item.sizeOpen) {
+              const searchTerm = sizeSearch || "";
+              const matchedItem = sizeDict[searchTerm.toLowerCase().trim()];
+              if (!matchedItem) {
+                return {
+                  ...item,
+                  size: searchTerm,
+                  sizeId: null,
+                  sizeOpen: false,
+                };
+              } else {
+                return {
+                  ...item,
+                  size: matchedItem.size,
+                  sizeId: matchedItem._id,
+                  sizeOpen: false,
+                };
+              }
             }
             return { ...item, sizeOpen: false };
           })
         );
-
+  
         // Close current item dropdown and apply search value if it was open
-        if (
-          currentItem.sizeOpen &&
-          !sizeDict[sizeSearch.toLowerCase().trim()]
-        ) {
-          setCurrentItem({
-            ...currentItem,
-            size: sizeSearch,
-            sizeId: null,
-            sizeOpen: false,
-          });
-        } else if (currentItem.sizeOpen) {
-          setCurrentItem({
-            ...currentItem,
-            size: sizeDict[sizeSearch.toLowerCase().trim()].size,
-            sizeId: sizeDict[sizeSearch.toLowerCase().trim()]._id,
-            sizeOpen: false,
-          });
+        if (currentItem.sizeOpen) {
+          const searchTerm = sizeSearch || "";
+          const matchedItem = sizeDict[searchTerm.toLowerCase().trim()];
+          if (!matchedItem) {
+            setCurrentItem({
+              ...currentItem,
+              size: searchTerm,
+              sizeId: null,
+              sizeOpen: false,
+            });
+          } else {
+            setCurrentItem({
+              ...currentItem,
+              size: matchedItem.size,
+              sizeId: matchedItem._id,
+              sizeOpen: false,
+            });
+          }
         }
-
+        
         setSizeSearch("");
       }
-
+  
       // Close brand dropdown
       if (!event.target.closest("[data-brand-dropdown]")) {
         setContents((prevContents) =>
           prevContents.map((item) => {
-            if (
-              item.brandOpen &&
-              !brandDict[brandSearch.toLowerCase().trim()]
-            ) {
-              return {
-                ...item,
-                brand: brandSearch,
-                brandId: null,
-                brandOpen: false,
-              };
-            } else if (item.brandOpen) {
-              return {
-                ...item,
-                brand: null,
-                brandId: brandDict[brandSearch.toLowerCase().trim()]._id,
-                brandOpen: false,
-              };
+            if (item.brandOpen) {
+              const searchTerm = brandSearch || "";
+              const matchedItem = brandDict[searchTerm.toLowerCase().trim()];
+              if (!matchedItem) {
+                return {
+                  ...item,
+                  brand: searchTerm,
+                  brandId: null,
+                  brandOpen: false,
+                };
+              } else {
+                return {
+                  ...item,
+                  brand: matchedItem.brand,
+                  brandId: matchedItem._id,
+                  brandOpen: false,
+                };
+              }
             }
             return { ...item, brandOpen: false };
           })
         );
-
+  
         // Close current item dropdown and apply search value if it was open
-        if (
-          currentItem.brandOpen &&
-          !brandDict[brandSearch.toLowerCase().trim()]
-        ) {
-          setCurrentItem({
-            ...currentItem,
-            brand: brandSearch,
-            brandId: null,
-            brandOpen: false,
-          });
-        } else if (currentItem.brandOpen) {
-          setCurrentItem({
-            ...currentItem,
-            brand: brandDict[brandSearch.toLowerCase().trim()].brand,
-            brandId: brandDict[brandSearch.toLowerCase().trim()]._id,
-            brandOpen: false,
-          });
+        if (currentItem.brandOpen) {
+          const searchTerm = brandSearch || "";
+          const matchedItem = brandDict[searchTerm.toLowerCase().trim()];
+          if (!matchedItem) {
+            setCurrentItem({
+              ...currentItem,
+              brand: searchTerm,
+              brandId: null,
+              brandOpen: false,
+            });
+          } else {
+            setCurrentItem({
+              ...currentItem,
+              brand: matchedItem.brand,
+              brandId: matchedItem._id,
+              brandOpen: false,
+            });
+          }
         }
-
+        
         setBrandSearch("");
       }
-
+  
+      // Close box-swapping dropdown
+      if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
+        setIsDropdownOpen(null);
+        setDropdownSearchTerm("");
+      }
+  
       // Close image options dropdown
       if (
         showImageOptions !== null &&
@@ -431,20 +444,24 @@ const AddBox = ({
         setShowImageOptions(null);
       }
     };
-
+  
     document.addEventListener("click", handleClickOutside);
-
+  
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, [
-    showImageOptions,
+    isDropdownOpen, 
+    showImageOptions, 
     currentItem.descriptionOpen,
-    currentItem.sizeOpen,
+    currentItem.sizeOpen, 
     currentItem.brandOpen,
     descriptionSearch,
     brandSearch,
     sizeSearch,
+    descriptionDict,
+    sizeDict,
+    brandDict
   ]);
 
   const handleDescriptionKeyDown = (e, index = null) => {

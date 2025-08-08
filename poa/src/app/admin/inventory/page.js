@@ -147,9 +147,19 @@ function Inventory() {
   }, [boxes]);
 
   const groupedInventory = useMemo(() => {
-    
-  })
-
+    let dict = {}
+    for(const item of inventory){
+      if(!dict[`${item.style}, ${item.color}, ${item.size || item.sizeId}`]){
+        dict[`${item.style}, ${item.color}, ${item.size || item.sizeId}`] = [item]
+      }
+      else{
+        dict[`${item.style}, ${item.color}, ${item.size || item.sizeId}`].push(item)
+      }
+    }
+    return dict
+  }, [inventory])
+  
+  console.log("groupedInventory", groupedInventory)
   // Filter inventory based on page selection
   const filteredInventory = useMemo(() => {
     let items;
