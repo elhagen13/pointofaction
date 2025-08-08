@@ -80,3 +80,19 @@
   .rowItem{
     padding: 5px 10px;
   }
+
+  .rowItem:hover{
+    background-color: #b8bfc7 !important;
+    color: white;
+  }
+
+  .mobileFlex{
+    display: flex;
+    flex-direction: row;
+  }
+
+  @media(max-width: 768px){
+    .mobileFlex{
+        flex-direction: column
+    }
+  }

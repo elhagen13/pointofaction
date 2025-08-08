@@ -858,11 +858,11 @@ const AddBox = ({
       retString =
         retString +
         "• " +
-        item.size +
+        (item.size || sizeDict[item.sizeId].size) +
         " " +
         item.color +
         " " +
-        item.description +
+        (item.description || descriptionDict[item.descriptionId].description) +
         " (" +
         item.style +
         ")\n";
@@ -879,12 +879,29 @@ const AddBox = ({
     }
   };
 
-  const descriptionDict = useMemo(() => {
+  const sizeDict = useMemo(() => {
     const dict = {};
-    if (!options.descriptions) return {};
+    if(!options.sizes) return {}
+    options.sizes.forEach((item) => {
+     dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
 
+  const descriptionDict = useMemo(() => {
+    if(!options.descriptions) return {}
+    const dict = {};
     options.descriptions.forEach((item) => {
-      dict[item._id.toString()] = item;
+     dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const brandDict = useMemo(() => {
+    if(!options.brands) return {}
+    const dict = {};
+    options.brands.forEach((item) => {
+     dict[item._id.toString()] = item;
     });
     return dict;
   }, [options]);

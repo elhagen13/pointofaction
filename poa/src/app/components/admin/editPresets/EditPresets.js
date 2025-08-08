@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import styles from "./editPresets.module.css";
+import { FaSearch } from "react-icons/fa";
+import { TfiExchangeVertical } from "react-icons/tfi";
 
 /**
  * Add, Edit, or Remove Presets
@@ -17,16 +19,54 @@ const EditPresets = ({ options, prevPage, setPage, refresh }) => {
   const [addType, setAddType] = useState("descriptions");
   const [newField, setNewField] = useState("");
   const [submitting, isSubmitting] = useState(false);
-  const [descriptions, setDescriptions] = useState(options.descriptions)
-  const [brands, setBrands] = useState(options.brands)
-  const [sizes, setSizes] = useState(options.sizes)
 
+  const [descriptionSearch, setDescriptionSearch] = useState("");
+  const [brandSearch, setBrandSearch] = useState("");
+  const [sizeSearch, setSizeSearch] = useState("");
 
-  const addPreset = async () => {
-    console.log("dfjks");
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const filteredDescriptions = useMemo(() => {
+    if (!options?.descriptions) return [];
+
+    if (!descriptionSearch.trim()) {
+      return options.descriptions;
+    }
+
+    return options.descriptions.filter((desc) =>
+      desc.description.toLowerCase().includes(descriptionSearch.toLowerCase())
+    );
+  }, [options?.descriptions, descriptionSearch]);
+
+  const filteredBrands = useMemo(() => {
+    if (!options?.brands) return [];
+
+    if (!brandSearch.trim()) {
+      return options.brands;
+    }
+
+    return options.brands.filter((desc) =>
+      desc.brand.toLowerCase().includes(brandSearch.toLowerCase())
+    );
+  }, [options?.brands, brandSearch]);
+
+  const filteredSizes = useMemo(() => {
+    if (!options?.sizes) return [];
+
+    if (!sizeSearch.trim()) {
+      return options.sizes;
+    }
+
+    return options.sizes.filter((desc) =>
+      desc.size.toLowerCase().includes(sizeSearch.toLowerCase())
+    );
+  }, [options?.sizes, sizeSearch]);
+
+  const addPreset = async (e) => {
+    e.preventDefault();
+
     if (submitting) return;
     isSubmitting(true);
-    console.log("inside");
     try {
       const itemData = {};
       let url = "";
@@ -76,6 +116,54 @@ const EditPresets = ({ options, prevPage, setPage, refresh }) => {
       return false;
     }
   };
+  const editPreset = async (e) => {
+    e.preventDefault()
+    if(submitting) return;
+    isSubmitting(true);
+
+    /**
+     * Go through all inventory, if their descriptionId/brandId/sizeId matches
+     */
+  };
+
+  useEffect(() => {
+    console.log(selectedIds);
+  }, [selectedIds]);
+
+  const editSelectedIds = (id) => {
+    console.log(selectedIds);
+    if (!selectedIds) return;
+    selectedIds.includes(id)
+      ? setSelectedIds(selectedIds.filter((x) => x !== id))
+      : setSelectedIds([...selectedIds, id]);
+  };
+
+  const sizeDict = useMemo(() => {
+    const dict = {};
+    if (!options.sizes) return {};
+    options.sizes.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const descriptionDict = useMemo(() => {
+    if (!options.descriptions) return {};
+    const dict = {};
+    options.descriptions.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const brandDict = useMemo(() => {
+    if (!options.brands) return {};
+    const dict = {};
+    options.brands.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
 
   return (
     <div className={styles.vertStack}>
@@ -92,7 +180,10 @@ const EditPresets = ({ options, prevPage, setPage, refresh }) => {
               backgroundColor: editType === et ? colors[index] : "white",
             }}
             className={styles.pageButton}
-            onClick={() => setEditType(et)}
+            onClick={() => {
+              setEditType(et);
+              setNewField("");
+            }}
           >
             {et}
           </div>
@@ -109,7 +200,9 @@ const EditPresets = ({ options, prevPage, setPage, refresh }) => {
                 name="options"
                 value="descriptions"
                 checked={addType === "descriptions"}
-                onClick={() => setAddType("descriptions")}
+                onClick={() => {
+                  setAddType("descriptions");
+                }}
               />
               <label for="descriptions">Descriptions</label>
             </div>
@@ -145,7 +238,7 @@ const EditPresets = ({ options, prevPage, setPage, refresh }) => {
           <button
             className={styles.button}
             disabled={!newField.trim()}
-            onClick={addPreset}
+            onClick={(e) => addPreset(e)}
           >
             Submit
           </button>
@@ -162,7 +255,10 @@ const EditPresets = ({ options, prevPage, setPage, refresh }) => {
                 name="options"
                 value="descriptions"
                 checked={addType === "descriptions"}
-                onClick={() => setAddType("descriptions")}
+                onClick={() => {
+                  setSelectedIds([]);
+                  setAddType("descriptions");
+                }}
               />
               <label for="descriptions">Descriptions</label>
             </div>
@@ -173,7 +269,10 @@ const EditPresets = ({ options, prevPage, setPage, refresh }) => {
                 name="options"
                 value="brands"
                 checked={addType === "brands"}
-                onClick={() => setAddType("brands")}
+                onClick={() => {
+                  setSelectedIds([]);
+                  setAddType("brands");
+                }}
               />
               <label for="brands">Brands</label>
             </div>
@@ -184,22 +283,113 @@ const EditPresets = ({ options, prevPage, setPage, refresh }) => {
                 name="options"
                 value="sizes"
                 checked={addType === "sizes"}
-                onClick={() => setAddType("sizes")}
+                onClick={() => {
+                  setSelectedIds([]);
+                  setAddType("sizes");
+                }}
               />
               <label for="sizes">Sizes</label>
             </div>
           </div>
-          <div>
-          <div style={{maxHeight:"70vh", width: "50%", overflow: "scroll", borderRadius:"10px"}}>
-            <input style={{backgroundColor: "#ccd5e0", width: "100%", border : "none", fontSize: "1rem"}} className={styles.rowItem}/>
-            {
-                (addType === "descriptions" ? descriptions : addType === "brands" ? brands : sizes).map((preset, index) => 
-                <div className={styles.rowItem} style={{backgroundColor:  index % 2 === 0 ? "#dae2eb" : "#ccd5e0",}}>
-                    {preset.description || preset.brand || preset.size}
-                </div>)
-            }
+          <div
+            className={styles.mobileFlex}
+            style={{ display: "flex", gap: "20px" }}
+          >
+            <div
+              style={{
+                maxHeight: "70vh",
+                flex: 1,
+                overflow: "scroll",
+                borderRadius: "10px",
+              }}
+            >
+              <div style={{ position: "relative" }}>
+                <FaSearch
+                  style={{ position: "absolute", left: "5px", top: "5px" }}
+                />
+                <input
+                  style={{
+                    backgroundColor: "#ccd5e0",
+                    width: "100%",
+                    border: "none",
+                    fontSize: "1rem",
+                    paddingLeft: "30px",
+                  }}
+                  className={styles.rowItem}
+                  onChange={(e) => {
+                    addType === "descriptions"
+                      ? setDescriptionSearch(e.target.value)
+                      : addType === "brands"
+                        ? setBrandSearch(e.target.value)
+                        : setSizeSearch(e.target.value);
+                  }}
+                />
+              </div>
+              {(addType === "descriptions"
+                ? filteredDescriptions
+                : addType === "brands"
+                  ? filteredBrands
+                  : filteredSizes
+              ).map((preset, index) => (
+                <div
+                  className={styles.rowItem}
+                  style={{
+                    backgroundColor:
+                      selectedIds.length > 0 && selectedIds.includes(preset._id)
+                        ? "#94a2b2"
+                        : index % 2 === 0
+                          ? "#dae2eb"
+                          : "#ccd5e0",
+                  }}
+                  onClick={() => editSelectedIds(preset._id)}
+                >
+                  {preset.description || preset.brand || preset.size}
+                </div>
+              ))}
+            </div>
+            <div
+              style={{
+                maxHeight: "70vh",
+                flex: 1,
+                overflow: "scroll",
+                borderRadius: "10px",
+                padding: "10px",
+              }}
+              className={styles.vertStack}
+            >
+              <h4>Editing {selectedIds.length} presets</h4>
+              <input
+                style={{ width: "100%" }}
+                className={styles.input}
+                value={selectedIds.map(
+                  (id) =>
+                    " " +
+                    (addType === "descriptions"
+                      ? descriptionDict[id]?.description
+                      : addType === "brands"
+                        ? brandDict[id]?.brand
+                        : sizeDict[id]?.size)
+                )}
+                readOnly
+              />
+              <TfiExchangeVertical
+                style={{ width: "100%", fontSize: "32px", color: "gray" }}
+              />
+              <textarea
+                className={styles.input}
+                style={{ resize: "vertical" }}
+                value={newField}
+                onChange={(e) => setNewField(e.target.value)}
+              />
+              <button
+                className={styles.button}
+                disabled={!newField.trim()}
+                onClick={(e) => editPreset(e)}
+              >
+                Submit
+              </button>
+            </div>
           </div>
-        </div>
         </div>
       )}
     </div>

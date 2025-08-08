@@ -902,11 +902,11 @@ const AddBox = ({
       retString =
         retString +
         "• " +
-        item.size +
+        (item.size || sizeDict[item.sizeId].size) +
         " " +
         item.color +
         " " +
-        item.description +
+        (item.description || descriptionDict[item.descriptionId].description) +
         " (" +
         item.style +
         ")\n";
