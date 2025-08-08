@@ -146,9 +146,14 @@ function Inventory() {
     return dict;
   }, [boxes]);
 
+  const groupedInventory = useMemo(() => {
+    
+  })
+
   // Filter inventory based on page selection
   const filteredInventory = useMemo(() => {
     let items;
+
     switch (page) {
       case "public":
         items = inventory.filter((item) => item.public === true);

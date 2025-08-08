@@ -112,6 +112,7 @@ export default function Box() {
     for(const [index, item] of items.entries()) {
       try {
         const newData = {
+          ...item,
           quantity: item.quantity +
           (negatives[index] ? 1 : -1) * changes[index]
         };
@@ -258,6 +259,9 @@ export default function Box() {
               <MdEdit fontSize="32px" className={styles.mobileInvisible}onClick={() => setEdit(!edit)} />
             </div>
           </h2>
+          <div className={styles.saveChanges} onClick={handleChanges}>
+            Save Changes
+          </div>
           {items.map((item, index) => (
             <div
               key={index}
@@ -369,9 +373,6 @@ export default function Box() {
               </div>
             </div>
           ))}
-          <div className={styles.saveChanges} onClick={handleChanges}>
-            Save Changes
-          </div>
         </div>
       ) : (
         <div className={styles.page}>

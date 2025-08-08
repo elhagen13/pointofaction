@@ -144,7 +144,6 @@ const AddBox = ({
   const [sizeSearch, setSizeSearch] = useState("");
 
   const filteredDescriptions = useMemo(() => {
-    console.log("options", options);
     if (!options?.descriptions) return [];
 
     if (!descriptionSearch || !descriptionSearch.trim()) {
@@ -226,6 +225,8 @@ const AddBox = ({
     if (!options.sizes) return {};
     options.sizes.forEach((item) => {
       dict[item._id.toString()] = item;
+      dict[item.size.toLowerCase().trim()] = item;
+
     });
     return dict;
   }, [options]);
@@ -236,15 +237,20 @@ const AddBox = ({
 
     options.descriptions.forEach((item) => {
       dict[item._id.toString()] = item;
+      dict[item.description.toLowerCase().trim()] = item;
     });
     return dict;
   }, [options]);
+
+
 
   const brandDict = useMemo(() => {
     if (!options.brands) return {};
     const dict = {};
     options.brands.forEach((item) => {
       dict[item._id.toString()] = item;
+      dict[item.brand.toLowerCase().trim()] = item;
+
     });
     return dict;
   }, [options]);
@@ -925,54 +931,176 @@ const AddBox = ({
   };
 
   // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Close description/brand/size dropdowns
-      if (!event.target.closest("[data-description-dropdown]")) {
-        setContents((prevContents) =>
-          prevContents.map((item) => ({ ...item, descriptionOpen: false }))
-        );
-        setCurrentItem((prevItem) => ({ ...prevItem, descriptionOpen: false }));
-        setDescriptionSearch("");
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    // Close description dropdown
+    if (!event.target.closest("[data-description-dropdown]")) {
+      // Close existing item dropdowns and apply search value if any were open
+      setContents((prevContents) =>
+        prevContents.map((item) => {
+          if (item.descriptionOpen && !descriptionDict[descriptionSearch.toLowerCase().trim()] ) {
+            return {
+              ...item,
+              description: descriptionSearch,
+              descriptionId: null,
+              descriptionOpen: false,
+            };
+          }
+          else if(item.descriptionOpen){
+            return {
+              ...item,
+              description: null,
+              descriptionId: descriptionDict[descriptionSearch.toLowerCase().trim()]._id,
+              descriptionOpen: false,
+            };
+          }
+          return { ...item, descriptionOpen: false };
+        })
+      );
+
+      // Close current item dropdown and apply search value if it was open
+      if (currentItem.descriptionOpen && !descriptionDict[descriptionSearch.toLowerCase().trim()] ) {
+        setCurrentItem({
+          ...currentItem,
+          description: descriptionSearch,
+          descriptionId: null,
+          descriptionOpen: false,
+        });
       }
-
-      if (!event.target.closest("[data-size-dropdown]")) {
-        setContents((prevContents) =>
-          prevContents.map((item) => ({ ...item, sizeOpen: false }))
-        );
-        setCurrentItem((prevItem) => ({ ...prevItem, sizeOpen: false }));
-        setSizeSearch("");
+      else if(currentItem.descriptionOpen){
+        setCurrentItem({
+          ...currentItem,
+          description: descriptionDict[descriptionSearch.toLowerCase().trim()].description,
+          descriptionId: descriptionDict[descriptionSearch.toLowerCase().trim()]._id,
+          descriptionOpen: false,
+        });
       }
+      
+      setDescriptionSearch("");
+    }
 
-      if (!event.target.closest("[data-brand-dropdown]")) {
-        setContents((prevContents) =>
-          prevContents.map((item) => ({ ...item, brandOpen: false }))
-        );
-        setCurrentItem((prevItem) => ({ ...prevItem, brandOpen: false }));
-        setBrandSearch("");
+    // Close size dropdown
+    if (!event.target.closest("[data-size-dropdown]")) {
+     setContents((prevContents) =>
+        prevContents.map((item) => {
+          if (item.sizeOpen && !sizeDict[sizeSearch.toLowerCase().trim()] ) {
+            return {
+              ...item,
+              size: sizeSearch,
+              sizeId: null,
+              sizeOpen: false,
+            };
+          }
+          else if(item.sizeOpen){
+            return {
+              ...item,
+              size: null,
+              sizeId: sizeDict[sizeSearch.toLowerCase().trim()]._id,
+              sizeOpen: false,
+            };
+          }
+          return { ...item, sizeOpen: false };
+        })
+      );
+
+      // Close current item dropdown and apply search value if it was open
+      if (currentItem.sizeOpen && !sizeDict[sizeSearch.toLowerCase().trim()] ) {
+        setCurrentItem({
+          ...currentItem,
+          size: sizeSearch,
+          sizeId: null,
+          sizeOpen: false,
+        });
       }
-
-      // Close box-swapping dropdown
-      if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
-        setIsDropdownOpen(null);
-        setDropdownSearchTerm("");
+      else if(currentItem.sizeOpen){
+        setCurrentItem({
+          ...currentItem,
+          size: sizeDict[sizeSearch.toLowerCase().trim()].size,
+          sizeId: sizeDict[sizeSearch.toLowerCase().trim()]._id,
+          sizeOpen: false,
+        });
       }
+      
+      setSizeSearch("");
+    }
 
-      // Close image options dropdown
-      if (
-        showImageOptions !== null &&
-        !event.target.closest("[data-image-options]")
-      ) {
-        setShowImageOptions(null);
+    // Close brand dropdown
+    if (!event.target.closest("[data-brand-dropdown]")) {
+      setContents((prevContents) =>
+        prevContents.map((item) => {
+          if (item.brandOpen && !brandDict[brandSearch.toLowerCase().trim()] ) {
+            return {
+              ...item,
+              brand: brandSearch,
+              brandId: null,
+              brandOpen: false,
+            };
+          }
+          else if(item.brandOpen){
+            return {
+              ...item,
+              brand: null,
+              brandId: brandDict[brandSearch.toLowerCase().trim()]._id,
+              brandOpen: false,
+            };
+          }
+          return { ...item, brandOpen: false };
+        })
+      );
+
+      // Close current item dropdown and apply search value if it was open
+      if (currentItem.brandOpen && !brandDict[brandSearch.toLowerCase().trim()] ) {
+        setCurrentItem({
+          ...currentItem,
+          brand: brandSearch,
+          brandId: null,
+          brandOpen: false,
+        });
       }
-    };
+      else if(currentItem.brandOpen){
+        setCurrentItem({
+          ...currentItem,
+          brand: brandDict[brandSearch.toLowerCase().trim()].brand,
+          brandId: brandDict[brandSearch.toLowerCase().trim()]._id,
+          brandOpen: false,
+        });
+      }
+      
+      setBrandSearch("");
+    }
 
-    document.addEventListener("click", handleClickOutside);
+    // Close box-swapping dropdown
+    if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
+      setIsDropdownOpen(null);
+      setDropdownSearchTerm("");
+    }
 
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [isDropdownOpen, showImageOptions]);
+    // Close image options dropdown
+    if (
+      showImageOptions !== null &&
+      !event.target.closest("[data-image-options]")
+    ) {
+      setShowImageOptions(null);
+    }
+  };
+
+  document.addEventListener("click", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("click", handleClickOutside);
+  };
+}, [
+  isDropdownOpen, 
+  showImageOptions, 
+  currentItem.descriptionOpen,
+  currentItem.sizeOpen, 
+  currentItem.brandOpen,
+  descriptionSearch,
+  brandSearch,
+  sizeSearch
+]);
+
+
 
   const handleDropdownToggle = (index) => {
     if (isDropdownOpen === index) {
@@ -994,7 +1122,168 @@ const AddBox = ({
       }, 0);
     }
   };
+  const handleDescriptionKeyDown = (e, index = null) => {
+    if (e.key === "Tab" || e.key === "Enter") {
+      // Prevent default behavior
+      e.preventDefault();
+  
+      const matchedItem = descriptionDict[descriptionSearch.toLowerCase().trim()];
+  
+      // Handle dropdown logic first
+      if (index !== null && !matchedItem) {
+        // No match found - use the raw search text
+        updateExistingContent(index, "description", descriptionSearch);
+        updateExistingContent(index, "descriptionId", null);
+        updateExistingContent(index, "descriptionOpen", false);
+      } else if (index !== null && matchedItem) {
+        // Match found - use the description from the dictionary
+        updateExistingContent(index, "description", matchedItem.description);
+        updateExistingContent(index, "descriptionId", matchedItem._id);
+        updateExistingContent(index, "descriptionOpen", false);
+      } else if (!matchedItem) {
+        // Handle current item - no match
+        setCurrentItem({
+          ...currentItem,
+          description: descriptionSearch,
+          descriptionId: null,
+          descriptionOpen: false,
+        });
+      } else {
+        // Handle current item - match found
+        setCurrentItem({
+          ...currentItem,
+          description: matchedItem.description,
+          descriptionId: matchedItem._id,
+          descriptionOpen: false,
+        });
+      }
+      setDescriptionSearch("");
+  
+      // Move to next input after state updates are processed
+      setTimeout(() => {
+        const focusableElements = document.querySelectorAll(
+          'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+        const currentIndex = Array.from(focusableElements).indexOf(e.target);
+  
+        if (currentIndex !== -1) {
+          const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+  
+          if (nextIndex >= 0 && nextIndex < focusableElements.length) {
+            focusableElements[nextIndex].focus();
+          }
+        }
+      }, 50);
+    }
+  };
+  
+  const handleBrandKeyDown = (e, index = null) => {
+    if (e.key === "Tab" || e.key === "Enter") {
+      e.preventDefault();
+  
+      const matchedItem = brandDict[brandSearch.toLowerCase().trim()];
+  
+      // Handle dropdown logic first
+      if (index !== null && !matchedItem) {
+        // No match found - use the raw search text
+        updateExistingContent(index, "brand", brandSearch);
+        updateExistingContent(index, "brandId", null);
+        updateExistingContent(index, "brandOpen", false);
+      } else if (index !== null && matchedItem) {
+        // Match found - use the brand from the dictionary
+        updateExistingContent(index, "brand", matchedItem.brand);
+        updateExistingContent(index, "brandId", matchedItem._id);
+        updateExistingContent(index, "brandOpen", false);
+      } else if (!matchedItem) {
+        // Handle current item - no match
+        setCurrentItem({
+          ...currentItem,
+          brand: brandSearch,
+          brandId: null,
+          brandOpen: false,
+        });
+      } else {
+        // Handle current item - match found
+        setCurrentItem({
+          ...currentItem,
+          brand: matchedItem.brand,
+          brandId: matchedItem._id,
+          brandOpen: false,
+        });
+      }
+      setBrandSearch("");
+  
+      setTimeout(() => {
+        const focusableElements = document.querySelectorAll(
+          'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+        const currentIndex = Array.from(focusableElements).indexOf(e.target);
+  
+        if (currentIndex !== -1) {
+          const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+  
+          if (nextIndex >= 0 && nextIndex < focusableElements.length) {
+            focusableElements[nextIndex].focus();
+          }
+        }
+      }, 50);
+    }
+  };
+  
 
+  const handleSizeKeyDown = (e, index = null) => {
+    if (e.key === "Tab" || e.key === "Enter") {
+      console.log("hmm")
+      e.preventDefault();
+  
+      const matchedItem = sizeDict[sizeSearch.toLowerCase().trim()];
+  
+      // Handle dropdown logic first
+      if (index !== null && !matchedItem) {
+        // No match found - use the raw search text
+        updateExistingContent(index, "size", sizeSearch);
+        updateExistingContent(index, "sizeId", null);
+        updateExistingContent(index, "sizeOpen", false);
+      } else if (index !== null && matchedItem) {
+        // Match found - use the size from the dictionary
+        updateExistingContent(index, "size", matchedItem.size);
+        updateExistingContent(index, "sizeId", matchedItem._id);
+        updateExistingContent(index, "sizeOpen", false);
+      } else if (!matchedItem) {
+        // Handle current item - no match
+        setCurrentItem({
+          ...currentItem,
+          size: sizeSearch,
+          sizeId: null,
+          sizeOpen: false,
+        });
+      } else {
+        // Handle current item - match found
+        setCurrentItem({
+          ...currentItem,
+          size: matchedItem.size,
+          sizeId: matchedItem._id,
+          sizeOpen: false,
+        });
+      }
+      setSizeSearch("");
+  
+      setTimeout(() => {
+        const focusableElements = document.querySelectorAll(
+          'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+        const currentIndex = Array.from(focusableElements).indexOf(e.target);
+  
+        if (currentIndex !== -1) {
+          const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+  
+          if (nextIndex >= 0 && nextIndex < focusableElements.length) {
+            focusableElements[nextIndex].focus();
+          }
+        }
+      }, 50);
+    }
+  };
   const addOptDb = async (selectedOption, newItem, index) => {
     console.log(selectedOption, newItem, index);
     if (isSubmitting) return;
@@ -1436,6 +1725,12 @@ const AddBox = ({
                                 : getDescription(item)
                             }
                             onClick={() => {
+                              setContents((prevContents) =>
+                                prevContents.map((item) => ({
+                                  ...item,
+                                  descriptionOpen: false,
+                                }))
+                              );
                               updateExistingContent(
                                 index,
                                 "descriptionOpen",
@@ -1456,6 +1751,7 @@ const AddBox = ({
                               );
                               setDescriptionSearch(item.description);
                             }}
+                            onKeyDown={(e) => handleDescriptionKeyDown(e, index)}
                             placeholder={
                               item.descriptionOpen
                                 ? "Search descriptions..."
@@ -1627,7 +1923,14 @@ const AddBox = ({
                             value={
                               item.brandOpen ? brandSearch : getBrand(item)
                             }
+                            
                             onClick={() => {
+                              setContents((prevContents) =>
+                              prevContents.map((item) => ({
+                                ...item,
+                                brandOpen: false,
+                              }))
+                            );
                               updateExistingContent(index, "brandOpen", true);
                               setBrandSearch(item.brand);
                             }}
@@ -1640,6 +1943,7 @@ const AddBox = ({
                               updateExistingContent(index, "brandOpen", true);
                               setBrandSearch(item.brand);
                             }}
+                            onKeyDown={(e) => handleBrandKeyDown(e, index)}
                             placeholder={
                               item.brandOpen ? "Search brands..." : ""
                             }
@@ -1786,6 +2090,12 @@ const AddBox = ({
                           <input
                             value={item.sizeOpen ? sizeSearch : getSize(item)}
                             onClick={() => {
+                              setContents((prevContents) =>
+                              prevContents.map((item) => ({
+                                ...item,
+                                sizeOpen: false,
+                              }))
+                            );
                               updateExistingContent(index, "sizeOpen", true);
                               setSizeSearch(item.size);
                             }}
@@ -1798,6 +2108,7 @@ const AddBox = ({
                               updateExistingContent(index, "sizeOpen", true);
                               setSizeSearch(item.size);
                             }}
+                            onKeyDown={(e) => handleSizeKeyDown(e, index)}
                             placeholder={item.sizeOpen ? "Search sizes..." : ""}
                             className={styles.input}
                             style={{
@@ -2324,6 +2635,7 @@ const AddBox = ({
                               });
                               setDescriptionSearch(currentItem.description);
                             }}
+                            onKeyDown={(e) => handleDescriptionKeyDown(e)}
                             placeholder={
                               currentItem.descriptionOpen
                                 ? "Search descriptions..."
@@ -2498,6 +2810,7 @@ const AddBox = ({
                               });
                               setBrandSearch(currentItem.brand);
                             }}
+                            onKeyDown={(e) => handleBrandKeyDown(e)}
                             placeholder={
                               currentItem.brandOpen ? "Search brands..." : ""
                             }
@@ -2648,6 +2961,7 @@ const AddBox = ({
                               });
                               setSizeSearch(currentItem.size);
                             }}
+                            onKeyDown={(e) => handleSizeKeyDown(e)}
                             placeholder={
                               currentItem.sizeOpen ? "Search sizes..." : ""
                             }
