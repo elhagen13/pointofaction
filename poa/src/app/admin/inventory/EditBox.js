@@ -18,6 +18,7 @@ import {
   IoIosRemoveCircle,
 } from "react-icons/io";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
+import EditPresets from "@/app/components/admin/editPresets/EditPresets";
 
 import jsPDF from "jspdf";
 
@@ -63,6 +64,14 @@ export default function EditItem({
           />
         )}
         {page === "success" && <Success />}
+        {page === "edit" && (
+          <EditPresets
+            options={options}
+            prevPage="box"
+            setPage={setPage}
+            refresh={refresh}
+          />
+        )}
       </div>
     </div>
   );
@@ -126,7 +135,7 @@ const AddBox = ({
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
-  const [acknowledgement, setAcknowledgement] = useState(false)
+  const [acknowledgement, setAcknowledgement] = useState(false);
   const [boxDict, setBoxDict] = useState({});
 
   // New state for description search
@@ -596,7 +605,7 @@ const AddBox = ({
       alert(
         "Warning: New item not finalized, click the checkmark to the right of the item to add."
       );
-      setAcknowledgement(true)
+      setAcknowledgement(true);
       return;
     }
 
@@ -926,7 +935,7 @@ const AddBox = ({
         setCurrentItem((prevItem) => ({ ...prevItem, descriptionOpen: false }));
         setDescriptionSearch("");
       }
-  
+
       if (!event.target.closest("[data-size-dropdown]")) {
         setContents((prevContents) =>
           prevContents.map((item) => ({ ...item, sizeOpen: false }))
@@ -934,7 +943,7 @@ const AddBox = ({
         setCurrentItem((prevItem) => ({ ...prevItem, sizeOpen: false }));
         setSizeSearch("");
       }
-  
+
       if (!event.target.closest("[data-brand-dropdown]")) {
         setContents((prevContents) =>
           prevContents.map((item) => ({ ...item, brandOpen: false }))
@@ -942,13 +951,13 @@ const AddBox = ({
         setCurrentItem((prevItem) => ({ ...prevItem, brandOpen: false }));
         setBrandSearch("");
       }
-  
+
       // Close box-swapping dropdown
       if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
         setIsDropdownOpen(null);
         setDropdownSearchTerm("");
       }
-  
+
       // Close image options dropdown
       if (
         showImageOptions !== null &&
@@ -957,9 +966,9 @@ const AddBox = ({
         setShowImageOptions(null);
       }
     };
-  
+
     document.addEventListener("click", handleClickOutside);
-  
+
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
@@ -987,7 +996,7 @@ const AddBox = ({
   };
 
   const addOptDb = async (selectedOption, newItem, index) => {
-    console.log(selectedOption, newItem, index)
+    console.log(selectedOption, newItem, index);
     if (isSubmitting) return;
     setIsSubmitting(true);
     const response = await addOption(selectedOption, newItem);
@@ -1014,16 +1023,14 @@ const AddBox = ({
           descriptionId: response._id,
           descriptionOpen: false,
         });
-      }
-      else if (selectedOption === "brand") {
+      } else if (selectedOption === "brand") {
         setCurrentItem({
           ...currentItem,
           brand: response.brand,
           brandId: response._id,
           brandOpen: false,
         });
-      }
-      else if (selectedOption === "size") {
+      } else if (selectedOption === "size") {
         setCurrentItem({
           ...currentItem,
           size: response.size,
@@ -1084,7 +1091,6 @@ const AddBox = ({
       return false;
     }
   };
-
 
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
@@ -1176,7 +1182,15 @@ const AddBox = ({
             </div>
           )}
           <div className={styles.formInput}>
-            <label>Box Inventory</label>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <label>Box Inventory</label>
+              <label
+                style={{ cursor: "pointer" }}
+                onClick={() => setPage("edit")}
+              >
+                Edit presets →
+              </label>
+            </div>{" "}
             <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
               <table
                 className={styles.boxTable}
@@ -1530,7 +1544,7 @@ const AddBox = ({
                                     No descriptions found
                                   </div>
                                 )}
-                                 <div
+                                <div
                                   className={styles.dropdownItem}
                                   style={{
                                     color: "#999",
@@ -1712,7 +1726,7 @@ const AddBox = ({
                                     No brands found
                                   </div>
                                 )}
-                                 <div
+                                <div
                                   className={styles.dropdownItem}
                                   style={{
                                     color: "#999",
@@ -2569,11 +2583,7 @@ const AddBox = ({
                                     textAlign: "center",
                                   }}
                                   onClick={() => {
-                                    addOptDb(
-                                      "brand",
-                                      brandSearch,
-                                      null
-                                    );
+                                    addOptDb("brand", brandSearch, null);
                                     setBrandSearch("");
                                   }}
                                   data-brand-dropdown
@@ -2723,11 +2733,7 @@ const AddBox = ({
                                     textAlign: "center",
                                   }}
                                   onClick={() => {
-                                    addOptDb(
-                                      "size",
-                                      sizeSearch,
-                                      null
-                                    );
+                                    addOptDb("size", sizeSearch, null);
                                     setSizeSearch("");
                                   }}
                                   data-size-dropdown
