@@ -87,6 +87,7 @@ function Inventory() {
         method: "GET",
     });
     let resultDescriptions = await response.json();
+    console.log(resultDescriptions)
 
     setOptions({
         ...options,
@@ -119,9 +120,8 @@ function Inventory() {
   }, [options]);
 
   const descriptionDict = useMemo(() => {
-    const dict = {};
     if(!options.descriptions) return {}
-
+    const dict = {};
     options.descriptions.forEach((item) => {
      dict[item._id.toString()] = item;
     });
@@ -351,15 +351,22 @@ function Inventory() {
         const itemData = {
           box_id: boxId,
           image: content.image,
-          description: content.description,
           style: content.style,
-          size: content.size,
           color: content.color,
           quantity: content.quantity,
           price: content.price,
           sale: content.sale || false,
           public: content.public || false,
         };
+
+        if(content.descriptionId) itemData.descriptionId = content.descriptionId
+        else itemData.description = content.description;
+
+        if(content.brandId) itemData.brandId = content.brandId
+        else itemData.brand = content.brand;
+
+        if(content.sizeId) itemData.sizeId = content.sizeId
+        else itemData.size = content.size;
 
         const itemResponse = await fetch("/api/inventory/item", {
           method: "POST",
@@ -416,8 +423,10 @@ function Inventory() {
 
   const getDescription = (item) => {
     let des = ""
-    if(item.descriptionId && descriptionDict[item.descriptionId.toString()]) des = descriptionDict[item.descriptionId.toString()].description
-    
+    if(item.descriptionId && descriptionDict[item.descriptionId.toString()]) {
+      des = descriptionDict[item.descriptionId.toString()].description
+
+    }    
     else if(item.description) des = item.description;
     else return "N/A"
     return des.length > 50 ? des.slice(0, 50) + "..." : des

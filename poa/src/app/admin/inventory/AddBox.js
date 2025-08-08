@@ -19,6 +19,7 @@ import {
 import jsPDF from "jspdf";
 
 import AddOption from "@/app/components/admin/addOptions/AddOption";
+import EditPresets from "@/app/components/admin/editPresets/EditPresets";
 
 export default function AddItem({
   onClose,
@@ -57,6 +58,14 @@ export default function AddItem({
         {page === "qr" && <QrPopup setPage={setPage} box={box} />}
         {page === "option" && (
           <AddOption
+            options={options}
+            prevPage="box"
+            setPage={setPage}
+            refresh={refresh}
+          />
+        )}
+        {page === "edit" && (
+          <EditPresets
             options={options}
             prevPage="box"
             setPage={setPage}
@@ -955,7 +964,10 @@ const AddBox = ({
             </div>
           )}
           <div className={styles.formInput}>
-            <label>Box Inventory</label>
+            <div style={{display:"flex", justifyContent:"space-between"}}>
+              <label>Box Inventory</label>
+            <label style={{cursor:"pointer"}}onClick={() => setPage("edit")}>Edit presets →</label>
+            </div>
             <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
               <table
                 className={styles.boxTable}
