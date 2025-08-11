@@ -1,6 +1,6 @@
 "use client";
 import styles from "./inventory.module.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FaUpload,
   FaTimes,
@@ -8,11 +8,13 @@ import {
   FaLink,
   FaDownload,
   FaRegCopy,
+  FaBookmark,
+  FaPlus,
 } from "react-icons/fa";
-import { IoIosAddCircle, IoIosCheckmarkCircle , IoIosRemoveCircle} from "react-icons/io";
+import { IoIosAddCircle, IoIosCheckmarkCircle, IoIosRemoveCircle } from "react-icons/io";
 import jsPDF from "jspdf";
 
-export default function AddItem({ onClose, refresh }) {
+export default function AddItem({ onClose, refresh, options }) {
   const [page, setPage] = useState("box");
   const [item, setItem] = useState({});
 
@@ -30,7 +32,7 @@ export default function AddItem({ onClose, refresh }) {
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        {page === "box" && <AddBox setPage={setPage} setItem={setItem} refresh={refresh}/>}
+        {page === "box" && <AddBox setPage={setPage} setItem={setItem} refresh={refresh} options={options} />}
         {page === "qr" && <QrPopup setPage={setPage} item={item} />}
       </div>
     </div>
@@ -54,12 +56,10 @@ const QrPopup = ({ item }) => {
       const textStartY = 1.6;
       const lineHeight = 0.2; 
       
-      
       const maxQrY = pageHeight - qrSize - bottomMargin; 
       
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
-      console.log("new", item.description)
       let description = item.description + "(" + item.style + ")";
       let currentQrY = 2.2; 
       
@@ -128,7 +128,7 @@ const QrPopup = ({ item }) => {
   );
 };
 
-const AddBox = ({ setPage, setItem, refresh }) => {
+const AddBox = ({ setPage, setItem, refresh, options }) => {
   const [location, setLocation] = useState("");
   const [minimumPrice, setMinimumPrice] = useState(0);
   const [visibility, setVisibility] = useState(["admin"]);
@@ -136,22 +136,90 @@ const AddBox = ({ setPage, setItem, refresh }) => {
   const [currentItem, setCurrentItem] = useState({
     imageUrl: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
     description: "",
+    descriptionId: null,
     style: "",
     brand: "",
+    brandId: null,
     size: "",
+    sizeId: null,
     color: "",
     quantity: 0,
     price: 0.0,
+    descriptionOpen: false,
+    brandOpen: false,
+    sizeOpen: false,
   });
   const [imageUploading, setImageUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
-  
-  // Add this missing state variable
-  const [selectedItemIndex, setSelectedItemIndex] = useState(null);
+  const [descriptionSearch, setDescriptionSearch] = useState("");
+  const [brandSearch, setBrandSearch] = useState("");
+  const [sizeSearch, setSizeSearch] = useState("");
 
-  const handleFileSelect = (e, type, itemIndex = null) => {
+  // Create dictionaries for quick lookup
+  const descriptionDict = useMemo(() => {
+    const dict = {};
+    if (!options?.descriptions) return {};
+    options.descriptions.forEach((item) => {
+      dict[item._id.toString()] = item;
+      dict[item.description.toLowerCase().trim()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const brandDict = useMemo(() => {
+    const dict = {};
+    if (!options?.brands) return {};
+    options.brands.forEach((item) => {
+      dict[item._id.toString()] = item;
+      dict[item.brand.toLowerCase().trim()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const sizeDict = useMemo(() => {
+    const dict = {};
+    if (!options?.sizes) return {};
+    options.sizes.forEach((item) => {
+      dict[item._id.toString()] = item;
+      dict[item.size.toLowerCase().trim()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  // Filter options based on search
+  const filteredDescriptions = useMemo(() => {
+    if (!options?.descriptions) return [];
+    if (!descriptionSearch || !descriptionSearch.trim()) {
+      return options.descriptions;
+    }
+    return options.descriptions.filter(desc =>
+      desc.description.toLowerCase().includes(descriptionSearch.toLowerCase())
+    );
+  }, [options?.descriptions, descriptionSearch]);
+
+  const filteredBrands = useMemo(() => {
+    if (!options?.brands) return [];
+    if (!brandSearch || !brandSearch.trim()) {
+      return options.brands;
+    }
+    return options.brands.filter(brand =>
+      brand.brand.toLowerCase().includes(brandSearch.toLowerCase())
+    );
+  }, [options?.brands, brandSearch]);
+
+  const filteredSizes = useMemo(() => {
+    if (!options?.sizes) return [];
+    if (!sizeSearch || !sizeSearch.trim()) {
+      return options.sizes;
+    }
+    return options.sizes.filter(size =>
+      size.size.toLowerCase().includes(sizeSearch.toLowerCase())
+    );
+  }, [options?.sizes, sizeSearch]);
+
+  const handleFileSelect = (e, type) => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
@@ -164,7 +232,7 @@ const AddBox = ({ setPage, setItem, refresh }) => {
         return;
       }
 
-      handleUploadImage(file, type, itemIndex);
+      handleUploadImage(file, type);
       setUploadError("");
     }
   };
@@ -175,7 +243,6 @@ const AddBox = ({ setPage, setItem, refresh }) => {
       return;
     }
 
-    // Basic URL validation
     try {
       new URL(imageUrlInput);
     } catch (e) {
@@ -195,11 +262,8 @@ const AddBox = ({ setPage, setItem, refresh }) => {
     setUploadError("");
   };
 
-  const handleUploadImage = async (file, type, itemIndex = null) => {
-    console.log(file, type, itemIndex);
-    if (!file) {
-      return;
-    }
+  const handleUploadImage = async (file, type) => {
+    if (!file) return;
     setImageUploading(true);
     setUploadError("");
     try {
@@ -211,13 +275,10 @@ const AddBox = ({ setPage, setItem, refresh }) => {
       });
       const result = await response.json();
       if (result.success) {
-        if (type === "content") {
-          // Update current item being added
-          setCurrentItem({
-            ...currentItem,
-            imageUrl: result.url,
-          });
-        }
+        setCurrentItem({
+          ...currentItem,
+          imageUrl: result.url,
+        });
       } else {
         setUploadError(result.error || "Upload failed");
       }
@@ -225,23 +286,20 @@ const AddBox = ({ setPage, setItem, refresh }) => {
       setUploadError("Network error: " + error.message);
     } finally {
       setImageUploading(false);
-      setSelectedItemIndex(null);
     }
   };
 
-  // Handle clicking on new item thumbnail
   const handleNewItemThumbnailClick = (e) => {
     e.preventDefault();
     setShowUrlInput(true);
   };
 
   const submitItem = async (e) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
     await submitDb();
   };
 
   const submitDb = async () => {
-    // Validate required fields
     if (!currentItem.description.trim()) {
       setUploadError("Please enter a description for the item");
       return false;
@@ -253,18 +311,34 @@ const AddBox = ({ setPage, setItem, refresh }) => {
     }
 
     const itemData = {
-      location: location, 
+      location: location,
       image: currentItem.imageUrl,
-      description: currentItem.description,
       style: currentItem.style,
-      size: currentItem.size,
       color: currentItem.color,
       quantity: currentItem.quantity,
       price: currentItem.price,
       sale: visibility.includes("sale"),
       public: visibility.includes("public"),
     };
-    
+
+    if (currentItem.descriptionId) {
+      itemData.descriptionId = currentItem.descriptionId;
+    } else {
+      itemData.description = currentItem.description;
+    }
+
+    if (currentItem.brandId) {
+      itemData.brandId = currentItem.brandId;
+    } else {
+      itemData.brand = currentItem.brand;
+    }
+
+    if (currentItem.sizeId) {
+      itemData.sizeId = currentItem.sizeId;
+    } else {
+      itemData.size = currentItem.size;
+    }
+
     if (visibility.includes("sale")) {
       itemData.discount = discount;
       itemData.minPrice = minimumPrice;
@@ -283,33 +357,258 @@ const AddBox = ({ setPage, setItem, refresh }) => {
 
       if (itemResult.success) {
         console.log("Item created successfully:", itemResult.data);
-        console.log("Message:", itemResult.message);
         alert("Item created successfully!");
         
         // Reset form
         setCurrentItem({
-          imageUrl: "",
+          imageUrl: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
           description: "",
+          descriptionId: null,
           style: "",
           brand: "",
+          brandId: null,
           size: "",
+          sizeId: null,
           color: "",
           quantity: 0,
           price: 0.0,
+          descriptionOpen: false,
+          brandOpen: false,
+          sizeOpen: false,
         });
         setLocation("");
         setUploadError("");
         
-        setPage("qr")
-        setItem(itemResult.data)
+        setPage("qr");
+        setItem(itemResult.data);
         refresh();
         return true;
       } else {
         console.error("Error creating item:", itemResult.error);
-        console.error("Details:", itemResult.details);
         setUploadError(itemResult.error || "Unknown error occurred");
         return false;
       }
+    } catch (error) {
+      console.error("Network error:", error);
+      setUploadError("Network error: " + error.message);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close description dropdown
+      if (!event.target.closest("[data-description-dropdown]") && currentItem.descriptionOpen) {
+        const searchTerm = descriptionSearch || "";
+        const matchedItem = descriptionDict[searchTerm.toLowerCase().trim()];
+        if (!matchedItem) {
+          setCurrentItem({
+            ...currentItem,
+            description: searchTerm,
+            descriptionId: null,
+            descriptionOpen: false,
+          });
+        } else {
+          setCurrentItem({
+            ...currentItem,
+            description: matchedItem.description,
+            descriptionId: matchedItem._id,
+            descriptionOpen: false,
+          });
+        }
+        setDescriptionSearch("");
+      }
+
+      // Close brand dropdown
+      if (!event.target.closest("[data-brand-dropdown]") && currentItem.brandOpen) {
+        const searchTerm = brandSearch || "";
+        const matchedItem = brandDict[searchTerm.toLowerCase().trim()];
+        if (!matchedItem) {
+          setCurrentItem({
+            ...currentItem,
+            brand: searchTerm,
+            brandId: null,
+            brandOpen: false,
+          });
+        } else {
+          setCurrentItem({
+            ...currentItem,
+            brand: matchedItem.brand,
+            brandId: matchedItem._id,
+            brandOpen: false,
+          });
+        }
+        setBrandSearch("");
+      }
+
+      // Close size dropdown
+      if (!event.target.closest("[data-size-dropdown]") && currentItem.sizeOpen) {
+        const searchTerm = sizeSearch || "";
+        const matchedItem = sizeDict[searchTerm.toLowerCase().trim()];
+        if (!matchedItem) {
+          setCurrentItem({
+            ...currentItem,
+            size: searchTerm,
+            sizeId: null,
+            sizeOpen: false,
+          });
+        } else {
+          setCurrentItem({
+            ...currentItem,
+            size: matchedItem.size,
+            sizeId: matchedItem._id,
+            sizeOpen: false,
+          });
+        }
+        setSizeSearch("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [
+    currentItem.descriptionOpen,
+    currentItem.brandOpen,
+    currentItem.sizeOpen,
+    descriptionSearch,
+    brandSearch,
+    sizeSearch,
+    descriptionDict,
+    brandDict,
+    sizeDict
+  ]);
+
+  const handleDescriptionKeyDown = (e) => {
+    if (e.key === "Tab" || e.key === "Enter") {
+      e.preventDefault();
+      const matchedItem = descriptionDict[descriptionSearch.toLowerCase().trim()];
+      if (!matchedItem) {
+        setCurrentItem({
+          ...currentItem,
+          description: descriptionSearch,
+          descriptionId: null,
+          descriptionOpen: false,
+        });
+      } else {
+        setCurrentItem({
+          ...currentItem,
+          description: matchedItem.description,
+          descriptionId: matchedItem._id,
+          descriptionOpen: false,
+        });
+      }
+      setDescriptionSearch("");
+    }
+  };
+
+  const handleBrandKeyDown = (e) => {
+    if (e.key === "Tab" || e.key === "Enter") {
+      e.preventDefault();
+      const matchedItem = brandDict[brandSearch.toLowerCase().trim()];
+      if (!matchedItem) {
+        setCurrentItem({
+          ...currentItem,
+          brand: brandSearch,
+          brandId: null,
+          brandOpen: false,
+        });
+      } else {
+        setCurrentItem({
+          ...currentItem,
+          brand: matchedItem.brand,
+          brandId: matchedItem._id,
+          brandOpen: false,
+        });
+      }
+      setBrandSearch("");
+    }
+  };
+
+  const handleSizeKeyDown = (e) => {
+    if (e.key === "Tab" || e.key === "Enter") {
+      e.preventDefault();
+      const matchedItem = sizeDict[sizeSearch.toLowerCase().trim()];
+      if (!matchedItem) {
+        setCurrentItem({
+          ...currentItem,
+          size: sizeSearch,
+          sizeId: null,
+          sizeOpen: false,
+        });
+      } else {
+        setCurrentItem({
+          ...currentItem,
+          size: matchedItem.size,
+          sizeId: matchedItem._id,
+          sizeOpen: false,
+        });
+      }
+      setSizeSearch("");
+    }
+  };
+
+  const addOptDb = async (selectedOption, newItem) => {
+    try {
+      const itemData = {};
+      let url = "";
+      switch (selectedOption) {
+        case "description":
+          itemData.description = newItem;
+          url = "/api/details/descriptions";
+          break;
+        case "brand":
+          itemData.brand = newItem;
+          url = "/api/details/brands";
+          break;
+        case "size":
+          itemData.size = newItem;
+          url = "/api/details/sizes";
+          break;
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(itemData),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        console.error("Error creating item:", data.error);
+        setUploadError(data.error || "Unknown error occurred");
+        return false;
+      }
+
+      // Update the current item with the new option
+      if (selectedOption === "description") {
+        setCurrentItem({
+          ...currentItem,
+          description: data.data.description,
+          descriptionId: data.data._id,
+          descriptionOpen: false,
+        });
+      } else if (selectedOption === "brand") {
+        setCurrentItem({
+          ...currentItem,
+          brand: data.data.brand,
+          brandId: data.data._id,
+          brandOpen: false,
+        });
+      } else if (selectedOption === "size") {
+        setCurrentItem({
+          ...currentItem,
+          size: data.data.size,
+          sizeId: data.data._id,
+          sizeOpen: false,
+        });
+      }
+
+      return data.data;
     } catch (error) {
       console.error("Network error:", error);
       setUploadError("Network error: " + error.message);
@@ -415,19 +714,30 @@ const AddBox = ({ setPage, setItem, refresh }) => {
                   >
                     {currentItem.imageUrl !== "" ? (
                       <div style={{position: "relative", width:"auto"}}>
-                      <img
-                        src={currentItem.imageUrl}
-                        alt="New Item"
-                        onClick={handleNewItemThumbnailClick}
-                        style={{
-                          cursor: "pointer",
-                          opacity: imageUploading ? 0.5 : 1,
-                          transition: "opacity 0.2s",
-                        }}
-                        title="Click to change image"
-                      />
-                      <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"0", fontSize:"30px", color:"red"}}
-                          onClick={() => setCurrentItem({...currentItem, imageUrl: ""})}/>
+                        <img
+                          src={currentItem.imageUrl}
+                          alt="New Item"
+                          onClick={handleNewItemThumbnailClick}
+                          style={{
+                            cursor: "pointer",
+                            opacity: imageUploading ? 0.5 : 1,
+                            transition: "opacity 0.2s",
+                          }}
+                          title="Click to change image"
+                        />
+                        <IoIosRemoveCircle 
+                          style={{
+                            position:"absolute", 
+                            top: "-15px", 
+                            right:"0", 
+                            fontSize:"30px", 
+                            color:"red"
+                          }}
+                          onClick={() => setCurrentItem({
+                            ...currentItem, 
+                            imageUrl: ""
+                          })}
+                        />
                       </div>
                     ) : showUrlInput ? (
                       <div>
@@ -496,21 +806,154 @@ const AddBox = ({ setPage, setItem, refresh }) => {
                     )}
                   </td>
                   <td className={styles.tableLg}>
-                    <input
-                      value={currentItem.description}
-                      onChange={(e) =>
-                        setCurrentItem({
-                          ...currentItem,
-                          description: e.target.value,
-                        })
-                      }
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        minHeight: "auto",
-                        width: "100%",
-                      }}
-                    />
+                    <div
+                      style={{ position: "relative" }}
+                      data-description-dropdown
+                    >
+                      <input
+                        value={
+                          currentItem.descriptionOpen
+                            ? descriptionSearch
+                            : currentItem.description
+                        }
+                        onClick={() => {
+                          setCurrentItem({
+                            ...currentItem,
+                            descriptionOpen: true,
+                          });
+                          setDescriptionSearch(currentItem.description);
+                        }}
+                        onChange={(e) => {
+                          if (currentItem.descriptionOpen) {
+                            setDescriptionSearch(e.target.value);
+                          }
+                        }}
+                        onFocus={() => {
+                          setCurrentItem({
+                            ...currentItem,
+                            descriptionOpen: true,
+                          });
+                          setDescriptionSearch(currentItem.description);
+                        }}
+                        onKeyDown={handleDescriptionKeyDown}
+                        placeholder={
+                          currentItem.descriptionOpen
+                            ? "Search descriptions..."
+                            : ""
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                          caretColor: currentItem.descriptionOpen
+                            ? "auto"
+                            : "transparent",
+                        }}
+                        data-description-dropdown
+                      />
+                      {currentItem.descriptionOpen && (
+                        <div
+                          className={styles.dropdown}
+                          data-description-dropdown
+                          style={{ maxWidth: "250px" }}
+                        >
+                          <div
+                            style={{
+                              maxHeight: "200px",
+                              overflowY: "auto",
+                            }}
+                            data-description-dropdown
+                          >
+                            {filteredDescriptions.length > 0 ? (
+                              filteredDescriptions.map((opt, oIndex) => (
+                                <div
+                                  key={oIndex}
+                                  className={styles.dropdownItem}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      description: opt.description,
+                                      descriptionId: opt._id,
+                                      descriptionOpen: false,
+                                    });
+                                    setDescriptionSearch("");
+                                  }}
+                                  style={{
+                                    padding: "8px 12px",
+                                    cursor: "pointer",
+                                    borderBottom:
+                                      oIndex < filteredDescriptions.length - 1
+                                        ? "1px solid #eee"
+                                        : "none",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.target.style.backgroundColor = "#f5f5f5")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.target.style.backgroundColor = "white")
+                                  }
+                                  data-description-dropdown
+                                >
+                                  <strong>{opt.description}</strong>
+                                </div>
+                              ))
+                            ) : (
+                              <div
+                                className={styles.dropdownItem}
+                                style={{
+                                  color: "#999",
+                                  fontStyle: "italic",
+                                  padding: "8px 12px",
+                                  textAlign: "center",
+                                }}
+                                data-description-dropdown
+                              >
+                                No descriptions found
+                              </div>
+                            )}
+                            <div
+                              className={styles.dropdownItem}
+                              style={{
+                                color: "#999",
+                                padding: "8px 12px",
+                                textAlign: "center",
+                              }}
+                              onClick={() => {
+                                addOptDb("description", descriptionSearch);
+                                setDescriptionSearch("");
+                              }}
+                              data-description-dropdown
+                            >
+                              <div>
+                                Add to inventory? <FaBookmark />
+                              </div>
+                            </div>
+                            <div
+                              className={styles.dropdownItem}
+                              style={{
+                                color: "#999",
+                                padding: "8px 12px",
+                                textAlign: "center",
+                              }}
+                              onClick={() => {
+                                setCurrentItem({
+                                  ...currentItem,
+                                  description: descriptionSearch,
+                                  descriptionId: null,
+                                  descriptionOpen: false,
+                                });
+                              }}
+                              data-description-dropdown
+                            >
+                              <div>
+                                Add only to item? <FaPlus />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -530,38 +973,300 @@ const AddBox = ({ setPage, setItem, refresh }) => {
                     />
                   </td>
                   <td className={styles.tableReg}>
-                    <input
-                      value={currentItem.brand}
-                      onChange={(e) =>
-                        setCurrentItem({
-                          ...currentItem,
-                          brand: e.target.value,
-                        })
-                      }
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        minHeight: "auto",
-                        width: "100%",
-                      }}
-                    />
+                    <div
+                      style={{ position: "relative" }}
+                      data-brand-dropdown
+                    >
+                      <input
+                        value={
+                          currentItem.brandOpen
+                            ? brandSearch
+                            : currentItem.brand
+                        }
+                        onClick={() => {
+                          setCurrentItem({
+                            ...currentItem,
+                            brandOpen: true,
+                          });
+                          setBrandSearch(currentItem.brand);
+                        }}
+                        onChange={(e) => {
+                          if (currentItem.brandOpen) {
+                            setBrandSearch(e.target.value);
+                          }
+                        }}
+                        onFocus={() => {
+                          setCurrentItem({
+                            ...currentItem,
+                            brandOpen: true,
+                          });
+                          setBrandSearch(currentItem.brand);
+                        }}
+                        onKeyDown={handleBrandKeyDown}
+                        placeholder={
+                          currentItem.brandOpen ? "Search brands..." : ""
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                          caretColor: currentItem.brandOpen
+                            ? "auto"
+                            : "transparent",
+                        }}
+                        data-brand-dropdown
+                      />
+                      {currentItem.brandOpen && (
+                        <div
+                          className={styles.dropdown}
+                          data-brand-dropdown
+                          style={{ maxWidth: "250px" }}
+                        >
+                          <div
+                            style={{
+                              maxHeight: "200px",
+                              overflowY: "auto",
+                            }}
+                            data-brand-dropdown
+                          >
+                            {filteredBrands.length > 0 ? (
+                              filteredBrands.map((opt, oIndex) => (
+                                <div
+                                  key={oIndex}
+                                  className={styles.dropdownItem}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      brand: opt.brand,
+                                      brandId: opt._id,
+                                      brandOpen: false,
+                                    });
+                                    setBrandSearch("");
+                                  }}
+                                  style={{
+                                    padding: "8px 12px",
+                                    cursor: "pointer",
+                                    borderBottom:
+                                      oIndex < filteredBrands.length - 1
+                                        ? "1px solid #eee"
+                                        : "none",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.target.style.backgroundColor = "#f5f5f5")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.target.style.backgroundColor = "white")
+                                  }
+                                  data-brand-dropdown
+                                >
+                                  <strong>{opt.brand}</strong>
+                                </div>
+                              ))
+                            ) : (
+                              <div
+                                className={styles.dropdownItem}
+                                style={{
+                                  color: "#999",
+                                  fontStyle: "italic",
+                                  padding: "8px 12px",
+                                  textAlign: "center",
+                                }}
+                                data-brand-dropdown
+                              >
+                                No brands found
+                              </div>
+                            )}
+                            <div
+                              className={styles.dropdownItem}
+                              style={{
+                                color: "#999",
+                                padding: "8px 12px",
+                                textAlign: "center",
+                              }}
+                              onClick={() => {
+                                addOptDb("brand", brandSearch);
+                                setBrandSearch("");
+                              }}
+                              data-brand-dropdown
+                            >
+                              <div>
+                                Add to inventory? <FaBookmark />
+                              </div>
+                            </div>
+                            <div
+                              className={styles.dropdownItem}
+                              style={{
+                                color: "#999",
+                                padding: "8px 12px",
+                                textAlign: "center",
+                              }}
+                              onClick={() => {
+                                setCurrentItem({
+                                  ...currentItem,
+                                  brand: brandSearch,
+                                  brandId: null,
+                                  brandOpen: false,
+                                });
+                              }}
+                              data-brand-dropdown
+                            >
+                              <div>
+                                Add only to item? <FaPlus />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className={styles.tableReg}>
-                    <input
-                      value={currentItem.size}
-                      onChange={(e) =>
-                        setCurrentItem({
-                          ...currentItem,
-                          size: e.target.value,
-                        })
-                      }
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        minHeight: "auto",
-                        width: "100%",
-                      }}
-                    />
+                    <div
+                      style={{ position: "relative" }}
+                      data-size-dropdown
+                    >
+                      <input
+                        value={
+                          currentItem.sizeOpen
+                            ? sizeSearch
+                            : currentItem.size
+                        }
+                        onClick={() => {
+                          setCurrentItem({
+                            ...currentItem,
+                            sizeOpen: true,
+                          });
+                          setSizeSearch(currentItem.size);
+                        }}
+                        onChange={(e) => {
+                          if (currentItem.sizeOpen) {
+                            setSizeSearch(e.target.value);
+                          }
+                        }}
+                        onFocus={() => {
+                          setCurrentItem({
+                            ...currentItem,
+                            sizeOpen: true,
+                          });
+                          setSizeSearch(currentItem.size);
+                        }}
+                        onKeyDown={handleSizeKeyDown}
+                        placeholder={
+                          currentItem.sizeOpen ? "Search sizes..." : ""
+                        }
+                        className={styles.input}
+                        style={{
+                          margin: 0,
+                          minHeight: "auto",
+                          width: "100%",
+                          caretColor: currentItem.sizeOpen
+                            ? "auto"
+                            : "transparent",
+                        }}
+                        data-size-dropdown
+                      />
+                      {currentItem.sizeOpen && (
+                        <div
+                          className={styles.dropdown}
+                          data-size-dropdown
+                          style={{ maxWidth: "250px" }}
+                        >
+                          <div
+                            style={{
+                              maxHeight: "200px",
+                              overflowY: "auto",
+                            }}
+                            data-size-dropdown
+                          >
+                            {filteredSizes.length > 0 ? (
+                              filteredSizes.map((opt, oIndex) => (
+                                <div
+                                  key={oIndex}
+                                  className={styles.dropdownItem}
+                                  onClick={() => {
+                                    setCurrentItem({
+                                      ...currentItem,
+                                      size: opt.size,
+                                      sizeId: opt._id,
+                                      sizeOpen: false,
+                                    });
+                                    setSizeSearch("");
+                                  }}
+                                  style={{
+                                    padding: "8px 12px",
+                                    cursor: "pointer",
+                                    borderBottom:
+                                      oIndex < filteredSizes.length - 1
+                                        ? "1px solid #eee"
+                                        : "none",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.target.style.backgroundColor = "#f5f5f5")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.target.style.backgroundColor = "white")
+                                  }
+                                  data-size-dropdown
+                                >
+                                  <strong>{opt.size}</strong>
+                                </div>
+                              ))
+                            ) : (
+                              <div
+                                className={styles.dropdownItem}
+                                style={{
+                                  color: "#999",
+                                  fontStyle: "italic",
+                                  padding: "8px 12px",
+                                  textAlign: "center",
+                                }}
+                                data-size-dropdown
+                              >
+                                No sizes found
+                              </div>
+                            )}
+                            <div
+                              className={styles.dropdownItem}
+                              style={{
+                                color: "#999",
+                                padding: "8px 12px",
+                                textAlign: "center",
+                              }}
+                              onClick={() => {
+                                addOptDb("size", sizeSearch);
+                                setSizeSearch("");
+                              }}
+                              data-size-dropdown
+                            >
+                              <div>
+                                Add to inventory? <FaBookmark />
+                              </div>
+                            </div>
+                            <div
+                              className={styles.dropdownItem}
+                              style={{
+                                color: "#999",
+                                padding: "8px 12px",
+                                textAlign: "center",
+                              }}
+                              onClick={() => {
+                                setCurrentItem({
+                                  ...currentItem,
+                                  size: sizeSearch,
+                                  sizeId: null,
+                                  sizeOpen: false,
+                                });
+                              }}
+                              data-size-dropdown
+                            >
+                              <div>
+                                Add only to item? <FaPlus />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -639,21 +1344,32 @@ const AddBox = ({ setPage, setItem, refresh }) => {
                   <div className={styles.mobileValue}>
                     {currentItem.imageUrl !== "" ? (
                       <div style={{position:"relative", width:"auto"}}>
-                      <img
-                        src={currentItem.imageUrl}
-                        alt="New Item"
-                        onClick={handleNewItemThumbnailClick}
-                        style={{
-                          cursor: "pointer",
-                          opacity: imageUploading ? 0.5 : 1,
-                          transition: "opacity 0.2s",
-                          maxWidth: "100px",
-                          maxHeight: "100px",
-                        }}
-                        title="Click to change image"
-                      />
-                      <IoIosRemoveCircle style={{position:"absolute", top: "-15px", right:"-15px", fontSize:"30px", color:"red"}}
-                          onClick={() => setCurrentItem({...currentItem, imageUrl: ""})}/>
+                        <img
+                          src={currentItem.imageUrl}
+                          alt="New Item"
+                          onClick={handleNewItemThumbnailClick}
+                          style={{
+                            cursor: "pointer",
+                            opacity: imageUploading ? 0.5 : 1,
+                            transition: "opacity 0.2s",
+                            maxWidth: "100px",
+                            maxHeight: "100px",
+                          }}
+                          title="Click to change image"
+                        />
+                        <IoIosRemoveCircle 
+                          style={{
+                            position:"absolute", 
+                            top: "-15px", 
+                            right:"-15px", 
+                            fontSize:"30px", 
+                            color:"red"
+                          }}
+                          onClick={() => setCurrentItem({
+                            ...currentItem, 
+                            imageUrl: ""
+                          })}
+                        />
                       </div>
                     ) : showUrlInput ? (
                       <div style={{ position: "relative" }}>
@@ -871,7 +1587,7 @@ const AddBox = ({ setPage, setItem, refresh }) => {
             </div>
           </div>
           
-          <div className={styles.formInput}>
+          <div className={styles.formInput} style={{zIndex: 0}}>
             <label>Visibility</label>
             <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <div>

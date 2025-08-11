@@ -281,59 +281,70 @@ const filteredInventory = useMemo(() => {
       default: // "all inventory"
         boxItems = boxes;
     }
-
+  
     // Apply search filter to boxes
     if (searchValue.trim() === "") {
       return boxItems;
     }
-
+  
     const searchTerm = searchValue.toLowerCase().trim();
-
-    return boxItems.filter((item) => {
+  
+    return boxItems.filter((box) => {
       if (selectedSearchOption !== "all") {
         switch (selectedSearchOption) {
-          case "style":
-            return item.style?.toLowerCase().includes(searchTerm);
+          case "style code":
+            return box.style?.toLowerCase().includes(searchTerm);
+          case "brand style":
+            return box.brand?.toLowerCase().includes(searchTerm);
           case "color":
-            return item.color?.toLowerCase().includes(searchTerm);
+            return box.color?.toLowerCase().includes(searchTerm);
           case "description":
-            return item.description?.toLowerCase().includes(searchTerm);
+            return box.description?.toLowerCase().includes(searchTerm);
           case "quantity":
-            return item.quantity?.toString().includes(searchTerm);
+            // For boxes, search in the total quantity of contents
+            const totalQuantity = (contentDict[box._id.toString()] || [])
+              .reduce((acc, item) => acc + item.quantity, 0);
+            return totalQuantity.toString().includes(searchTerm);
           case "box":
-            const boxId = boxDict[item.boxId?.toString()]?.boxId;
-            return boxId?.toLowerCase().includes(searchTerm);
+            // For boxes, search by the box's own boxId
+            return box.boxId?.toLowerCase().includes(searchTerm);
           case "location":
-            const location = boxDict[item.boxId?.toString()]?.location;
-            return location?.toLowerCase().includes(searchTerm);
+            // For boxes, search by the box's own location
+            return box.location?.toLowerCase().includes(searchTerm);
+          default:
+            return false;
         }
       }
-
+  
       // For "all" search - multi-word logic
       const searchWords = searchTerm
         .toLowerCase()
         .split(/\s+/)
         .filter((word) => word.length > 0);
-
+  
       if (searchWords.length === 0) return true;
-
-      // Combine all searchable text for this item
-      const itemText = [
-        item.style || "",
-        item.color || "",
-        item.description || "",
-        item.quantity?.toString() || "",
-        boxDict[item.boxId?.toString()]?.boxId || "",
-        boxDict[item.boxId?.toString()]?.location || "",
+  
+      // Calculate total quantity for this box
+      const totalQuantity = (contentDict[box._id.toString()] || [])
+        .reduce((acc, item) => acc + item.quantity, 0);
+  
+      // Combine all searchable text for this box
+      const boxText = [
+        box.style || "",
+        box.brand || "",
+        box.color || "",
+        box.description || "",
+        totalQuantity.toString() || "",
+        box.boxId || "",
+        box.location || "",
       ]
         .join(" ")
         .toLowerCase();
-
+  
       // Check if ALL search words are found in the combined text
-      return searchWords.every((word) => itemText.includes(word));
+      return searchWords.every((word) => boxText.includes(word));
     });
-  }, [boxes, contentDict, page, searchValue, selectedSearchOption]);
-
+  }, [boxes, contentDict, page, searchValue, selectedSearchOption, boxDict]);
   const getInventory = async () => {
     const response = await fetch("/api/inventory/item", {
       method: "GET",
@@ -875,6 +886,7 @@ const filteredInventory = useMemo(() => {
           refresh={refresh}
           savedInfo={savedInfo}
           setSavedInfo={setSavedInfo}
+          options={options}
         />
       )}
       {addBoxOpen && (
