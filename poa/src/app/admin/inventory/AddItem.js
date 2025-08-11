@@ -232,7 +232,6 @@ const AddBox = ({ setPage, setItem, refresh }) => {
   // Handle clicking on new item thumbnail
   const handleNewItemThumbnailClick = (e) => {
     e.preventDefault();
-    console.log("hello");
     setShowUrlInput(true);
   };
 

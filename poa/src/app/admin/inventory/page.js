@@ -484,12 +484,12 @@ const filteredInventory = useMemo(() => {
     return des.length > 50 ? des.slice(0, 50) + "..." : des;
   };
 
-  const getBrand = (item, clicked) => {
+  const getBrand = (item) => {
     let brand = item[0].brand || item[0].brandId;
 
     for (const i of item) {
       if (
-        (i.brand && i.brand.toLowerCase() !== brand.toLowerCase()) ||
+        (i.brand && brand && i.brand.toLowerCase() !== brand.toLowerCase()) ||
         (i.brandId && i.brandId !== brand)
       ) {
         return "Various";
@@ -524,10 +524,10 @@ const filteredInventory = useMemo(() => {
 
 
   const getLocation = (item) => {
-    let firstLocation = item.location || (item[0].boxId && boxDict[item[0].boxId].location) || null;
+    let firstLocation = item.location || (item[0].boxId && boxDict[item[0].boxId]?.location) || null;
     let curLocation = ""
     for(const i of item){
-      curLocation = i.location || boxDict[i.boxId].location || null;
+      curLocation = i.location || (boxDict[i.boxId]?.location) || null;
       if(curLocation !== firstLocation) return "Multi"
     }
     return firstLocation
@@ -893,6 +893,7 @@ const filteredInventory = useMemo(() => {
           refresh={refresh}
           boxes={boxes}
           items={inventory}
+          options={options}
         />
       )}
       {editBoxOpen !== null && (
