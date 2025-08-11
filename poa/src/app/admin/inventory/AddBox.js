@@ -973,6 +973,7 @@ const AddBox = ({
         setMinimumPrice(0);
 
         setPage("qr");
+        refresh();
       }
     } catch (error) {
       console.error("Error submitting form:", error);

@@ -10,6 +10,7 @@ import AddItem from "./AddItem.js";
 import AddBox from "./AddBox.js";
 import EditItem from "./EditItem.js";
 import EditBox from "./EditBox.js";
+import MultiOpen from "./MultiOpen.js";
 
 function Inventory() {
   /*"all inventory", "boxes", "public", "sale"*/
@@ -24,6 +25,8 @@ function Inventory() {
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [editItemOpen, setEditItemOpen] = useState(null);
   const [editBoxOpen, setEditBoxOpen] = useState(null);
+
+  const [multiOpen, setMultiOpen] = useState(null)
 
   const [inventory, setInventory] = useState([]);
   const [boxes, setBoxes] = useState([]);
@@ -46,19 +49,20 @@ function Inventory() {
   const [options, setOptions] = useState({});
   const [savedInfo, setSavedInfo] = useState({
     addBox: {},
-    addItem: {}
-  })
+    addItem: {},
+  });
+
+  
+  const getBoxes = async () => {
+    const response = await fetch("/api/inventory/box", {
+      method: "GET",
+    });
+
+    const result = await response.json();
+    setBoxes(result.data);
+  };
 
   useEffect(() => {
-    const getBoxes = async () => {
-      const response = await fetch("/api/inventory/box", {
-        method: "GET",
-      });
-
-      const result = await response.json();
-      setBoxes(result.data);
-    };
-
     getBoxes();
   }, [inventory]);
 
@@ -70,32 +74,33 @@ function Inventory() {
   const refresh = () => {
     getInventory();
     getItemOptions();
-  }
+    getBoxes();
+  };
 
   const getItemOptions = async () => {
     let response = await fetch("/api/details/brands", {
-        method: "GET",
+      method: "GET",
     });
     let resultBrands = await response.json();
 
     response = await fetch("/api/details/sizes", {
-        method: "GET",
+      method: "GET",
     });
     let resultSizes = await response.json();
 
     response = await fetch("/api/details/descriptions", {
-        method: "GET",
+      method: "GET",
     });
     let resultDescriptions = await response.json();
-    console.log(resultDescriptions)
+    console.log(resultDescriptions);
 
     setOptions({
-        ...options,
-        brands: resultBrands.data,
-        sizes: resultSizes.data,
-        descriptions: resultDescriptions.data,
+      ...options,
+      brands: resultBrands.data,
+      sizes: resultSizes.data,
+      descriptions: resultDescriptions.data,
     });
-};
+  };
   const contentDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
@@ -112,33 +117,32 @@ function Inventory() {
 
   const sizeDict = useMemo(() => {
     const dict = {};
-    if(!options.sizes) return {}
+    if (!options.sizes) return {};
     options.sizes.forEach((item) => {
-     dict[item._id.toString()] = item;
+      dict[item._id.toString()] = item;
     });
     return dict;
   }, [options]);
 
   const descriptionDict = useMemo(() => {
-    if(!options.descriptions) return {}
+    if (!options.descriptions) return {};
     const dict = {};
     options.descriptions.forEach((item) => {
-     dict[item._id.toString()] = item;
+      dict[item._id.toString()] = item;
     });
     return dict;
   }, [options]);
 
   const brandDict = useMemo(() => {
-    if(!options.brands) return {}
+    if (!options.brands) return {};
     const dict = {};
     options.brands.forEach((item) => {
-     dict[item._id.toString()] = item;
+      dict[item._id.toString()] = item;
     });
     return dict;
   }, [options]);
 
   const boxDict = useMemo(() => {
-    console.log(boxes)
     const dict = {};
     boxes.forEach((box) => {
       dict[box._id.toString()] = box;
@@ -146,21 +150,7 @@ function Inventory() {
     return dict;
   }, [boxes]);
 
-  const groupedInventory = useMemo(() => {
-    let dict = {}
-    for(const item of inventory){
-      if(!dict[`${item.style}, ${item.color}, ${item.size || item.sizeId}`]){
-        dict[`${item.style}, ${item.color}, ${item.size || item.sizeId}`] = [item]
-      }
-      else{
-        dict[`${item.style}, ${item.color}, ${item.size || item.sizeId}`].push(item)
-      }
-    }
-    return dict
-  }, [inventory])
-  
-  console.log("groupedInventory", groupedInventory)
-  // Filter inventory based on page selection
+  // Filter inventory based on page selection and search, then group
   const filteredInventory = useMemo(() => {
     let items;
 
@@ -176,59 +166,78 @@ function Inventory() {
     }
 
     // Apply search filter
-    if (searchValue.trim() === "") {
-      return items;
+    if (searchValue.trim() !== "") {
+      const searchTerm = searchValue.toLowerCase().trim();
+
+      items = items.filter((item) => {
+        if (selectedSearchOption !== "all") {
+          // Keep existing single-field search logic
+          switch (selectedSearchOption) {
+            case "style code":
+              return item.style?.toLowerCase().includes(searchTerm);
+            case "brand style":
+              return item.brand?.toLowerCase().includes(searchTerm);
+            case "color":
+              return item.color?.toLowerCase().includes(searchTerm);
+            case "description":
+              return item.description?.toLowerCase().includes(searchTerm);
+            case "quantity":
+              return item.quantity?.toString().includes(searchTerm);
+            case "box":
+              const boxId = boxDict[item.boxId?.toString()]?.boxId;
+              return boxId?.toLowerCase().includes(searchTerm);
+            case "location":
+              const location = boxDict[item.boxId?.toString()]?.location;
+              return location?.toLowerCase().includes(searchTerm);
+            default:
+              return false;
+          }
+        }
+
+        // For "all" search - multi-word logic
+        const searchWords = searchTerm
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((word) => word.length > 0);
+
+        if (searchWords.length === 0) return true;
+
+        // Combine all searchable text for this item
+        const itemText = [
+          item.style || "",
+          item.brand || "",
+          item.color || "",
+          item.description || "",
+          item.quantity?.toString() || "",
+          boxDict[item.boxId?.toString()]?.boxId || "",
+          boxDict[item.boxId?.toString()]?.location || "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        console.log("ITEMTEXT:", itemText)
+        console.log("searchWORDS:", searchWords)
+
+        // Check if ALL search words are found in the combined text
+        return searchWords.all((word) => itemText.includes(word));
+      });
     }
 
-    const searchTerm = searchValue.toLowerCase().trim();
+    // Now group the filtered items using the same logic as groupedInventory
+    let dict = {};
+    for (const item of items) {
+      const style = item.style.toLowerCase();
+      const color = item.color.toLowerCase();
+      const size = item.sizeId || item.size.toLowerCase();
+      const key = `${style}, ${color}, ${size}`;
 
-    return items.filter((item) => {
-      if (selectedSearchOption !== "all") {
-        // Keep existing single-field search logic
-        switch (selectedSearchOption) {
-          case "style code":
-            return item.style?.toLowerCase().includes(searchTerm);
-          case "brand style":
-            return item.brand?.toLowerCase().includes(searchTerm);
-          case "color":
-            return item.color?.toLowerCase().includes(searchTerm);
-          case "description":
-            return item.description?.toLowerCase().includes(searchTerm);
-          case "quantity":
-            return item.quantity?.toString().includes(searchTerm);
-          case "box":
-            const boxId = boxDict[item.boxId?.toString()]?.boxId;
-            return boxId?.toLowerCase().includes(searchTerm);
-          case "location":
-            const location = boxDict[item.boxId?.toString()]?.location;
-            return location?.toLowerCase().includes(searchTerm);
-        }
+      if (!dict[key]) {
+        dict[key] = [item];
+      } else {
+        dict[key].push(item);
       }
+    }
 
-      // For "all" search - multi-word logic
-      const searchWords = searchTerm
-        .toLowerCase()
-        .split(/\s+/)
-        .filter((word) => word.length > 0);
-
-      if (searchWords.length === 0) return true;
-
-      // Combine all searchable text for this item
-      const itemText = [
-        item.style || "",
-        item.brand || "",
-        item.color || "",
-        item.description || "",
-        item.quantity?.toString() || "",
-        boxDict[item.boxId?.toString()]?.boxId || "",
-        boxDict[item.boxId?.toString()]?.location || "",
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      // Check if ALL search words are found in the combined text
-      return searchWords.every((word) => itemText.includes(word));
-    });
+    return Object.values(dict);
   }, [inventory, page, searchValue, selectedSearchOption, boxDict]);
 
   // Filter boxes based on page selection and search
@@ -277,24 +286,29 @@ function Inventory() {
             return location?.toLowerCase().includes(searchTerm);
         }
       }
-    
+
       // For "all" search - multi-word logic
-      const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(word => word.length > 0);
-      
+      const searchWords = searchTerm
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
       if (searchWords.length === 0) return true;
-    
+
       // Combine all searchable text for this item
       const itemText = [
-        item.style || '',
-        item.color || '',
-        item.description || '',
-        item.quantity?.toString() || '',
-        boxDict[item.boxId?.toString()]?.boxId || '',
-        boxDict[item.boxId?.toString()]?.location || ''
-      ].join(' ').toLowerCase();
-    
+        item.style || "",
+        item.color || "",
+        item.description || "",
+        item.quantity?.toString() || "",
+        boxDict[item.boxId?.toString()]?.boxId || "",
+        boxDict[item.boxId?.toString()]?.location || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
       // Check if ALL search words are found in the combined text
-      return searchWords.every(word => itemText.includes(word));
+      return searchWords.every((word) => itemText.includes(word));
     });
   }, [boxes, contentDict, page, searchValue, selectedSearchOption]);
 
@@ -307,7 +321,6 @@ function Inventory() {
 
     setInventory(result.data);
   };
-
 
   async function duplicateBox(box) {
     try {
@@ -374,13 +387,14 @@ function Inventory() {
           public: content.public || false,
         };
 
-        if(content.descriptionId) itemData.descriptionId = content.descriptionId
+        if (content.descriptionId)
+          itemData.descriptionId = content.descriptionId;
         else itemData.description = content.description;
 
-        if(content.brandId) itemData.brandId = content.brandId
+        if (content.brandId) itemData.brandId = content.brandId;
         else itemData.brand = content.brand;
 
-        if(content.sizeId) itemData.sizeId = content.sizeId
+        if (content.sizeId) itemData.sizeId = content.sizeId;
         else itemData.size = content.size;
 
         const itemResponse = await fetch("/api/inventory/item", {
@@ -437,33 +451,77 @@ function Inventory() {
   };
 
   const getDescription = (item) => {
-    let des = ""
-    if(item.descriptionId && descriptionDict[item.descriptionId.toString()]) {
-      des = descriptionDict[item.descriptionId.toString()].description
+    let des = "";
+    if (
+      item[0].descriptionId &&
+      descriptionDict[item[0].descriptionId.toString()]
+    ) {
+      des = descriptionDict[item[0].descriptionId.toString()].description;
+    } else if (item[0].description) des = item[0].description;
+    else return "N/A";
+    return des.length > 50 ? des.slice(0, 50) + "..." : des;
+  };
 
-    }    
-    else if(item.description) des = item.description;
-    else return "N/A"
-    return des.length > 50 ? des.slice(0, 50) + "..." : des
-  }
-  
-  const getBrand = (item) => {
-    let brand = ""
-    if(item.brandId && brandDict[item.brandId.toString()])
-      brand = brandDict[item.brandId.toString()].brand
-    else if(item.brand) brand = item.brand;
-    else return "N/A"
-    return brand
-  }
+  const getBrand = (item, clicked) => {
+    let brand = item[0].brand || item[0].brandId;
+
+    for (const i of item) {
+      if (
+        (i.brand && i.brand.toLowerCase() !== brand.toLowerCase()) ||
+        (i.brandId && i.brandId !== brand)
+      ) {
+        return "Various";
+      }
+    }
+
+    if (item[0].brandId && brandDict[item[0].brandId.toString()]) {
+      brand = brandDict[item[0].brandId.toString()].brand;
+    } else if (item[0].brand) brand = item[0].brand;
+    else return "N/A";
+    return brand;
+  };
 
   const getSize = (item) => {
-    let size = ""
-    if(item.sizeId && sizeDict[item.sizeId.toString()])
-      size = sizeDict[item.sizeId.toString()].size
-    else if(item.size) size = item.size;
-    else return "N/A"
-    return size
-  }
+    let size = "";
+    if (item[0].sizeId && sizeDict[item[0].sizeId.toString()])
+      size = sizeDict[item[0].sizeId.toString()].size;
+    else if (item[0].size) size = item[0].size;
+    else return "N/A";
+    return size;
+  };
+
+  const getBox = (item) => {
+    let same = item[0].boxId;
+    for(const i of item){
+      if(i.boxId !== same){
+        return "Multi"
+      }
+    }
+    return boxDict[same].boxId || "N/A"
+  };
+
+
+  const getLocation = (item) => {
+    let firstLocation = item.location || (item[0].boxId && boxDict[item[0].boxId].location) || null;
+    let curLocation = ""
+    for(const i of item){
+      curLocation = i.location || boxDict[i.boxId].location || null;
+      if(curLocation !== firstLocation) return "Multi"
+    }
+    return firstLocation
+  };
+
+  const getPrice = (item) => {
+    let same = item[0].price;
+    for(const i of item){
+      if(i.price !== same){
+        return "Multi"
+      }
+    }
+    return same || "N/A"
+  };
+
+  
 
   return (
     <div
@@ -484,7 +542,7 @@ function Inventory() {
           Add Box
         </button>
       </div>
-      <div className={styles.filters} >
+      <div className={styles.filters}>
         <div className={styles.searchContainer} ref={dropdownRef}>
           <IoSearch className={styles.search} />
           <input
@@ -504,7 +562,7 @@ function Inventory() {
           </div>
 
           {isDropdownOpen && (
-            <div className={`${styles.dropdown} ${styles.searchDropdown}`} >
+            <div className={`${styles.dropdown} ${styles.searchDropdown}`}>
               {searchOptions.map((option, index) => (
                 <div
                   key={index}
@@ -561,200 +619,250 @@ function Inventory() {
               Boxes
             </label>
           </div>
-          <div style={{display:"flex", flexDirection:"row", gap:"10px"}}>
-          {pageOptions.map((opt, index) => (
-            <button
-              key={index}
-              onClick={() => setPage(opt)}
-              style={{
-                backgroundColor: page === opt ? colors[index] : "#f0f0f0",
-                color: page === opt ? "white" : "black",
-                border: "1px solid #ccc",
-                padding: "8px 16px",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
-            >
-              {opt}
-            </button>
-          ))}
+          <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
+            {pageOptions.map((opt, index) => (
+              <button
+                key={index}
+                onClick={() => setPage(opt)}
+                style={{
+                  backgroundColor: page === opt ? colors[index] : "#f0f0f0",
+                  color: page === opt ? "white" : "black",
+                  border: "1px solid #ccc",
+                  padding: "8px 16px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              >
+                {opt}
+              </button>
+            ))}
           </div>
         </div>
       </div>
-      <div style={{overflowX:"scroll"}}>
-      {filter === "line items" && (
-        <table
-          className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse", borderRadius:"10px"}}
-        >
-          <thead>
-            <tr style={{ backgroundColor: "#ebebeb" }}>
-              <th className={styles.tableSm}>Item</th>
-              <th style={{minWidth:"200px"}}>Description</th>
-              <th>Style Code</th>
-              <th>Brand Style</th>
-              <th>Color</th>
-              <th>Size</th>
-              <th>Quantity</th>
-              <th>Box</th>
-              <th>Location</th>
-              <th>Price</th>
-              <th>Visibility</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredInventory.map((item, index) => (
-              <tr
-                key={index}
-                style={{
-                  backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-                  overflow:"scroll"
-                }}
-                onClick={() => {
-                  if (boxDict[item.boxId?.toString()]) {
-                    setSelectedItem(item._id);
-                    setEditBoxOpen(boxDict[item.boxId?.toString()]);
-                  } else {
-                    setEditItemOpen(item);
-                  }
-                }}
-              >
-                <td className={styles.tableSm} style={{ position: "relative"}}>
-                  <img src={item.image} alt={`Item ${index + 1}`} />
-                </td>
-                <td  style={{minWidth:"100px"}}>
-                  {getDescription(item)}
-                </td>
-                <td style={{minWidth:"100px"}}>{item.style}</td>
-                <td style={{minWidth:"100px"}}>{getBrand(item)}</td>
-                <td  style={{minWidth:"100px"}}>{item.color}</td>
-                <td  style={{minWidth:"100px"}}>{getSize(item)}</td>
-                <td  style={{minWidth:"100px"}}>{item.quantity}</td>
-                {boxDict[item.boxId?.toString()] ? (
-                  <td
-                    onClick={() =>
-                      setEditBoxOpen(boxDict[item.boxId?.toString()])
-                    }
-                    style={{ cursor: "pointer", minWidth:"100px" }}
-                  >
-                    {boxDict[item.boxId?.toString()]?.boxId}
-                  </td>
-                ) : (
-                  <td style={{minWidth:"100px"}}>N/A</td>
-                )}
-                <td  style={{minWidth:"100px"}}>
-                  {boxDict[item.boxId?.toString()]?.location || item.location}
-                </td>
-                <td  style={{minWidth:"100px"}}>${item.price}</td>
-                <td  style={{minWidth:"100px"}}>
-                  {item.public ? (
-                    <MdPublic color="green" />
-                  ) : (
-                    <MdOutlinePublicOff color="red" />
-                  )}{" "}
-                  {item.sale ? <HiCash color="blue" /> : <></>}
-                </td>
+      <div style={{ overflowX: "scroll" }}>
+        {filter === "line items" && (
+          <table
+            className={styles.inventoryTable}
+            style={{ borderCollapse: "collapse", borderRadius: "10px" }}
+          >
+            <thead>
+              <tr style={{ backgroundColor: "#ebebeb" }}>
+                <th className={styles.tableSm}>Item</th>
+                <th style={{ minWidth: "200px" }}>Description</th>
+                <th>Style Code</th>
+                <th>Brand Style</th>
+                <th>Color</th>
+                <th>Size</th>
+                <th>Quantity</th>
+                <th>Box</th>
+                <th>Location</th>
+                <th>Price</th>
+                <th>Visibility</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      {filter === "boxes" && (
-        <table
-          className={styles.inventoryTable}
-          style={{ borderCollapse: "collapse", borderRadius:"10px", overflow:"auto"  }}
-        >
-          <thead style={{ textAlign: "left" }}>
-            <tr style={{ backgroundColor: "#ebebeb" }}>
-              <th>Box</th>
-              <th>Box Id</th>
-              <th>Description</th>
-              <th>Location</th>
-              <th>Total Quant.</th>
-              <th>Discount</th>
-              <th>Min.</th>
-              <th>Visibility</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredBoxes.map((box, index) => (
-              <tr
-                key={index}
-                style={{
-                  width: "100%",
-                  backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-                  cursor: "pointer",
-                }}
-              >
-                <td
-                  style={{ position: "relative" }}
-                  onClick={() => setEditBoxOpen(box)}
+            </thead>
+            <tbody>
+              {filteredInventory.map((item, index) => (
+                <tr
+                  key={index}
+                  style={{
+                    backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                    overflow: "scroll",
+                  }}
+                  onClick={() => {
+                      if(item.length === 1 && boxDict[item[0].boxId?.toString()]){
+                        setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
+                      }
+                      else if(item.length === 1){
+                        setEditItemOpen(item[0]);
+                      }
+                      else setMultiOpen(item)
+                  }}
                 >
-                  <div className={styles.tableSm}>
-                  <img src={box.image} alt={`Item ${index + 1}`} />
-                  </div>
-                </td>
-                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>{box.boxId}</td>
-                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
-                  {box.description.length > 80
-                    ? box.description.slice(0, 80) + "..."
-                    : box.description}
-                </td>
-                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>{box.location}</td>
-                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
-                  {contentDict[box._id.toString()]?.reduce((acc, cur) => acc + cur.quantity, 0)|| 0}
-                </td>
-                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
-                  {contentDict[box._id]
-                    ? contentDict[box._id][0].sale
-                      ? `${box.discount}%`
-                      : "N/A"
-                    : "N/A"}
-                </td>
-                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
-                  {contentDict[box._id]
-                    ? contentDict[box._id][0].sale
-                      ? `$${box.minPrice}`
-                      : "N/A"
-                    : "N/A"}
-                </td>
-                <td onClick={() => setEditBoxOpen(box)} style={{minWidth:"100px"}}>
-                  {contentDict[box._id] ? (
-                    contentDict[box._id][0].public ? (
+                  <td
+                    className={styles.tableSm}
+                    style={{ position: "relative" }}
+                  >
+                    <img src={item[0].image} alt={`Item ${index + 1}`} />
+                  </td>
+                  <td style={{ minWidth: "100px" }}>{getDescription(item)}</td>
+                  <td style={{ minWidth: "100px" }}>{item[0].style}</td>
+                  <td style={{ minWidth: "100px" }}>{getBrand(item)}</td>
+                  <td style={{ minWidth: "100px" }}>{item[0].color}</td>
+                  <td style={{ minWidth: "100px" }}>{getSize(item)}</td>
+                  <td style={{ minWidth: "100px" }}>{item.reduce((acc, cur) => acc + cur.quantity, 0)}</td>
+                  {boxDict[item[0].boxId?.toString()] ? (
+                    <td
+                      onClick={() =>
+                        setEditBoxOpen(boxDict[item.boxId?.toString()])
+                      }
+                      style={{ cursor: "pointer", minWidth: "100px" }}
+                    >
+                      {getBox(item)}
+                    </td>
+                  ) : (
+                    <td style={{ minWidth: "100px" }}>N/A</td>
+                  )}
+                  <td style={{ minWidth: "100px" }}>
+                    {getLocation(item)}
+                  </td>
+                  <td style={{ minWidth: "100px" }}>{getPrice(item) !== "Multi" ? `$${getPrice(item)}` : "Multi"}</td>
+                  <td style={{ minWidth: "100px" }}>
+                    {item.every(i => i.public) ? (
                       <MdPublic color="green" />
+                    ) : 
+                    item.some(i => i.public) ? (
+                      <MdPublic color="orange"/>
                     ) : (
                       <MdOutlinePublicOff color="red" />
                     )
-                  ) : (
-                    <MdOutlinePublicOff color="red" />
-                  )}
-                  {contentDict[box._id] ? (
-                    contentDict[box._id][0].sale ? (
-                      <HiCash color="blue" />
+                  }
+
+                    {item.every(i => i.sale) ? <HiCash color="blue" /> : item.some(i => i.sale) ? <HiCash color="orange"/> : <></>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {filter === "boxes" && (
+          <table
+            className={styles.inventoryTable}
+            style={{
+              borderCollapse: "collapse",
+              borderRadius: "10px",
+              overflow: "auto",
+            }}
+          >
+            <thead style={{ textAlign: "left" }}>
+              <tr style={{ backgroundColor: "#ebebeb" }}>
+                <th>Box</th>
+                <th>Box Id</th>
+                <th>Description</th>
+                <th>Location</th>
+                <th>Total Quant.</th>
+                <th>Discount</th>
+                <th>Min.</th>
+                <th>Visibility</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredBoxes.map((box, index) => (
+                <tr
+                  key={index}
+                  style={{
+                    width: "100%",
+                    backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                    cursor: "pointer",
+                  }}
+                >
+                  <td
+                    style={{ position: "relative" }}
+                    onClick={() => setEditBoxOpen(box)}
+                  >
+                    <div className={styles.tableSm}>
+                      <img src={box.image} alt={`Item ${index + 1}`} />
+                    </div>
+                  </td>
+                  <td
+                    onClick={() => setEditBoxOpen(box)}
+                    style={{ minWidth: "100px" }}
+                  >
+                    {box.boxId}
+                  </td>
+                  <td
+                    onClick={() => setEditBoxOpen(box)}
+                    style={{ minWidth: "100px" }}
+                  >
+                    {box.description.length > 80
+                      ? box.description.slice(0, 80) + "..."
+                      : box.description}
+                  </td>
+                  <td
+                    onClick={() => setEditBoxOpen(box)}
+                    style={{ minWidth: "100px" }}
+                  >
+                    {box.location}
+                  </td>
+                  <td
+                    onClick={() => setEditBoxOpen(box)}
+                    style={{ minWidth: "100px" }}
+                  >
+                    {contentDict[box._id.toString()]?.reduce(
+                      (acc, cur) => acc + cur.quantity,
+                      0
+                    ) || 0}
+                  </td>
+                  <td
+                    onClick={() => setEditBoxOpen(box)}
+                    style={{ minWidth: "100px" }}
+                  >
+                    {contentDict[box._id]
+                      ? contentDict[box._id][0].sale
+                        ? `${box.discount}%`
+                        : "N/A"
+                      : "N/A"}
+                  </td>
+                  <td
+                    onClick={() => setEditBoxOpen(box)}
+                    style={{ minWidth: "100px" }}
+                  >
+                    {contentDict[box._id]
+                      ? contentDict[box._id][0].sale
+                        ? `$${box.minPrice}`
+                        : "N/A"
+                      : "N/A"}
+                  </td>
+                  <td
+                    onClick={() => setEditBoxOpen(box)}
+                    style={{ minWidth: "100px" }}
+                  >
+                    {contentDict[box._id] ? (
+                      contentDict[box._id][0].public ? (
+                        <MdPublic color="green" />
+                      ) : (
+                        <MdOutlinePublicOff color="red" />
+                      )
+                    ) : (
+                      <MdOutlinePublicOff color="red" />
+                    )}
+                    {contentDict[box._id] ? (
+                      contentDict[box._id][0].sale ? (
+                        <HiCash color="blue" />
+                      ) : (
+                        ""
+                      )
                     ) : (
                       ""
-                    )
-                  ) : (
-                    ""
-                  )}
-                </td>
-                <td>
-                  <FaRegCopy onClick={() => duplicateBox(box)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+                    )}
+                  </td>
+                  <td>
+                    <FaRegCopy onClick={() => duplicateBox(box)} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {addItemOpen && (
-        <AddItem onClose={() => setAddItemOpen(false)} refresh={refresh} savedInfo={savedInfo} setSavedInfo={setSavedInfo} />
+        <AddItem
+          onClose={() => setAddItemOpen(false)}
+          refresh={refresh}
+          savedInfo={savedInfo}
+          setSavedInfo={setSavedInfo}
+        />
       )}
       {addBoxOpen && (
-        <AddBox onClose={() => setAddBoxOpen(false)} refresh={refresh} options={options} savedInfo={savedInfo} setSavedInfo={setSavedInfo}/>
+        <AddBox
+          onClose={() => setAddBoxOpen(false)}
+          refresh={refresh}
+          options={options}
+          savedInfo={savedInfo}
+          setSavedInfo={setSavedInfo}
+        />
       )}
       {editItemOpen !== null && (
         <EditItem
@@ -776,6 +884,19 @@ function Inventory() {
           options={options}
         />
       )}
+      {
+        multiOpen !== null && (
+          <MultiOpen items={multiOpen}
+          onClose={() => setMultiOpen(null)}
+          setEditBoxOpen={setEditBoxOpen}
+          boxDict={boxDict}
+          sizeDict={sizeDict}
+          descriptionDict={descriptionDict}
+          brandDict={brandDict}
+          />
+
+        )
+      }
     </div>
   );
 }
