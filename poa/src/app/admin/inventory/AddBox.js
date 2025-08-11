@@ -272,6 +272,41 @@ const AddBox = ({
     );
   }, [options?.sizes, sizeSearch]);
 
+  const sizeDict = useMemo(() => {
+    const dict = {};
+    if (!options.sizes) return {};
+    options.sizes.forEach((item) => {
+      dict[item._id.toString()] = item;
+      dict[item.size.toLowerCase().trim()] = item;
+
+    });
+    return dict;
+  }, [options]);
+
+  const descriptionDict = useMemo(() => {
+    const dict = {};
+    if (!options.descriptions) return {};
+
+    options.descriptions.forEach((item) => {
+      dict[item._id.toString()] = item;
+      dict[item.description.toLowerCase().trim()] = item;
+    });
+    return dict;
+  }, [options]);
+
+
+
+  const brandDict = useMemo(() => {
+    if (!options.brands) return {};
+    const dict = {};
+    options.brands.forEach((item) => {
+      dict[item._id.toString()] = item;
+      dict[item.brand.toLowerCase().trim()] = item;
+
+    });
+    return dict;
+  }, [options]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Close description dropdown
@@ -430,11 +465,6 @@ const AddBox = ({
         setBrandSearch("");
       }
   
-      // Close box-swapping dropdown
-      if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
-        setIsDropdownOpen(null);
-        setDropdownSearchTerm("");
-      }
   
       // Close image options dropdown
       if (
@@ -451,7 +481,6 @@ const AddBox = ({
       document.removeEventListener("click", handleClickOutside);
     };
   }, [
-    isDropdownOpen, 
     showImageOptions, 
     currentItem.descriptionOpen,
     currentItem.sizeOpen, 
@@ -1186,40 +1215,6 @@ const AddBox = ({
     }
   };
 
-  const sizeDict = useMemo(() => {
-    const dict = {};
-    if (!options.sizes) return {};
-    options.sizes.forEach((item) => {
-      dict[item._id.toString()] = item;
-      dict[item.size.toLowerCase().trim()] = item;
-
-    });
-    return dict;
-  }, [options]);
-
-  const descriptionDict = useMemo(() => {
-    const dict = {};
-    if (!options.descriptions) return {};
-
-    options.descriptions.forEach((item) => {
-      dict[item._id.toString()] = item;
-      dict[item.description.toLowerCase().trim()] = item;
-    });
-    return dict;
-  }, [options]);
-
-
-
-  const brandDict = useMemo(() => {
-    if (!options.brands) return {};
-    const dict = {};
-    options.brands.forEach((item) => {
-      dict[item._id.toString()] = item;
-      dict[item.brand.toLowerCase().trim()] = item;
-
-    });
-    return dict;
-  }, [options]);
 
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
