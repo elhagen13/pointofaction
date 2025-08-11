@@ -150,95 +150,117 @@ function Inventory() {
     return dict;
   }, [boxes]);
 
-  // Filter inventory based on page selection and search, then group
-  const filteredInventory = useMemo(() => {
-    let items;
+// Filter inventory based on page selection and search, then group
+// Filter inventory based on page selection and search, then group
+const filteredInventory = useMemo(() => {
+  let items;
 
-    switch (page) {
-      case "public":
-        items = inventory.filter((item) => item.public === true);
-        break;
-      case "sale":
-        items = inventory.filter((item) => item.sale === true);
-        break;
-      default: // "all inventory"
-        items = inventory;
+  switch (page) {
+    case "public":
+      items = inventory.filter((item) => item.public === true);
+      break;
+    case "sale":
+      items = inventory.filter((item) => item.sale === true);
+      break;
+    default: // "all inventory"
+      items = inventory;
+  }
+
+  // First, group the items (before filtering)
+  let dict = {};
+  for (const item of items) {
+    const style = item.style.toLowerCase();
+    const color = item.color.toLowerCase();
+    const size = item.sizeId || item.size.toLowerCase();
+    const key = `${style}, ${color}, ${size}`;
+
+    if (!dict[key]) {
+      dict[key] = [item];
+    } else {
+      dict[key].push(item);
     }
+  }
 
-    // Apply search filter
-    if (searchValue.trim() !== "") {
-      const searchTerm = searchValue.toLowerCase().trim();
+  const groupedItems = Object.values(dict);
 
-      items = items.filter((item) => {
-        if (selectedSearchOption !== "all") {
-          // Keep existing single-field search logic
-          switch (selectedSearchOption) {
-            case "style code":
-              return item.style?.toLowerCase().includes(searchTerm);
-            case "brand style":
-              return item.brand?.toLowerCase().includes(searchTerm);
-            case "color":
-              return item.color?.toLowerCase().includes(searchTerm);
-            case "description":
-              return item.description?.toLowerCase().includes(searchTerm);
-            case "quantity":
-              return item.quantity?.toString().includes(searchTerm);
-            case "box":
-              const boxId = boxDict[item.boxId?.toString()]?.boxId;
-              return boxId?.toLowerCase().includes(searchTerm);
-            case "location":
-              const location = boxDict[item.boxId?.toString()]?.location;
-              return location?.toLowerCase().includes(searchTerm);
-            default:
-              return false;
-          }
+  // Now filter the groups based on search criteria
+  if (searchValue.trim() === "") {
+    return groupedItems;
+  }
+
+  const searchTerm = searchValue.toLowerCase().trim();
+
+  return groupedItems.filter((group) => {
+    // Check if ANY item in the group matches the search
+    return group.some((item) => {
+      if (selectedSearchOption !== "all") {
+        // Keep existing single-field search logic
+        switch (selectedSearchOption) {
+          case "style code":
+            return item.style?.toLowerCase().includes(searchTerm);
+          case "brand style":
+            // Check both direct brand and brandId reference
+            const brandText = item.brandId && brandDict[item.brandId.toString()] 
+              ? brandDict[item.brandId.toString()].brand 
+              : item.brand || "";
+            return brandText.toLowerCase().includes(searchTerm);
+          case "color":
+            return item.color?.toLowerCase().includes(searchTerm);
+          case "description":
+            // Check both direct description and descriptionId reference
+            const descriptionText = item.descriptionId && descriptionDict[item.descriptionId.toString()]
+              ? descriptionDict[item.descriptionId.toString()].description
+              : item.description || "";
+            return descriptionText.toLowerCase().includes(searchTerm);
+          case "quantity":
+            return item.quantity?.toString().includes(searchTerm);
+          case "box":
+            const boxId = boxDict[item.boxId?.toString()]?.boxId;
+            return boxId?.toLowerCase().includes(searchTerm);
+          case "location":
+            const location = boxDict[item.boxId?.toString()]?.location;
+            return location?.toLowerCase().includes(searchTerm);
+          default:
+            return false;
         }
-
-        // For "all" search - multi-word logic
-        const searchWords = searchTerm
-          .toLowerCase()
-          .split(/\s+/)
-          .filter((word) => word.length > 0);
-
-        if (searchWords.length === 0) return true;
-
-        // Combine all searchable text for this item
-        const itemText = [
-          item.style || "",
-          item.brand || "",
-          item.color || "",
-          item.description || "",
-          item.quantity?.toString() || "",
-          boxDict[item.boxId?.toString()]?.boxId || "",
-          boxDict[item.boxId?.toString()]?.location || "",
-        ]
-          .join(" ")
-          .toLowerCase();
-        console.log("ITEMTEXT:", itemText)
-        console.log("searchWORDS:", searchWords)
-
-        // Check if ALL search words are found in the combined text
-        return searchWords.all((word) => itemText.includes(word));
-      });
-    }
-
-    // Now group the filtered items using the same logic as groupedInventory
-    let dict = {};
-    for (const item of items) {
-      const style = item.style.toLowerCase();
-      const color = item.color.toLowerCase();
-      const size = item.sizeId || item.size.toLowerCase();
-      const key = `${style}, ${color}, ${size}`;
-
-      if (!dict[key]) {
-        dict[key] = [item];
-      } else {
-        dict[key].push(item);
       }
-    }
 
-    return Object.values(dict);
-  }, [inventory, page, searchValue, selectedSearchOption, boxDict]);
+      // For "all" search - multi-word logic
+      const searchWords = searchTerm
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      if (searchWords.length === 0) return true;
+
+      // Combine all searchable text for this item (handling referenced fields)
+      const brandText = item.brandId && brandDict[item.brandId.toString()] 
+        ? brandDict[item.brandId.toString()].brand 
+        : item.brand || "";
+      const descriptionText = item.descriptionId && descriptionDict[item.descriptionId.toString()]
+        ? descriptionDict[item.descriptionId.toString()].description
+        : item.description || "";
+
+      const itemText = [
+        item.style || "",
+        brandText,
+        item.color || "",
+        descriptionText,
+        item.quantity?.toString() || "",
+        boxDict[item.boxId?.toString()]?.boxId || "",
+        boxDict[item.boxId?.toString()]?.location || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      console.log("ITEMTEXT:", itemText)
+      console.log("searchWORDS:", searchWords)
+
+      // Check if ALL search words are found in the combined text
+      return searchWords.every((word) => itemText.includes(word));
+    });
+  });
+}, [inventory, page, searchValue, selectedSearchOption, boxDict, brandDict, descriptionDict]);
 
   // Filter boxes based on page selection and search
   const filteredBoxes = useMemo(() => {
