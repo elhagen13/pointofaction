@@ -1,6 +1,6 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { IoAddCircleOutline, IoRemoveCircleOutline } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
 import { FaUpload, FaTimes } from "react-icons/fa";
@@ -28,6 +28,8 @@ export default function Box() {
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [movedIndex, setMovedIndex] = useState(null);
+
+  const [options, setOptions] = useState({});
 
   const minSwipeDistance = 50;
 
@@ -77,30 +79,52 @@ export default function Box() {
     setItems(result.data.filter((item) => item.boxId == boxId));
   };
 
-  const incDecQuant = (index, inc) => {
-    setItems(
-      items.map((item, i) => {
-        if (index === i) {
-          return {
-            ...item,
-            quantity: item.quantity + inc,
-          };
-        } else return item;
-      })
-    );
+  const getItemOptions = async () => {
+    let response = await fetch("/api/details/brands", {
+      method: "GET",
+    });
+    let resultBrands = await response.json();
+
+    response = await fetch("/api/details/sizes", {
+      method: "GET",
+    });
+    let resultSizes = await response.json();
+
+    response = await fetch("/api/details/descriptions", {
+      method: "GET",
+    });
+    let resultDescriptions = await response.json();
+    console.log(resultDescriptions);
+
+    setOptions({
+      ...options,
+      brands: resultBrands.data,
+      sizes: resultSizes.data,
+      descriptions: resultDescriptions.data,
+    });
   };
-  const changeQuantity = (index, val) => {
-    setItems(
-      items.map((item, i) => {
-        if (index === i) {
-          return {
-            ...item,
-            quantity: parseInt(val) ? parseInt(val) : 0,
-          };
-        } else return item;
-      })
-    );
-  };
+
+  const sizeDict = useMemo(() => {
+    const dict = {};
+    if (!options.sizes) return {};
+    options.sizes.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  const descriptionDict = useMemo(() => {
+    if (!options.descriptions) return {};
+    const dict = {};
+    options.descriptions.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
+  useEffect(() => {
+    getItemOptions();
+  }, []);
 
   const handleChanges = async () => {
     for (const item of items) {
@@ -109,12 +133,12 @@ export default function Box() {
         return;
       }
     }
-    for(const [index, item] of items.entries()) {
+    for (const [index, item] of items.entries()) {
       try {
         const newData = {
           ...item,
-          quantity: item.quantity +
-          (negatives[index] ? 1 : -1) * changes[index]
+          quantity:
+            item.quantity + (negatives[index] ? 1 : -1) * changes[index],
         };
 
         // Create the box first
@@ -130,9 +154,9 @@ export default function Box() {
         return false;
       }
     }
-    alert("Updated quantity successful")
-    setChanges([])
-    setNegatives([])
+    alert("Updated quantity successful");
+    setChanges([]);
+    setNegatives([]);
     getItems();
     setEdit(false);
   };
@@ -250,15 +274,15 @@ export default function Box() {
         <div className={styles.scanPage}>
           <h2 className={styles.separateRow}>
             Box #{id} Contents
-            <div>
-              <IoAddCircleOutline
-                fontSize="32px"
-                style={{ marginRight: "15px" }}
-                onClick={() => setAdd(!add)}
-              />
-              <MdEdit fontSize="32px" className={styles.mobileInvisible}onClick={() => setEdit(!edit)} />
-            </div>
+            <IoAddCircleOutline
+              fontSize="32px"
+              style={{ marginRight: "15px" }}
+              onClick={() => setAdd(!add)}
+            />
           </h2>
+          <div style={{fontWeight:"bold", color:"gray"}}>
+            Swipe to edit quantity
+          </div>
           <div className={styles.saveChanges} onClick={handleChanges}>
             Save Changes
           </div>
@@ -272,6 +296,7 @@ export default function Box() {
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={(e) => onTouchEnd(e, index)}
+                onClick={() => movedIndex === index ? setMovedIndex(null) : setMovedIndex(index)}
                 style={{
                   position: "relative",
                   zIndex: 1,
@@ -287,7 +312,9 @@ export default function Box() {
                   <div className={styles.rowObjectInfo}>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Description:</span>{" "}
-                      {item.description}{" "}
+                      {item.description || descriptionDict[item.descriptionId]
+                        ? descriptionDict[item.descriptionId].description
+                        : "N/A"}{" "}
                     </div>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Color:</span>{" "}
@@ -295,7 +322,9 @@ export default function Box() {
                     </div>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Size:</span>{" "}
-                      {item.size}
+                      {item.size || sizeDict[item.sizeId]
+                        ? sizeDict[item.sizeId].size
+                        : "N/A"}{" "}
                     </div>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Style:</span>{" "}
@@ -303,40 +332,23 @@ export default function Box() {
                     </div>
                   </div>
                 </div>
-                {edit ? (
-                  <div className={styles.separate} style={{ color: "#c2c2c2" }}>
-                    <div onClick={() => incDecQuant(index, -1)}>
-                      <IoRemoveCircleOutline fontSize="32px" />
-                    </div>
-                    <input
-                      className={styles.numberInput}
-                      value={item.quantity}
-                      onChange={(e) => changeQuantity(index, e.target.value)}
-                    />
-
-                    <div onClick={() => incDecQuant(index, 1)}>
-                      <IoAddCircleOutline fontSize="32px" />
-                    </div>
-                  </div>
-                ) : (
-                  <h1 style={{ color: "#c2c2c2", minWidth: "15%" }}>
-                    <span
-                      style={{
-                        textDecoration:
-                          changes[index] !== 0 && changes[index] !== ""
-                            ? "line-through"
-                            : "none",
-                      }}
-                    >
-                      {item.quantity}
-                    </span>{" "}
-                    {changes[index] !== 0 && changes[index] !== ""
-                      ? item.quantity +
-                        (negatives[index] ? 1 : -1) * changes[index]
-                      : ""}{" "}
-                    left
-                  </h1>
-                )}
+                <h1 style={{ color: "#c2c2c2", minWidth: "15%" }}>
+                  <span
+                    style={{
+                      textDecoration:
+                        changes[index] !== 0 && changes[index] !== ""
+                          ? "line-through"
+                          : "none",
+                    }}
+                  >
+                    {item.quantity}
+                  </span>{" "}
+                  {changes[index] !== 0 && changes[index] !== ""
+                    ? item.quantity +
+                      (negatives[index] ? 1 : -1) * changes[index]
+                    : ""}{" "}
+                  left
+                </h1>
               </div>
 
               <div
