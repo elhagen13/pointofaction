@@ -4,6 +4,9 @@ import styles from "./reserve.module.css";
 import { FiShoppingBag } from "react-icons/fi";
 import { Fis } from "aws-sdk";
 import SetQuantity from "./SetQuantity";
+import Cart from "./Cart"
+import { IoCart } from "react-icons/io5";
+
 
 
 function Inventory() {
@@ -26,7 +29,7 @@ function Inventory() {
   ];
   const [selectedSearchOption, setSelectedSearchOption] = useState("all");
 
-  const [cart, addToCart] = useState([])
+  const [cartOpen, setCartOpen] = useState(false)
 
   const [options, setOptions] = useState({});
 
@@ -58,7 +61,6 @@ function Inventory() {
       sizes: resultSizes.data,
       descriptions: resultDescriptions.data,
     });
-    console.log("kdfjsl");
   };
 
   useEffect(() => {
@@ -223,12 +225,7 @@ function Inventory() {
     descriptionDict,
   ]);
 
-  useEffect(() => {
-    console.log("CART: ", cart)
-  }, [cart])
 
-  console.log("filteredInventory", filteredInventory);
-  console.log("brandDict", brandDict);
 
   const getInventory = async () => {
     const response = await fetch("/api/inventory/item", {
@@ -242,10 +239,12 @@ function Inventory() {
 
   return (
     <div style={{ padding: "20px" }}>
+      <div style={{display:"flex", justifyContent:"end"}}>
+        <IoCart onClick={() => setCartOpen(true)} style={{fontSize:"40px", color:"#2563EB", cursor:"pointer"}}/>
+      </div>
       <div className={styles.productGrid}>
         {filteredInventory.map((grouping) => {
           const representative = grouping[0];
-          console.log("representative", representative);
           return (
             <div className={styles.productCard}>
               <img
@@ -277,7 +276,8 @@ function Inventory() {
           );
         })}
       </div>
-      {selectedItem && <SetQuantity onClose={() => setSelectedItem(null)} items={selectedItem} sizeDict={sizeDict} brandDict={brandDict} descriptionDict={descriptionDict} cart={cart} addToCart={addToCart}/>}
+      {selectedItem && <SetQuantity onClose={() => setSelectedItem(null)} items={selectedItem} sizeDict={sizeDict} brandDict={brandDict} descriptionDict={descriptionDict}/>}
+      {cartOpen && <Cart onClose={() => setCartOpen(false)} sizeDict={sizeDict} brandDict={brandDict} descriptionDict={descriptionDict} groupedInventory={filteredInventory}/>}
     </div>
   );
 }

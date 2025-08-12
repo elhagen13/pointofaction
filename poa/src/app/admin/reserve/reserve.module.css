@@ -34,6 +34,7 @@
     padding: 5px 10px;
     border-radius: 10px;
     transition: 0.1s ease-in;
+    cursor:pointer;
 }
 
 .shoppingButton:hover{
@@ -100,6 +101,17 @@ position: fixed;
     font-size: 0.75rem;
     font-weight: bold;
 }
+
+.tableRow td{
+    min-width: 100px;
+    text-align: left;
+}
+
+.tableRow th{
+    text-align: left;
+}
+
+
 @media(max-width: 769px){
     .productGrid{
         grid-template-columns: repeat(3, 1fr)

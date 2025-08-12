@@ -8,7 +8,6 @@ export default function SetQuantity({
   sizeDict,
   brandDict,
   descriptionDict,
-  cart, addToCart
 }) {
   const [sizes, setSizes] = useState([]);
   const [orderQuant, setOrderQuant] = useState([]);
@@ -50,61 +49,138 @@ export default function SetQuantity({
   };
 
   const onSubmit = () => {
-    let addedItems = []
+    let addedItems = [];
+    const currentBrand = items[0].brand || items[0].brandId;
+  
     orderQuant.forEach((order, index) => {
-        if(order !== 0){
-            addedItems.push({
-                style: items[0].style,
-                brand: items[0].brand || items[0].brandId,
-                color: items[0].color,
-                size: sizes[index]
-            })
-        }}
-    )
-
-    addToCart(cart.concat(addedItems))
-
+      if (order !== 0 && parseInt(order) > 0) {
+        addedItems.push({
+          style: items[0].style,
+          brand: currentBrand,
+          color: items[0].color,
+          size: sizes[index][0],
+          quantity: parseInt(order)
+        });
+      }
+    });
+  
+    const curCart = [];
+    const prevCart = getCartFromStorage(); 
+    
+    // Remove existing items that match
+    for (const item of prevCart) {
+      if (item.style === items[0].style && 
+          item.brand === currentBrand &&
+          item.color === items[0].color) {
+        continue;
+      }
+      curCart.push(item);
+    }
+    
+    const finalCart = curCart.concat(addedItems);
+    saveCartToStorage(finalCart); 
+    
     onClose();
-  }
+  };
+  
 
+const getCartFromStorage = () => {
+    try {
+      const cartData = localStorage.getItem("cart");
+      if (!cartData) return [];
+      
+      const parsed = JSON.parse(cartData);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn("Invalid cart data in localStorage, resetting cart:", error);
+      localStorage.removeItem("cart");
+      return [];
+    }
+  };
+  
+  // Safe function to save cart to localStorage
+  const saveCartToStorage = (cart) => {
+    try {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    } catch (error) {
+      console.error("Failed to save cart to localStorage:", error);
+    }
+  };
+  
+  // Updated useEffect with safe parsing
   useEffect(() => {
     let tempDict = {};
-    console.log("items", items)
     for (const item of items) {
       let size = item.size || sizeDict[item.sizeId].size;
-      if (!tempDict[size]){
+      if (!tempDict[size]) {
         tempDict[size] = item.quantity - (item.reserved ? item.reserved : 0);
-      }
-      else
+      } else {
         tempDict[size] += item.quantity - (item.reserved ? item.reserved : 0);
+      }
     }
-    console.log("tempDict", tempDict)
-
+    
+    const previouslyAddedSizes = {};
+    const prevCart = getCartFromStorage(); // Use safe function
+    
+    for (const item of prevCart) {
+      if (item.style === items[0].style && 
+          item.brand === (items[0].brand || items[0].brandId) &&
+          item.color === items[0].color) {
+        previouslyAddedSizes[item.size] = item.quantity;
+      }
+    }
+    
     const arr = [];
-    let orderQuantArr = []
-
     for (const [key, val] of Object.entries(tempDict)) {
       arr.push([key, val]);
-      orderQuantArr.push(0)
     }
-    setOrderQuant(orderQuantArr)
-
-
+  
+    // Sort first
     arr.sort((a, b) => {
       return getPriority(a[0]) - getPriority(b[0]);
     });
-
-    console.log(arr);
+  
+    // Create orderQuant based on sorted array
+    let orderQuantArr = arr.map(([size]) => {
+      return previouslyAddedSizes[size] || 0;
+    });
+  
+    setOrderQuant(orderQuantArr);
     setSizes(arr);
   }, [items]);
+  
+
+
+  const getBrandValue = (item) => {
+    return item.brand || item.brandId;
+  };
+
+  const handleQuantityChange = (e, index) => {
+    const value = e.target.value;
+    
+    setOrderQuant(
+      orderQuant.map((quant, i) => {
+        if (i === index) {
+          // Allow empty string for user typing, but cap at max available
+          if (value === '') return '';
+          const numValue = parseInt(value);
+          if (isNaN(numValue) || numValue < 0) return 0;
+          return Math.min(numValue, sizes[index][1]); // Cap at available quantity
+        }
+        return quant;
+      })
+    );
+  };
+  
 
   const validateInput = () => {
     setOrderQuant(
       orderQuant.map((quant, index) => {
-        if (parseInt(quant) > sizes[index][1]) {
+        const numQuant = parseInt(quant) || 0; // Handle empty strings and NaN
+        if (numQuant > sizes[index][1]) {
           return sizes[index][1];
         }
-        return parseInt(quant);
+        return Math.max(0, numQuant); // Ensure non-negative
       })
     );
   };
@@ -193,7 +269,7 @@ export default function SetQuantity({
                     max={sizes[index][1]}
                     value={orderQuant[index]}
                     className={styles.input}
-                    onBlur={() => validateInput()}
+                    onBlur={validateInput}
                     onChange={(e) => setOrderQuant(
                         orderQuant.map((quant, i) => {
                             if(i === index) return e.target.value
@@ -206,8 +282,8 @@ export default function SetQuantity({
             </div>
           </div>
         </div>
-        <div onClick={onSubmit} style={{width:"100%", display:"flex", justifyContent:"end", padding:"20px", paddingTop: "0"}}>
-                <div className={styles.shoppingButton}>
+        <div style={{width:"100%", display:"flex", justifyContent:"end", padding:"20px", paddingTop: "0"}}>
+                <div className={styles.shoppingButton}  onClick={onSubmit} >
                     <FiShoppingBag/>
                     Add to Order
                 </div>

@@ -895,7 +895,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                         value={
                           currentItem.descriptionOpen
                             ? descriptionSearch
-                            : currentItem.description
+                            : (currentItem.description || descriptionDict[currentItem.descriptionId]?.description)
                         }
                         onClick={() => {
                           setCurrentItem({
@@ -1062,7 +1062,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                         value={
                           currentItem.brandOpen
                             ? brandSearch
-                            : currentItem.brand
+                            : (currentItem.brand || brandDict[currentItem.brandId]?.brand)
                         }
                         onClick={() => {
                           setCurrentItem({
@@ -1210,7 +1210,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                         value={
                           currentItem.sizeOpen
                             ? sizeSearch
-                            : currentItem.size
+                            : (currentItem.size || sizeDict[currentItem.sizeId]?.size)
                         }
                         onClick={() => {
                           setCurrentItem({

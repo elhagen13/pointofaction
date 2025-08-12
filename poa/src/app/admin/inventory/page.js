@@ -39,6 +39,7 @@ function Inventory() {
     "style code",
     "brand style",
     "color",
+    "size",
     "description",
     "quantity",
     "box",
@@ -213,6 +214,12 @@ const filteredInventory = useMemo(() => {
               ? descriptionDict[item.descriptionId.toString()].description
               : item.description || "";
             return descriptionText.toLowerCase().includes(searchTerm);
+          case "size":
+              // Check both direct description and descriptionId reference
+              const sizeText = item.sizeId && sizeDict[item.sizeId.toString()]
+                ? sizeDict[item.sizeId.toString()].size
+                : item.size || "";
+              return sizeText.toLowerCase().includes(searchTerm);
           case "quantity":
             return item.quantity?.toString().includes(searchTerm);
           case "box":
@@ -241,12 +248,16 @@ const filteredInventory = useMemo(() => {
       const descriptionText = item.descriptionId && descriptionDict[item.descriptionId.toString()]
         ? descriptionDict[item.descriptionId.toString()].description
         : item.description || "";
+        const sizeText = item.sizeId && sizeDict[item.sizeId.toString()]
+        ? sizeDict[item.sizeId.toString()].size
+        : item.size || "";
 
       const itemText = [
         item.style || "",
         brandText,
         item.color || "",
         descriptionText,
+        sizeText,
         item.quantity?.toString() || "",
         boxDict[item.boxId?.toString()]?.boxId || "",
         boxDict[item.boxId?.toString()]?.location || "",
@@ -559,8 +570,8 @@ const filteredInventory = useMemo(() => {
 
   return (
     <div
-      className={styles.inventoryBackground}
-      
+      className={styles.inventoryBackground} style={{color:"black"}}
+   
     >
       <div className={styles.pageSelection}>
         <button className={styles.button} onClick={() => setAddItemOpen(true)}>
