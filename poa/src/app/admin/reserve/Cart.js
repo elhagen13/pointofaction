@@ -54,12 +54,6 @@ export default function Cart({
     setCart(getCartFromStorage())
   }
 
-  useEffect(() => {
-    filteredInventory.forEach((grouping) => {
-        
-    })
-  }, [filteredInventory])
-
   const removeFromCart = (index) => {
     const tempCart = cart
     tempCart.splice(index, 1);
