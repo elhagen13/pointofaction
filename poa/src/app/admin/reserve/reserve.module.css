@@ -1,0 +1,111 @@
+.productGrid{
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+}
+
+.productCard{
+    grid-column: span 1;
+    box-shadow: 0 3px 5px rgb(204, 204, 204);
+    border-radius: 0 0 20px 20px;
+    overflow: hidden;
+    background-color: #F2EEEE;
+}
+
+.productImage{
+    width: 100%;
+    object-fit: cover;
+    height: 300px
+}
+
+.productCardDescription{
+    width: 100%;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+.shoppingButton{
+    display:flex;
+    gap: 10px;
+    background-color: #2563EB;
+    color: white;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 10px;
+    transition: 0.1s ease-in;
+}
+
+.shoppingButton:hover{
+    background-color: #1c54ce;
+    transform: scale(1.1);
+
+}
+.overlayBackground{
+position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.addItem {
+    position: relative;
+    background-color: white;
+    padding: 30px;
+    border-radius: 20px;
+  }
+  
+.top{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 30px;
+}
+
+.topText{
+    width: 300px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+}
+
+.row{
+    display: grid;
+}
+
+.box{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px
+}
+
+.input{
+    border: 1px solid #dbdbdb;
+    border-radius: 10px;
+    padding: 5px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+@media(max-width: 769px){
+    .productGrid{
+        grid-template-columns: repeat(3, 1fr)
+    }
+
+    .top{
+        flex-direction: column;
+    }
+}

@@ -105,7 +105,7 @@ const AddBox = ({
   setPage,
   options,
 }) => {
-  const [boxDescription, setBoxDescription] = useState(box.description);
+  const [boxDescription, setBoxDescription] = useState(box.description || "");
   const [boxLocation, setBoxLocation] = useState(box.location);
   const [contents, setContents] = useState([]);
   const [originalContents, setOriginalContents] = useState([]);

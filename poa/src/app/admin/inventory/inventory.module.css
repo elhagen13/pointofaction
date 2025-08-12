@@ -516,8 +516,24 @@
   min-width: 20px !important
 }
 
+.inventoryBackground{
+    width: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    color: black,
+
+}
 /* Mobile styles */
 @media (max-width: 768px) {
+  .inventoryBackground{
+    padding: 10px;
+  }
+  .overlayBackground{
+    padding: 5px;
+  }
+
   .pageSelection {
     flex-direction: column;
   }

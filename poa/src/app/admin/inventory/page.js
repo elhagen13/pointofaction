@@ -172,7 +172,8 @@ const filteredInventory = useMemo(() => {
     const style = item.style.toLowerCase();
     const color = item.color.toLowerCase();
     const size = item.sizeId || item.size.toLowerCase();
-    const key = `${style}, ${color}, ${size}`;
+    const brand = item.brandId || item.brand.toLowerCase();
+    const key = `${style}, ${color}, ${size}, ${brand}`;
 
     if (!dict[key]) {
       dict[key] = [item];
@@ -558,14 +559,8 @@ const filteredInventory = useMemo(() => {
 
   return (
     <div
-      style={{
-        width: "100%",
-        padding: "30px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-        color: "black",
-      }}
+      className={styles.inventoryBackground}
+      
     >
       <div className={styles.pageSelection}>
         <button className={styles.button} onClick={() => setAddItemOpen(true)}>
