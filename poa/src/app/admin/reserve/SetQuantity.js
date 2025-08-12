@@ -151,28 +151,6 @@ const getCartFromStorage = () => {
   
 
 
-  const getBrandValue = (item) => {
-    return item.brand || item.brandId;
-  };
-
-  const handleQuantityChange = (e, index) => {
-    const value = e.target.value;
-    
-    setOrderQuant(
-      orderQuant.map((quant, i) => {
-        if (i === index) {
-          // Allow empty string for user typing, but cap at max available
-          if (value === '') return '';
-          const numValue = parseInt(value);
-          if (isNaN(numValue) || numValue < 0) return 0;
-          return Math.min(numValue, sizes[index][1]); // Cap at available quantity
-        }
-        return quant;
-      })
-    );
-  };
-  
-
   const validateInput = () => {
     setOrderQuant(
       orderQuant.map((quant, index) => {

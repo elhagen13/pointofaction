@@ -2,7 +2,7 @@
     display: grid;
     width: 100%;
     grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
+    gap: 30px;
 }
 
 .productCard{

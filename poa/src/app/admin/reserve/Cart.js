@@ -1,6 +1,7 @@
 import styles from "./reserve.module.css";
 import { useState, useEffect } from "react";
-import { FiShoppingBag } from "react-icons/fi";
+import { FaRegTrashAlt } from "react-icons/fa";
+
 
 export default function Cart({
   onClose,
@@ -47,22 +48,31 @@ export default function Cart({
 
   useEffect(() => {
     setCart(getCartFromStorage())
-    filteredInventory.forEach(() => {
-
-    })
   }, [])
 
+  const refresh = () => {
+    setCart(getCartFromStorage())
+  }
+
   useEffect(() => {
-    const cartWithImages = [];
-    cart.forEach((item) => {
-
+    filteredInventory.forEach((grouping) => {
+        
     })
-  }, [cart])
+  }, [filteredInventory])
 
+  const removeFromCart = (index) => {
+    const tempCart = cart
+    tempCart.splice(index, 1);
+    saveCartToStorage(tempCart);
+    refresh();
+  }
+
+ 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
         <table>
+        <thead>
         <tr className={styles.tableRow}>
             <th>Item</th>
             <th>Style</th>
@@ -72,7 +82,9 @@ export default function Cart({
             <th>Quantity</th>
             <th></th>
         </tr>
-        {cart.map((cartItem) => (
+        </thead>
+        <tbody>
+        {cart.map((cartItem, index) => (
             <tr className={styles.tableRow}>
                 <td></td>
                 <td>{cartItem.style}</td>
@@ -80,10 +92,11 @@ export default function Cart({
                 <td>{cartItem.color}</td>
                 <td>{cartItem.size}</td>
                 <td>{cartItem.quantity}</td>
-                <td></td>
+                <td onClick={() => removeFromCart(index)}><FaRegTrashAlt/></td>
 
             </tr>
         ))}
+        </tbody>
         </table>
       </div>
     </div>
