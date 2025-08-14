@@ -280,11 +280,11 @@ export default function Box() {
               onClick={() => setAdd(!add)}
             />
           </h2>
-          <div style={{fontWeight:"bold", color:"gray"}}>
-            Swipe to edit quantity
-          </div>
           <div className={styles.saveChanges} onClick={handleChanges}>
             Save Changes
+          </div>
+          <div style={{fontWeight:"bold", fontSize: "20px", color:"#c4413f"}}>
+            Swipe to edit quantity
           </div>
           {items.map((item, index) => (
             <div
@@ -378,7 +378,7 @@ export default function Box() {
                   )}
                   <input
                     className={styles.numberInput}
-                    value={changes[index]}
+                    value={changes[index] || ""}
                     onChange={(e) => onChanges(e, index)}
                   />
                 </div>
