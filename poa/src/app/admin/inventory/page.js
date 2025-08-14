@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
-import { FaRegCopy, FaEye } from "react-icons/fa";
+import { FaRegCopy, FaEye, FaArrowDown, FaArrowUp} from "react-icons/fa";
 import { IoSearch, IoChevronDown, IoChevronUp } from "react-icons/io5";
 import { MdPublic, MdOutlinePublicOff } from "react-icons/md";
 import { HiCash } from "react-icons/hi";
@@ -17,6 +17,10 @@ function Inventory() {
   const [page, setPage] = useState("all inventory");
   const pageOptions = ["all inventory", "public", "sale"];
   const [filter, setFilter] = useState("line items");
+  /*options: description, style, brand, color size, quantity*/
+  const [sortBy, setSortBy] = useState("");
+  const [sortOrder, setSortOrder] = useState(false);
+
   const colors = ["#BDCE67", "#93A537", "#6B7B15"];
 
   const [selectedItem, setSelectedItem] = useState(null);
@@ -26,7 +30,7 @@ function Inventory() {
   const [editItemOpen, setEditItemOpen] = useState(null);
   const [editBoxOpen, setEditBoxOpen] = useState(null);
 
-  const [multiOpen, setMultiOpen] = useState(null)
+  const [multiOpen, setMultiOpen] = useState(null);
 
   const [inventory, setInventory] = useState([]);
   const [boxes, setBoxes] = useState([]);
@@ -53,7 +57,6 @@ function Inventory() {
     addItem: {},
   });
 
-  
   const getBoxes = async () => {
     const response = await fetch("/api/inventory/box", {
       method: "GET",
@@ -151,129 +154,217 @@ function Inventory() {
     return dict;
   }, [boxes]);
 
-// Filter inventory based on page selection and search, then group
-// Filter inventory based on page selection and search, then group
-const filteredInventory = useMemo(() => {
-  let items;
+  // Filter inventory based on page selection and search, then group
+  const filteredInventory = useMemo(() => {
+    let items;
 
-  switch (page) {
-    case "public":
-      items = inventory.filter((item) => item.public === true);
-      break;
-    case "sale":
-      items = inventory.filter((item) => item.sale === true);
-      break;
-    default: // "all inventory"
-      items = inventory;
-  }
-
-  // First, group the items (before filtering)
-  let dict = {};
-  for (const item of items) {
-    const style = item.style.toLowerCase();
-    const color = item.color.toLowerCase();
-    const size = item.sizeId || item.size.toLowerCase();
-    const brand = item.brandId || item.brand.toLowerCase();
-    const key = `${style}, ${color}, ${size}, ${brand}`;
-
-    if (!dict[key]) {
-      dict[key] = [item];
-    } else {
-      dict[key].push(item);
+    switch (page) {
+      case "public":
+        items = inventory.filter((item) => item.public === true);
+        break;
+      case "sale":
+        items = inventory.filter((item) => item.sale === true);
+        break;
+      default: // "all inventory"
+        items = inventory;
     }
-  }
 
-  const groupedItems = Object.values(dict);
+    // First, group the items (before filtering)
+    let dict = {};
+    for (const item of items) {
+      const style = item.style.toLowerCase();
+      const color = item.color.toLowerCase();
+      const size = item.sizeId || item.size.toLowerCase();
+      const brand = item.brandId || item.brand.toLowerCase();
+      const key = `${style}, ${color}, ${size}, ${brand}`;
 
-  // Now filter the groups based on search criteria
-  if (searchValue.trim() === "") {
-    return groupedItems;
-  }
+      if (!dict[key]) {
+        dict[key] = [item];
+      } else {
+        dict[key].push(item);
+      }
+    }
 
-  const searchTerm = searchValue.toLowerCase().trim();
+    let groupedItems = Object.values(dict);
 
-  return groupedItems.filter((group) => {
-    // Check if ANY item in the group matches the search
-    return group.some((item) => {
-      if (selectedSearchOption !== "all") {
-        // Keep existing single-field search logic
-        switch (selectedSearchOption) {
-          case "style code":
-            return item.style?.toLowerCase().includes(searchTerm);
-          case "brand style":
-            // Check both direct brand and brandId reference
-            const brandText = item.brandId && brandDict[item.brandId.toString()] 
-              ? brandDict[item.brandId.toString()].brand 
+    // Now filter the groups based on search criteria
+    if (searchValue.trim() !== "") {
+      const searchTerm = searchValue.toLowerCase().trim();
+
+      groupedItems = groupedItems.filter((group) => {
+        // Check if ANY item in the group matches the search
+        return group.some((item) => {
+          if (selectedSearchOption !== "all") {
+            // Keep existing single-field search logic
+            switch (selectedSearchOption) {
+              case "style code":
+                return item.style?.toLowerCase().includes(searchTerm);
+              case "brand style":
+                // Check both direct brand and brandId reference
+                const brandText =
+                  item.brandId && brandDict[item.brandId.toString()]
+                    ? brandDict[item.brandId.toString()].brand
+                    : item.brand || "";
+                return brandText.toLowerCase().includes(searchTerm);
+              case "color":
+                return item.color?.toLowerCase().includes(searchTerm);
+              case "description":
+                // Check both direct description and descriptionId reference
+                const descriptionText =
+                  item.descriptionId &&
+                  descriptionDict[item.descriptionId.toString()]
+                    ? descriptionDict[item.descriptionId.toString()].description
+                    : item.description || "";
+                return descriptionText.toLowerCase().includes(searchTerm);
+              case "size":
+                // Check both direct size and sizeId reference
+                const sizeText =
+                  item.sizeId && sizeDict[item.sizeId.toString()]
+                    ? sizeDict[item.sizeId.toString()].size
+                    : item.size || "";
+                return sizeText.toLowerCase().includes(searchTerm);
+              case "quantity":
+                return item.quantity?.toString().includes(searchTerm);
+              case "box":
+                const boxId = boxDict[item.boxId?.toString()]?.boxId;
+                return boxId?.toLowerCase().includes(searchTerm);
+              case "location":
+                const location = boxDict[item.boxId?.toString()]?.location;
+                return location?.toLowerCase().includes(searchTerm);
+              default:
+                return false;
+            }
+          }
+
+          // For "all" search - multi-word logic
+          const searchWords = searchTerm
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((word) => word.length > 0);
+
+          if (searchWords.length === 0) return true;
+
+          // Combine all searchable text for this item (handling referenced fields)
+          const brandText =
+            item.brandId && brandDict[item.brandId.toString()]
+              ? brandDict[item.brandId.toString()].brand
               : item.brand || "";
-            return brandText.toLowerCase().includes(searchTerm);
-          case "color":
-            return item.color?.toLowerCase().includes(searchTerm);
-          case "description":
-            // Check both direct description and descriptionId reference
-            const descriptionText = item.descriptionId && descriptionDict[item.descriptionId.toString()]
+          const descriptionText =
+            item.descriptionId && descriptionDict[item.descriptionId.toString()]
               ? descriptionDict[item.descriptionId.toString()].description
               : item.description || "";
-            return descriptionText.toLowerCase().includes(searchTerm);
+          const sizeText =
+            item.sizeId && sizeDict[item.sizeId.toString()]
+              ? sizeDict[item.sizeId.toString()].size
+              : item.size || "";
+
+          const itemText = [
+            item.style || "",
+            brandText,
+            item.color || "",
+            descriptionText,
+            sizeText,
+            item.quantity?.toString() || "",
+            boxDict[item.boxId?.toString()]?.boxId || "",
+            boxDict[item.boxId?.toString()]?.location || "",
+          ]
+            .join(" ")
+            .toLowerCase();
+
+          console.log("ITEMTEXT:", itemText);
+          console.log("searchWORDS:", searchWords);
+
+          // Check if ALL search words are found in the combined text
+          return searchWords.every((word) => itemText.includes(word));
+        });
+      });
+    }
+
+    return groupedItems.sort((a, b) => {
+      const getTextForSort = (group, field) => {
+        const item = group[0];
+        switch (field) {
+          case "description":
+            return item.descriptionId &&
+              descriptionDict[item.descriptionId.toString()]
+              ? descriptionDict[item.descriptionId.toString()].description
+              : item.description || "";
+          case "style":
+            return item.style || "";
+          case "brand":
+            return item.brandId && brandDict[item.brandId.toString()]
+              ? brandDict[item.brandId.toString()].brand
+              : item.brand || "";
+          case "color":
+            return item.color || "";
           case "size":
-              // Check both direct description and descriptionId reference
-              const sizeText = item.sizeId && sizeDict[item.sizeId.toString()]
-                ? sizeDict[item.sizeId.toString()].size
-                : item.size || "";
-              return sizeText.toLowerCase().includes(searchTerm);
+            return item.sizeId && sizeDict[item.sizeId.toString()]
+              ? sizeDict[item.sizeId.toString()].size
+              : item.size || "";
           case "quantity":
-            return item.quantity?.toString().includes(searchTerm);
+            return item.quantity || 0;
           case "box":
-            const boxId = boxDict[item.boxId?.toString()]?.boxId;
-            return boxId?.toLowerCase().includes(searchTerm);
-          case "location":
-            const location = boxDict[item.boxId?.toString()]?.location;
-            return location?.toLowerCase().includes(searchTerm);
+            return boxDict[item.boxId]?.boxId || 0;
           default:
-            return false;
+            return "";
         }
+      };
+
+      switch (sortBy) {
+        case "description":
+          const aDesc = getTextForSort(a, "description").toLowerCase();
+          const bDesc = getTextForSort(b, "description").toLowerCase();
+          return sortOrder
+            ? aDesc.localeCompare(bDesc)
+            : bDesc.localeCompare(aDesc);
+        case "style":
+          const aStyle = getTextForSort(a, "style").toLowerCase();
+          const bStyle = getTextForSort(b, "style").toLowerCase();
+          return sortOrder
+            ? aStyle.localeCompare(bStyle)
+            : bStyle.localeCompare(aStyle);
+        case "brand":
+          const aBrand = getTextForSort(a, "brand").toLowerCase();
+          const bBrand = getTextForSort(b, "brand").toLowerCase();
+          return sortOrder
+            ? aBrand.localeCompare(bBrand)
+            : bBrand.localeCompare(aBrand);
+        case "color":
+          const aColor = getTextForSort(a, "color").toLowerCase();
+          const bColor = getTextForSort(b, "color").toLowerCase();
+          return sortOrder
+            ? aColor.localeCompare(bColor)
+            : bColor.localeCompare(aColor);
+        case "size":
+          const aSize = getTextForSort(a, "size").toLowerCase();
+          const bSize = getTextForSort(b, "size").toLowerCase();
+          return sortOrder
+            ? aSize.localeCompare(bSize)
+            : bSize.localeCompare(aSize);
+        case "quantity":
+          const aQty = getTextForSort(a, "quantity");
+          const bQty = getTextForSort(b, "quantity");
+          return sortOrder ? aQty - bQty : bQty - aQty;
+        case "box":
+          const aBox = getTextForSort(a, "box");
+          const bBox = getTextForSort(b, "box");
+          return sortOrder ? aBox - bBox : bBox - aBox;
+        default:
+          return 0; // No sorting
       }
-
-      // For "all" search - multi-word logic
-      const searchWords = searchTerm
-        .toLowerCase()
-        .split(/\s+/)
-        .filter((word) => word.length > 0);
-
-      if (searchWords.length === 0) return true;
-
-      // Combine all searchable text for this item (handling referenced fields)
-      const brandText = item.brandId && brandDict[item.brandId.toString()] 
-        ? brandDict[item.brandId.toString()].brand 
-        : item.brand || "";
-      const descriptionText = item.descriptionId && descriptionDict[item.descriptionId.toString()]
-        ? descriptionDict[item.descriptionId.toString()].description
-        : item.description || "";
-        const sizeText = item.sizeId && sizeDict[item.sizeId.toString()]
-        ? sizeDict[item.sizeId.toString()].size
-        : item.size || "";
-
-      const itemText = [
-        item.style || "",
-        brandText,
-        item.color || "",
-        descriptionText,
-        sizeText,
-        item.quantity?.toString() || "",
-        boxDict[item.boxId?.toString()]?.boxId || "",
-        boxDict[item.boxId?.toString()]?.location || "",
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      console.log("ITEMTEXT:", itemText)
-      console.log("searchWORDS:", searchWords)
-
-      // Check if ALL search words are found in the combined text
-      return searchWords.every((word) => itemText.includes(word));
     });
-  });
-}, [inventory, page, searchValue, selectedSearchOption, boxDict, brandDict, descriptionDict]);
-
+  }, [
+    inventory,
+    page,
+    searchValue,
+    selectedSearchOption,
+    boxDict,
+    brandDict,
+    descriptionDict,
+    sizeDict,
+    sortBy,
+    sortOrder,
+  ]);
   // Filter boxes based on page selection and search
   const filteredBoxes = useMemo(() => {
     let boxItems;
@@ -293,14 +384,14 @@ const filteredInventory = useMemo(() => {
       default: // "all inventory"
         boxItems = boxes;
     }
-  
+
     // Apply search filter to boxes
     if (searchValue.trim() === "") {
       return boxItems;
     }
-  
+
     const searchTerm = searchValue.toLowerCase().trim();
-  
+
     return boxItems.filter((box) => {
       if (selectedSearchOption !== "all") {
         switch (selectedSearchOption) {
@@ -314,8 +405,9 @@ const filteredInventory = useMemo(() => {
             return box.description?.toLowerCase().includes(searchTerm);
           case "quantity":
             // For boxes, search in the total quantity of contents
-            const totalQuantity = (contentDict[box._id.toString()] || [])
-              .reduce((acc, item) => acc + item.quantity, 0);
+            const totalQuantity = (
+              contentDict[box._id.toString()] || []
+            ).reduce((acc, item) => acc + item.quantity, 0);
             return totalQuantity.toString().includes(searchTerm);
           case "box":
             // For boxes, search by the box's own boxId
@@ -327,19 +419,21 @@ const filteredInventory = useMemo(() => {
             return false;
         }
       }
-  
+
       // For "all" search - multi-word logic
       const searchWords = searchTerm
         .toLowerCase()
         .split(/\s+/)
         .filter((word) => word.length > 0);
-  
+
       if (searchWords.length === 0) return true;
-  
+
       // Calculate total quantity for this box
-      const totalQuantity = (contentDict[box._id.toString()] || [])
-        .reduce((acc, item) => acc + item.quantity, 0);
-  
+      const totalQuantity = (contentDict[box._id.toString()] || []).reduce(
+        (acc, item) => acc + item.quantity,
+        0
+      );
+
       // Combine all searchable text for this box
       const boxText = [
         box.style || "",
@@ -352,7 +446,7 @@ const filteredInventory = useMemo(() => {
       ]
         .join(" ")
         .toLowerCase();
-  
+
       // Check if ALL search words are found in the combined text
       return searchWords.every((word) => boxText.includes(word));
     });
@@ -537,42 +631,40 @@ const filteredInventory = useMemo(() => {
 
   const getBox = (item) => {
     let same = item[0].boxId;
-    for(const i of item){
-      if(i.boxId !== same){
-        return "Multi"
+    for (const i of item) {
+      if (i.boxId !== same) {
+        return "Multi";
       }
     }
-    return boxDict[same].boxId || "N/A"
+    return boxDict[same].boxId || "N/A";
   };
 
-
-  const getLocation = (item) => {
-    let firstLocation = item.location || (item[0].boxId && boxDict[item[0].boxId]?.location) || null;
-    let curLocation = ""
-    for(const i of item){
-      curLocation = i.location || (boxDict[i.boxId]?.location) || null;
-      if(curLocation !== firstLocation) return "Multi"
+  const getLocation = (item, clicked = false) => {
+    if (clicked) console.log("CLICKED", item);
+    let firstLocation =
+      item[0].location ||
+      (item[0].boxId && boxDict[item[0].boxId]?.location) ||
+      null;
+    let curLocation = "";
+    for (const i of item) {
+      curLocation = i.location || boxDict[i.boxId]?.location || null;
+      if (curLocation !== firstLocation) return "Multi";
     }
-    return firstLocation
+    return firstLocation;
   };
 
   const getPrice = (item) => {
     let same = item[0].price;
-    for(const i of item){
-      if(i.price !== same){
-        return "Multi"
+    for (const i of item) {
+      if (i.price !== same) {
+        return "Multi";
       }
     }
-    return same || "N/A"
+    return same || "N/A";
   };
 
-  
-
   return (
-    <div
-      className={styles.inventoryBackground} style={{color:"black"}}
-   
-    >
+    <div className={styles.inventoryBackground} style={{ color: "black" }}>
       <div className={styles.pageSelection}>
         <button className={styles.button} onClick={() => setAddItemOpen(true)}>
           Add Item
@@ -688,13 +780,132 @@ const filteredInventory = useMemo(() => {
             <thead>
               <tr style={{ backgroundColor: "#ebebeb" }}>
                 <th className={styles.tableSm}>Item</th>
-                <th style={{ minWidth: "200px" }}>Description</th>
-                <th>Style Code</th>
-                <th>Brand Style</th>
-                <th>Color</th>
-                <th>Size</th>
-                <th>Quantity</th>
-                <th>Box</th>
+                <th
+                  style={{ minWidth: "200px", cursor: "pointer" }}
+                  onClick={() => {
+                    setSortBy("description");
+                    setSortOrder(!sortOrder);
+                  }}
+                >
+                  Description
+                  {sortBy === "description" ? (
+                    sortOrder ? (
+                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    ) : (
+                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    )
+                  ) : (
+                    ""
+                  )}
+                </th>
+                <th
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    setSortBy("style");
+                    setSortOrder(!sortOrder);
+                  }}
+                >
+                  Style Code
+                  {sortBy === "style" ? (
+                    sortOrder ? (
+                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    ) : (
+                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    )
+                  ) : (
+                    ""
+                  )}
+                </th>
+                <th
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    setSortBy("brand");
+                    setSortOrder(!sortOrder);
+                  }}
+                >
+                  Brand Style
+                  {sortBy === "brand" ? (
+                    sortOrder ? (
+                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    ) : (
+                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    )
+                  ) : (
+                    ""
+                  )}
+                </th>
+                <th
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    setSortBy("color");
+                    setSortOrder(!sortOrder);
+                  }}
+                >
+                  Color
+                  {sortBy === "color" ? (
+                    sortOrder ? (
+                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    ) : (
+                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    )
+                  ) : (
+                    ""
+                  )}
+                </th>
+                <th
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    setSortBy("size");
+                    setSortOrder(!sortOrder);
+                  }}
+                >
+                  Size
+                  {sortBy === "size" ? (
+                    sortOrder ? (
+                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    ) : (
+                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    )
+                  ) : (
+                    ""
+                  )}
+                </th>
+                <th
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    setSortBy("quantity");
+                    setSortOrder(!sortOrder);
+                  }}
+                >
+                  Quantity
+                  {sortBy === "quantity" ? (
+                    sortOrder ? (
+                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    ) : (
+                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    )
+                  ) : (
+                    ""
+                  )}
+                </th>
+                <th
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    setSortBy("box");
+                    setSortOrder(!sortOrder);
+                  }}
+                >
+                  Box
+                  {sortBy === "box" ? (
+                    sortOrder ? (
+                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    ) : (
+                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                    )
+                  ) : (
+                    ""
+                  )}
+                </th>
                 <th>Location</th>
                 <th>Price</th>
                 <th>Visibility</th>
@@ -709,13 +920,15 @@ const filteredInventory = useMemo(() => {
                     overflow: "scroll",
                   }}
                   onClick={() => {
-                      if(item.length === 1 && boxDict[item[0].boxId?.toString()]){
-                        setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
-                      }
-                      else if(item.length === 1){
-                        setEditItemOpen(item[0]);
-                      }
-                      else setMultiOpen(item)
+                    getLocation(item, true);
+                    if (
+                      item.length === 1 &&
+                      boxDict[item[0].boxId?.toString()]
+                    ) {
+                      setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
+                    } else if (item.length === 1) {
+                      setEditItemOpen(item[0]);
+                    } else setMultiOpen(item);
                   }}
                 >
                   <td
@@ -729,7 +942,9 @@ const filteredInventory = useMemo(() => {
                   <td style={{ minWidth: "100px" }}>{getBrand(item)}</td>
                   <td style={{ minWidth: "100px" }}>{item[0].color}</td>
                   <td style={{ minWidth: "100px" }}>{getSize(item)}</td>
-                  <td style={{ minWidth: "100px" }}>{item.reduce((acc, cur) => acc + cur.quantity, 0)}</td>
+                  <td style={{ minWidth: "100px" }}>
+                    {item.reduce((acc, cur) => acc + cur.quantity, 0)}
+                  </td>
                   {boxDict[item[0].boxId?.toString()] ? (
                     <td
                       onClick={() =>
@@ -742,22 +957,28 @@ const filteredInventory = useMemo(() => {
                   ) : (
                     <td style={{ minWidth: "100px" }}>N/A</td>
                   )}
+                  <td style={{ minWidth: "100px" }}>{getLocation(item)}</td>
                   <td style={{ minWidth: "100px" }}>
-                    {getLocation(item)}
+                    {getPrice(item) !== "Multi"
+                      ? `$${getPrice(item)}`
+                      : "Multi"}
                   </td>
-                  <td style={{ minWidth: "100px" }}>{getPrice(item) !== "Multi" ? `$${getPrice(item)}` : "Multi"}</td>
                   <td style={{ minWidth: "100px" }}>
-                    {item.every(i => i.public) ? (
+                    {item.every((i) => i.public) ? (
                       <MdPublic color="green" />
-                    ) : 
-                    item.some(i => i.public) ? (
-                      <MdPublic color="orange"/>
+                    ) : item.some((i) => i.public) ? (
+                      <MdPublic color="orange" />
                     ) : (
                       <MdOutlinePublicOff color="red" />
-                    )
-                  }
+                    )}
 
-                    {item.every(i => i.sale) ? <HiCash color="blue" /> : item.some(i => i.sale) ? <HiCash color="orange"/> : <></>}
+                    {item.every((i) => i.sale) ? (
+                      <HiCash color="blue" />
+                    ) : item.some((i) => i.sale) ? (
+                      <HiCash color="orange" />
+                    ) : (
+                      <></>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -925,19 +1146,18 @@ const filteredInventory = useMemo(() => {
           options={options}
         />
       )}
-      {
-        multiOpen !== null && (
-          <MultiOpen items={multiOpen}
+      {multiOpen !== null && (
+        <MultiOpen
+          items={multiOpen}
           onClose={() => setMultiOpen(null)}
           setEditBoxOpen={setEditBoxOpen}
+          setEditItemOpen={setEditItemOpen}
           boxDict={boxDict}
           sizeDict={sizeDict}
           descriptionDict={descriptionDict}
           brandDict={brandDict}
-          />
-
-        )
-      }
+        />
+      )}
     </div>
   );
 }
