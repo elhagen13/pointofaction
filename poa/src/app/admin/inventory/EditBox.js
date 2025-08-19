@@ -69,7 +69,7 @@ export default function EditItem({
       {page === "edit" && (
         <EditPresets
           options={options}
-          prevPage="box"
+          prevPage="add"
           setPage={setPage}
           refresh={refresh}
         />
@@ -3730,7 +3730,7 @@ const AddBox = ({
                   }}
                 />
 
-                <label for="checkbox2" style={{ marginLeft: "5px" }}>
+                <label htmlFor="checkbox2" style={{ marginLeft: "5px" }}>
                   Sale
                 </label>
               </div>

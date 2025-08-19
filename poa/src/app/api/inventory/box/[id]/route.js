@@ -98,11 +98,23 @@ export async function PATCH(request, { params }) {
     if (body.minPrice !== undefined) {
       updateDocument.minPrice = body.minPrice;
     }
+
+    if(body.editHistory !== undefined){
+      updateDocument.editHistory = body.editHistory
+    }
     
+    const historyDoc = {}
+    if(body.history !== undefined){
+      historyDoc.history = body.history
+    }
+   
     // Update the document
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: updateDocument }
+      { 
+        $set: updateDocument,
+        $push: historyDoc,
+      }
     );
     
     if (result.matchedCount === 0) {

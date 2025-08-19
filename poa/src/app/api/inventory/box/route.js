@@ -103,6 +103,7 @@ export async function POST(request) {
       qrCode: qrCodeUrl,
       image: body.imageLink.trim(),
       location: body.location.trim(),
+      history: body.history,
       createdAt: new Date(),
       updatedAt: new Date()
     }

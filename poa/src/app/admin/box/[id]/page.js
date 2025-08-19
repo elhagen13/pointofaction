@@ -217,10 +217,9 @@ export default function Box() {
     }
     console.log(change);
 
-    alert("Updated quantity successful");
+    getItems();
     setChanges([]);
     setNegatives([]);
-    getItems();
     setEdit(false);
   };
 
@@ -415,7 +414,7 @@ export default function Box() {
                   >
                     {item.quantity}
                   </span>{" "}
-                  {changes[index] !== 0 && changes[index] !== ""
+                  {changes[index] && changes[index] !== 0 && changes[index] !== ""
                     ? item.quantity +
                       (negatives[index] ? 1 : -1) * changes[index]
                     : ""}{" "}

@@ -37,7 +37,7 @@
     color: black;
     -webkit-appearance: none;
     -moz-appearance: none;
-    appearance: none,
+    appearance: none;
   }
   
   .input:focus {
@@ -90,6 +90,90 @@
     display: flex;
     flex-direction: row;
   }
+
+  .commonInputs{
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .inputContainer{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .inputContainer label{
+    font-weight: bold;
+
+  }
+
+  .uploadOptions {
+    display: flex;
+    gap: 10px;
+  }
+
+.uploadSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fileInput {
+  display: none;
+}
+.fileLabel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.fileLabel:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.fileLabel:active {
+  transform: scale(0.98);
+}
+
+.imageContainer{
+  position: relative;
+  width: 44px;
+  height: 44px;
+  background-color: rgb(201, 201, 201);
+  border-radius: 5px;
+  box-shadow: 0 0 3px rgb(114, 114, 114);
+}
+
+.imageContainer img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+
+}
+
+.dropdown {
+  position: fixed;
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100000;
+  min-width: 150px;
+  max-height: 200px; 
+  overflow-y: auto;   
+}
 
   @media(max-width: 768px){
     .mobileFlex{
