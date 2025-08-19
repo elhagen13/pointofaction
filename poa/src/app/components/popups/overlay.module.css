@@ -1,0 +1,57 @@
+/*Add Item Styles*/
+.overlayBackground {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.overlay {
+    position: relative;
+    background-color: white;
+    padding: 30px;
+    border-radius: 20px;
+    width: 100%;
+}
+
+.exitContainer{
+    width: 100%;
+    display: flex;
+    justify-content: end;
+}
+.exit{
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    border: 2px solid white;
+    padding: 0.25rem 1rem;
+    transition: all 0.1s ease-out
+}
+
+.exit:hover{
+    border-color:#e0483d;
+    border-radius: 10px;
+    color: #e0483d
+
+}
+
+@media (max-width: 768px) {
+  
+    .overlayBackground{
+      padding: 5px;
+    }
+  
+}

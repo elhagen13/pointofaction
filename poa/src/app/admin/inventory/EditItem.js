@@ -1,6 +1,6 @@
 "use client";
 import styles from "./inventory.module.css";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   FaUpload,
   FaTimes,
@@ -13,54 +13,86 @@ import {
 } from "react-icons/fa";
 import { IoIosRemoveCircle, IoIosCheckmarkCircle } from "react-icons/io";
 import jsPDF from "jspdf";
+import Overlay from "@/app/components/popups/Overlay";
 
-export default function EditItem({ item, onClose, refresh, boxes, items, options }) {
-  const [page, setPage] = useState("edit");
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      refresh();
-      onClose();
-    }
-  };
-
-  const handleModalClick = (e) => {
-    e.stopPropagation();
-  };
+export default function EditItem({
+  item,
+  onClose,
+  refresh,
+  boxes,
+  items,
+  options,
+  deletePopup,
+}) {
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [popup, setPopup] = useState(null);
 
   return (
-    <div className={styles.overlayBackground} onClick={handleOverlayClick}>
-      <div className={styles.addItem} onClick={handleModalClick}>
-        {page === "edit" && (
-          <Edit 
-            item={item} 
-            onClose={onClose} 
-            refresh={refresh} 
-            boxes={boxes} 
-            items={items} 
-            setPage={setPage}
-            options={options}
-          />
-        )}
-        {page === "success" && <Success />}
-      </div>
-    </div>
+    <Overlay
+      onClose={onClose}
+      isVisible={true}
+      popup={popup}
+      setPopup={setPopup}
+      unsavedChanges={unsavedChanges}
+      setUnsavedChanges={setUnsavedChanges}
+    >
+      <Edit
+        item={item}
+        onClose={onClose}
+        refresh={refresh}
+        boxes={boxes}
+        items={items}
+        options={options}
+        setUnsavedChanges={setUnsavedChanges}
+        unsavedChanges={unsavedChanges}
+        popup={popup}
+        setPopup={setPopup}
+        deletePopup={deletePopup}
+      />
+    </Overlay>
   );
 }
 
 const Success = () => {
   return (
-    <div style={{width:"100%", minHeight:"300px", display:"flex", flexDirection:"column",gap:"20px", justifyContent:"center", alignItems:"center"}}>
-      <IoIosCheckmarkCircle style={{fontSize:"64px", color:"green"}}/>
-      <div style={{fontSize:"2rem"}}>Item successfully edited!</div>
+    <div
+      style={{
+        width: "100%",
+        minHeight: "300px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "20px",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <IoIosCheckmarkCircle style={{ fontSize: "64px", color: "green" }} />
+      <div style={{ fontSize: "2rem" }}>Item successfully edited!</div>
     </div>
   );
 };
 
-const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
+const Edit = ({
+  item,
+  onClose,
+  refresh,
+  boxes,
+  items,
+  options,
+  setUnsavedChanges,
+  unsavedChanges,
+  popup,
+  setPopup,
+  deletePopup,
+}) => {
   const [location, setLocation] = useState(item.location);
+  const [originalLocation] = useState(item.location);
   const [minimumPrice, setMinimumPrice] = useState(item.minPrice || 0);
+  const [originalMinimumPrice] = useState(item.minPrice || 0);
   const [visibility, setVisibility] = useState(["admin"]);
+  const [originalVisibility, setOriginalVisibility] = useState([]);
   const [discount, setDiscount] = useState(item.discount || 20);
+  const [originalDiscount] = useState(item.discount || 20);
   const [currentItem, setCurrentItem] = useState({
     imageUrl: item.image,
     description: item.description,
@@ -77,16 +109,111 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
     brandOpen: false,
     sizeOpen: false,
   });
+  const [originalCurrentItem] = useState({
+    imageUrl: item.image,
+    description: item.description,
+    descriptionId: item.descriptionId,
+    style: item.style,
+    brand: item.brand,
+    brandId: item.brandId,
+    size: item.size,
+    sizeId: item.sizeId,
+    color: item.color,
+    quantity: item.quantity,
+    price: item.price,
+  });
   const [imageUploading, setImageUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [box, setBox] = useState(item.boxId || null);
+  const [originalBox] = useState(item.boxId || null);
   const [boxDict, setBoxDict] = useState({});
   const [descriptionSearch, setDescriptionSearch] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
   const [sizeSearch, setSizeSearch] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Enhanced setters with change tracking
+  const setLocationWithTracking = useCallback(
+    (newValue) => {
+      setUnsavedChanges(true);
+      setLocation(newValue);
+    },
+    [setUnsavedChanges]
+  );
+
+  const setMinimumPriceWithTracking = useCallback(
+    (newValue) => {
+      setUnsavedChanges(true);
+      setMinimumPrice(newValue);
+    },
+    [setUnsavedChanges]
+  );
+
+  const setDiscountWithTracking = useCallback(
+    (newValue) => {
+      setUnsavedChanges(true);
+      setDiscount(newValue);
+    },
+    [setUnsavedChanges]
+  );
+
+  const setVisibilityWithTracking = useCallback(
+    (newValue) => {
+      setUnsavedChanges(true);
+      setVisibility(newValue);
+    },
+    [setUnsavedChanges]
+  );
+
+  const setBoxWithTracking = useCallback(
+    (newValue) => {
+      setUnsavedChanges(true);
+      setBox(newValue);
+    },
+    [setUnsavedChanges]
+  );
+
+  const setCurrentItemWithTracking = useCallback(
+    (newItem) => {
+      setUnsavedChanges(true);
+      setCurrentItem(newItem);
+    },
+    [setUnsavedChanges]
+  );
+
+  // Keyboard event handler
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Enter") {
+        if (popup === "unsaved") {
+          handleSubmitItem();
+        } else if (popup === "success") {
+          onClose();
+        }
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (popup === "success" || !unsavedChanges) {
+          onClose();
+        } else if (unsavedChanges) {
+          setPopup("unsaved");
+          setUnsavedChanges(false);
+        }
+      }
+    },
+    [popup, onClose, unsavedChanges, setPopup, setUnsavedChanges]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   // Create dictionaries for quick lookup
   const descriptionDict = useMemo(() => {
@@ -125,7 +252,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
     if (!descriptionSearch || !descriptionSearch.trim()) {
       return options.descriptions;
     }
-    return options.descriptions.filter(desc =>
+    return options.descriptions.filter((desc) =>
       desc.description.toLowerCase().includes(descriptionSearch.toLowerCase())
     );
   }, [options?.descriptions, descriptionSearch]);
@@ -135,7 +262,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
     if (!brandSearch || !brandSearch.trim()) {
       return options.brands;
     }
-    return options.brands.filter(brand =>
+    return options.brands.filter((brand) =>
       brand.brand.toLowerCase().includes(brandSearch.toLowerCase())
     );
   }, [options?.brands, brandSearch]);
@@ -145,7 +272,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
     if (!sizeSearch || !sizeSearch.trim()) {
       return options.sizes;
     }
-    return options.sizes.filter(size =>
+    return options.sizes.filter((size) =>
       size.size.toLowerCase().includes(sizeSearch.toLowerCase())
     );
   }, [options?.sizes, sizeSearch]);
@@ -156,7 +283,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
       if (item.boxId && !tempDict[item.boxId]) {
         tempDict[item.boxId] = {
           sale: item.sale,
-          public: item.public
+          public: item.public,
         };
       }
     }
@@ -168,6 +295,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
     if (item.public) newVisibility.push("public");
     if (item.sale) newVisibility.push("sale");
     setVisibility(newVisibility);
+    setOriginalVisibility(newVisibility);
   }, [item]);
 
   const handleFileSelect = (e, type) => {
@@ -189,7 +317,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
   };
 
   const handleUrlSubmit = (e, type) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
       return;
@@ -202,9 +330,8 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
       return;
     }
 
-    console.log(type)
     if (type === "content") {
-      setCurrentItem({
+      setCurrentItemWithTracking({
         ...currentItem,
         imageUrl: imageUrlInput,
       });
@@ -228,7 +355,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
       });
       const result = await response.json();
       if (result.success) {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           imageUrl: result.url,
         });
@@ -247,16 +374,32 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
     setShowUrlInput(true);
   };
 
+  const handleSubmitItem = async (e) => {
+    if (e) e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const success = await submitDb();
+      if (success) {
+        setUnsavedChanges(false);
+        setPopup("success")
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setUploadError("Error submitting form: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+      refresh();
+    }
+  };
+
   const submitItem = async (e) => {
     e.preventDefault();
-    await submitDb();
+    await handleSubmitItem();
   };
 
   const submitDb = async () => {
-    if (!currentItem.description.trim()) {
-      setUploadError("Please enter a description for the item");
-      return false;
-    }
 
     if (!location.trim() && !box) {
       setUploadError("Please enter an item location");
@@ -317,8 +460,6 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
 
       if (itemResult.success) {
         console.log("Item edited successfully:", itemResult.data);
-        setPage("success");
-        refresh();
         return true;
       } else {
         console.error("Error creating item:", itemResult.error);
@@ -348,30 +489,33 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
         console.error("Error deleting item:", itemResult.error);
       }
 
-      alert("Item deleted successfully!");
+      deletePopup();
       refresh();
       onClose();
     } catch (error) {
       console.error("Network error:", error);
-      alert("Network error: " + error.message);
+      setUploadError("Network error: " + error.message);
     }
   }
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Close description dropdown
-      if (!event.target.closest("[data-description-dropdown]") && currentItem.descriptionOpen) {
+      if (
+        !event.target.closest("[data-description-dropdown]") &&
+        currentItem.descriptionOpen
+      ) {
         const searchTerm = descriptionSearch || "";
         const matchedItem = descriptionDict[searchTerm.toLowerCase().trim()];
         if (!matchedItem) {
-          setCurrentItem({
+          setCurrentItemWithTracking({
             ...currentItem,
             description: searchTerm,
             descriptionId: null,
             descriptionOpen: false,
           });
         } else {
-          setCurrentItem({
+          setCurrentItemWithTracking({
             ...currentItem,
             description: matchedItem.description,
             descriptionId: matchedItem._id,
@@ -382,18 +526,21 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
       }
 
       // Close brand dropdown
-      if (!event.target.closest("[data-brand-dropdown]") && currentItem.brandOpen) {
+      if (
+        !event.target.closest("[data-brand-dropdown]") &&
+        currentItem.brandOpen
+      ) {
         const searchTerm = brandSearch || "";
         const matchedItem = brandDict[searchTerm.toLowerCase().trim()];
         if (!matchedItem) {
-          setCurrentItem({
+          setCurrentItemWithTracking({
             ...currentItem,
             brand: searchTerm,
             brandId: null,
             brandOpen: false,
           });
         } else {
-          setCurrentItem({
+          setCurrentItemWithTracking({
             ...currentItem,
             brand: matchedItem.brand,
             brandId: matchedItem._id,
@@ -404,18 +551,21 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
       }
 
       // Close size dropdown
-      if (!event.target.closest("[data-size-dropdown]") && currentItem.sizeOpen) {
+      if (
+        !event.target.closest("[data-size-dropdown]") &&
+        currentItem.sizeOpen
+      ) {
         const searchTerm = sizeSearch || "";
         const matchedItem = sizeDict[searchTerm.toLowerCase().trim()];
         if (!matchedItem) {
-          setCurrentItem({
+          setCurrentItemWithTracking({
             ...currentItem,
             size: searchTerm,
             sizeId: null,
             sizeOpen: false,
           });
         } else {
-          setCurrentItem({
+          setCurrentItemWithTracking({
             ...currentItem,
             size: matchedItem.size,
             sizeId: matchedItem._id,
@@ -426,7 +576,10 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
       }
 
       // Close box dropdown
-      if (isDropdownOpen !== false && !event.target.closest("[data-dropdown]")) {
+      if (
+        isDropdownOpen !== false &&
+        !event.target.closest("[data-dropdown]")
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -445,22 +598,25 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
     sizeSearch,
     descriptionDict,
     brandDict,
-    sizeDict
+    sizeDict,
+    setCurrentItemWithTracking,
+    currentItem,
   ]);
 
   const handleDescriptionKeyDown = (e) => {
     if (e.key === "Tab" || e.key === "Enter") {
       e.preventDefault();
-      const matchedItem = descriptionDict[descriptionSearch.toLowerCase().trim()];
+      const matchedItem =
+        descriptionDict[descriptionSearch.toLowerCase().trim()];
       if (!matchedItem) {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           description: descriptionSearch,
           descriptionId: null,
           descriptionOpen: false,
         });
       } else {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           description: matchedItem.description,
           descriptionId: matchedItem._id,
@@ -476,14 +632,14 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
       e.preventDefault();
       const matchedItem = brandDict[brandSearch.toLowerCase().trim()];
       if (!matchedItem) {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           brand: brandSearch,
           brandId: null,
           brandOpen: false,
         });
       } else {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           brand: matchedItem.brand,
           brandId: matchedItem._id,
@@ -499,14 +655,14 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
       e.preventDefault();
       const matchedItem = sizeDict[sizeSearch.toLowerCase().trim()];
       if (!matchedItem) {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           size: sizeSearch,
           sizeId: null,
           sizeOpen: false,
         });
       } else {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           size: matchedItem.size,
           sizeId: matchedItem._id,
@@ -554,21 +710,21 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
 
       // Update the current item with the new option
       if (selectedOption === "description") {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           description: data.data.description,
           descriptionId: data.data._id,
           descriptionOpen: false,
         });
       } else if (selectedOption === "brand") {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           brand: data.data.brand,
           brandId: data.data._id,
           brandOpen: false,
         });
       } else if (selectedOption === "size") {
-        setCurrentItem({
+        setCurrentItemWithTracking({
           ...currentItem,
           size: data.data.size,
           sizeId: data.data._id,
@@ -591,54 +747,63 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
         unit: "in",
         format: [4, 6],
       });
-  
+
       // Constants
       const pageWidth = 4;
       const pageHeight = 6;
       const qrSize = 2;
-      const bottomMargin = 0.5; 
+      const bottomMargin = 0.5;
       const textStartY = 1.6;
-      const lineHeight = 0.2; 
-      
-      const maxQrY = pageHeight - qrSize - bottomMargin; 
-      
+      const lineHeight = 0.2;
+
+      const maxQrY = pageHeight - qrSize - bottomMargin;
+
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
-      let description = currentItem.size + " " + currentItem.color + " " + currentItem.description + "(" + item.style + ")";
-      let currentQrY = 2.2; 
-      
+      let description =
+        currentItem.size +
+        " " +
+        currentItem.color +
+        " " +
+        currentItem.description +
+        "(" +
+        item.style +
+        ")";
+      let currentQrY = 2.2;
+
       const textLines = pdf.splitTextToSize(description, 3.5);
       const textHeight = textLines.length * lineHeight;
-      const idealQrY = textStartY + textHeight + 0.3; 
-      
+      const idealQrY = textStartY + textHeight + 0.3;
+
       // If QR would go past bottom, truncate text
       if (idealQrY + qrSize > pageHeight - bottomMargin) {
-        const availableHeight = maxQrY - textStartY - 0.3; 
+        const availableHeight = maxQrY - textStartY - 0.3;
         const maxLines = Math.floor(availableHeight / lineHeight);
-        
+
         // Truncate text to fit
         let truncatedText = description;
         let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
-        
+
         while (truncatedLines.length > maxLines && truncatedText.length > 0) {
-          truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedText =
+            truncatedText.substring(0, truncatedText.length - 4) + "...";
           truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
         }
-        
+
         description = truncatedText;
         currentQrY = maxQrY;
       } else {
         currentQrY = idealQrY;
       }
-      
+
       pdf.text(description, 2, textStartY, {
         align: "center",
         maxWidth: 3.5,
       });
-      
+
       const qrX = (pageWidth - qrSize) / 2;
       pdf.addImage(item.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
-      
+
       pdf.save(`item-${currentItem.description}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -656,28 +821,41 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
           }}
         >
           <h2>Edit Item</h2>
-          <div style={{ display: "flex", gap: !box ? "16px": "20px", position: "relative" }}>
-            {item.qrCode ? <FaDownload style={{ cursor: "pointer" }} onClick={downloadItemPDF}/> : ""}
-            {!box ? 
+          <div
+            style={{
+              display: "flex",
+              gap: !box ? "16px" : "20px",
+              position: "relative",
+            }}
+          >
+            {item.qrCode ? (
+              <FaDownload
+                style={{ cursor: "pointer" }}
+                onClick={downloadItemPDF}
+              />
+            ) : (
+              ""
+            )}
+            {!box ? (
               <FaBoxOpen
-                style={{ cursor: "pointer", fontSize:"20px" }}
+                style={{ cursor: "pointer", fontSize: "20px" }}
                 onClick={() => setIsDropdownOpen(true)}
                 data-dropdown
               />
-            :
+            ) : (
               <FaBox
                 style={{ cursor: "pointer" }}
                 onClick={() => setIsDropdownOpen(true)}
                 data-dropdown
               />
-            }
-            
+            )}
+
             {isDropdownOpen && (
               <div className={styles.dropdown} data-dropdown>
                 <div
                   key="removed"
                   className={`${styles.dropdownItem} ${!box ? styles.selected : ""}`}
-                  onClick={() => setBox(null)}
+                  onClick={() => setBoxWithTracking(null)}
                   data-dropdown
                 >
                   No Box
@@ -689,7 +867,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                       b._id === box ? styles.selected : ""
                     }`}
                     onClick={() => {
-                      setBox(b._id);
+                      setBoxWithTracking(b._id);
                     }}
                     data-dropdown
                   >
@@ -711,7 +889,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
               <input
                 className={styles.input}
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => setLocationWithTracking(e.target.value)}
                 disabled={!!box}
                 required={!box}
               />
@@ -749,13 +927,13 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                    Style Code 
+                    Style Code
                   </th>
                   <th
                     className={styles.tableReg}
                     style={{ border: "none", fontWeight: "bold" }}
                   >
-                   Brand Style
+                    Brand Style
                   </th>
                   <th
                     className={styles.tableReg}
@@ -798,93 +976,96 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     }}
                   >
                     {currentItem.imageUrl !== "" ? (
-                          <div style={{ position: "relative" }}>
-                            <img
-                              src={currentItem.imageUrl}
-                              alt="New Item"
-                              onClick={handleNewItemThumbnailClick}
-                              style={{
-                                cursor: "pointer",
-                                opacity: imageUploading ? 0.5 : 1,
-                                transition: "opacity 0.2s",
-                              }}
-                              title="Click to change image"
-                            />
-                            <IoIosRemoveCircle
-                              style={{
-                                position: "absolute",
-                                top: "-15px",
-                                right: "0px",
-                                fontSize: "30px",
-                                color: "red",
-                              }}
-                              onClick={() =>
-                                setCurrentItem({ ...currentItem, imageUrl: "" })
-                              }
-                            />
-                          </div>
-                        ) : showUrlInput ? (
-                          <div>
-                            <input
-                              type="text"
-                              value={imageUrlInput}
-                              onChange={(e) => setImageUrlInput(e.target.value)}
-                              placeholder="url..."
-                              className={styles.input}
-                              style={{
-                                margin: 0,
-                                padding: 0,
-                                width: "100%",
-                              }}
-                            />
-                            <div
-                              style={{
-                                position: "absolute",
-                                right: "0",
-                                top: "0",
-                              }}
-                            >
-                              <button
-                                onClick={(e) => handleUrlSubmit(e, "content")}
-                                style={{ padding: "5px" }}
-                              >
-                                Use
-                              </button>
-                              <button
-                                onClick={() => setShowUrlInput(false)}
-                                className={styles.urlCancelButton}
-                              >
-                                <FaTimes />
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className={styles.uploadOptions}>
-                            <div className={styles.uploadSection}>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleFileSelect(e, "content")}
-                                className={styles.fileInput}
-                                id="file-upload-new"
-                              />
-                              <label
-                                htmlFor="file-upload-new"
-                                className={styles.fileLabel}
-                                title="Upload from computer"
-                              >
-                                <FaUpload />
-                              </label>
-                            </div>
-                            <button
-                              className={styles.fileLabel}
-                              onClick={handleNewItemThumbnailClick}
-                              title="Enter image URL"
-                            >
-                              <FaLink color="black" />
-                            </button>
-                          </div>
-                        )}
+                      <div style={{ position: "relative" }}>
+                        <img
+                          src={currentItem.imageUrl}
+                          alt="New Item"
+                          onClick={handleNewItemThumbnailClick}
+                          style={{
+                            cursor: "pointer",
+                            opacity: imageUploading ? 0.5 : 1,
+                            transition: "opacity 0.2s",
+                          }}
+                          title="Click to change image"
+                        />
+                        <IoIosRemoveCircle
+                          style={{
+                            position: "absolute",
+                            top: "-15px",
+                            right: "0px",
+                            fontSize: "30px",
+                            color: "red",
+                          }}
+                          onClick={() =>
+                            setCurrentItemWithTracking({
+                              ...currentItem,
+                              imageUrl: "",
+                            })
+                          }
+                        />
+                      </div>
+                    ) : showUrlInput ? (
+                      <div>
+                        <input
+                          type="text"
+                          value={imageUrlInput}
+                          onChange={(e) => setImageUrlInput(e.target.value)}
+                          placeholder="url..."
+                          className={styles.input}
+                          style={{
+                            margin: 0,
+                            padding: 0,
+                            width: "100%",
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: "absolute",
+                            right: "0",
+                            top: "0",
+                          }}
+                        >
+                          <button
+                            onClick={(e) => handleUrlSubmit(e, "content")}
+                            style={{ padding: "5px" }}
+                          >
+                            Use
+                          </button>
+                          <button
+                            onClick={() => setShowUrlInput(false)}
+                            className={styles.urlCancelButton}
+                          >
+                            <FaTimes />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.uploadOptions}>
+                        <div className={styles.uploadSection}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileSelect(e, "content")}
+                            className={styles.fileInput}
+                            id="file-upload-new"
+                          />
+                          <label
+                            htmlFor="file-upload-new"
+                            className={styles.fileLabel}
+                            title="Upload from computer"
+                          >
+                            <FaUpload />
+                          </label>
+                        </div>
+                        <button
+                          className={styles.fileLabel}
+                          onClick={handleNewItemThumbnailClick}
+                          title="Enter image URL"
+                        >
+                          <FaLink color="black" />
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className={styles.tableLg}>
                     <div
@@ -895,10 +1076,12 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                         value={
                           currentItem.descriptionOpen
                             ? descriptionSearch
-                            : (currentItem.description || descriptionDict[currentItem.descriptionId]?.description)
+                            : currentItem.description ||
+                              descriptionDict[currentItem.descriptionId]
+                                ?.description
                         }
                         onClick={() => {
-                          setCurrentItem({
+                          setCurrentItemWithTracking({
                             ...currentItem,
                             descriptionOpen: true,
                           });
@@ -910,7 +1093,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                           }
                         }}
                         onFocus={() => {
-                          setCurrentItem({
+                          setCurrentItemWithTracking({
                             ...currentItem,
                             descriptionOpen: true,
                           });
@@ -952,7 +1135,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                                   key={oIndex}
                                   className={styles.dropdownItem}
                                   onClick={() => {
-                                    setCurrentItem({
+                                    setCurrentItemWithTracking({
                                       ...currentItem,
                                       description: opt.description,
                                       descriptionId: opt._id,
@@ -1018,7 +1201,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                                 textAlign: "center",
                               }}
                               onClick={() => {
-                                setCurrentItem({
+                                setCurrentItemWithTracking({
                                   ...currentItem,
                                   description: descriptionSearch,
                                   descriptionId: null,
@@ -1040,7 +1223,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     <input
                       value={currentItem.style}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           style: e.target.value,
                         })
@@ -1054,18 +1237,16 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     />
                   </td>
                   <td className={styles.tableReg}>
-                    <div
-                      style={{ position: "relative" }}
-                      data-brand-dropdown
-                    >
+                    <div style={{ position: "relative" }} data-brand-dropdown>
                       <input
                         value={
                           currentItem.brandOpen
                             ? brandSearch
-                            : (currentItem.brand || brandDict[currentItem.brandId]?.brand)
+                            : currentItem.brand ||
+                              brandDict[currentItem.brandId]?.brand
                         }
                         onClick={() => {
-                          setCurrentItem({
+                          setCurrentItemWithTracking({
                             ...currentItem,
                             brandOpen: true,
                           });
@@ -1077,7 +1258,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                           }
                         }}
                         onFocus={() => {
-                          setCurrentItem({
+                          setCurrentItemWithTracking({
                             ...currentItem,
                             brandOpen: true,
                           });
@@ -1117,7 +1298,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                                   key={oIndex}
                                   className={styles.dropdownItem}
                                   onClick={() => {
-                                    setCurrentItem({
+                                    setCurrentItemWithTracking({
                                       ...currentItem,
                                       brand: opt.brand,
                                       brandId: opt._id,
@@ -1183,7 +1364,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                                 textAlign: "center",
                               }}
                               onClick={() => {
-                                setCurrentItem({
+                                setCurrentItemWithTracking({
                                   ...currentItem,
                                   brand: brandSearch,
                                   brandId: null,
@@ -1202,18 +1383,16 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     </div>
                   </td>
                   <td className={styles.tableReg}>
-                    <div
-                      style={{ position: "relative" }}
-                      data-size-dropdown
-                    >
+                    <div style={{ position: "relative" }} data-size-dropdown>
                       <input
                         value={
                           currentItem.sizeOpen
                             ? sizeSearch
-                            : (currentItem.size || sizeDict[currentItem.sizeId]?.size)
+                            : currentItem.size ||
+                              sizeDict[currentItem.sizeId]?.size
                         }
                         onClick={() => {
-                          setCurrentItem({
+                          setCurrentItemWithTracking({
                             ...currentItem,
                             sizeOpen: true,
                           });
@@ -1225,7 +1404,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                           }
                         }}
                         onFocus={() => {
-                          setCurrentItem({
+                          setCurrentItemWithTracking({
                             ...currentItem,
                             sizeOpen: true,
                           });
@@ -1265,7 +1444,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                                   key={oIndex}
                                   className={styles.dropdownItem}
                                   onClick={() => {
-                                    setCurrentItem({
+                                    setCurrentItemWithTracking({
                                       ...currentItem,
                                       size: opt.size,
                                       sizeId: opt._id,
@@ -1331,7 +1510,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                                 textAlign: "center",
                               }}
                               onClick={() => {
-                                setCurrentItem({
+                                setCurrentItemWithTracking({
                                   ...currentItem,
                                   size: sizeSearch,
                                   sizeId: null,
@@ -1353,7 +1532,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     <input
                       value={currentItem.color}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           color: e.target.value,
                         })
@@ -1373,7 +1552,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                       inputMode="numeric"
                       value={currentItem.quantity}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           quantity: parseInt(e.target.value) || "",
                         })
@@ -1393,14 +1572,14 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                       inputMode="decimal"
                       value={currentItem.price}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           price: e.target.value,
                         })
                       }
                       onBlur={(e) => {
                         const numValue = parseFloat(e.target.value);
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           price: isNaN(numValue) ? 0 : numValue.toFixed(2),
                         });
@@ -1424,7 +1603,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                   <label className={styles.mobileLabel}>Image</label>
                   <div className={styles.mobileValue}>
                     {currentItem.imageUrl !== "" ? (
-                      <div style={{position:"relative", width:"auto"}}>
+                      <div style={{ position: "relative", width: "auto" }}>
                         <img
                           src={currentItem.imageUrl}
                           alt="New Item"
@@ -1438,18 +1617,20 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                           }}
                           title="Click to change image"
                         />
-                        <IoIosRemoveCircle 
+                        <IoIosRemoveCircle
                           style={{
-                            position:"absolute", 
-                            top: "-15px", 
-                            right:"0", 
-                            fontSize:"30px", 
-                            color:"red"
+                            position: "absolute",
+                            top: "-15px",
+                            right: "0",
+                            fontSize: "30px",
+                            color: "red",
                           }}
-                          onClick={() => setCurrentItem({
-                            ...currentItem, 
-                            imageUrl: ""
-                          })}
+                          onClick={() =>
+                            setCurrentItemWithTracking({
+                              ...currentItem,
+                              imageUrl: "",
+                            })
+                          }
                         />
                       </div>
                     ) : showUrlInput ? (
@@ -1468,7 +1649,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                         <div style={{ marginTop: "5px" }}>
                           <button
                             type="button"
-                            onClick={() => handleUrlSubmit("content")}
+                            onClick={(e) => handleUrlSubmit(e, "content")}
                             style={{ padding: "5px", marginRight: "5px" }}
                           >
                             Use
@@ -1519,7 +1700,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     <input
                       value={currentItem.description}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           description: e.target.value,
                         })
@@ -1539,7 +1720,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     <input
                       value={currentItem.style}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           style: e.target.value,
                         })
@@ -1558,7 +1739,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     <input
                       value={currentItem.brand}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           brand: e.target.value,
                         })
@@ -1578,7 +1759,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     <input
                       value={currentItem.size}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           size: e.target.value,
                         })
@@ -1598,7 +1779,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                     <input
                       value={currentItem.color}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           color: e.target.value,
                         })
@@ -1621,7 +1802,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                       inputMode="numeric"
                       value={currentItem.quantity}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           quantity: parseInt(e.target.value) || "",
                         })
@@ -1644,14 +1825,14 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                       inputMode="decimal"
                       value={currentItem.price}
                       onChange={(e) =>
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           price: e.target.value,
                         })
                       }
                       onBlur={(e) => {
                         const numValue = parseFloat(e.target.value);
-                        setCurrentItem({
+                        setCurrentItemWithTracking({
                           ...currentItem,
                           price: isNaN(numValue) ? 0 : numValue.toFixed(2),
                         });
@@ -1668,7 +1849,7 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
             </div>
           </div>
 
-          <div className={styles.formInput} style={{zIndex:0}}>
+          <div className={styles.formInput} style={{ zIndex: 0 }}>
             <label>Visibility</label>
             <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <div>
@@ -1694,9 +1875,9 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                   checked={visibility.includes("public")}
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setVisibility([...visibility, "public"]);
+                      setVisibilityWithTracking([...visibility, "public"]);
                     } else {
-                      setVisibility(
+                      setVisibilityWithTracking(
                         visibility.filter((item) => item !== "public")
                       );
                     }
@@ -1717,9 +1898,9 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                   checked={visibility.includes("sale")}
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setVisibility([...visibility, "sale"]);
+                      setVisibilityWithTracking([...visibility, "sale"]);
                     } else {
-                      setVisibility(
+                      setVisibilityWithTracking(
                         visibility.filter((item) => item !== "sale")
                       );
                     }
@@ -1739,7 +1920,9 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                 <input
                   className={styles.input}
                   onChange={(e) =>
-                    setDiscount(e.target.value.replace(/[^0-9.]/g, ""))
+                    setDiscountWithTracking(
+                      e.target.value.replace(/[^0-9.]/g, "")
+                    )
                   }
                   value={`${discount}%`}
                   required
@@ -1750,9 +1933,11 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
                 <input
                   className={styles.input}
                   onChange={(e) =>
-                    setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
+                    setMinimumPriceWithTracking(
+                      e.target.value.replace(/[^0-9.]/g, "")
+                    )
                   }
-                  value={`$${minimumPrice}`}
+                  value={`${minimumPrice}`}
                   required
                 />
               </div>
@@ -1770,11 +1955,16 @@ const Edit = ({ item, onClose, refresh, boxes, items, setPage, options }) => {
               className={styles.button}
               style={{ backgroundColor: "#a83a32" }}
               onClick={(e) => handleDelete(e)}
+              type="button"
             >
               Delete
             </button>
-            <button type="submit" className={styles.button}>
-              Save
+            <button
+              type="submit"
+              className={styles.button}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save"}
             </button>
           </div>
         </form>

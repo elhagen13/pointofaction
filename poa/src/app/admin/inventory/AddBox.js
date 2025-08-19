@@ -1,6 +1,6 @@
 "use client";
 import styles from "./inventory.module.css";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   FaUpload,
   FaTimes,
@@ -17,9 +17,11 @@ import {
   IoIosCheckmarkCircle,
 } from "react-icons/io";
 import jsPDF from "jspdf";
+import { useUser } from "@clerk/nextjs";
 
 import AddOption from "@/app/components/admin/addOptions/AddOption";
 import EditPresets from "@/app/components/admin/editPresets/EditPresets";
+import Overlay from "@/app/components/popups/Overlay";
 
 export default function AddItem({
   onClose,
@@ -31,52 +33,72 @@ export default function AddItem({
   const [page, setPage] = useState("box");
   const [box, setBox] = useState({});
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      refresh();
-      onClose();
-    }
-  };
-
-  const handleModalClick = (e) => {
-    e.stopPropagation();
-  };
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [popup, setPopup] = useState(null);
 
   return (
-    <div className={styles.overlayBackground} onClick={handleOverlayClick}>
-      <div className={styles.addItem} onClick={handleModalClick}>
-        {page === "box" && (
-          <AddBox
-            setPage={setPage}
-            setBox={setBox}
-            options={options}
-            savedInfo={savedInfo}
-            setSavedInfo={setSavedInfo}
-            refresh={refresh}
-          />
-        )}
-        {page === "qr" && <QrPopup setPage={setPage} box={box} />}
-        {page === "option" && (
-          <AddOption
-            options={options}
-            prevPage="box"
-            setPage={setPage}
-            refresh={refresh}
-          />
-        )}
-        {page === "edit" && (
-          <EditPresets
-            options={options}
-            prevPage="box"
-            setPage={setPage}
-            refresh={refresh}
-          />
-        )}
-      </div>
-    </div>
+    <Overlay
+      onClose={onClose}
+      isVisible={true}
+      popup={popup}
+      setPopup={setPopup}
+      unsavedChanges={unsavedChanges}
+      setUnsavedChanges={setUnsavedChanges}
+    >
+      {page === "box" && (
+        <AddBox
+          setPage={setPage}
+          setBox={setBox}
+          options={options}
+          savedInfo={savedInfo}
+          setSavedInfo={setSavedInfo}
+          refresh={refresh}
+          onClose={onClose}
+          setUnsavedChanges={setUnsavedChanges}
+          unsavedChanges={unsavedChanges}
+          popup={popup}
+          setPopup={setPopup}
+        />
+      )}
+      {page === "qr" && <QrPopup setPage={setPage} box={box} onClose={onClose}/>}
+      {page === "option" && (
+        <AddOption
+          options={options}
+          prevPage="box"
+          setPage={setPage}
+          refresh={refresh}
+        />
+      )}
+      {page === "edit" && (
+        <EditPresets
+          options={options}
+          prevPage="box"
+          setPage={setPage}
+          refresh={refresh}
+        />
+      )}
+    </Overlay>
   );
 }
-const QrPopup = ({ box }) => {
+const QrPopup = ({ box, onClose}) => {
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
+
   const downloadBoxPDF = async () => {
     try {
       const pdf = new jsPDF({
@@ -178,6 +200,11 @@ const AddBox = ({
   savedInfo,
   setSavedInfo,
   refresh,
+  onClose,
+  unsavedChanges,
+  setUnsavedChanges,
+  popup,
+  setPopup,
 }) => {
   const [boxDescription, setBoxDescription] = useState(
     savedInfo.addBox.boxDescription || ""
@@ -231,9 +258,80 @@ const AddBox = ({
   const [brandSearch, setBrandSearch] = useState("");
   const [sizeSearch, setSizeSearch] = useState("");
 
-  let acknowledgement = false;
+  const [acknowledged, setAcknowledged] = useState(false);
 
   const [showImageOptions, setShowImageOptions] = useState(null);
+
+  const { user } = useUser();
+
+  const checkCurrent = useCallback(() => {
+    // Check if user has entered any meaningful data for the current item
+    const hasData =
+      (currentItem.description && currentItem.description.trim()) ||
+      (currentItem.style && currentItem.style.trim()) ||
+      (currentItem.brand && currentItem.brand.trim()) ||
+      (currentItem.size && currentItem.size.trim()) ||
+      (currentItem.color && currentItem.color.trim()) ||
+      (currentItem.quantity && parseInt(currentItem.quantity) > 0) ||
+      (currentItem.price && parseFloat(currentItem.price) > 0);
+
+    console.log("Current Item Data:", {
+      description: currentItem.description,
+      style: currentItem.style,
+      brand: currentItem.brand,
+      size: currentItem.size,
+      color: currentItem.color,
+      quantity: currentItem.quantity,
+      price: currentItem.price,
+    });
+
+    console.log("hasData", hasData);
+
+    if (!acknowledged && hasData) {
+      setPopup("itemNotAdded");
+      setAcknowledged(true);
+      return false; // There is unsaved item data
+    }
+
+    return true; // No unsaved item data, safe to proceed
+  }, [currentItem, acknowledged, setPopup, setAcknowledged]);
+
+  /**
+   * Enter: if there is a popup it with save unsaved changes it will save it,
+   * if there is a popup saying changes were successful it will exit
+   * Escape: if there are unsaved changes it will alert user of unsaved changes,
+   * if there are no unsaved changes it will exit
+   */
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Enter") {
+        if (popup === "unsaved") {
+          handleSubmitBox();
+        } else if (popup === "success") {
+          onClose();
+        }
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        const current = checkCurrent()
+        if ((popup === "success" || !unsavedChanges) && checkCurrent()) {
+          onClose();
+        } else if (unsavedChanges) {
+          setPopup("unsaved");
+          setUnsavedChanges(false);
+        }
+      }
+    },
+    [popup, onClose, unsavedChanges, checkCurrent]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   // Filter descriptions based on search
   const filteredDescriptions = useMemo(() => {
@@ -278,7 +376,6 @@ const AddBox = ({
     options.sizes.forEach((item) => {
       dict[item._id.toString()] = item;
       dict[item.size.toLowerCase().trim()] = item;
-
     });
     return dict;
   }, [options]);
@@ -294,15 +391,12 @@ const AddBox = ({
     return dict;
   }, [options]);
 
-
-
   const brandDict = useMemo(() => {
     if (!options.brands) return {};
     const dict = {};
     options.brands.forEach((item) => {
       dict[item._id.toString()] = item;
       dict[item.brand.toLowerCase().trim()] = item;
-
     });
     return dict;
   }, [options]);
@@ -316,7 +410,8 @@ const AddBox = ({
           prevContents.map((item) => {
             if (item.descriptionOpen) {
               const searchTerm = descriptionSearch || "";
-              const matchedItem = descriptionDict[searchTerm.toLowerCase().trim()];
+              const matchedItem =
+                descriptionDict[searchTerm.toLowerCase().trim()];
               if (!matchedItem) {
                 // No match found - use the raw search text
                 return {
@@ -338,7 +433,7 @@ const AddBox = ({
             return { ...item, descriptionOpen: false };
           })
         );
-  
+
         // Close current item dropdown and apply search value if it was open
         if (currentItem.descriptionOpen) {
           const searchTerm = descriptionSearch || "";
@@ -359,13 +454,13 @@ const AddBox = ({
             });
           }
         }
-        
+
         setDescriptionSearch("");
       }
-  
+
       // Close size dropdown
       if (!event.target.closest("[data-size-dropdown]")) {
-       setContents((prevContents) =>
+        setContents((prevContents) =>
           prevContents.map((item) => {
             if (item.sizeOpen) {
               const searchTerm = sizeSearch || "";
@@ -389,7 +484,7 @@ const AddBox = ({
             return { ...item, sizeOpen: false };
           })
         );
-  
+
         // Close current item dropdown and apply search value if it was open
         if (currentItem.sizeOpen) {
           const searchTerm = sizeSearch || "";
@@ -410,10 +505,10 @@ const AddBox = ({
             });
           }
         }
-        
+
         setSizeSearch("");
       }
-  
+
       // Close brand dropdown
       if (!event.target.closest("[data-brand-dropdown]")) {
         setContents((prevContents) =>
@@ -440,7 +535,7 @@ const AddBox = ({
             return { ...item, brandOpen: false };
           })
         );
-  
+
         // Close current item dropdown and apply search value if it was open
         if (currentItem.brandOpen) {
           const searchTerm = brandSearch || "";
@@ -461,11 +556,10 @@ const AddBox = ({
             });
           }
         }
-        
+
         setBrandSearch("");
       }
-  
-  
+
       // Close image options dropdown
       if (
         showImageOptions !== null &&
@@ -474,32 +568,33 @@ const AddBox = ({
         setShowImageOptions(null);
       }
     };
-  
+
     document.addEventListener("click", handleClickOutside);
-  
+
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, [
-    showImageOptions, 
+    showImageOptions,
     currentItem.descriptionOpen,
-    currentItem.sizeOpen, 
+    currentItem.sizeOpen,
     currentItem.brandOpen,
     descriptionSearch,
     brandSearch,
     sizeSearch,
     descriptionDict,
     sizeDict,
-    brandDict
+    brandDict,
   ]);
 
   const handleDescriptionKeyDown = (e, index = null) => {
     if (e.key === "Tab" || e.key === "Enter") {
       // Prevent default behavior
       e.preventDefault();
-  
-      const matchedItem = descriptionDict[descriptionSearch.toLowerCase().trim()];
-  
+
+      const matchedItem =
+        descriptionDict[descriptionSearch.toLowerCase().trim()];
+
       // Handle dropdown logic first
       if (index !== null && !matchedItem) {
         // No match found - use the raw search text
@@ -529,17 +624,17 @@ const AddBox = ({
         });
       }
       setDescriptionSearch("");
-  
+
       // Move to next input after state updates are processed
       setTimeout(() => {
         const focusableElements = document.querySelectorAll(
           'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
         );
         const currentIndex = Array.from(focusableElements).indexOf(e.target);
-  
+
         if (currentIndex !== -1) {
           const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
-  
+
           if (nextIndex >= 0 && nextIndex < focusableElements.length) {
             focusableElements[nextIndex].focus();
           }
@@ -547,13 +642,13 @@ const AddBox = ({
       }, 50);
     }
   };
-  
+
   const handleBrandKeyDown = (e, index = null) => {
     if (e.key === "Tab" || e.key === "Enter") {
       e.preventDefault();
-  
+
       const matchedItem = brandDict[brandSearch.toLowerCase().trim()];
-  
+
       // Handle dropdown logic first
       if (index !== null && !matchedItem) {
         // No match found - use the raw search text
@@ -583,16 +678,16 @@ const AddBox = ({
         });
       }
       setBrandSearch("");
-  
+
       setTimeout(() => {
         const focusableElements = document.querySelectorAll(
           'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
         );
         const currentIndex = Array.from(focusableElements).indexOf(e.target);
-  
+
         if (currentIndex !== -1) {
           const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
-  
+
           if (nextIndex >= 0 && nextIndex < focusableElements.length) {
             focusableElements[nextIndex].focus();
           }
@@ -600,13 +695,13 @@ const AddBox = ({
       }, 50);
     }
   };
-  
+
   const handleSizeKeyDown = (e, index = null) => {
     if (e.key === "Tab" || e.key === "Enter") {
       e.preventDefault();
-  
+
       const matchedItem = sizeDict[sizeSearch.toLowerCase().trim()];
-  
+
       // Handle dropdown logic first
       if (index !== null && !matchedItem) {
         // No match found - use the raw search text
@@ -636,16 +731,16 @@ const AddBox = ({
         });
       }
       setSizeSearch("");
-  
+
       setTimeout(() => {
         const focusableElements = document.querySelectorAll(
           'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
         );
         const currentIndex = Array.from(focusableElements).indexOf(e.target);
-  
+
         if (currentIndex !== -1) {
           const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
-  
+
           if (nextIndex >= 0 && nextIndex < focusableElements.length) {
             focusableElements[nextIndex].focus();
           }
@@ -681,6 +776,7 @@ const AddBox = ({
   ]);
 
   const handleFileSelect = (e, type, itemIndex = null) => {
+    setUnsavedChanges(true);
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
@@ -699,6 +795,7 @@ const AddBox = ({
   };
 
   const handleUrlSubmit = (e, type, itemIndex = null) => {
+    setUnsavedChanges(true);
     e.preventDefault();
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
@@ -737,6 +834,7 @@ const AddBox = ({
   };
 
   const handleUploadImage = async (file, type, itemIndex = null) => {
+    setUnsavedChanges(true);
     if (!file) {
       return;
     }
@@ -781,7 +879,6 @@ const AddBox = ({
 
   // Handle clicking on thumbnail to select new image
   const handleThumbnailClick = (index) => {
-    console.log("hello 1", index);
     setSelectedItemIndex(index);
     setShowImageOptions(index);
   };
@@ -812,6 +909,7 @@ const AddBox = ({
   };
 
   const updateExistingContent = (idToUpdate, field, newValue) => {
+    setUnsavedChanges(true);
     setContents((prevContents) =>
       prevContents.map((item, index) =>
         index === idToUpdate ? { ...item, [field]: newValue } : item
@@ -820,17 +918,20 @@ const AddBox = ({
   };
 
   const removeItem = (indexToRemove) => {
+    setUnsavedChanges(true);
     setContents((prevContents) =>
       prevContents.filter((_, index) => index !== indexToRemove)
     );
   };
 
   const copyItem = (indexToCopy) => {
+    setUnsavedChanges(true);
     const itemToCopy = contents[indexToCopy];
     setContents([...contents, itemToCopy]);
   };
 
   const addNewItem = () => {
+    setUnsavedChanges(true);
     if (currentItem.description.trim() === "") {
       setUploadError("Please enter a description for the item");
       return;
@@ -911,7 +1012,7 @@ const AddBox = ({
   };
 
   const handleSubmitBox = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     if (isSubmitting) {
       return;
@@ -942,23 +1043,6 @@ const AddBox = ({
       }
     }
 
-    if (
-      !acknowledgement &&
-      (currentItem.color ||
-        currentItem.description ||
-        currentItem.price ||
-        currentItem.size ||
-        currentItem.brand ||
-        currentItem.quantity ||
-        currentItem.style)
-    ) {
-      alert(
-        "Warning: New item not finalized, click the checkmark to the right of the item to add."
-      );
-      acknowledgement = true;
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -971,7 +1055,8 @@ const AddBox = ({
         setContents([]);
         setVisibility(["admin"]);
         setMinimumPrice(0);
-
+        setUnsavedChanges(false);
+        setPopup("success");
         setPage("qr");
         refresh();
       }
@@ -1086,6 +1171,10 @@ const AddBox = ({
   async function uploadBox() {
     try {
       const boxData = {
+        history: [{
+          user: user?.fullName,
+          createdOn: new Date(),
+        }],
         imageLink: imageUrl,
         location: boxLocation,
         description: boxDescription,
@@ -1188,7 +1277,7 @@ const AddBox = ({
 
   const generateDescription = (e) => {
     e.preventDefault();
-
+    setUnsavedChanges(true);
     let retString = "";
 
     contents.forEach((item) => {
@@ -1207,15 +1296,6 @@ const AddBox = ({
 
     setBoxDescription(retString);
   };
-
-  const getDescription = (desc) => {
-    for (const description of options.descriptions) {
-      if (description.description == desc) {
-        return description;
-      }
-    }
-  };
-
 
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
@@ -1243,7 +1323,10 @@ const AddBox = ({
               className={styles.input}
               style={{ resize: "vertical", minHeight: "90px" }}
               value={boxDescription}
-              onChange={(e) => setBoxDescription(e.target.value)}
+              onChange={(e) => {
+                setUnsavedChanges(true);
+                setBoxDescription(e.target.value);
+              }}
               required
             />
           </div>
@@ -1268,7 +1351,10 @@ const AddBox = ({
               <input
                 className={styles.input}
                 value={boxLocation}
-                onChange={(e) => setBoxLocation(e.target.value)}
+                onChange={(e) => {
+                  setUnsavedChanges(true);
+                  setBoxLocation(e.target.value);
+                }}
                 required
               />
             </div>

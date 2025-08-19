@@ -7,9 +7,11 @@ import { FaUpload, FaTimes } from "react-icons/fa";
 import { CiCirclePlus, CiCircleMinus } from "react-icons/ci";
 
 import styles from "./page.module.css";
+import { useUser } from "@clerk/nextjs";
 export default function Box() {
   const { id } = useParams();
   const [items, setItems] = useState([]);
+  const [originalItems, setOriginalItems] = useState([]);
   const [boxId, setBoxId] = useState("");
   const [edit, setEdit] = useState(false);
   const [add, setAdd] = useState(false);
@@ -30,6 +32,8 @@ export default function Box() {
   const [movedIndex, setMovedIndex] = useState(null);
 
   const [options, setOptions] = useState({});
+
+  const { user } = useUser();
 
   const minSwipeDistance = 50;
 
@@ -77,6 +81,7 @@ export default function Box() {
     const result = await response.json();
 
     setItems(result.data.filter((item) => item.boxId == boxId));
+    setOriginalItems(result.data.filter((item) => item.boxId == boxId));
   };
 
   const getItemOptions = async () => {
@@ -122,17 +127,45 @@ export default function Box() {
     return dict;
   }, [options]);
 
+  const brandDict = useMemo(() => {
+    if (!options.brands) return {};
+    const dict = {};
+    options.brands.forEach((item) => {
+      dict[item._id.toString()] = item;
+    });
+    return dict;
+  }, [options]);
+
   useEffect(() => {
     getItemOptions();
   }, []);
 
+  const itemDescriptor = (item) => {
+    return `${
+      item.brand || brandDict[item.brandId]?.brand || "No brand"
+    } ${item.style || "No style"} ${
+      item.description ||
+      descriptionDict[item.descriptionId]?.description ||
+      "No description"
+    } ${
+      item.size || sizeDict[item.sizeId]?.size || "No size"
+    } ${item.color || "No color"}`;
+  };
+
   const handleChanges = async () => {
+    const change = {
+      user: user.fullName,
+      editedOn: new Date(),
+      changes: [],
+    };
+
     for (const item of items) {
       if (!item.quantity) {
         alert("Item quantity not valid");
         return;
       }
     }
+
     for (const [index, item] of items.entries()) {
       try {
         const newData = {
@@ -140,6 +173,12 @@ export default function Box() {
           quantity:
             item.quantity + (negatives[index] ? 1 : -1) * changes[index],
         };
+
+        if (changes[index] && changes[index] !== 0) {
+          change.changes.push(
+            `Item (${itemDescriptor(item)}) quantity changed: ${item.quantity} -> ${item.quantity + (negatives[index] ? 1 : -1) * changes[index]}`
+          );
+        }
 
         // Create the box first
         const response = await fetch(`/api/inventory/item/${item._id}`, {
@@ -154,6 +193,30 @@ export default function Box() {
         return false;
       }
     }
+    try {
+      const boxResponse = await fetch(`/api/inventory/box/${boxId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          history: change,
+        }),
+      });
+      const data = await boxResponse.json();
+      if (!data.success) {
+        console.error("Error updating box:", data.error);
+        console.error("Details:", data.details);
+        throw new Error(data.error || "Unknown error updating box");
+      }
+      console.log("Box updated successfully:", data.data);
+      console.log(change);
+    } catch {
+      console.error("Error updating box");
+      throw new Error("Unknown error updating box");
+    }
+    console.log(change);
+
     alert("Updated quantity successful");
     setChanges([]);
     setNegatives([]);
@@ -283,7 +346,9 @@ export default function Box() {
           <div className={styles.saveChanges} onClick={handleChanges}>
             Save Changes
           </div>
-          <div style={{fontWeight:"bold", fontSize: "20px", color:"#c4413f"}}>
+          <div
+            style={{ fontWeight: "bold", fontSize: "20px", color: "#c4413f" }}
+          >
             Swipe to edit quantity
           </div>
           {items.map((item, index) => (
@@ -296,7 +361,11 @@ export default function Box() {
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={(e) => onTouchEnd(e, index)}
-                onClick={() => movedIndex === index ? setMovedIndex(null) : setMovedIndex(index)}
+                onClick={() =>
+                  movedIndex === index
+                    ? setMovedIndex(null)
+                    : setMovedIndex(index)
+                }
                 style={{
                   position: "relative",
                   zIndex: 1,
@@ -312,9 +381,10 @@ export default function Box() {
                   <div className={styles.rowObjectInfo}>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Description:</span>{" "}
-                      {item.description || descriptionDict[item.descriptionId]
-                        ? descriptionDict[item.descriptionId].description
-                        : "N/A"}{" "}
+                      {item.description ||
+                        (descriptionDict[item.descriptionId]
+                          ? descriptionDict[item.descriptionId].description
+                          : "N/A")}{" "}
                     </div>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Color:</span>{" "}
@@ -322,9 +392,11 @@ export default function Box() {
                     </div>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Size:</span>{" "}
-                      {item.size || sizeDict[item.sizeId]
-                        ? sizeDict[item.sizeId].size
-                        : "N/A"}{" "}
+                      {console.log(item)}
+                      {item.size ||
+                        (sizeDict[item.sizeId]
+                          ? sizeDict[item.sizeId].size
+                          : "N/A")}{" "}
                     </div>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Style:</span>{" "}

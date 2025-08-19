@@ -1,6 +1,7 @@
 "use client";
 import styles from "./inventory.module.css";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { BeatLoader } from "react-spinners";
 import {
   FaUpload,
   FaTimes,
@@ -17,9 +18,12 @@ import {
   IoIosCheckmarkCircle,
   IoIosRemoveCircle,
 } from "react-icons/io";
+import { CiMaximize1, CiMinimize1 } from "react-icons/ci";
+import { FiMinimize2, FiMaximize2 } from "react-icons/fi";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
 import EditPresets from "@/app/components/admin/editPresets/EditPresets";
-
+import Overlay from "@/app/components/popups/Overlay";
+import { useUser } from "@clerk/nextjs";
 import jsPDF from "jspdf";
 
 export default function EditItem({
@@ -27,74 +31,52 @@ export default function EditItem({
   onClose,
   refresh,
   selectedItem,
-  setSelectedItem,
   boxes,
   options,
+  deletePopup,
+  getBox,
 }) {
   const [page, setPage] = useState("add");
-
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      refresh();
-      setSelectedItem(null);
-      onClose();
-    }
-  };
-
-  const handleModalClick = (e) => {
-    e.stopPropagation();
-  };
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [popup, setPopup] = useState(null);
 
   return (
-    <div className={styles.overlayBackground} onClick={handleOverlayClick}>
-      <div
-        className={styles.addItem}
-        onClick={handleModalClick}
-        style={{ width: page == "success" && "auto" }}
-      >
-        {page === "add" && (
-          <AddBox
-            box={box}
-            onClose={onClose}
-            refresh={refresh}
-            selectedItem={selectedItem}
-            boxes={boxes}
-            setPage={setPage}
-            options={options}
-          />
-        )}
-        {page === "success" && <Success />}
-        {page === "edit" && (
-          <EditPresets
-            options={options}
-            prevPage="box"
-            setPage={setPage}
-            refresh={refresh}
-          />
-        )}
-      </div>
-    </div>
+    <Overlay
+      onClose={onClose}
+      isVisible={true}
+      popup={popup}
+      setPopup={setPopup}
+      unsavedChanges={unsavedChanges}
+      setUnsavedChanges={setUnsavedChanges}
+    >
+      {page === "add" && (
+        <AddBox
+          box={box}
+          onClose={onClose}
+          refresh={refresh}
+          selectedItem={selectedItem}
+          boxes={boxes}
+          setPage={setPage}
+          options={options}
+          setUnsavedChanges={setUnsavedChanges}
+          unsavedChanges={unsavedChanges}
+          popup={popup}
+          setPopup={setPopup}
+          deletePopup={deletePopup}
+          getBox={getBox}
+        />
+      )}
+      {page === "edit" && (
+        <EditPresets
+          options={options}
+          prevPage="box"
+          setPage={setPage}
+          refresh={refresh}
+        />
+      )}
+    </Overlay>
   );
 }
-
-const Success = () => {
-  return (
-    <div
-      style={{
-        width: "100%",
-        minHeight: "300px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <IoIosCheckmarkCircle style={{ fontSize: "64px", color: "green" }} />
-      <div style={{ fontSize: "2rem" }}>Item successfully edited!</div>
-    </div>
-  );
-};
 
 const AddBox = ({
   box,
@@ -104,16 +86,30 @@ const AddBox = ({
   boxes,
   setPage,
   options,
+  unsavedChanges,
+  setUnsavedChanges,
+  popup,
+  setPopup,
+  deletePopup,
+  getBox,
 }) => {
-  const [boxDescription, setBoxDescription] = useState(box.description || "");
-  const [boxLocation, setBoxLocation] = useState(box.location);
+  const [boxDescription, setBoxDescription] = useState(box?.description || "");
+  const [origDescription, setOrigDescription] = useState(
+    box?.description || ""
+  );
+  const [boxLocation, setBoxLocation] = useState(box?.location);
+  const [origLocation, setOrigLocation] = useState(box?.location);
   const [contents, setContents] = useState([]);
   const [originalContents, setOriginalContents] = useState([]);
-  const [imageUrl, setImageUrl] = useState(box.image);
-  const [minimumPrice, setMinimumPrice] = useState(box.minPrice);
+  const [imageUrl, setImageUrl] = useState(box?.image);
+  const [origImageUrl, setOrigImageUrl] = useState(box?.image);
+  const [minimumPrice, setMinimumPrice] = useState(box?.minPrice);
   /*admin (always clicked), public inventory, sale*/
   const [visibility, setVisibility] = useState(["admin"]);
-  const [boxDiscount, setBoxDiscount] = useState(box.discount ?? 20);
+  const [boxDiscount, setBoxDiscount] = useState(box?.discount ?? 20);
+  const [originalBoxData, setOriginalBoxData] = useState({});
+  const [originalVisibility, setOriginalVisibility] = useState([]);
+
   const [currentItem, setCurrentItem] = useState({
     image:
       "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
@@ -135,21 +131,125 @@ const AddBox = ({
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
-  const [acknowledgement, setAcknowledgement] = useState(false);
   const [boxDict, setBoxDict] = useState({});
 
-  // New state for description search
   const [descriptionSearch, setDescriptionSearch] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
   const [sizeSearch, setSizeSearch] = useState("");
 
+  const { user } = useUser();
+
+  const [acknowledged, setAcknowledged] = useState(false);
+
+  const [history, setHistory] = useState(box.history || []);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState(null);
+  const [reload, setReload] = useState(0);
+
+  const checkCurrent = useCallback(() => {
+    // Check if user has entered any meaningful data for the current item
+    const hasData =
+      (currentItem.description && currentItem.description.trim()) ||
+      (currentItem.style && currentItem.style.trim()) ||
+      (currentItem.brand && currentItem.brand.trim()) ||
+      (currentItem.size && currentItem.size.trim()) ||
+      (currentItem.color && currentItem.color.trim()) ||
+      (currentItem.quantity && parseInt(currentItem.quantity) > 0) ||
+      (currentItem.price && parseFloat(currentItem.price) > 0);
+
+    console.log("Current Item Data:", {
+      description: currentItem.description,
+      style: currentItem.style,
+      brand: currentItem.brand,
+      size: currentItem.size,
+      color: currentItem.color,
+      quantity: currentItem.quantity,
+      price: currentItem.price,
+    });
+
+    console.log("hasData", hasData);
+
+    if (!acknowledged && hasData) {
+      setPopup("itemNotAdded");
+      setAcknowledged(true);
+      return false; // There is unsaved item data
+    }
+
+    return true; // No unsaved item data, safe to proceed
+  }, [currentItem, acknowledged, setPopup, setAcknowledged]);
+
+  /**
+   * Enter: if there is a popup it with save unsaved changes it will save it,
+   * if there is a popup saying changes were successful it will exit
+   * Escape: if there are unsaved changes it will alert user of unsaved changes,
+   * if there are no unsaved changes it will exit
+   */
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Enter") {
+        if (popup === "unsaved") {
+          handleSubmitBox();
+        } else if (popup === "success") {
+          onClose();
+        }
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if ((popup === "success" || !unsavedChanges) && checkCurrent()) {
+          onClose();
+        } else if (unsavedChanges) {
+          setPopup("unsaved");
+          setUnsavedChanges(false);
+        }
+      }
+    },
+    [popup, onClose, unsavedChanges, checkCurrent]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
+
+  // Enhanced setters with edit tracking
+  const setBoxDescriptionWithTracking = (newValue) => {
+    setUnsavedChanges(true);
+    setBoxDescription(newValue);
+  };
+
+  const setBoxLocationWithTracking = (newValue) => {
+    setUnsavedChanges(true);
+    setBoxLocation(newValue);
+  };
+
+  const setImageUrlWithTracking = (newValue) => {
+    setUnsavedChanges(true);
+    setImageUrl(newValue);
+  };
+  const setMinimumPriceWithTracking = (newValue) => {
+    setUnsavedChanges(true);
+    setMinimumPrice(newValue);
+  };
+
+  const setBoxDiscountWithTracking = (newValue) => {
+    setUnsavedChanges(true);
+    setBoxDiscount(newValue);
+  };
+
+  const setVisibilityWithTracking = (newVisibility) => {
+    console.log("inside", newVisibility);
+    setUnsavedChanges(true);
+    setVisibility(newVisibility);
+  };
+
   const filteredDescriptions = useMemo(() => {
     if (!options?.descriptions) return [];
-
     if (!descriptionSearch || !descriptionSearch.trim()) {
       return options.descriptions;
     }
-
     return options.descriptions.filter((desc) =>
       desc.description.toLowerCase().includes(descriptionSearch.toLowerCase())
     );
@@ -157,11 +257,9 @@ const AddBox = ({
 
   const filteredBrands = useMemo(() => {
     if (!options?.brands) return [];
-
     if (!brandSearch || !brandSearch.trim()) {
       return options.brands;
     }
-
     return options.brands.filter((desc) =>
       desc.brand.toLowerCase().includes(brandSearch.toLowerCase())
     );
@@ -169,11 +267,9 @@ const AddBox = ({
 
   const filteredSizes = useMemo(() => {
     if (!options?.sizes) return [];
-
     if (!sizeSearch || !sizeSearch.trim()) {
       return options.sizes;
     }
-
     return options.sizes.filter((desc) =>
       desc.size.toLowerCase().includes(sizeSearch.toLowerCase())
     );
@@ -185,12 +281,21 @@ const AddBox = ({
         method: "GET",
       });
       const result = await response.json();
-
       const matchingItems = result.data.filter(
         (item) => item.boxId === box._id
       );
       setContents(matchingItems);
       setOriginalContents(matchingItems);
+
+      // Store original box data for comparison
+      setOriginalBoxData({
+        description: box.description || "",
+        location: box.location,
+        image: box.image,
+        minPrice: box.minPrice,
+        discount: box.discount ?? 20,
+        history: box.history || [],
+      });
 
       const newBoxDict = {};
       for (const item of result.data) {
@@ -203,14 +308,16 @@ const AddBox = ({
       setBoxDict(newBoxDict);
     };
     getContent();
-  }, []);
+  }, [reload]);
 
   useEffect(() => {
-    const newVisibility = [];
-    if (contents[0]?.public) newVisibility.push("public");
-    if (contents[0]?.sale) newVisibility.push("sale");
-    setVisibility(newVisibility);
-  }, [contents]);
+    const initialVisibility = ["admin"];
+    if (box?.public) initialVisibility.push("public");
+    if (box?.sale) initialVisibility.push("sale");
+
+    setVisibility(initialVisibility);
+    setOriginalVisibility(initialVisibility);
+  }, [box]);
 
   // Filter boxes based on search term
   const filteredBoxes = boxes.filter(
@@ -226,7 +333,6 @@ const AddBox = ({
     options.sizes.forEach((item) => {
       dict[item._id.toString()] = item;
       dict[item.size.toLowerCase().trim()] = item;
-
     });
     return dict;
   }, [options]);
@@ -234,7 +340,6 @@ const AddBox = ({
   const descriptionDict = useMemo(() => {
     const dict = {};
     if (!options.descriptions) return {};
-
     options.descriptions.forEach((item) => {
       dict[item._id.toString()] = item;
       dict[item.description.toLowerCase().trim()] = item;
@@ -242,15 +347,12 @@ const AddBox = ({
     return dict;
   }, [options]);
 
-
-
   const brandDict = useMemo(() => {
     if (!options.brands) return {};
     const dict = {};
     options.brands.forEach((item) => {
       dict[item._id.toString()] = item;
       dict[item.brand.toLowerCase().trim()] = item;
-
     });
     return dict;
   }, [options]);
@@ -291,7 +393,6 @@ const AddBox = ({
         putOnlyUsedFonts: true,
         compress: true,
       });
-
       // Constants
       const pageWidth = 4;
       const pageHeight = 6;
@@ -299,53 +400,42 @@ const AddBox = ({
       const bottomMargin = 0.5;
       const textStartY = 1.6;
       const lineHeight = 0.2;
-
       // Title
       pdf.setFontSize(24);
       pdf.setFont(undefined, "bold");
       pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
-
       const maxQrY = pageHeight - qrSize - bottomMargin;
-
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
       console.log("new", box.description);
       let description = box.description;
       let currentQrY = 2.2;
-
       const textLines = pdf.splitTextToSize(description, 3.5);
       const textHeight = textLines.length * lineHeight;
       const idealQrY = textStartY + textHeight + 0.3;
-
       // If QR would go past bottom, truncate text
       if (idealQrY + qrSize > pageHeight - bottomMargin) {
         const availableHeight = maxQrY - textStartY - 0.3;
         const maxLines = Math.floor(availableHeight / lineHeight);
-
         // Truncate text to fit
         let truncatedText = description;
         let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
-
         while (truncatedLines.length > maxLines && truncatedText.length > 0) {
           truncatedText =
             truncatedText.substring(0, truncatedText.length - 4) + "...";
           truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
         }
-
         description = truncatedText;
         currentQrY = maxQrY;
       } else {
         currentQrY = idealQrY;
       }
-
       pdf.text(description, 2, textStartY, {
         align: "center",
         maxWidth: 3.5,
       });
-
       const qrX = (pageWidth - qrSize) / 2;
       pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
-
       pdf.save(`box-${box.boxId}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -353,6 +443,7 @@ const AddBox = ({
   };
 
   const handleFileSelect = (e, type, itemIndex = null) => {
+    setUnsavedChanges(true);
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
@@ -364,7 +455,6 @@ const AddBox = ({
         setUploadError("File size must be less than 5MB");
         return;
       }
-
       handleUploadImage(file, type, itemIndex);
       setUploadError("");
     }
@@ -373,12 +463,12 @@ const AddBox = ({
   };
 
   const handleUrlSubmit = (e, type, itemIndex = null) => {
+    setUnsavedChanges(true);
     e.preventDefault();
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
       return;
     }
-
     // Basic URL validation
     try {
       new URL(imageUrlInput);
@@ -386,14 +476,16 @@ const AddBox = ({
       setUploadError("Please enter a valid URL");
       return;
     }
-
     if (type === "content" && itemIndex !== null) {
       // Update specific item's image
       console.log(contents);
       setContents((prevContents) =>
-        prevContents.map((item, index) =>
-          index === itemIndex ? { ...item, image: imageUrlInput } : item
-        )
+        prevContents.map((item, index) => {
+          if (index === itemIndex) {
+            return { ...item, image: imageUrlInput };
+          }
+          return item;
+        })
       );
     } else if (type === "content") {
       // Update current item being added
@@ -403,9 +495,8 @@ const AddBox = ({
       });
     } else {
       // Update box image
-      setImageUrl(imageUrlInput);
+      setImageUrlWithTracking(imageUrlInput);
     }
-
     setImageUrlInput("");
     setShowUrlInput(false);
     setShowImageOptions(null); // Hide options after URL submission
@@ -413,6 +504,7 @@ const AddBox = ({
   };
 
   const handleUploadImage = async (file, type, itemIndex = null) => {
+    setUnsavedChanges(true);
     console.log(file, type, itemIndex);
     if (!file) {
       return;
@@ -431,9 +523,12 @@ const AddBox = ({
         if (type === "content" && itemIndex !== null) {
           // Update specific item's image
           setContents((prevContents) =>
-            prevContents.map((item, index) =>
-              index === itemIndex ? { ...item, image: result.url } : item
-            )
+            prevContents.map((item, index) => {
+              if (index === itemIndex) {
+                return { ...item, image: result.url };
+              }
+              return item;
+            })
           );
         } else if (type === "content") {
           // Update current item being added
@@ -443,7 +538,7 @@ const AddBox = ({
           });
         } else {
           // Update box image
-          setImageUrl(result.url);
+          setImageUrlWithTracking(result.url);
         }
       } else {
         setUploadError(result.error || "Upload failed");
@@ -487,24 +582,31 @@ const AddBox = ({
   };
 
   const removeUploadedImage = () => {
-    setImageUrl("");
+    setImageUrlWithTracking("");
   };
 
   const updateExistingContent = (idToUpdate, field, newValue) => {
+    setUnsavedChanges(true);
     setContents((prevContents) =>
-      prevContents.map((item, index) =>
-        index === idToUpdate ? { ...item, [field]: newValue } : item
-      )
+      prevContents.map((item, index) => {
+        if (index === idToUpdate) {
+          return { ...item, [field]: newValue };
+        }
+        return item;
+      })
     );
   };
 
   const removeItem = async (indexToRemove) => {
+    setUnsavedChanges(true);
+    const removedItem = contents[indexToRemove];
     setContents((prevContents) =>
       prevContents.filter((_, index) => index !== indexToRemove)
     );
   };
 
   const copyItem = async (indexToCopy) => {
+    setUnsavedChanges(true);
     const { _id, ...itemToCopy } = contents[indexToCopy];
     setContents([...contents, itemToCopy]);
   };
@@ -516,21 +618,19 @@ const AddBox = ({
         "Content-Type": "application/json",
       },
     });
-
     const data = await itemResponse.json();
-
     if (!data.success) {
       console.error("Error deleting item:", data.error);
       console.error("Details:", data.details);
       throw new Error(data.error || "Unknown error deleting item");
     }
-
     console.log("Item deleted successfully:", data.data);
     console.log("Message:", data.message);
     return data;
   };
 
   const addNewItem = () => {
+    setUnsavedChanges(true);
     if (currentItem.description.trim() === "") {
       setUploadError("Please enter a description for the item");
       return;
@@ -567,12 +667,10 @@ const AddBox = ({
   };
 
   const handleSubmitBox = async (e) => {
-    e.preventDefault();
-
+    if (e) e.preventDefault();
     if (isSubmitting) {
       return;
     }
-
     if (
       !boxDescription ||
       !boxLocation ||
@@ -583,7 +681,6 @@ const AddBox = ({
       alert("Please fill in all fields and upload an image");
       return;
     }
-
     for (const item of contents) {
       if (
         (!item.description && !item.descriptionId) ||
@@ -598,35 +695,16 @@ const AddBox = ({
         return;
       }
     }
-
-    if (
-      !acknowledgement &&
-      (currentItem.color ||
-        currentItem.description ||
-        currentItem.price ||
-        currentItem.quantity ||
-        currentItem.size ||
-        currentItem.style)
-    ) {
-      alert(
-        "Warning: New item not finalized, click the checkmark to the right of the item to add."
-      );
-      setAcknowledgement(true);
+    if (!checkCurrent()) {
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const success = await uploadBox();
       if (success) {
-        // Clear form
-        setBoxDescription("");
-        setBoxDiscount(20);
-        setBoxLocation("");
-        setImageUrl("");
-        setContents([]);
-        setVisibility(["admin"]);
+        setUnsavedChanges(false);
+        setPopup("success");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -639,19 +717,16 @@ const AddBox = ({
 
   const positionDropdown = (dropdownElement, triggerElement) => {
     if (!dropdownElement || !triggerElement) return;
-
     const triggerRect = triggerElement.getBoundingClientRect();
     const dropdownRect = dropdownElement.getBoundingClientRect();
     const viewport = {
       width: window.innerWidth,
       height: window.innerHeight,
     };
-
     // Check if there's enough space below
     const spaceBelow = viewport.height - triggerRect.bottom;
     const spaceAbove = triggerRect.top;
     const dropdownHeight = dropdownRect.height || 200; // fallback height
-
     if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
       // Position above
       dropdownElement.classList.add("dropdown-up");
@@ -669,19 +744,126 @@ const AddBox = ({
     }
   };
 
+  const itemDescriptor = (item) => {
+    return `${
+      item.brand || brandDict[item.brandId]?.brand || "No brand"
+    } ${item.style || "No style"} ${
+      item.description ||
+      descriptionDict[item.descriptionId]?.description ||
+      "No description"
+    } ${
+      item.size || sizeDict[item.sizeId]?.size || "No size"
+    } ${item.color || "No color"}`;
+  };
+
   async function uploadBox() {
+    console.log(getBox);
+    let change = {
+      user: user.fullName,
+      editedOn: new Date(),
+      changes: [],
+    };
+
+    if (origDescription.trim() !== boxDescription.trim()) {
+      change.changes.push(
+        `Box description changed: ${box?.description.trim()} -> ${boxDescription.trim()}`
+      );
+    }
+    if (origLocation.trim() !== boxLocation.trim()) {
+      change.changes.push(
+        `Box location changed: ${box?.location.trim()} -> ${boxLocation.trim()}`
+      );
+    }
+    if (origImageUrl.trim() !== imageUrl.trim()) {
+      change.changes.push(
+        `Box image changed: ${box?.image.trim()} -> ${imageUrl.trim()}`
+      );
+    }
+
+    if (
+      originalVisibility.includes("public") !== visibility.includes("public")
+    ) {
+      change.changes.push(
+        `Box privacy changed: ${originalVisibility.includes("public") ? "public" : "private"} -> ${visibility.includes("public") ? "public" : "private"}`
+      );
+    }
+
+    if (originalVisibility.includes("sale") !== visibility.includes("sale")) {
+      change.changes.push(
+        `Box sale status changed: ${originalVisibility.includes("sale") ? "on sale" : "not on sale"} -> ${visibility.includes("sale") ? "on sale" : "not on sale"}`
+      );
+    }
+
+    let origContentsDict = {};
+    for (const content of originalContents) {
+      origContentsDict[content._id] = content;
+    }
+
+    function getFieldValue(content, field) {
+      if (field === "description" && content.descriptionId) {
+        return descriptionDict[content.descriptionId]?.description;
+      } else if (field === "brand" && content.brandId) {
+        return brandDict[content.brandId]?.brand;
+      } else if (field === "size" && content.sizeId) {
+        return sizeDict[content.sizeId]?.size;
+      }
+      return content[field];
+    }
+
+    for (const newContent of contents) {
+      /**if there is an id it's an item that was already there pre-edit */
+      if (newContent._id) {
+        const origContent = origContentsDict[newContent._id];
+        const fields = [
+          "image",
+          "description",
+          "style",
+          "size",
+          "quantity",
+          "color",
+          "brand",
+          "price",
+        ];
+        fields.forEach((field) => {
+          const newValue = getFieldValue(newContent, field);
+          const origValue = getFieldValue(origContent, field);
+          if (newValue && newValue !== origValue) {
+            change.changes.push(
+              `Item (${itemDescriptor(newContent)}) ${field} changed: ${origValue} -> ${newValue}`
+            );
+          }
+        });
+      }
+    }
+
     try {
       const itemsToDelete = originalContents.filter((original) => {
         return !contents.some(
           (current) => current._id && current._id === original._id
         );
       });
-
       for (const itemToDelete of itemsToDelete) {
         try {
+          change.changes.push(
+            `Item (${itemDescriptor(itemToDelete)}) removed from box.`
+          );
           await removeItemDB(itemToDelete._id);
         } catch (error) {
           console.error(`Failed to delete item ${itemToDelete._id}:`, error);
+        }
+      }
+      for (const content of contents) {
+        if (content.removed) {
+          change.changes.push(
+            `Item (${itemDescriptor(content)}) removed from box`
+          );
+        } else if (content.boxId && content.boxId !== box._id) {
+          change.changes.push(
+            `Item (${itemDescriptor(content)}) moved from box ${getBox[box._id].boxId} -> ${getBox[content.boxId].boxId}`
+          );
+        }
+        if (!content._id) {
+          change.changes.push(`Item (${itemDescriptor(content)}) created.`);
         }
       }
 
@@ -695,6 +877,7 @@ const AddBox = ({
         }),
         contents: contents,
       };
+      if (change.changes.length >= 1) boxData.history = change;
 
       const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
         method: "PATCH",
@@ -703,20 +886,16 @@ const AddBox = ({
         },
         body: JSON.stringify(boxData),
       });
-
       const data = await boxResponse.json();
-
       if (!data.success) {
         console.error("Error updating box:", data.error);
         console.error("Details:", data.details);
         throw new Error(data.error || "Unknown error updating box");
       }
-
       console.log("Box updated successfully:", data.data);
+      console.log(change);
       const boxId = data.data._id;
-
       for (const content of contents) {
-        console.log("content", content);
         try {
           if (content.removed) {
             await removeFromBox(content);
@@ -741,17 +920,13 @@ const AddBox = ({
                     ? boxDict[content.boxId].public
                     : false,
             };
-
             if (content.descriptionId)
               itemData.descriptionId = content.descriptionId;
             else itemData.description = content.description;
-
             if (content.sizeId) itemData.sizeId = content.sizeId;
             else itemData.size = content.size;
-
             if (content.brandId) itemData.brandId = content.brandId;
             else itemData.brand = content.brand;
-
             let itemResponse;
             if (!content._id) {
               itemResponse = await fetch(`/api/inventory/item`, {
@@ -770,14 +945,11 @@ const AddBox = ({
                 body: JSON.stringify(itemData),
               });
             }
-
             const itemResult = await itemResponse.json();
-
             if (!itemResult.success) {
               console.error("Error with item:", itemResult.error);
               throw new Error(itemResult.error || "Unknown error with item");
             }
-
             console.log("Item processed successfully:", itemResult.data);
           }
         } catch (error) {
@@ -785,8 +957,12 @@ const AddBox = ({
           throw error;
         }
       }
-
-      setPage("success");
+      setOrigDescription(boxDescription);
+      setOrigLocation(boxLocation);
+      setOrigImageUrl(imageUrl);
+      setOriginalContents(contents);
+      setReload(reload + 1);
+      setHistory([...history, change]);
       return true;
     } catch (error) {
       console.error("Network error:", error);
@@ -809,9 +985,7 @@ const AddBox = ({
                 },
               }
             );
-
             const itemResult = await itemResponse.json();
-
             if (!itemResult.success) {
               console.error("Error deleting item:", itemResult.error);
             }
@@ -822,24 +996,19 @@ const AddBox = ({
           removeFromBox(content);
         }
       }
-
       const boxResponse = await fetch(`/api/inventory/box/${box._id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
       });
-
       const deleteResult = await boxResponse.json();
-
       if (!deleteResult.success) {
         console.error("Error deleting box:", deleteResult.error);
         alert("Error deleting box: " + (deleteResult.error || "Unknown error"));
         return;
       }
-
-      if (opt === "all") alert("Box and all items deleted successfully!");
-      else alert("Box and all items deleted successfully!");
+      deletePopup();
 
       refresh();
       onClose();
@@ -860,19 +1029,16 @@ const AddBox = ({
       public: visibility.includes("public"),
       location: boxLocation,
     };
-
     if (content.descriptionId) itemData.descriptionId = content.descriptionId;
     else itemData.description = content.description;
     if (content.brandId) itemData.brandId = content.brandId;
     else itemData.brand = content.brand;
     if (content.sizeId) itemData.sizeId = content.sizeId;
     else itemData.size = content.size;
-
     if (visibility.includes("sale")) {
       itemData.discount = boxDiscount;
       itemData.minPrice = minimumPrice;
     }
-
     let itemResponse;
     //if it doesn't have an id, its an added item
     if (!content._id) {
@@ -892,9 +1058,7 @@ const AddBox = ({
         body: JSON.stringify(itemData),
       });
     }
-
     const itemResult = await itemResponse.json();
-
     if (itemResult.success) {
       console.log("Items successfully removed from box:", itemResult.data);
       console.log("Message:", itemResult.message);
@@ -910,9 +1074,7 @@ const AddBox = ({
 
   const generateDescription = (e) => {
     e.preventDefault();
-
     let retString = "";
-
     contents.forEach((item) => {
       retString =
         retString +
@@ -926,9 +1088,76 @@ const AddBox = ({
         item.style +
         ")\n";
     });
-
-    setBoxDescription(retString);
+    setBoxDescriptionWithTracking(retString);
   };
+
+  function stringToOrangeHex(str) {
+    // Simple hash function to convert string to number
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    // Make hash positive
+    hash = Math.abs(hash);
+
+    // Orange spectrum ranges:
+    // Hue: 15-45 degrees (red-orange to yellow-orange)
+    // Saturation: 70-100% (vibrant oranges)
+    // Lightness: 45-65% (not too dark, not too light)
+
+    const hue = 15 + (hash % 31); // 15-45 range
+    const saturation = 70 + (hash % 31); // 70-100 range
+    const lightness = 45 + (hash % 21); // 45-65 range
+
+    // Convert HSL to RGB
+    const hslToRgb = (h, s, l) => {
+      h /= 360;
+      s /= 100;
+      l /= 100;
+
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+
+      if (s === 0) {
+        return [l, l, l]; // achromatic
+      }
+
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+
+      const r = hue2rgb(p, q, h + 1 / 3);
+      const g = hue2rgb(p, q, h);
+      const b = hue2rgb(p, q, h - 1 / 3);
+
+      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    };
+
+    const [r, g, b] = hslToRgb(hue, saturation, lightness);
+
+    // Create darker red version
+    // Shift hue towards red (0-15 degrees) and reduce lightness
+    const redHue = hash % 16; // 0-15 range (red spectrum)
+    const redSaturation = Math.max(80, saturation); // Keep high saturation
+    const redLightness = Math.max(25, lightness - 20); // Make it darker
+
+    const [redR, redG, redB] = hslToRgb(redHue, redSaturation, redLightness);
+
+    // Convert to hex
+    const toHex = (n) => n.toString(16).padStart(2, "0");
+    return [
+      `#${toHex(r)}${toHex(g)}${toHex(b)}`,
+      `#${toHex(redR)}${toHex(redG)}${toHex(redB)}`,
+    ];
+  }
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -939,7 +1168,8 @@ const AddBox = ({
           prevContents.map((item) => {
             if (item.descriptionOpen) {
               const searchTerm = descriptionSearch || "";
-              const matchedItem = descriptionDict[searchTerm.toLowerCase().trim()];
+              const matchedItem =
+                descriptionDict[searchTerm.toLowerCase().trim()];
               if (!matchedItem) {
                 // No match found - use the raw search text
                 return {
@@ -961,7 +1191,7 @@ const AddBox = ({
             return { ...item, descriptionOpen: false };
           })
         );
-  
+
         // Close current item dropdown and apply search value if it was open
         if (currentItem.descriptionOpen) {
           const searchTerm = descriptionSearch || "";
@@ -982,13 +1212,13 @@ const AddBox = ({
             });
           }
         }
-        
+
         setDescriptionSearch("");
       }
-  
+
       // Close size dropdown
       if (!event.target.closest("[data-size-dropdown]")) {
-       setContents((prevContents) =>
+        setContents((prevContents) =>
           prevContents.map((item) => {
             if (item.sizeOpen) {
               const searchTerm = sizeSearch || "";
@@ -1012,7 +1242,7 @@ const AddBox = ({
             return { ...item, sizeOpen: false };
           })
         );
-  
+
         // Close current item dropdown and apply search value if it was open
         if (currentItem.sizeOpen) {
           const searchTerm = sizeSearch || "";
@@ -1033,10 +1263,10 @@ const AddBox = ({
             });
           }
         }
-        
+
         setSizeSearch("");
       }
-  
+
       // Close brand dropdown
       if (!event.target.closest("[data-brand-dropdown]")) {
         setContents((prevContents) =>
@@ -1063,7 +1293,7 @@ const AddBox = ({
             return { ...item, brandOpen: false };
           })
         );
-  
+
         // Close current item dropdown and apply search value if it was open
         if (currentItem.brandOpen) {
           const searchTerm = brandSearch || "";
@@ -1084,16 +1314,16 @@ const AddBox = ({
             });
           }
         }
-        
+
         setBrandSearch("");
       }
-  
+
       // Close box-swapping dropdown
       if (isDropdownOpen !== null && !event.target.closest("[data-dropdown]")) {
         setIsDropdownOpen(null);
         setDropdownSearchTerm("");
       }
-  
+
       // Close image options dropdown
       if (
         showImageOptions !== null &&
@@ -1102,26 +1332,25 @@ const AddBox = ({
         setShowImageOptions(null);
       }
     };
-  
+
     document.addEventListener("click", handleClickOutside);
-  
+
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, [
-    isDropdownOpen, 
-    showImageOptions, 
+    isDropdownOpen,
+    showImageOptions,
     currentItem.descriptionOpen,
-    currentItem.sizeOpen, 
+    currentItem.sizeOpen,
     currentItem.brandOpen,
     descriptionSearch,
     brandSearch,
     sizeSearch,
     descriptionDict,
     sizeDict,
-    brandDict
+    brandDict,
   ]);
-
 
   const handleDropdownToggle = (index) => {
     if (isDropdownOpen === index) {
@@ -1130,7 +1359,6 @@ const AddBox = ({
     } else {
       setIsDropdownOpen(index);
       setDropdownSearchTerm("");
-
       // Position the dropdown after it renders
       setTimeout(() => {
         const dropdown = document.querySelector(
@@ -1143,13 +1371,15 @@ const AddBox = ({
       }, 0);
     }
   };
+
   const handleDescriptionKeyDown = (e, index = null) => {
     if (e.key === "Tab" || e.key === "Enter") {
       // Prevent default behavior
       e.preventDefault();
-  
-      const matchedItem = descriptionDict[descriptionSearch.toLowerCase().trim()];
-  
+
+      const matchedItem =
+        descriptionDict[descriptionSearch.toLowerCase().trim()];
+
       // Handle dropdown logic first
       if (index !== null && !matchedItem) {
         // No match found - use the raw search text
@@ -1179,17 +1409,17 @@ const AddBox = ({
         });
       }
       setDescriptionSearch("");
-  
+
       // Move to next input after state updates are processed
       setTimeout(() => {
         const focusableElements = document.querySelectorAll(
           'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
         );
         const currentIndex = Array.from(focusableElements).indexOf(e.target);
-  
+
         if (currentIndex !== -1) {
           const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
-  
+
           if (nextIndex >= 0 && nextIndex < focusableElements.length) {
             focusableElements[nextIndex].focus();
           }
@@ -1197,13 +1427,13 @@ const AddBox = ({
       }, 50);
     }
   };
-  
+
   const handleBrandKeyDown = (e, index = null) => {
     if (e.key === "Tab" || e.key === "Enter") {
       e.preventDefault();
-  
+
       const matchedItem = brandDict[brandSearch.toLowerCase().trim()];
-  
+
       // Handle dropdown logic first
       if (index !== null && !matchedItem) {
         // No match found - use the raw search text
@@ -1233,16 +1463,16 @@ const AddBox = ({
         });
       }
       setBrandSearch("");
-  
+
       setTimeout(() => {
         const focusableElements = document.querySelectorAll(
           'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
         );
         const currentIndex = Array.from(focusableElements).indexOf(e.target);
-  
+
         if (currentIndex !== -1) {
           const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
-  
+
           if (nextIndex >= 0 && nextIndex < focusableElements.length) {
             focusableElements[nextIndex].focus();
           }
@@ -1250,15 +1480,14 @@ const AddBox = ({
       }, 50);
     }
   };
-  
 
   const handleSizeKeyDown = (e, index = null) => {
     if (e.key === "Tab" || e.key === "Enter") {
-      console.log("hmm")
+      console.log("hmm");
       e.preventDefault();
-  
+
       const matchedItem = sizeDict[sizeSearch.toLowerCase().trim()];
-  
+
       // Handle dropdown logic first
       if (index !== null && !matchedItem) {
         // No match found - use the raw search text
@@ -1288,16 +1517,16 @@ const AddBox = ({
         });
       }
       setSizeSearch("");
-  
+
       setTimeout(() => {
         const focusableElements = document.querySelectorAll(
           'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
         );
         const currentIndex = Array.from(focusableElements).indexOf(e.target);
-  
+
         if (currentIndex !== -1) {
           const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
-  
+
           if (nextIndex >= 0 && nextIndex < focusableElements.length) {
             focusableElements[nextIndex].focus();
           }
@@ -1305,12 +1534,12 @@ const AddBox = ({
       }, 50);
     }
   };
+
   const addOptDb = async (selectedOption, newItem, index) => {
     console.log(selectedOption, newItem, index);
     if (isSubmitting) return;
     setIsSubmitting(true);
     const response = await addOption(selectedOption, newItem);
-
     if (index !== null) {
       if (selectedOption === "description") {
         updateExistingContent(index, "description", response.description);
@@ -1349,7 +1578,6 @@ const AddBox = ({
         });
       }
     }
-
     setIsSubmitting(false);
   };
 
@@ -1371,7 +1599,6 @@ const AddBox = ({
           url = "/api/details/sizes";
           break;
       }
-
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -1379,19 +1606,15 @@ const AddBox = ({
         },
         body: JSON.stringify(itemData),
       });
-
       const data = await response.json();
-
       if (!data.success) {
         console.error("Error creating item:", data.error);
         console.error("Details:", data.details);
         alert("Error creating item: " + (data.error || "Unknown error"));
         return false;
       }
-
       console.log("Item created successfully:", data.data);
       console.log("Message:", data.message);
-
       // Clear form after successful submission
       refresh();
       return data.data;
@@ -1444,6 +1667,7 @@ const AddBox = ({
               style={{ resize: "vertical", minHeight: "90px" }}
               value={boxDescription}
               onChange={(e) => setBoxDescription(e.target.value)}
+              onBlur={(e) => setBoxDescriptionWithTracking(e.target.value)}
               required
             />
           </div>
@@ -1469,6 +1693,7 @@ const AddBox = ({
                 className={styles.input}
                 value={boxLocation}
                 onChange={(e) => setBoxLocation(e.target.value)}
+                onBlur={(e) => setBoxLocationWithTracking(e.target.value)}
                 required
               />
             </div>
@@ -1772,7 +1997,9 @@ const AddBox = ({
                               );
                               setDescriptionSearch(item.description);
                             }}
-                            onKeyDown={(e) => handleDescriptionKeyDown(e, index)}
+                            onKeyDown={(e) =>
+                              handleDescriptionKeyDown(e, index)
+                            }
                             placeholder={
                               item.descriptionOpen
                                 ? "Search descriptions..."
@@ -1944,14 +2171,13 @@ const AddBox = ({
                             value={
                               item.brandOpen ? brandSearch : getBrand(item)
                             }
-                            
                             onClick={() => {
                               setContents((prevContents) =>
-                              prevContents.map((item) => ({
-                                ...item,
-                                brandOpen: false,
-                              }))
-                            );
+                                prevContents.map((item) => ({
+                                  ...item,
+                                  brandOpen: false,
+                                }))
+                              );
                               updateExistingContent(index, "brandOpen", true);
                               setBrandSearch(item.brand);
                             }}
@@ -2112,11 +2338,11 @@ const AddBox = ({
                             value={item.sizeOpen ? sizeSearch : getSize(item)}
                             onClick={() => {
                               setContents((prevContents) =>
-                              prevContents.map((item) => ({
-                                ...item,
-                                sizeOpen: false,
-                              }))
-                            );
+                                prevContents.map((item) => ({
+                                  ...item,
+                                  sizeOpen: false,
+                                }))
+                              );
                               updateExistingContent(index, "sizeOpen", true);
                               setSizeSearch(item.size);
                             }}
@@ -2176,6 +2402,7 @@ const AddBox = ({
                                           "sizeOpen",
                                           false
                                         );
+
                                         setSizeSearch("");
                                       }}
                                       style={{
@@ -2320,11 +2547,10 @@ const AddBox = ({
                           }
                           onBlur={(e) => {
                             const numValue = parseFloat(e.target.value);
-                            updateExistingContent(
-                              index,
-                              "price",
-                              isNaN(numValue) ? 0 : numValue.toFixed(2)
-                            );
+                            const finalValue = isNaN(numValue)
+                              ? 0
+                              : numValue.toFixed(2);
+                            updateExistingContent(index, "price", finalValue);
                           }}
                           className={styles.input}
                           style={{
@@ -3449,7 +3675,7 @@ const AddBox = ({
                   checked
                   readOnly
                 />
-                <label for="radio1" style={{ marginLeft: "5px" }}>
+                <label htmlFor="radio1" style={{ marginLeft: "5px" }}>
                   Admin
                 </label>
                 <br />
@@ -3462,16 +3688,21 @@ const AddBox = ({
                   value="public"
                   checked={visibility.includes("public")}
                   onChange={(e) => {
+                    let newVisibility = [...visibility];
                     if (e.target.checked) {
-                      setVisibility([...visibility, "public"]);
+                      if (!newVisibility.includes("public")) {
+                        newVisibility.push("public");
+                      }
                     } else {
-                      setVisibility(
-                        visibility.filter((item) => item !== "public")
+                      newVisibility = newVisibility.filter(
+                        (item) => item !== "public"
                       );
                     }
+                    console.log(newVisibility);
+                    setVisibilityWithTracking(newVisibility); // Use tracking function
                   }}
                 />
-                <label for="checkbox1" style={{ marginLeft: "5px" }}>
+                <label htmlFor="checkbox1" style={{ marginLeft: "5px" }}>
                   Public
                 </label>
                 <br />
@@ -3485,13 +3716,17 @@ const AddBox = ({
                   value="sale"
                   checked={visibility.includes("sale")}
                   onChange={(e) => {
+                    let newVisibility = [...visibility];
                     if (e.target.checked) {
-                      setVisibility([...visibility, "sale"]);
+                      if (!newVisibility.includes("sale")) {
+                        newVisibility.push("sale");
+                      }
                     } else {
-                      setVisibility(
-                        visibility.filter((item) => item !== "sale")
+                      newVisibility = newVisibility.filter(
+                        (item) => item !== "sale"
                       );
                     }
+                    setVisibilityWithTracking(newVisibility);
                   }}
                 />
 
@@ -3507,9 +3742,10 @@ const AddBox = ({
                 <label>Discount</label>
                 <input
                   className={styles.input}
-                  onChange={(e) =>
-                    setBoxDiscount(e.target.value.replace(/[^0-9.]/g, ""))
-                  }
+                  onChange={(e) => {
+                    const newValue = e.target.value.replace(/[^0-9.]/g, "");
+                    setBoxDiscountWithTracking(newValue);
+                  }}
                   value={`${boxDiscount}%`}
                   required
                 />
@@ -3518,15 +3754,88 @@ const AddBox = ({
                 <label>Minimum Purchase</label>
                 <input
                   className={styles.input}
-                  onChange={(e) =>
-                    setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
-                  }
+                  onChange={(e) => {
+                    const newValue = e.target.value.replace(/[^0-9.]/g, "");
+                    setMinimumPriceWithTracking(newValue);
+                  }}
                   value={`${minimumPrice || "0"}`}
                   required
                 />
               </div>
             </div>
           )}
+          {history.length >= 1 && (
+            <div>
+              <div
+                className={styles.discreetButton}
+                onClick={() => setHistoryOpen(!historyOpen)}
+              >
+                View History{" "}
+                {historyOpen ? (
+                  <FiMinimize2 strokeWidth="2" />
+                ) : (
+                  <FiMaximize2 strokeWidth="2" />
+                )}
+              </div>
+              <div
+                className={`${styles.history} ${historyOpen ? styles.visible : ""}`}
+              >
+                <div style={{ padding: "10px", paddingTop: "0" }}>
+                  {history.reverse().map((entry, index) => (
+                    <div>
+                      <div
+                        className={styles.historyRow}
+                        onClick={() =>
+                          selectedHistory === index
+                            ? setSelectedHistory(null)
+                            : setSelectedHistory(index)
+                        }
+                        data-selected={index === selectedHistory}
+                      >
+                        <div
+                          className={styles.profile}
+                          style={{
+                            backgroundColor: stringToOrangeHex(entry.user)[0],
+                            color: stringToOrangeHex(entry.user)[1],
+                          }}
+                        >
+                          {entry.user
+                            .split(" ")
+                            .map((name) => name[0])
+                            .join("")}
+                        </div>
+                        <div>
+                          {entry.createdOn ? `Created by ${entry.user}` : ""}
+                          {entry.editedOn ? `Edited by ${entry.user}` : ""}
+                        </div>
+                        <div>
+                          Date:{" "}
+                          {entry.createdOn
+                            ? new Date(entry.createdOn).toLocaleString()
+                            : ""}
+                          {entry.editedOn
+                            ? `${new Date(entry.editedOn).toLocaleString()}`
+                            : ""}
+                        </div>
+                      </div>
+                      {entry.changes?.length >= 1 && <div
+                        className={`${styles.historyEntriesContainer} ${index === selectedHistory ? styles.visible : ""}`}
+                      >
+                        <div className={styles.historyEntries}>
+                          {entry.changes?.map((change) => (
+                            <div className={styles.historyEntry}>
+                              • {change}
+                            </div>
+                          ))}
+                        </div>
+                      </div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {uploadError && <div className={styles.error}>{uploadError}</div>}
           <div
             style={{
@@ -3555,8 +3864,12 @@ const AddBox = ({
                 Delete Box
               </button>
             </div>
-            <button className={styles.button} type="submit">
-              Save
+            <button
+              className={styles.button}
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <BeatLoader color="white" size={8} /> : "Save"}
             </button>
           </div>
         </form>

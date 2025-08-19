@@ -12,6 +12,9 @@ import EditItem from "./EditItem.js";
 import EditBox from "./EditBox.js";
 import MultiOpen from "./MultiOpen.js";
 
+import Popup from "@/app/components/popups/Popup";
+import { useUser } from "@clerk/nextjs";
+
 function Inventory() {
   /*"all inventory", "boxes", "public", "sale"*/
   const [page, setPage] = useState("all inventory");
@@ -56,6 +59,10 @@ function Inventory() {
     addBox: {},
     addItem: {},
   });
+
+  const [popup, setPopup] = useState(null);
+
+  const {user} = useUser();
 
   const getBoxes = async () => {
     const response = await fetch("/api/inventory/box", {
@@ -469,6 +476,10 @@ function Inventory() {
         description: box.description,
         ...(box.discount && { discount: box.discount }),
         ...(box.minPrice && { minPrice: box.minPrice }),
+        history: [{
+          user: user?.fullName,
+          createdOn: new Date(),
+        }],
       };
 
       // Create the box first
@@ -664,7 +675,8 @@ function Inventory() {
   };
 
   return (
-    <div className={styles.inventoryBackground} style={{ color: "black" }}>
+    <div className={styles.inventoryBackground} style={{ color: "black", position: "relative" }}>
+      {popup && <Popup closePopup={() => setPopup(null)} popupType={popup}/>}
       <div className={styles.pageSelection}>
         <button className={styles.button} onClick={() => setAddItemOpen(true)}>
           Add Item
@@ -1133,6 +1145,8 @@ function Inventory() {
           boxes={boxes}
           items={inventory}
           options={options}
+          deletePopup={() => setPopup("delete")}
+
         />
       )}
       {editBoxOpen !== null && (
@@ -1144,6 +1158,8 @@ function Inventory() {
           setSelectedItem={setSelectedItem}
           boxes={boxes}
           options={options}
+          deletePopup={() => setPopup("delete")}
+          getBox={boxDict}
         />
       )}
       {multiOpen !== null && (

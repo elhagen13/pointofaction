@@ -1,0 +1,36 @@
+.popup {
+    position: absolute;
+    max-width: 20rem;
+    right: 50%;
+    top: 1rem;
+    transform: translateX(50%);
+    border-radius: 10px;
+    overflow: hidden; /* This clips the timed bar to the border radius */
+  }
+  
+  .popupInner {
+    position: relative;
+    width: 100%;
+    color: white;
+    font-size: 1rem;
+    padding: 1rem;
+    overflow: hidden;
+  }
+  
+  .title {
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  .timedBar {
+    height: 5px;
+    position: absolute; 
+    bottom: 0;
+    left: 0;
+    width: 0;
+    transition: width 5s linear;
+  }
+
+  .long{
+    width: 100%
+  }

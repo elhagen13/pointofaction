@@ -1,6 +1,6 @@
 "use client";
 import styles from "./inventory.module.css";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   FaUpload,
   FaTimes,
@@ -11,35 +11,67 @@ import {
   FaBookmark,
   FaPlus,
 } from "react-icons/fa";
-import { IoIosAddCircle, IoIosCheckmarkCircle, IoIosRemoveCircle } from "react-icons/io";
+import {
+  IoIosAddCircle,
+  IoIosCheckmarkCircle,
+  IoIosRemoveCircle,
+} from "react-icons/io";
 import jsPDF from "jspdf";
+import Overlay from "@/app/components/popups/Overlay";
 
 export default function AddItem({ onClose, refresh, options }) {
   const [page, setPage] = useState("box");
   const [item, setItem] = useState({});
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      refresh();
-      onClose();
-    }
-  };
-
-  const handleModalClick = (e) => {
-    e.stopPropagation();
-  };
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [popup, setPopup] = useState(null);
 
   return (
-    <div className={styles.overlayBackground} onClick={handleOverlayClick}>
-      <div className={styles.addItem} onClick={handleModalClick}>
-        {page === "box" && <AddBox setPage={setPage} setItem={setItem} refresh={refresh} options={options} />}
-        {page === "qr" && <QrPopup setPage={setPage} item={item} />}
-      </div>
-    </div>
+    <Overlay
+      onClose={onClose}
+      isVisible={true}
+      popup={popup}
+      setPopup={setPopup}
+      unsavedChanges={unsavedChanges}
+      setUnsavedChanges={setUnsavedChanges}
+    >
+      {page === "box" && (
+        <AddBox
+          setPage={setPage}
+          setItem={setItem}
+          refresh={refresh}
+          options={options}
+          onClose={onClose}
+          setUnsavedChanges={setUnsavedChanges}
+          unsavedChanges={unsavedChanges}
+          popup={popup}
+          setPopup={setPopup}
+        />
+      )}
+      {page === "qr" && <QrPopup setPage={setPage} item={item} onClose={onClose} />}
+    </Overlay>
   );
 }
 
-const QrPopup = ({ item }) => {
+const QrPopup = ({ item, onClose }) => {
+
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
+
   const downloadItemPDF = async () => {
     try {
       const pdf = new jsPDF({
@@ -47,54 +79,55 @@ const QrPopup = ({ item }) => {
         unit: "in",
         format: [4, 6],
       });
-  
+
       // Constants
       const pageWidth = 4;
       const pageHeight = 6;
       const qrSize = 2;
-      const bottomMargin = 0.5; 
+      const bottomMargin = 0.5;
       const textStartY = 1.6;
-      const lineHeight = 0.2; 
-      
-      const maxQrY = pageHeight - qrSize - bottomMargin; 
-      
+      const lineHeight = 0.2;
+
+      const maxQrY = pageHeight - qrSize - bottomMargin;
+
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
       let description = item.description + "(" + item.style + ")";
-      let currentQrY = 2.2; 
-      
+      let currentQrY = 2.2;
+
       const textLines = pdf.splitTextToSize(description, 3.5);
       const textHeight = textLines.length * lineHeight;
-      const idealQrY = textStartY + textHeight + 0.3; 
-      
+      const idealQrY = textStartY + textHeight + 0.3;
+
       // If QR would go past bottom, truncate text
       if (idealQrY + qrSize > pageHeight - bottomMargin) {
-        const availableHeight = maxQrY - textStartY - 0.3; 
+        const availableHeight = maxQrY - textStartY - 0.3;
         const maxLines = Math.floor(availableHeight / lineHeight);
-        
+
         // Truncate text to fit
         let truncatedText = description;
         let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
-        
+
         while (truncatedLines.length > maxLines && truncatedText.length > 0) {
-          truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedText =
+            truncatedText.substring(0, truncatedText.length - 4) + "...";
           truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
         }
-        
+
         description = truncatedText;
         currentQrY = maxQrY;
       } else {
         currentQrY = idealQrY;
       }
-      
+
       pdf.text(description, 2, textStartY, {
         align: "center",
         maxWidth: 3.5,
       });
-      
+
       const qrX = (pageWidth - qrSize) / 2;
       pdf.addImage(item.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
-      
+
       pdf.save(`item-${item.description}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -112,7 +145,9 @@ const QrPopup = ({ item }) => {
       }}
     >
       <div style={{ fontWeight: "bold", fontSize: "32px" }}>
-        {item.description} {"("}{item.style}{")"}
+        {item.description} {"("}
+        {item.style}
+        {")"}
       </div>
       <div>
         <img src={item.qrCode} alt={`QR Code for ${item.description}`} />
@@ -128,13 +163,24 @@ const QrPopup = ({ item }) => {
   );
 };
 
-const AddBox = ({ setPage, setItem, refresh, options }) => {
+const AddBox = ({
+  setPage,
+  setItem,
+  refresh,
+  options,
+  onClose,
+  setUnsavedChanges,
+  unsavedChanges,
+  popup,
+  setPopup,
+}) => {
   const [location, setLocation] = useState("");
   const [minimumPrice, setMinimumPrice] = useState(0);
   const [visibility, setVisibility] = useState(["admin"]);
   const [discount, setDiscount] = useState(20);
   const [currentItem, setCurrentItem] = useState({
-    imageUrl: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
+    imageUrl:
+      "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
     description: "",
     descriptionId: null,
     style: "",
@@ -156,6 +202,77 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
   const [descriptionSearch, setDescriptionSearch] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
   const [sizeSearch, setSizeSearch] = useState("");
+
+  const [acknowledged, setAcknowledged] = useState(false);
+
+  const checkCurrent = useCallback(() => {
+    // Check if user has entered any meaningful data for the current item
+    const hasData =
+      (currentItem.description && currentItem.description.trim()) ||
+      (currentItem.style && currentItem.style.trim()) ||
+      (currentItem.brand && currentItem.brand.trim()) ||
+      (currentItem.size && currentItem.size.trim()) ||
+      (currentItem.color && currentItem.color.trim()) ||
+      (currentItem.quantity && parseInt(currentItem.quantity) > 0) ||
+      (currentItem.price && parseFloat(currentItem.price) > 0);
+
+    console.log("Current Item Data:", {
+      description: currentItem.description,
+      style: currentItem.style,
+      brand: currentItem.brand,
+      size: currentItem.size,
+      color: currentItem.color,
+      quantity: currentItem.quantity,
+      price: currentItem.price,
+    });
+
+    console.log("hasData", hasData);
+
+    if (!acknowledged && hasData) {
+      setPopup("incomplete");
+      setAcknowledged(true);
+      return false; // There is unsaved item data
+    }
+
+    return true; // No unsaved item data, safe to proceed
+  }, [currentItem, acknowledged, setPopup, setAcknowledged]);
+
+  /**
+   * Enter: if there is a popup it with save unsaved changes it will save it,
+   * if there is a popup saying changes were successful it will exit
+   * Escape: if there are unsaved changes it will alert user of unsaved changes,
+   * if there are no unsaved changes it will exit
+   */
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Enter") {
+        if (popup === "unsaved") {
+          handleSubmitBox();
+        } else if (popup === "success") {
+          onClose();
+        }
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        const current = checkCurrent();
+        if ((popup === "success" || !unsavedChanges) && checkCurrent()) {
+          onClose();
+        } else if (unsavedChanges) {
+          setPopup("unsaved");
+          setUnsavedChanges(false);
+        }
+      }
+    },
+    [popup, onClose, unsavedChanges, checkCurrent]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   // Create dictionaries for quick lookup
   const descriptionDict = useMemo(() => {
@@ -194,7 +311,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
     if (!descriptionSearch || !descriptionSearch.trim()) {
       return options.descriptions;
     }
-    return options.descriptions.filter(desc =>
+    return options.descriptions.filter((desc) =>
       desc.description.toLowerCase().includes(descriptionSearch.toLowerCase())
     );
   }, [options?.descriptions, descriptionSearch]);
@@ -204,7 +321,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
     if (!brandSearch || !brandSearch.trim()) {
       return options.brands;
     }
-    return options.brands.filter(brand =>
+    return options.brands.filter((brand) =>
       brand.brand.toLowerCase().includes(brandSearch.toLowerCase())
     );
   }, [options?.brands, brandSearch]);
@@ -214,12 +331,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
     if (!sizeSearch || !sizeSearch.trim()) {
       return options.sizes;
     }
-    return options.sizes.filter(size =>
+    return options.sizes.filter((size) =>
       size.size.toLowerCase().includes(sizeSearch.toLowerCase())
     );
   }, [options?.sizes, sizeSearch]);
 
   const handleFileSelect = (e, type) => {
+    setUnsavedChanges(true);
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
@@ -238,6 +356,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
   };
 
   const handleUrlSubmit = (type) => {
+    setUnsavedChanges(true);
     if (!imageUrlInput.trim()) {
       setUploadError("Please enter a valid URL");
       return;
@@ -263,6 +382,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
   };
 
   const handleUploadImage = async (file, type) => {
+    setUnsavedChanges(true);
     if (!file) return;
     setImageUploading(true);
     setUploadError("");
@@ -296,20 +416,30 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
 
   const submitItem = async (e) => {
     e.preventDefault();
-    await submitDb();
+    await handleSubmitBox();
   };
 
-  const submitDb = async () => {
-    if (!currentItem.description.trim()) {
-      setUploadError("Please enter a description for the item");
+  const handleSubmitBox = async () => {
+    if (!currentItem.description.trim() || !currentItem.style.trim() || !currentItem.brand.trim() || !currentItem.size.trim() || !currentItem.color.trim()) {
+      setUploadError("Please enter all item fields for the item");
       return false;
     }
-
     if (!location.trim()) {
       setUploadError("Please enter an item location");
       return false;
     }
+   
 
+    const success = await submitDb();
+    if (success) {
+      setPage("qr");
+      setUnsavedChanges(false);
+      setPopup("success");
+      refresh();
+    }
+  };
+
+  const submitDb = async () => {
     const itemData = {
       location: location,
       image: currentItem.imageUrl,
@@ -357,11 +487,11 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
 
       if (itemResult.success) {
         console.log("Item created successfully:", itemResult.data);
-        alert("Item created successfully!");
-        
+
         // Reset form
         setCurrentItem({
-          imageUrl: "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
+          imageUrl:
+            "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
           description: "",
           descriptionId: null,
           style: "",
@@ -378,10 +508,9 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
         });
         setLocation("");
         setUploadError("");
-        
-        setPage("qr");
+        setAcknowledged(false);
+
         setItem(itemResult.data);
-        refresh();
         return true;
       } else {
         console.error("Error creating item:", itemResult.error);
@@ -398,7 +527,10 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Close description dropdown
-      if (!event.target.closest("[data-description-dropdown]") && currentItem.descriptionOpen) {
+      if (
+        !event.target.closest("[data-description-dropdown]") &&
+        currentItem.descriptionOpen
+      ) {
         const searchTerm = descriptionSearch || "";
         const matchedItem = descriptionDict[searchTerm.toLowerCase().trim()];
         if (!matchedItem) {
@@ -420,7 +552,10 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
       }
 
       // Close brand dropdown
-      if (!event.target.closest("[data-brand-dropdown]") && currentItem.brandOpen) {
+      if (
+        !event.target.closest("[data-brand-dropdown]") &&
+        currentItem.brandOpen
+      ) {
         const searchTerm = brandSearch || "";
         const matchedItem = brandDict[searchTerm.toLowerCase().trim()];
         if (!matchedItem) {
@@ -442,7 +577,10 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
       }
 
       // Close size dropdown
-      if (!event.target.closest("[data-size-dropdown]") && currentItem.sizeOpen) {
+      if (
+        !event.target.closest("[data-size-dropdown]") &&
+        currentItem.sizeOpen
+      ) {
         const searchTerm = sizeSearch || "";
         const matchedItem = sizeDict[searchTerm.toLowerCase().trim()];
         if (!matchedItem) {
@@ -477,13 +615,14 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
     sizeSearch,
     descriptionDict,
     brandDict,
-    sizeDict
+    sizeDict,
   ]);
 
   const handleDescriptionKeyDown = (e) => {
     if (e.key === "Tab" || e.key === "Enter") {
       e.preventDefault();
-      const matchedItem = descriptionDict[descriptionSearch.toLowerCase().trim()];
+      const matchedItem =
+        descriptionDict[descriptionSearch.toLowerCase().trim()];
       if (!matchedItem) {
         setCurrentItem({
           ...currentItem,
@@ -500,6 +639,22 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
         });
       }
       setDescriptionSearch("");
+
+      // Focus next element
+      setTimeout(() => {
+        const focusableElements = document.querySelectorAll(
+          'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+        const currentIndex = Array.from(focusableElements).indexOf(e.target);
+
+        if (currentIndex !== -1) {
+          const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+
+          if (nextIndex >= 0 && nextIndex < focusableElements.length) {
+            focusableElements[nextIndex].focus();
+          }
+        }
+      }, 50);
     }
   };
 
@@ -523,6 +678,22 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
         });
       }
       setBrandSearch("");
+
+      // Focus next element
+      setTimeout(() => {
+        const focusableElements = document.querySelectorAll(
+          'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+        const currentIndex = Array.from(focusableElements).indexOf(e.target);
+
+        if (currentIndex !== -1) {
+          const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+
+          if (nextIndex >= 0 && nextIndex < focusableElements.length) {
+            focusableElements[nextIndex].focus();
+          }
+        }
+      }, 50);
     }
   };
 
@@ -546,6 +717,22 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
         });
       }
       setSizeSearch("");
+
+      // Focus next element
+      setTimeout(() => {
+        const focusableElements = document.querySelectorAll(
+          'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+        const currentIndex = Array.from(focusableElements).indexOf(e.target);
+
+        if (currentIndex !== -1) {
+          const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+
+          if (nextIndex >= 0 && nextIndex < focusableElements.length) {
+            focusableElements[nextIndex].focus();
+          }
+        }
+      }, 50);
     }
   };
 
@@ -620,21 +807,28 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
         <h2>Add Item to Inventory</h2>
-        <form className={styles.form} style={{ marginTop: "30px" }} onSubmit={submitItem}>
+        <form
+          className={styles.form}
+          style={{ marginTop: "30px" }}
+          onSubmit={submitItem}
+        >
           <div className={styles.imageAndLocation}>
             <div className={styles.formInput}>
               <label>Item Location</label>
               <input
                 className={styles.input}
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => {
+                  setUnsavedChanges(true);
+                  setLocation(e.target.value);
+                }}
                 required
               />
             </div>
           </div>
           <div className={styles.formInput}>
             <label>Item Details</label>
-            
+
             {/* Desktop Table View */}
             <table
               className={`${styles.boxTable} ${styles.desktopTable}`}
@@ -713,7 +907,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                     }}
                   >
                     {currentItem.imageUrl !== "" ? (
-                      <div style={{position: "relative", width:"auto"}}>
+                      <div style={{ position: "relative", width: "auto" }}>
                         <img
                           src={currentItem.imageUrl}
                           alt="New Item"
@@ -725,18 +919,21 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                           }}
                           title="Click to change image"
                         />
-                        <IoIosRemoveCircle 
+                        <IoIosRemoveCircle
                           style={{
-                            position:"absolute", 
-                            top: "-15px", 
-                            right:"0", 
-                            fontSize:"30px", 
-                            color:"red"
+                            position: "absolute",
+                            top: "-15px",
+                            right: "0",
+                            fontSize: "30px",
+                            color: "red",
                           }}
-                          onClick={() => setCurrentItem({
-                            ...currentItem, 
-                            imageUrl: ""
-                          })}
+                          onClick={() => {
+                            setUnsavedChanges(true);
+                            setCurrentItem({
+                              ...currentItem,
+                              imageUrl: "",
+                            });
+                          }}
                         />
                       </div>
                     ) : showUrlInput ? (
@@ -958,12 +1155,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   <td className={styles.tableReg}>
                     <input
                       value={currentItem.style}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           style: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -973,10 +1171,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                     />
                   </td>
                   <td className={styles.tableReg}>
-                    <div
-                      style={{ position: "relative" }}
-                      data-brand-dropdown
-                    >
+                    <div style={{ position: "relative" }} data-brand-dropdown>
                       <input
                         value={
                           currentItem.brandOpen
@@ -1121,15 +1316,10 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                     </div>
                   </td>
                   <td className={styles.tableReg}>
-                    <div
-                      style={{ position: "relative" }}
-                      data-size-dropdown
-                    >
+                    <div style={{ position: "relative" }} data-size-dropdown>
                       <input
                         value={
-                          currentItem.sizeOpen
-                            ? sizeSearch
-                            : currentItem.size
+                          currentItem.sizeOpen ? sizeSearch : currentItem.size
                         }
                         onClick={() => {
                           setCurrentItem({
@@ -1271,12 +1461,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   <td className={styles.tableReg}>
                     <input
                       value={currentItem.color}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           color: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -1291,12 +1482,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                       pattern="[0-9]*"
                       inputMode="numeric"
                       value={currentItem.quantity}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           quantity: parseInt(e.target.value) || "",
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -1311,12 +1503,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                       pattern="^\d*\.?\d*$"
                       inputMode="decimal"
                       value={currentItem.price}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           price: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       onBlur={(e) => {
                         const numValue = parseFloat(e.target.value);
                         setCurrentItem({
@@ -1343,7 +1536,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   <label className={styles.mobileLabel}>Image</label>
                   <div className={styles.mobileValue}>
                     {currentItem.imageUrl !== "" ? (
-                      <div style={{position:"relative", width:"auto"}}>
+                      <div style={{ position: "relative", width: "auto" }}>
                         <img
                           src={currentItem.imageUrl}
                           alt="New Item"
@@ -1357,18 +1550,21 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                           }}
                           title="Click to change image"
                         />
-                        <IoIosRemoveCircle 
+                        <IoIosRemoveCircle
                           style={{
-                            position:"absolute", 
-                            top: "-15px", 
-                            right:"-15px", 
-                            fontSize:"30px", 
-                            color:"red"
+                            position: "absolute",
+                            top: "-15px",
+                            right: "-15px",
+                            fontSize: "30px",
+                            color: "red",
                           }}
-                          onClick={() => setCurrentItem({
-                            ...currentItem, 
-                            imageUrl: ""
-                          })}
+                          onClick={() => {
+                            setUnsavedChanges(true);
+                            setCurrentItem({
+                              ...currentItem,
+                              imageUrl: "",
+                            });
+                          }}
                         />
                       </div>
                     ) : showUrlInput ? (
@@ -1437,12 +1633,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   <div className={styles.mobileValue}>
                     <input
                       value={currentItem.description}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           description: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -1457,12 +1654,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   <div className={styles.mobileValue}>
                     <input
                       value={currentItem.style}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           style: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -1476,12 +1674,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   <div className={styles.mobileValue}>
                     <input
                       value={currentItem.brand}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           brand: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -1496,12 +1695,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   <div className={styles.mobileValue}>
                     <input
                       value={currentItem.size}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           size: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -1516,12 +1716,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   <div className={styles.mobileValue}>
                     <input
                       value={currentItem.color}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           color: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -1539,12 +1740,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                       pattern="[0-9]*"
                       inputMode="numeric"
                       value={currentItem.quantity}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           quantity: parseInt(e.target.value) || "",
-                        })
-                      }
+                        });
+                      }}
                       className={styles.input}
                       style={{
                         margin: 0,
@@ -1562,12 +1764,13 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                       pattern="^\d*\.?\d*$"
                       inputMode="decimal"
                       value={currentItem.price}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setUnsavedChanges(true);
                         setCurrentItem({
                           ...currentItem,
                           price: e.target.value,
-                        })
-                      }
+                        });
+                      }}
                       onBlur={(e) => {
                         const numValue = parseFloat(e.target.value);
                         setCurrentItem({
@@ -1586,8 +1789,8 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
               </div>
             </div>
           </div>
-          
-          <div className={styles.formInput} style={{zIndex: 0}}>
+
+          <div className={styles.formInput} style={{ zIndex: 0 }}>
             <label>Visibility</label>
             <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <div>
@@ -1612,6 +1815,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   value="public"
                   checked={visibility.includes("public")}
                   onChange={(e) => {
+                    setUnsavedChanges(true);
                     if (e.target.checked) {
                       setVisibility([...visibility, "public"]);
                     } else {
@@ -1635,6 +1839,7 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                   value="sale"
                   checked={visibility.includes("sale")}
                   onChange={(e) => {
+                    setUnsavedChanges(true);
                     if (e.target.checked) {
                       setVisibility([...visibility, "sale"]);
                     } else {
@@ -1657,9 +1862,10 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                 <label>Discount</label>
                 <input
                   className={styles.input}
-                  onChange={(e) =>
-                    setDiscount(e.target.value.replace(/[^0-9.]/g, ""))
-                  }
+                  onChange={(e) => {
+                    setUnsavedChanges(true);
+                    setDiscount(e.target.value.replace(/[^0-9.]/g, ""));
+                  }}
                   value={`${discount}%`}
                   required
                 />
@@ -1668,10 +1874,11 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
                 <label>Minimum Purchase</label>
                 <input
                   className={styles.input}
-                  onChange={(e) =>
-                    setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
-                  }
-                  value={`$${minimumPrice}`}
+                  onChange={(e) => {
+                    setUnsavedChanges(true);
+                    setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""));
+                  }}
+                  value={`${minimumPrice}`}
                   required
                 />
               </div>
@@ -1688,5 +1895,5 @@ const AddBox = ({ setPage, setItem, refresh, options }) => {
         </form>
       </div>
     </div>
-  );
-};
+
+  )}
