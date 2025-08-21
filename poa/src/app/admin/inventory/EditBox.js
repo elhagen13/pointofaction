@@ -72,6 +72,8 @@ export default function EditItem({
           prevPage="add"
           setPage={setPage}
           refresh={refresh}
+          popup={popup}
+          setPopup={setPopup}
         />
       )}
     </Overlay>
@@ -407,8 +409,7 @@ const AddBox = ({
       const maxQrY = pageHeight - qrSize - bottomMargin;
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
-      console.log("new", box.description);
-      let description = box.description;
+      let description = boxDescription;
       let currentQrY = 2.2;
       const textLines = pdf.splitTextToSize(description, 3.5);
       const textHeight = textLines.length * lineHeight;

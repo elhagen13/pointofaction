@@ -175,6 +175,21 @@
   overflow-y: auto;   
 }
 
+
+.dropdownAlt {
+  position: absolute; 
+  top: 100%;
+  left: 0;
+  right: 0; 
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
   @media(max-width: 768px){
     .mobileFlex{
         flex-direction: column
