@@ -18,7 +18,7 @@ import {
   IoIosCheckmarkCircle,
   IoIosRemoveCircle,
 } from "react-icons/io";
-import { IoSearch, IoChevronDown, IoChevronUp } from "react-icons/io5";
+import { IoSearch } from "react-icons/io5";
 import { CiMaximize1, CiMinimize1 } from "react-icons/ci";
 import { FiMinimize2, FiMaximize2 } from "react-icons/fi";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
