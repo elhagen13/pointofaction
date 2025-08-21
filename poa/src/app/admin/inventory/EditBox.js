@@ -600,7 +600,6 @@ const AddBox = ({
 
   const removeItem = async (indexToRemove) => {
     setUnsavedChanges(true);
-    const removedItem = contents[indexToRemove];
     setContents((prevContents) =>
       prevContents.filter((_, index) => index !== indexToRemove)
     );
@@ -972,11 +971,14 @@ const AddBox = ({
   }
 
   async function handleDelete(opt, e) {
+    console.log("deleting")
     e.preventDefault();
     try {
       if (opt === "all") {
-        for (const item of contents) {
+        for (const item of originalContents) {
+          console.log(item)
           if (item._id) {
+            console.log(`deleting ${item._id}`)
             const itemResponse = await fetch(
               `/api/inventory/item/${item._id}`,
               {

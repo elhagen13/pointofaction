@@ -12,6 +12,14 @@ export default function Popup({ closePopup, closeOverlay = null, popupType }) {
       backgroundColor: "#e0483d",
       color: "rgb(230, 195, 195)"
     },
+    unsuccessful: {
+      title: "Unsuccessful",
+      subtext: [
+        "Please try again",
+      ],
+      backgroundColor: "#e0483d",
+      color: "rgb(230, 195, 195)"
+    },
     success: {
       title: "Successfully updated",
       subtext: ["To exit: click exit or press esc"],
