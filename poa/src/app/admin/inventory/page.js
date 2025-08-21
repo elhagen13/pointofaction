@@ -103,6 +103,12 @@ function Inventory() {
       method: "GET",
     });
     let resultDescriptions = await response.json();
+
+    response = await fetch("/api/details/common", {
+      method: "GET"
+    })
+    let resultCombos = await response.json();
+
     console.log(resultDescriptions);
 
     setOptions({
@@ -110,6 +116,7 @@ function Inventory() {
       brands: resultBrands.data,
       sizes: resultSizes.data,
       descriptions: resultDescriptions.data,
+      combos: resultCombos.data,
     });
   };
   const contentDict = useMemo(() => {

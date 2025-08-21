@@ -143,7 +143,7 @@ const AddBox = ({
 
   const [acknowledged, setAcknowledged] = useState(false);
 
-  const [history, setHistory] = useState(box.history || []);
+  const [history, setHistory] = useState(box?.history || []);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [reload, setReload] = useState(0);
@@ -3782,7 +3782,7 @@ const AddBox = ({
                 className={`${styles.history} ${historyOpen ? styles.visible : ""}`}
               >
                 <div style={{ padding: "10px", paddingTop: "0" }}>
-                  {history.reverse().map((entry, index) => (
+                  {[...history].reverse().map((entry, index) => (
                     <div>
                       <div
                         className={styles.historyRow}
