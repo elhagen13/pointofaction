@@ -22,6 +22,7 @@ export default function MultiOpen({
   items,
   onClose,
   setEditBoxOpen,
+  setEditItemOpen,
   boxDict,
   sizeDict,
   descriptionDict,
@@ -40,16 +41,16 @@ export default function MultiOpen({
 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
-      <div className={styles.addItem} onClick={handleModalClick}>
+      <div className={styles.addItem} onClick={handleModalClick} style={{width:"100%", display: "flex", flexDirection:"column", gap:"20px"}}>
         <h2>
-          Matching inventory: {items[0].color}{" "}
+          Matching inventory: {items[0].color}{" "}{items[0].brand || brandDict[items[0].brandId].brand}{" "}
           {items[0].size || sizeDict[items[0].sizeId].size} {items[0].style}
         </h2>
         <h3 style={{ color: "gray" }}>{items.length} results found</h3>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, 300px",
+            gridTemplateColumns: "repeat(auto-fit, 300px)",
             gap: "20px",
             marginTop: "30px",
           }}
@@ -58,7 +59,7 @@ export default function MultiOpen({
             <div
               onClick={() => {
                 onClose();
-                setEditBoxOpen(boxDict[item.boxId])
+                item.boxId ? setEditBoxOpen(boxDict[item.boxId]) : setEditItemOpen(item)
             }}
               style={{
                 gridColumn: "span 1",

@@ -95,14 +95,17 @@
     display: flex;
     flex-direction: row;
     gap: 10px;
+
   }
 
   .inputContainer{
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-  }
+    width: 50px;
 
+  }
+  
   .inputContainer label{
     font-weight: bold;
 
