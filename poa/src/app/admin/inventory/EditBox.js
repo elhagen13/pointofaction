@@ -18,6 +18,7 @@ import {
   IoIosCheckmarkCircle,
   IoIosRemoveCircle,
 } from "react-icons/io";
+import { IoSearch, IoChevronDown, IoChevronUp } from "react-icons/io5";
 import { CiMaximize1, CiMinimize1 } from "react-icons/ci";
 import { FiMinimize2, FiMaximize2 } from "react-icons/fi";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
@@ -132,6 +133,7 @@ const AddBox = ({
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(null);
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
   const [boxDict, setBoxDict] = useState({});
 
@@ -147,6 +149,9 @@ const AddBox = ({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [reload, setReload] = useState(0);
+
+  const dropdownRef = useRef(null);
+  const [searchValue, setSearchValue] = useState("");
 
   const checkCurrent = useCallback(() => {
     // Check if user has entered any meaningful data for the current item
@@ -358,6 +363,36 @@ const AddBox = ({
     });
     return dict;
   }, [options]);
+
+  const filteredCombos = useMemo(() => {
+    if (!options?.combos) return [];
+    if (!searchValue.trim()) {
+      return options.combos;
+    }
+
+    const searchTerm = searchValue.toLowerCase().trim();
+    console.log(searchTerm);
+    return options.combos.filter((combo) => {
+      // Create a searchable string from all combo properties
+      const searchableString = [
+        combo.style.toLowerCase(),
+        combo.color.toLowerCase(),
+        combo.price?.toString(),
+        (
+          combo.description || descriptionDict[combo.descriptionId].description
+        ).toLowerCase(),
+        (combo.size || sizeDict[combo.sizeId].size).toLowerCase(),
+        (combo.brand || brandDict[combo.brandId].brand).toLowerCase(),
+      ]
+        .filter(Boolean) // Remove null/undefined values
+        .join(" ")
+        .toLowerCase();
+
+      return searchTerm
+        .split(" ")
+        .every((word) => searchableString.includes(word));
+    });
+  }, [options?.combos, searchValue, descriptionDict, sizeDict, brandDict]);
 
   const getDescription = (item) => {
     let des = "";
@@ -971,14 +1006,14 @@ const AddBox = ({
   }
 
   async function handleDelete(opt, e) {
-    console.log("deleting")
+    console.log("deleting");
     e.preventDefault();
     try {
       if (opt === "all") {
         for (const item of originalContents) {
-          console.log(item)
+          console.log(item);
           if (item._id) {
-            console.log(`deleting ${item._id}`)
+            console.log(`deleting ${item._id}`);
             const itemResponse = await fetch(
               `/api/inventory/item/${item._id}`,
               {
@@ -1327,6 +1362,15 @@ const AddBox = ({
         setDropdownSearchTerm("");
       }
 
+      //search dropdwon
+      if (
+        searchDropdownOpen &&
+        !event.target.closest("[data-dropdown]") &&
+        !event.target.classList.contains("searchInput")
+      ) {
+        setSearchDropdownOpen(false);
+      }
+
       // Close image options dropdown
       if (
         showImageOptions !== null &&
@@ -1347,6 +1391,7 @@ const AddBox = ({
     currentItem.descriptionOpen,
     currentItem.sizeOpen,
     currentItem.brandOpen,
+    searchDropdownOpen,
     descriptionSearch,
     brandSearch,
     sizeSearch,
@@ -1358,6 +1403,7 @@ const AddBox = ({
   const handleDropdownToggle = (index) => {
     if (isDropdownOpen === index) {
       setIsDropdownOpen(null);
+      setSearchDropdownOpen(false);
       setDropdownSearchTerm("");
     } else {
       setIsDropdownOpen(index);
@@ -1626,6 +1672,41 @@ const AddBox = ({
       alert("Network error: " + error.message);
       return false;
     }
+  };
+
+  const handleOptionSelect = (option) => {
+    setCurrentItem({
+      ...currentItem,
+      description:
+        option.description ||
+        descriptionDict[option.descriptionId]?.description ||
+        "",
+      descriptionId: option.descriptionId || null,
+      style: option.style || "",
+      brand: option.brand || brandDict[option.brandId]?.brand || "",
+      brandId: option.brandId || null,
+      size: option.size || sizeDict[option.sizeId]?.size || "",
+      sizeId: option.sizeId || null,
+      color: option.color || "",
+      quantity: option.quantity || 0,
+      price: option.price || 0.0,
+      // Keep the current image unless the option has one
+      image: option.image || currentItem.image,
+    });
+
+    // Clear search and close dropdown
+    setSearchValue("");
+    setSearchDropdownOpen(false);
+  };
+
+  const getCommonDescription = (preset) => {
+    return `${preset.color} ${preset.size || sizeDict[preset.sizeId]?.size || "N/A"} ${
+      preset.brand || brandDict[preset.brandId]?.brand || "N/A"
+    } ${preset.style} ${
+      preset.description ||
+      descriptionDict[preset.descriptionId]?.description ||
+      "N/A"
+    } $${preset.price}`;
   };
 
   return (
@@ -2748,6 +2829,85 @@ const AddBox = ({
             </div>
             {newItemOpen && (
               <div>
+                <div
+                  className={styles.searchContainer}
+                  ref={dropdownRef}
+                  style={{ zIndex: "9999", marginBottom: "30px" }}
+                >
+                  <IoSearch className={styles.search} />
+                  <input
+                    className={styles.searchInput}
+                    value={searchValue}
+                    onFocus={() => {
+                      // Always open dropdown on focus
+                      setSearchDropdownOpen(true);
+                    }}
+                    onClick={(e) => {
+                      // Prevent event bubbling and ensure dropdown opens
+                      e.stopPropagation();
+                      setSearchDropdownOpen(true);
+                    }}
+                    onChange={(e) => {
+                      setSearchValue(e.target.value);
+                      // Keep dropdown open when typing
+                      setSearchDropdownOpen(true);
+                    }}
+                    placeholder={`Search...`}
+                    style={{ width: "50%" }}
+                    data-dropdown
+                  />
+                  {searchDropdownOpen && (
+                    <div
+                      className={`${styles.dropdown} ${styles.presetDropdown}`}
+                      data-dropdown 
+                    >
+                      {filteredCombos.length > 0 ? (
+                        filteredCombos.map((option, index) => (
+                          <div
+                            key={index}
+                            className={`${styles.dropdownItem}`}
+                            onClick={(e) => {
+                              e.stopPropagation(); 
+                              handleOptionSelect(option);
+                            }}
+                            data-dropdown 
+                          >
+                            {getCommonDescription(option)}
+                          </div>
+                        ))
+                      ) : searchValue ? (
+                        <>
+                        <div
+                          className={styles.dropdownItem}
+                          style={{
+                            color: "#999",
+                            fontStyle: "italic",
+                            textAlign: "center",
+                          }}
+                          data-dropdown 
+                        >
+                          No matching presets found
+                        </div>
+                        <div className={styles.dropdownItem} onClick={() => setPage("edit")}>
+                          Add Preset?
+                        </div>
+                        </>
+                      ) : (
+                        <div
+                          className={styles.dropdownItem}
+                          style={{
+                            color: "#999",
+                            fontStyle: "italic",
+                            textAlign: "center",
+                          }}
+                          data-dropdown
+                        >
+                          Start typing to search presets...
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <table
                   style={{ width: "100%", textAlign: "left" }}
                   className={`${styles.boxTable} ${styles.desktopTable}`}
@@ -3821,17 +3981,19 @@ const AddBox = ({
                             : ""}
                         </div>
                       </div>
-                      {entry.changes?.length >= 1 && <div
-                        className={`${styles.historyEntriesContainer} ${index === selectedHistory ? styles.visible : ""}`}
-                      >
-                        <div className={styles.historyEntries}>
-                          {entry.changes?.map((change) => (
-                            <div className={styles.historyEntry}>
-                              • {change}
-                            </div>
-                          ))}
+                      {entry.changes?.length >= 1 && (
+                        <div
+                          className={`${styles.historyEntriesContainer} ${index === selectedHistory ? styles.visible : ""}`}
+                        >
+                          <div className={styles.historyEntries}>
+                            {entry.changes?.map((change) => (
+                              <div className={styles.historyEntry}>
+                                • {change}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>}
+                      )}
                     </div>
                   ))}
                 </div>

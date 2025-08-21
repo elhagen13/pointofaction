@@ -88,6 +88,7 @@
 
 .historyRow[data-selected="true"]{
   background-color: rgb(209, 207, 207);
+  border-radius: 40px 15px 15px 40px 
 }
 
 .profile{
@@ -517,6 +518,10 @@
 
 .searchDropdown{
   right: 60%;
+}
+
+.presetDropdown{
+  right: 78.5%;
 }
 
 
