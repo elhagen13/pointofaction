@@ -14,6 +14,8 @@ import {
 import { IoIosRemoveCircle, IoIosCheckmarkCircle } from "react-icons/io";
 import jsPDF from "jspdf";
 import Overlay from "@/app/components/popups/Overlay";
+import EditPresets from "@/app/components/admin/editPresets/EditPresets";
+import Dropdown from "./Dropdown";
 
 export default function EditItem({
   item,
@@ -26,6 +28,7 @@ export default function EditItem({
 }) {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [popup, setPopup] = useState(null);
+  const [page, setPage] = useState("item")
 
   return (
     <Overlay
@@ -36,7 +39,7 @@ export default function EditItem({
       unsavedChanges={unsavedChanges}
       setUnsavedChanges={setUnsavedChanges}
     >
-      <Edit
+      {page === "item" && <Edit
         item={item}
         onClose={onClose}
         refresh={refresh}
@@ -48,29 +51,14 @@ export default function EditItem({
         popup={popup}
         setPopup={setPopup}
         deletePopup={deletePopup}
-      />
+        setPage={setPage}
+      />}
+      {page === "preset" && 
+      <EditPresets options={options} prevPage={"item"} setPage={setPage} refresh={refresh} setPopup={setPopup}/>}
     </Overlay>
   );
 }
 
-const Success = () => {
-  return (
-    <div
-      style={{
-        width: "100%",
-        minHeight: "300px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <IoIosCheckmarkCircle style={{ fontSize: "64px", color: "green" }} />
-      <div style={{ fontSize: "2rem" }}>Item successfully edited!</div>
-    </div>
-  );
-};
 
 const Edit = ({
   item,
@@ -84,6 +72,7 @@ const Edit = ({
   popup,
   setPopup,
   deletePopup,
+  setPage,
 }) => {
   const [location, setLocation] = useState(item.location);
   const [originalLocation] = useState(item.location);
@@ -603,142 +592,7 @@ const Edit = ({
     currentItem,
   ]);
 
-  const handleDescriptionKeyDown = (e) => {
-    if (e.key === "Tab" || e.key === "Enter") {
-      e.preventDefault();
-      const matchedItem =
-        descriptionDict[descriptionSearch.toLowerCase().trim()];
-      if (!matchedItem) {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          description: descriptionSearch,
-          descriptionId: null,
-          descriptionOpen: false,
-        });
-      } else {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          description: matchedItem.description,
-          descriptionId: matchedItem._id,
-          descriptionOpen: false,
-        });
-      }
-      setDescriptionSearch("");
-    }
-  };
-
-  const handleBrandKeyDown = (e) => {
-    if (e.key === "Tab" || e.key === "Enter") {
-      e.preventDefault();
-      const matchedItem = brandDict[brandSearch.toLowerCase().trim()];
-      if (!matchedItem) {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          brand: brandSearch,
-          brandId: null,
-          brandOpen: false,
-        });
-      } else {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          brand: matchedItem.brand,
-          brandId: matchedItem._id,
-          brandOpen: false,
-        });
-      }
-      setBrandSearch("");
-    }
-  };
-
-  const handleSizeKeyDown = (e) => {
-    if (e.key === "Tab" || e.key === "Enter") {
-      e.preventDefault();
-      const matchedItem = sizeDict[sizeSearch.toLowerCase().trim()];
-      if (!matchedItem) {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          size: sizeSearch,
-          sizeId: null,
-          sizeOpen: false,
-        });
-      } else {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          size: matchedItem.size,
-          sizeId: matchedItem._id,
-          sizeOpen: false,
-        });
-      }
-      setSizeSearch("");
-    }
-  };
-
-  const addOptDb = async (selectedOption, newItem) => {
-    try {
-      const itemData = {};
-      let url = "";
-      switch (selectedOption) {
-        case "description":
-          itemData.description = newItem;
-          url = "/api/details/descriptions";
-          break;
-        case "brand":
-          itemData.brand = newItem;
-          url = "/api/details/brands";
-          break;
-        case "size":
-          itemData.size = newItem;
-          url = "/api/details/sizes";
-          break;
-      }
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(itemData),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        console.error("Error creating item:", data.error);
-        setUploadError(data.error || "Unknown error occurred");
-        return false;
-      }
-
-      // Update the current item with the new option
-      if (selectedOption === "description") {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          description: data.data.description,
-          descriptionId: data.data._id,
-          descriptionOpen: false,
-        });
-      } else if (selectedOption === "brand") {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          brand: data.data.brand,
-          brandId: data.data._id,
-          brandOpen: false,
-        });
-      } else if (selectedOption === "size") {
-        setCurrentItemWithTracking({
-          ...currentItem,
-          size: data.data.size,
-          sizeId: data.data._id,
-          sizeOpen: false,
-        });
-      }
-
-      return data.data;
-    } catch (error) {
-      console.error("Network error:", error);
-      setUploadError("Network error: " + error.message);
-      return false;
-    }
-  };
+  
 
   const downloadItemPDF = async () => {
     try {
@@ -807,6 +661,42 @@ const Edit = ({
       pdf.save(`item-${currentItem.description}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
+    }
+  };
+
+  const DROPDOWN_CONFIGS = {
+    description: {
+      searchState: descriptionSearch,
+      setSearchState: setDescriptionSearch,
+      filteredOptions: filteredDescriptions,
+      dictionary: descriptionDict,
+      fieldKey: 'description',
+      idKey: 'descriptionId',
+      openKey: 'descriptionOpen',
+      placeholder: 'Search descriptions...',
+      noResultsText: 'No descriptions found'
+    },
+    brand: {
+      searchState: brandSearch,
+      setSearchState: setBrandSearch,
+      filteredOptions: filteredBrands,
+      dictionary: brandDict,
+      fieldKey: 'brand',
+      idKey: 'brandId',
+      openKey: 'brandOpen',
+      placeholder: 'Search brands...',
+      noResultsText: 'No brands found'
+    },
+    size: {
+      searchState: sizeSearch,
+      setSearchState: setSizeSearch,
+      filteredOptions: filteredSizes,
+      dictionary: sizeDict,
+      fieldKey: 'size',
+      idKey: 'sizeId',
+      openKey: 'sizeOpen',
+      placeholder: 'Search sizes...',
+      noResultsText: 'No sizes found'
     }
   };
 
@@ -896,7 +786,15 @@ const Edit = ({
             </div>
           </div>
           <div className={styles.formInput}>
-            <label>Item Details</label>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <label>Item Details</label>
+              <label
+                style={{ cursor: "pointer" }}
+                onClick={() => setPage("preset")}
+              >
+                Edit presets →
+              </label>
+            </div>
 
             {/* Desktop Table View */}
             <table
@@ -1068,156 +966,7 @@ const Edit = ({
                     )}
                   </td>
                   <td className={styles.tableLg}>
-                    <div
-                      style={{ position: "relative" }}
-                      data-description-dropdown
-                    >
-                      <input
-                        value={
-                          currentItem.descriptionOpen
-                            ? descriptionSearch
-                            : currentItem.description ||
-                              descriptionDict[currentItem.descriptionId]
-                                ?.description
-                        }
-                        onClick={() => {
-                          setCurrentItemWithTracking({
-                            ...currentItem,
-                            descriptionOpen: true,
-                          });
-                          setDescriptionSearch(currentItem.description);
-                        }}
-                        onChange={(e) => {
-                          if (currentItem.descriptionOpen) {
-                            setDescriptionSearch(e.target.value);
-                          }
-                        }}
-                        onFocus={() => {
-                          setCurrentItemWithTracking({
-                            ...currentItem,
-                            descriptionOpen: true,
-                          });
-                          setDescriptionSearch(currentItem.description);
-                        }}
-                        onKeyDown={handleDescriptionKeyDown}
-                        placeholder={
-                          currentItem.descriptionOpen
-                            ? "Search descriptions..."
-                            : ""
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                          caretColor: currentItem.descriptionOpen
-                            ? "auto"
-                            : "transparent",
-                        }}
-                        data-description-dropdown
-                      />
-                      {currentItem.descriptionOpen && (
-                        <div
-                          className={styles.dropdown}
-                          data-description-dropdown
-                          style={{ maxWidth: "250px" }}
-                        >
-                          <div
-                            style={{
-                              maxHeight: "200px",
-                              overflowY: "auto",
-                            }}
-                            data-description-dropdown
-                          >
-                            {filteredDescriptions.length > 0 ? (
-                              filteredDescriptions.map((opt, oIndex) => (
-                                <div
-                                  key={oIndex}
-                                  className={styles.dropdownItem}
-                                  onClick={() => {
-                                    setCurrentItemWithTracking({
-                                      ...currentItem,
-                                      description: opt.description,
-                                      descriptionId: opt._id,
-                                      descriptionOpen: false,
-                                    });
-                                    setDescriptionSearch("");
-                                  }}
-                                  style={{
-                                    padding: "8px 12px",
-                                    cursor: "pointer",
-                                    borderBottom:
-                                      oIndex < filteredDescriptions.length - 1
-                                        ? "1px solid #eee"
-                                        : "none",
-                                  }}
-                                  onMouseEnter={(e) =>
-                                    (e.target.style.backgroundColor = "#f5f5f5")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.target.style.backgroundColor = "white")
-                                  }
-                                  data-description-dropdown
-                                >
-                                  <strong>{opt.description}</strong>
-                                </div>
-                              ))
-                            ) : (
-                              <div
-                                className={styles.dropdownItem}
-                                style={{
-                                  color: "#999",
-                                  fontStyle: "italic",
-                                  padding: "8px 12px",
-                                  textAlign: "center",
-                                }}
-                                data-description-dropdown
-                              >
-                                No descriptions found
-                              </div>
-                            )}
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                addOptDb("description", descriptionSearch);
-                                setDescriptionSearch("");
-                              }}
-                              data-description-dropdown
-                            >
-                              <div>
-                                Add to inventory? <FaBookmark />
-                              </div>
-                            </div>
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                setCurrentItemWithTracking({
-                                  ...currentItem,
-                                  description: descriptionSearch,
-                                  descriptionId: null,
-                                  descriptionOpen: false,
-                                });
-                              }}
-                              data-description-dropdown
-                            >
-                              <div>
-                                Add only to item? <FaPlus />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -1237,296 +986,12 @@ const Edit = ({
                     />
                   </td>
                   <td className={styles.tableReg}>
-                    <div style={{ position: "relative" }} data-brand-dropdown>
-                      <input
-                        value={
-                          currentItem.brandOpen
-                            ? brandSearch
-                            : currentItem.brand ||
-                              brandDict[currentItem.brandId]?.brand
-                        }
-                        onClick={() => {
-                          setCurrentItemWithTracking({
-                            ...currentItem,
-                            brandOpen: true,
-                          });
-                          setBrandSearch(currentItem.brand);
-                        }}
-                        onChange={(e) => {
-                          if (currentItem.brandOpen) {
-                            setBrandSearch(e.target.value);
-                          }
-                        }}
-                        onFocus={() => {
-                          setCurrentItemWithTracking({
-                            ...currentItem,
-                            brandOpen: true,
-                          });
-                          setBrandSearch(currentItem.brand);
-                        }}
-                        onKeyDown={handleBrandKeyDown}
-                        placeholder={
-                          currentItem.brandOpen ? "Search brands..." : ""
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                          caretColor: currentItem.brandOpen
-                            ? "auto"
-                            : "transparent",
-                        }}
-                        data-brand-dropdown
-                      />
-                      {currentItem.brandOpen && (
-                        <div
-                          className={styles.dropdown}
-                          data-brand-dropdown
-                          style={{ maxWidth: "250px" }}
-                        >
-                          <div
-                            style={{
-                              maxHeight: "200px",
-                              overflowY: "auto",
-                            }}
-                            data-brand-dropdown
-                          >
-                            {filteredBrands.length > 0 ? (
-                              filteredBrands.map((opt, oIndex) => (
-                                <div
-                                  key={oIndex}
-                                  className={styles.dropdownItem}
-                                  onClick={() => {
-                                    setCurrentItemWithTracking({
-                                      ...currentItem,
-                                      brand: opt.brand,
-                                      brandId: opt._id,
-                                      brandOpen: false,
-                                    });
-                                    setBrandSearch("");
-                                  }}
-                                  style={{
-                                    padding: "8px 12px",
-                                    cursor: "pointer",
-                                    borderBottom:
-                                      oIndex < filteredBrands.length - 1
-                                        ? "1px solid #eee"
-                                        : "none",
-                                  }}
-                                  onMouseEnter={(e) =>
-                                    (e.target.style.backgroundColor = "#f5f5f5")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.target.style.backgroundColor = "white")
-                                  }
-                                  data-brand-dropdown
-                                >
-                                  <strong>{opt.brand}</strong>
-                                </div>
-                              ))
-                            ) : (
-                              <div
-                                className={styles.dropdownItem}
-                                style={{
-                                  color: "#999",
-                                  fontStyle: "italic",
-                                  padding: "8px 12px",
-                                  textAlign: "center",
-                                }}
-                                data-brand-dropdown
-                              >
-                                No brands found
-                              </div>
-                            )}
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                addOptDb("brand", brandSearch);
-                                setBrandSearch("");
-                              }}
-                              data-brand-dropdown
-                            >
-                              <div>
-                                Add to inventory? <FaBookmark />
-                              </div>
-                            </div>
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                setCurrentItemWithTracking({
-                                  ...currentItem,
-                                  brand: brandSearch,
-                                  brandId: null,
-                                  brandOpen: false,
-                                });
-                              }}
-                              data-brand-dropdown
-                            >
-                              <div>
-                                Add only to item? <FaPlus />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </td>
                   <td className={styles.tableReg}>
-                    <div style={{ position: "relative" }} data-size-dropdown>
-                      <input
-                        value={
-                          currentItem.sizeOpen
-                            ? sizeSearch
-                            : currentItem.size ||
-                              sizeDict[currentItem.sizeId]?.size
-                        }
-                        onClick={() => {
-                          setCurrentItemWithTracking({
-                            ...currentItem,
-                            sizeOpen: true,
-                          });
-                          setSizeSearch(currentItem.size);
-                        }}
-                        onChange={(e) => {
-                          if (currentItem.sizeOpen) {
-                            setSizeSearch(e.target.value);
-                          }
-                        }}
-                        onFocus={() => {
-                          setCurrentItemWithTracking({
-                            ...currentItem,
-                            sizeOpen: true,
-                          });
-                          setSizeSearch(currentItem.size);
-                        }}
-                        onKeyDown={handleSizeKeyDown}
-                        placeholder={
-                          currentItem.sizeOpen ? "Search sizes..." : ""
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                          caretColor: currentItem.sizeOpen
-                            ? "auto"
-                            : "transparent",
-                        }}
-                        data-size-dropdown
-                      />
-                      {currentItem.sizeOpen && (
-                        <div
-                          className={styles.dropdown}
-                          data-size-dropdown
-                          style={{ maxWidth: "250px" }}
-                        >
-                          <div
-                            style={{
-                              maxHeight: "200px",
-                              overflowY: "auto",
-                            }}
-                            data-size-dropdown
-                          >
-                            {filteredSizes.length > 0 ? (
-                              filteredSizes.map((opt, oIndex) => (
-                                <div
-                                  key={oIndex}
-                                  className={styles.dropdownItem}
-                                  onClick={() => {
-                                    setCurrentItemWithTracking({
-                                      ...currentItem,
-                                      size: opt.size,
-                                      sizeId: opt._id,
-                                      sizeOpen: false,
-                                    });
-                                    setSizeSearch("");
-                                  }}
-                                  style={{
-                                    padding: "8px 12px",
-                                    cursor: "pointer",
-                                    borderBottom:
-                                      oIndex < filteredSizes.length - 1
-                                        ? "1px solid #eee"
-                                        : "none",
-                                  }}
-                                  onMouseEnter={(e) =>
-                                    (e.target.style.backgroundColor = "#f5f5f5")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.target.style.backgroundColor = "white")
-                                  }
-                                  data-size-dropdown
-                                >
-                                  <strong>{opt.size}</strong>
-                                </div>
-                              ))
-                            ) : (
-                              <div
-                                className={styles.dropdownItem}
-                                style={{
-                                  color: "#999",
-                                  fontStyle: "italic",
-                                  padding: "8px 12px",
-                                  textAlign: "center",
-                                }}
-                                data-size-dropdown
-                              >
-                                No sizes found
-                              </div>
-                            )}
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                addOptDb("size", sizeSearch);
-                                setSizeSearch("");
-                              }}
-                              data-size-dropdown
-                            >
-                              <div>
-                                Add to inventory? <FaBookmark />
-                              </div>
-                            </div>
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                setCurrentItemWithTracking({
-                                  ...currentItem,
-                                  size: sizeSearch,
-                                  sizeId: null,
-                                  sizeOpen: false,
-                                });
-                              }}
-                              data-size-dropdown
-                            >
-                              <div>
-                                Add only to item? <FaPlus />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -1697,20 +1162,8 @@ const Edit = ({
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Description</label>
                   <div className={styles.mobileValue}>
-                    <input
-                      value={currentItem.description}
-                      onChange={(e) =>
-                        setCurrentItemWithTracking({
-                          ...currentItem,
-                          description: e.target.value,
-                        })
-                      }
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        width: "100%",
-                      }}
-                    />
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </div>
                 </div>
 
@@ -1736,40 +1189,16 @@ const Edit = ({
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Brand Style</label>
                   <div className={styles.mobileValue}>
-                    <input
-                      value={currentItem.brand}
-                      onChange={(e) =>
-                        setCurrentItemWithTracking({
-                          ...currentItem,
-                          brand: e.target.value,
-                        })
-                      }
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        width: "100%",
-                      }}
-                    />
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </div>
                 </div>
 
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Size</label>
                   <div className={styles.mobileValue}>
-                    <input
-                      value={currentItem.size}
-                      onChange={(e) =>
-                        setCurrentItemWithTracking({
-                          ...currentItem,
-                          size: e.target.value,
-                        })
-                      }
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        width: "100%",
-                      }}
-                    />
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </div>
                 </div>
 

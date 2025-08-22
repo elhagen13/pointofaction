@@ -5,12 +5,9 @@ import {
   FaTrash,
   FaUpload,
   FaLink,
-  FaTimes,
   FaPlus,
 } from "react-icons/fa";
-import { TfiExchangeVertical } from "react-icons/tfi";
-import { IoIosRemoveCircle } from "react-icons/io";
-import { MdAdd, MdAddCircle, MdOutlineSwapVert } from "react-icons/md";
+import { MdOutlineSwapVert } from "react-icons/md";
 import { BeatLoader } from "react-spinners";
 
 /**
@@ -962,6 +959,7 @@ export default function EditPresets({
                 value="sizes"
                 checked={addType === "sizes"}
                 onClick={() => setAddType("sizes")}
+                readOnly
               />
               <label htmlFor="sizes">Sizes</label>
             </div>
@@ -973,6 +971,7 @@ export default function EditPresets({
                 value="common"
                 checked={addType === "common"}
                 onClick={() => setAddType("common")}
+                readOnly
               />
               <label htmlFor="common">Commonly Used</label>
             </div>
@@ -1566,6 +1565,7 @@ export default function EditPresets({
                   setSelectedIds([]);
                   setAddType("descriptions");
                 }}
+                readOnly
               />
               <label htmlFor="descriptions">Descriptions</label>
             </div>
@@ -1580,6 +1580,7 @@ export default function EditPresets({
                   setSelectedIds([]);
                   setAddType("brands");
                 }}
+                readOnly
               />
               <label htmlFor="brands">Brands</label>
             </div>
@@ -1594,6 +1595,7 @@ export default function EditPresets({
                   setSelectedIds([]);
                   setAddType("sizes");
                 }}
+                readOnly
               />
               <label htmlFor="sizes">Sizes</label>
             </div>
@@ -1608,6 +1610,7 @@ export default function EditPresets({
                   setSelectedIds([]);
                   setAddType("common");
                 }}
+                readOnly
               />
               <label htmlFor="common">Commonly Used</label>
             </div>
@@ -2319,6 +2322,7 @@ export default function EditPresets({
                   setSelectedIds([]);
                   setAddType("descriptions");
                 }}
+                readOnly
               />
               <label htmlFor="descriptions">Descriptions</label>
             </div>
@@ -2333,6 +2337,7 @@ export default function EditPresets({
                   setSelectedIds([]);
                   setAddType("brands");
                 }}
+                readOnly
               />
               <label htmlFor="brands">Brands</label>
             </div>
@@ -2347,6 +2352,7 @@ export default function EditPresets({
                   setSelectedIds([]);
                   setAddType("sizes");
                 }}
+                readOnly
               />
               <label htmlFor="sizes">Sizes</label>
             </div>
@@ -2361,6 +2367,7 @@ export default function EditPresets({
                   setSelectedIds([]);
                   setAddType("common");
                 }}
+                readOnly
               />
               <label htmlFor="common">Commonly Used</label>
             </div>

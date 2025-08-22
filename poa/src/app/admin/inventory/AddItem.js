@@ -18,6 +18,8 @@ import {
 } from "react-icons/io";
 import jsPDF from "jspdf";
 import Overlay from "@/app/components/popups/Overlay";
+import EditPresets from "@/app/components/admin/editPresets/EditPresets";
+import Dropdown from "./Dropdown";
 
 export default function AddItem({ onClose, refresh, options }) {
   const [page, setPage] = useState("box");
@@ -49,6 +51,8 @@ export default function AddItem({ onClose, refresh, options }) {
         />
       )}
       {page === "qr" && <QrPopup setPage={setPage} item={item} onClose={onClose} />}
+      {page === "preset" && 
+      <EditPresets options={options} prevPage={"box"} setPage={setPage} refresh={refresh} setPopup={setPopup}/>}
     </Overlay>
   );
 }
@@ -803,6 +807,42 @@ const AddBox = ({
     }
   };
 
+  const DROPDOWN_CONFIGS = {
+    description: {
+      searchState: descriptionSearch,
+      setSearchState: setDescriptionSearch,
+      filteredOptions: filteredDescriptions,
+      dictionary: descriptionDict,
+      fieldKey: 'description',
+      idKey: 'descriptionId',
+      openKey: 'descriptionOpen',
+      placeholder: 'Search descriptions...',
+      noResultsText: 'No descriptions found'
+    },
+    brand: {
+      searchState: brandSearch,
+      setSearchState: setBrandSearch,
+      filteredOptions: filteredBrands,
+      dictionary: brandDict,
+      fieldKey: 'brand',
+      idKey: 'brandId',
+      openKey: 'brandOpen',
+      placeholder: 'Search brands...',
+      noResultsText: 'No brands found'
+    },
+    size: {
+      searchState: sizeSearch,
+      setSearchState: setSizeSearch,
+      filteredOptions: filteredSizes,
+      dictionary: sizeDict,
+      fieldKey: 'size',
+      idKey: 'sizeId',
+      openKey: 'sizeOpen',
+      placeholder: 'Search sizes...',
+      noResultsText: 'No sizes found'
+    }
+  };
+
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
@@ -827,7 +867,15 @@ const AddBox = ({
             </div>
           </div>
           <div className={styles.formInput}>
-            <label>Item Details</label>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <label>Item Details</label>
+              <label
+                style={{ cursor: "pointer" }}
+                onClick={() => setPage("preset")}
+              >
+                Edit presets →
+              </label>
+            </div>
 
             {/* Desktop Table View */}
             <table
@@ -1003,154 +1051,8 @@ const AddBox = ({
                     )}
                   </td>
                   <td className={styles.tableLg}>
-                    <div
-                      style={{ position: "relative" }}
-                      data-description-dropdown
-                    >
-                      <input
-                        value={
-                          currentItem.descriptionOpen
-                            ? descriptionSearch
-                            : currentItem.description
-                        }
-                        onClick={() => {
-                          setCurrentItem({
-                            ...currentItem,
-                            descriptionOpen: true,
-                          });
-                          setDescriptionSearch(currentItem.description);
-                        }}
-                        onChange={(e) => {
-                          if (currentItem.descriptionOpen) {
-                            setDescriptionSearch(e.target.value);
-                          }
-                        }}
-                        onFocus={() => {
-                          setCurrentItem({
-                            ...currentItem,
-                            descriptionOpen: true,
-                          });
-                          setDescriptionSearch(currentItem.description);
-                        }}
-                        onKeyDown={handleDescriptionKeyDown}
-                        placeholder={
-                          currentItem.descriptionOpen
-                            ? "Search descriptions..."
-                            : ""
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                          caretColor: currentItem.descriptionOpen
-                            ? "auto"
-                            : "transparent",
-                        }}
-                        data-description-dropdown
-                      />
-                      {currentItem.descriptionOpen && (
-                        <div
-                          className={styles.dropdown}
-                          data-description-dropdown
-                          style={{ maxWidth: "250px" }}
-                        >
-                          <div
-                            style={{
-                              maxHeight: "200px",
-                              overflowY: "auto",
-                            }}
-                            data-description-dropdown
-                          >
-                            {filteredDescriptions.length > 0 ? (
-                              filteredDescriptions.map((opt, oIndex) => (
-                                <div
-                                  key={oIndex}
-                                  className={styles.dropdownItem}
-                                  onClick={() => {
-                                    setCurrentItem({
-                                      ...currentItem,
-                                      description: opt.description,
-                                      descriptionId: opt._id,
-                                      descriptionOpen: false,
-                                    });
-                                    setDescriptionSearch("");
-                                  }}
-                                  style={{
-                                    padding: "8px 12px",
-                                    cursor: "pointer",
-                                    borderBottom:
-                                      oIndex < filteredDescriptions.length - 1
-                                        ? "1px solid #eee"
-                                        : "none",
-                                  }}
-                                  onMouseEnter={(e) =>
-                                    (e.target.style.backgroundColor = "#f5f5f5")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.target.style.backgroundColor = "white")
-                                  }
-                                  data-description-dropdown
-                                >
-                                  <strong>{opt.description}</strong>
-                                </div>
-                              ))
-                            ) : (
-                              <div
-                                className={styles.dropdownItem}
-                                style={{
-                                  color: "#999",
-                                  fontStyle: "italic",
-                                  padding: "8px 12px",
-                                  textAlign: "center",
-                                }}
-                                data-description-dropdown
-                              >
-                                No descriptions found
-                              </div>
-                            )}
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                addOptDb("description", descriptionSearch);
-                                setDescriptionSearch("");
-                              }}
-                              data-description-dropdown
-                            >
-                              <div>
-                                Add to inventory? <FaBookmark />
-                              </div>
-                            </div>
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                setCurrentItem({
-                                  ...currentItem,
-                                  description: descriptionSearch,
-                                  descriptionId: null,
-                                  descriptionOpen: false,
-                                });
-                              }}
-                              data-description-dropdown
-                            >
-                              <div>
-                                Add only to item? <FaPlus />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={null} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -1171,292 +1073,12 @@ const AddBox = ({
                     />
                   </td>
                   <td className={styles.tableReg}>
-                    <div style={{ position: "relative" }} data-brand-dropdown>
-                      <input
-                        value={
-                          currentItem.brandOpen
-                            ? brandSearch
-                            : currentItem.brand
-                        }
-                        onClick={() => {
-                          setCurrentItem({
-                            ...currentItem,
-                            brandOpen: true,
-                          });
-                          setBrandSearch(currentItem.brand);
-                        }}
-                        onChange={(e) => {
-                          if (currentItem.brandOpen) {
-                            setBrandSearch(e.target.value);
-                          }
-                        }}
-                        onFocus={() => {
-                          setCurrentItem({
-                            ...currentItem,
-                            brandOpen: true,
-                          });
-                          setBrandSearch(currentItem.brand);
-                        }}
-                        onKeyDown={handleBrandKeyDown}
-                        placeholder={
-                          currentItem.brandOpen ? "Search brands..." : ""
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                          caretColor: currentItem.brandOpen
-                            ? "auto"
-                            : "transparent",
-                        }}
-                        data-brand-dropdown
-                      />
-                      {currentItem.brandOpen && (
-                        <div
-                          className={styles.dropdown}
-                          data-brand-dropdown
-                          style={{ maxWidth: "250px" }}
-                        >
-                          <div
-                            style={{
-                              maxHeight: "200px",
-                              overflowY: "auto",
-                            }}
-                            data-brand-dropdown
-                          >
-                            {filteredBrands.length > 0 ? (
-                              filteredBrands.map((opt, oIndex) => (
-                                <div
-                                  key={oIndex}
-                                  className={styles.dropdownItem}
-                                  onClick={() => {
-                                    setCurrentItem({
-                                      ...currentItem,
-                                      brand: opt.brand,
-                                      brandId: opt._id,
-                                      brandOpen: false,
-                                    });
-                                    setBrandSearch("");
-                                  }}
-                                  style={{
-                                    padding: "8px 12px",
-                                    cursor: "pointer",
-                                    borderBottom:
-                                      oIndex < filteredBrands.length - 1
-                                        ? "1px solid #eee"
-                                        : "none",
-                                  }}
-                                  onMouseEnter={(e) =>
-                                    (e.target.style.backgroundColor = "#f5f5f5")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.target.style.backgroundColor = "white")
-                                  }
-                                  data-brand-dropdown
-                                >
-                                  <strong>{opt.brand}</strong>
-                                </div>
-                              ))
-                            ) : (
-                              <div
-                                className={styles.dropdownItem}
-                                style={{
-                                  color: "#999",
-                                  fontStyle: "italic",
-                                  padding: "8px 12px",
-                                  textAlign: "center",
-                                }}
-                                data-brand-dropdown
-                              >
-                                No brands found
-                              </div>
-                            )}
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                addOptDb("brand", brandSearch);
-                                setBrandSearch("");
-                              }}
-                              data-brand-dropdown
-                            >
-                              <div>
-                                Add to inventory? <FaBookmark />
-                              </div>
-                            </div>
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                setCurrentItem({
-                                  ...currentItem,
-                                  brand: brandSearch,
-                                  brandId: null,
-                                  brandOpen: false,
-                                });
-                              }}
-                              data-brand-dropdown
-                            >
-                              <div>
-                                Add only to item? <FaPlus />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={null} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </td>
                   <td className={styles.tableReg}>
-                    <div style={{ position: "relative" }} data-size-dropdown>
-                      <input
-                        value={
-                          currentItem.sizeOpen ? sizeSearch : currentItem.size
-                        }
-                        onClick={() => {
-                          setCurrentItem({
-                            ...currentItem,
-                            sizeOpen: true,
-                          });
-                          setSizeSearch(currentItem.size);
-                        }}
-                        onChange={(e) => {
-                          if (currentItem.sizeOpen) {
-                            setSizeSearch(e.target.value);
-                          }
-                        }}
-                        onFocus={() => {
-                          setCurrentItem({
-                            ...currentItem,
-                            sizeOpen: true,
-                          });
-                          setSizeSearch(currentItem.size);
-                        }}
-                        onKeyDown={handleSizeKeyDown}
-                        placeholder={
-                          currentItem.sizeOpen ? "Search sizes..." : ""
-                        }
-                        className={styles.input}
-                        style={{
-                          margin: 0,
-                          minHeight: "auto",
-                          width: "100%",
-                          caretColor: currentItem.sizeOpen
-                            ? "auto"
-                            : "transparent",
-                        }}
-                        data-size-dropdown
-                      />
-                      {currentItem.sizeOpen && (
-                        <div
-                          className={styles.dropdown}
-                          data-size-dropdown
-                          style={{ maxWidth: "250px" }}
-                        >
-                          <div
-                            style={{
-                              maxHeight: "200px",
-                              overflowY: "auto",
-                            }}
-                            data-size-dropdown
-                          >
-                            {filteredSizes.length > 0 ? (
-                              filteredSizes.map((opt, oIndex) => (
-                                <div
-                                  key={oIndex}
-                                  className={styles.dropdownItem}
-                                  onClick={() => {
-                                    setCurrentItem({
-                                      ...currentItem,
-                                      size: opt.size,
-                                      sizeId: opt._id,
-                                      sizeOpen: false,
-                                    });
-                                    setSizeSearch("");
-                                  }}
-                                  style={{
-                                    padding: "8px 12px",
-                                    cursor: "pointer",
-                                    borderBottom:
-                                      oIndex < filteredSizes.length - 1
-                                        ? "1px solid #eee"
-                                        : "none",
-                                  }}
-                                  onMouseEnter={(e) =>
-                                    (e.target.style.backgroundColor = "#f5f5f5")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.target.style.backgroundColor = "white")
-                                  }
-                                  data-size-dropdown
-                                >
-                                  <strong>{opt.size}</strong>
-                                </div>
-                              ))
-                            ) : (
-                              <div
-                                className={styles.dropdownItem}
-                                style={{
-                                  color: "#999",
-                                  fontStyle: "italic",
-                                  padding: "8px 12px",
-                                  textAlign: "center",
-                                }}
-                                data-size-dropdown
-                              >
-                                No sizes found
-                              </div>
-                            )}
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                addOptDb("size", sizeSearch);
-                                setSizeSearch("");
-                              }}
-                              data-size-dropdown
-                            >
-                              <div>
-                                Add to inventory? <FaBookmark />
-                              </div>
-                            </div>
-                            <div
-                              className={styles.dropdownItem}
-                              style={{
-                                color: "#999",
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                              onClick={() => {
-                                setCurrentItem({
-                                  ...currentItem,
-                                  size: sizeSearch,
-                                  sizeId: null,
-                                  sizeOpen: false,
-                                });
-                              }}
-                              data-size-dropdown
-                            >
-                              <div>
-                                Add only to item? <FaPlus />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={null} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -1631,21 +1253,8 @@ const AddBox = ({
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Description</label>
                   <div className={styles.mobileValue}>
-                    <input
-                      value={currentItem.description}
-                      onChange={(e) => {
-                        setUnsavedChanges(true);
-                        setCurrentItem({
-                          ...currentItem,
-                          description: e.target.value,
-                        });
-                      }}
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        width: "100%",
-                      }}
-                    />
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </div>
                 </div>
 
@@ -1672,42 +1281,16 @@ const AddBox = ({
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Brand</label>
                   <div className={styles.mobileValue}>
-                    <input
-                      value={currentItem.brand}
-                      onChange={(e) => {
-                        setUnsavedChanges(true);
-                        setCurrentItem({
-                          ...currentItem,
-                          brand: e.target.value,
-                        });
-                      }}
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        width: "100%",
-                      }}
-                    />
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </div>
                 </div>
 
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Size</label>
                   <div className={styles.mobileValue}>
-                    <input
-                      value={currentItem.size}
-                      onChange={(e) => {
-                        setUnsavedChanges(true);
-                        setCurrentItem({
-                          ...currentItem,
-                          size: e.target.value,
-                        });
-                      }}
-                      className={styles.input}
-                      style={{
-                        margin: 0,
-                        width: "100%",
-                      }}
-                    />
+                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+
                   </div>
                 </div>
 
