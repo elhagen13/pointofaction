@@ -271,6 +271,36 @@
   transform: scale(0.98);
 }
 
+.paginate{
+  min-width: 2rem;
+  height: 2rem;
+  background-color: rgb(235, 235, 235);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+  min-width: 2rem;
+  padding: 5px;
+}
+
+.paginate:hover{
+  box-shadow: 0 0 2px 3px rgb(191, 224, 203);
+  background-color: rgb(14, 83, 14) !important;
+  color: white;
+}
+
+.pages{
+  margin-bottom: 10px;
+  padding-top:3px;
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+}
+
+
 /*table styles*/
 .tableReg {
   width: 10%;
@@ -558,6 +588,8 @@
     justify-content: space-between;
     align-items: center;
 }
+
+
 @media (max-width: 768px) {
   .imageAndLocation {
     flex-direction: column;
@@ -616,6 +648,8 @@
     color: black,
 
 }
+
+
 /* Mobile styles */
 @media (max-width: 768px) {
   .inventoryBackground{

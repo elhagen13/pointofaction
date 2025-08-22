@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
-import { FaRegCopy, FaEye, FaArrowDown, FaArrowUp} from "react-icons/fa";
+import { FaRegCopy, FaEye, FaArrowDown, FaArrowUp } from "react-icons/fa";
 import { IoSearch, IoChevronDown, IoChevronUp } from "react-icons/io5";
 import { MdPublic, MdOutlinePublicOff } from "react-icons/md";
 import { HiCash } from "react-icons/hi";
@@ -62,7 +62,11 @@ function Inventory() {
 
   const [popup, setPopup] = useState(null);
 
-  const {user} = useUser();
+  const { user } = useUser();
+
+  const [paginate, setPaginate] = useState(0);
+  const [numItemsPage, setNumItemsPage] = useState(20);
+  const [numPages, setNumPages] = useState(0);
 
   const getBoxes = async () => {
     const response = await fetch("/api/inventory/box", {
@@ -105,8 +109,8 @@ function Inventory() {
     let resultDescriptions = await response.json();
 
     response = await fetch("/api/details/common", {
-      method: "GET"
-    })
+      method: "GET",
+    });
     let resultCombos = await response.json();
 
     console.log(resultDescriptions);
@@ -293,80 +297,88 @@ function Inventory() {
         });
       });
     }
+    setNumPages(
+      Math.floor(
+        groupedItems.length / numItemsPage +
+          (groupedItems.length % numItemsPage !== 0 ? 1 : 0)
+      )
+    );
 
-    return groupedItems.sort((a, b) => {
-      const getTextForSort = (group, field) => {
-        const item = group[0];
-        switch (field) {
+    return groupedItems
+      .sort((a, b) => {
+        const getTextForSort = (group, field) => {
+          const item = group[0];
+          switch (field) {
+            case "description":
+              return item.descriptionId &&
+                descriptionDict[item.descriptionId.toString()]
+                ? descriptionDict[item.descriptionId.toString()].description
+                : item.description || "";
+            case "style":
+              return item.style || "";
+            case "brand":
+              return item.brandId && brandDict[item.brandId.toString()]
+                ? brandDict[item.brandId.toString()].brand
+                : item.brand || "";
+            case "color":
+              return item.color || "";
+            case "size":
+              return item.sizeId && sizeDict[item.sizeId.toString()]
+                ? sizeDict[item.sizeId.toString()].size
+                : item.size || "";
+            case "quantity":
+              return item.quantity || 0;
+            case "box":
+              return boxDict[item.boxId]?.boxId || 0;
+            default:
+              return "";
+          }
+        };
+
+        switch (sortBy) {
           case "description":
-            return item.descriptionId &&
-              descriptionDict[item.descriptionId.toString()]
-              ? descriptionDict[item.descriptionId.toString()].description
-              : item.description || "";
+            const aDesc = getTextForSort(a, "description").toLowerCase();
+            const bDesc = getTextForSort(b, "description").toLowerCase();
+            return sortOrder
+              ? aDesc.localeCompare(bDesc)
+              : bDesc.localeCompare(aDesc);
           case "style":
-            return item.style || "";
+            const aStyle = getTextForSort(a, "style").toLowerCase();
+            const bStyle = getTextForSort(b, "style").toLowerCase();
+            return sortOrder
+              ? aStyle.localeCompare(bStyle)
+              : bStyle.localeCompare(aStyle);
           case "brand":
-            return item.brandId && brandDict[item.brandId.toString()]
-              ? brandDict[item.brandId.toString()].brand
-              : item.brand || "";
+            const aBrand = getTextForSort(a, "brand").toLowerCase();
+            const bBrand = getTextForSort(b, "brand").toLowerCase();
+            return sortOrder
+              ? aBrand.localeCompare(bBrand)
+              : bBrand.localeCompare(aBrand);
           case "color":
-            return item.color || "";
+            const aColor = getTextForSort(a, "color").toLowerCase();
+            const bColor = getTextForSort(b, "color").toLowerCase();
+            return sortOrder
+              ? aColor.localeCompare(bColor)
+              : bColor.localeCompare(aColor);
           case "size":
-            return item.sizeId && sizeDict[item.sizeId.toString()]
-              ? sizeDict[item.sizeId.toString()].size
-              : item.size || "";
+            const aSize = getTextForSort(a, "size").toLowerCase();
+            const bSize = getTextForSort(b, "size").toLowerCase();
+            return sortOrder
+              ? aSize.localeCompare(bSize)
+              : bSize.localeCompare(aSize);
           case "quantity":
-            return item.quantity || 0;
+            const aQty = getTextForSort(a, "quantity");
+            const bQty = getTextForSort(b, "quantity");
+            return sortOrder ? aQty - bQty : bQty - aQty;
           case "box":
-            return boxDict[item.boxId]?.boxId || 0;
+            const aBox = getTextForSort(a, "box");
+            const bBox = getTextForSort(b, "box");
+            return sortOrder ? aBox - bBox : bBox - aBox;
           default:
-            return "";
+            return 0; // No sorting
         }
-      };
-
-      switch (sortBy) {
-        case "description":
-          const aDesc = getTextForSort(a, "description").toLowerCase();
-          const bDesc = getTextForSort(b, "description").toLowerCase();
-          return sortOrder
-            ? aDesc.localeCompare(bDesc)
-            : bDesc.localeCompare(aDesc);
-        case "style":
-          const aStyle = getTextForSort(a, "style").toLowerCase();
-          const bStyle = getTextForSort(b, "style").toLowerCase();
-          return sortOrder
-            ? aStyle.localeCompare(bStyle)
-            : bStyle.localeCompare(aStyle);
-        case "brand":
-          const aBrand = getTextForSort(a, "brand").toLowerCase();
-          const bBrand = getTextForSort(b, "brand").toLowerCase();
-          return sortOrder
-            ? aBrand.localeCompare(bBrand)
-            : bBrand.localeCompare(aBrand);
-        case "color":
-          const aColor = getTextForSort(a, "color").toLowerCase();
-          const bColor = getTextForSort(b, "color").toLowerCase();
-          return sortOrder
-            ? aColor.localeCompare(bColor)
-            : bColor.localeCompare(aColor);
-        case "size":
-          const aSize = getTextForSort(a, "size").toLowerCase();
-          const bSize = getTextForSort(b, "size").toLowerCase();
-          return sortOrder
-            ? aSize.localeCompare(bSize)
-            : bSize.localeCompare(aSize);
-        case "quantity":
-          const aQty = getTextForSort(a, "quantity");
-          const bQty = getTextForSort(b, "quantity");
-          return sortOrder ? aQty - bQty : bQty - aQty;
-        case "box":
-          const aBox = getTextForSort(a, "box");
-          const bBox = getTextForSort(b, "box");
-          return sortOrder ? aBox - bBox : bBox - aBox;
-        default:
-          return 0; // No sorting
-      }
-    });
+      })
+      .slice(paginate * numItemsPage, paginate * numItemsPage + numItemsPage);
   }, [
     inventory,
     page,
@@ -378,7 +390,9 @@ function Inventory() {
     sizeDict,
     sortBy,
     sortOrder,
+    paginate
   ]);
+
   // Filter boxes based on page selection and search
   const filteredBoxes = useMemo(() => {
     let boxItems;
@@ -483,10 +497,12 @@ function Inventory() {
         description: box.description,
         ...(box.discount && { discount: box.discount }),
         ...(box.minPrice && { minPrice: box.minPrice }),
-        history: [{
-          user: user?.fullName,
-          createdOn: new Date(),
-        }],
+        history: [
+          {
+            user: user?.fullName,
+            createdOn: new Date(),
+          },
+        ],
       };
 
       // Create the box first
@@ -682,8 +698,11 @@ function Inventory() {
   };
 
   return (
-    <div className={styles.inventoryBackground} style={{ color: "black", position: "relative" }}>
-      {popup && <Popup closePopup={() => setPopup(null)} popupType={popup}/>}
+    <div
+      className={styles.inventoryBackground}
+      style={{ color: "black", position: "relative" }}
+    >
+      {popup && <Popup closePopup={() => setPopup(null)} popupType={popup} />}
       <div className={styles.pageSelection}>
         <button className={styles.button} onClick={() => setAddItemOpen(true)}>
           Add Item
@@ -698,7 +717,7 @@ function Inventory() {
           <input
             className={styles.searchInput}
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={(e) => {setPaginate(0); setSearchValue(e.target.value)}}
             placeholder={`Search ${selectedSearchOption === "all" ? "everything" : selectedSearchOption}...`}
           />
           <div
@@ -792,6 +811,27 @@ function Inventory() {
       </div>
       <div style={{ overflowX: "scroll" }}>
         {filter === "line items" && (
+          <>
+          <div className={styles.pages}>
+          {paginate > 0 && <div
+            className={styles.paginate}
+            onClick={() => setPaginate(paginate - 1)}
+          >
+            {paginate}
+          </div>}
+          <div
+            className={styles.paginate}
+            style={{ backgroundColor: "rgb(140, 140, 140)" }}
+          >
+            {paginate + 1}
+          </div>
+          {paginate < numPages - 1 && <div
+            className={styles.paginate}
+            onClick={() => setPaginate(paginate + 1)}
+          >
+            {paginate + 2}
+          </div>}
+        </div>
           <table
             className={styles.inventoryTable}
             style={{ borderCollapse: "collapse", borderRadius: "10px" }}
@@ -809,9 +849,19 @@ function Inventory() {
                   Description
                   {sortBy === "description" ? (
                     sortOrder ? (
-                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowDown
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     ) : (
-                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowUp
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     )
                   ) : (
                     ""
@@ -827,9 +877,19 @@ function Inventory() {
                   Style Code
                   {sortBy === "style" ? (
                     sortOrder ? (
-                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowDown
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     ) : (
-                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowUp
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     )
                   ) : (
                     ""
@@ -845,9 +905,19 @@ function Inventory() {
                   Brand Style
                   {sortBy === "brand" ? (
                     sortOrder ? (
-                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowDown
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     ) : (
-                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowUp
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     )
                   ) : (
                     ""
@@ -863,9 +933,19 @@ function Inventory() {
                   Color
                   {sortBy === "color" ? (
                     sortOrder ? (
-                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowDown
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     ) : (
-                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowUp
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     )
                   ) : (
                     ""
@@ -881,9 +961,19 @@ function Inventory() {
                   Size
                   {sortBy === "size" ? (
                     sortOrder ? (
-                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowDown
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     ) : (
-                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowUp
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     )
                   ) : (
                     ""
@@ -899,9 +989,19 @@ function Inventory() {
                   Quantity
                   {sortBy === "quantity" ? (
                     sortOrder ? (
-                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowDown
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     ) : (
-                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowUp
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     )
                   ) : (
                     ""
@@ -917,9 +1017,19 @@ function Inventory() {
                   Box
                   {sortBy === "box" ? (
                     sortOrder ? (
-                      <FaArrowDown style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowDown
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     ) : (
-                      <FaArrowUp style={{marginLeft:"5px", transform:"translateY(2px)"}}/>
+                      <FaArrowUp
+                        style={{
+                          marginLeft: "5px",
+                          transform: "translateY(2px)",
+                        }}
+                      />
                     )
                   ) : (
                     ""
@@ -1003,6 +1113,8 @@ function Inventory() {
               ))}
             </tbody>
           </table>
+          
+        </>
         )}
         {filter === "boxes" && (
           <table
@@ -1125,6 +1237,7 @@ function Inventory() {
           </table>
         )}
       </div>
+      
 
       {addItemOpen && (
         <AddItem
@@ -1153,7 +1266,6 @@ function Inventory() {
           items={inventory}
           options={options}
           deletePopup={() => setPopup("delete")}
-
         />
       )}
       {editBoxOpen !== null && (
