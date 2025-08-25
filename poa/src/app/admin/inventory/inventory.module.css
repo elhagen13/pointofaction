@@ -283,6 +283,8 @@
   transition: all 0.2s ease-in-out;
   min-width: 2rem;
   padding: 5px;
+  user-select: none;
+  cursor: pointer;
 }
 
 .paginate:hover{
@@ -298,6 +300,7 @@
   gap: 10px;
   width: 100%;
   justify-content: center;
+  user-select: none;
 }
 
 

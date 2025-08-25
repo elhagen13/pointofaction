@@ -151,8 +151,6 @@ const AddBox = ({
   const dropdownRef = useRef(null);
   const [searchValue, setSearchValue] = useState("");
 
-
-
   const checkCurrent = useCallback(() => {
     // Check if user has entered any meaningful data for the current item
     const hasData =
@@ -646,7 +644,7 @@ const AddBox = ({
     setContents([...contents, itemToCopy]);
   };
 
-  const removeItemDB = async (id) => {
+  const removeItemDB = async (id, key) => {
     const itemResponse = await fetch(`/api/inventory/item/${id}`, {
       method: "DELETE",
       headers: {
@@ -655,6 +653,25 @@ const AddBox = ({
     });
     const data = await itemResponse.json();
     if (!data.success) {
+      console.error("Error deleting item:", data.error);
+      console.error("Details:", data.details);
+      throw new Error(data.error || "Unknown error deleting item");
+    }
+
+    const catalogResponse = await fetch(`/api/catalog`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        key: key,
+        deleteMode: true,
+        inventoryId: id,
+      }),
+    });
+
+    const catalogData = await catalogResponse.json();
+    if (!data.success || !catalogData.success) {
       console.error("Error deleting item:", data.error);
       console.error("Details:", data.details);
       throw new Error(data.error || "Unknown error deleting item");
@@ -878,11 +895,19 @@ const AddBox = ({
         );
       });
       for (const itemToDelete of itemsToDelete) {
+        const key = `${itemToDelete.style || "No style"}-${itemToDelete.color || "No color"}-${
+          itemToDelete.size || sizeDict[itemToDelete.sizeId]?.size || "No size"
+        }-${itemToDelete.brand || brandDict[itemToDelete.brandId]?.brand || "No brand"}-${
+          itemToDelete.description ||
+          descriptionDict[itemToDelete.descriptionId]?.description ||
+          "No description"
+        }`;
+
         try {
           change.changes.push(
             `Item (${itemDescriptor(itemToDelete)}) removed from box.`
           );
-          await removeItemDB(itemToDelete._id);
+          await removeItemDB(itemToDelete._id, key);
         } catch (error) {
           console.error(`Failed to delete item ${itemToDelete._id}:`, error);
         }
@@ -932,6 +957,7 @@ const AddBox = ({
       const boxId = data.data._id;
       for (const content of contents) {
         try {
+          //STEP 1: if it is taken out of the box, then change
           if (content.removed) {
             await removeFromBox(content);
           } else {
@@ -985,7 +1011,39 @@ const AddBox = ({
               console.error("Error with item:", itemResult.error);
               throw new Error(itemResult.error || "Unknown error with item");
             }
-            console.log("Item processed successfully:", itemResult.data);
+            console.log("continue");
+
+            const key = `${content.style || "No style"}-${content.color || "No color"}-${
+              content.size || sizeDict[content.sizeId]?.size || "No size"
+            }-${content.brand || brandDict[content.brandId]?.brand || "No brand"}-${
+              content.description ||
+              descriptionDict[content.descriptionId]?.description ||
+              "No description"
+            }`;
+
+            const itemToPush = {
+              inventoryId: itemResult.data._id,
+              key: key,
+              totalQuant: content.quantity,
+              totalReserved: 0,
+              items: [
+                {
+                  inventoryId: itemResult.data._id,
+                  quantAvailable: content.quantity,
+                  reserved: [],
+                },
+              ],
+            };
+            console.log("itemToPush", itemToPush);
+            const catalogResponse = await fetch("/api/catalog", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(itemToPush),
+            });
+
+            const catalogResult = await catalogResponse.json();
           }
         } catch (error) {
           console.error(`Error processing item:`, error);
@@ -1108,6 +1166,37 @@ const AddBox = ({
       );
       return false;
     }
+
+    const key = `${content.style || "No style"}-${content.color || "No color"}-${
+      content.size || sizeDict[content.sizeId]?.size || "No size"
+    }-${currentItem.brand || brandDict[content.brandId]?.brand || "No brand"}-${
+      content.description ||
+      descriptionDict[content.descriptionId]?.description ||
+      "No description"
+    }`;
+
+    const itemToPush = {
+      inventoryId: itemResult.data._id,
+      key: key,
+      totalQuant: content.quantity,
+      totalReserved: 0,
+      items: [
+        {
+          inventoryId: itemResult.data._id,
+          quantAvailable: content.quantity,
+          reserved: [],
+        },
+      ],
+    };
+    const catalogResponse = await fetch("/api/catalog", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(itemToPush),
+    });
+
+    const catalogResult = await catalogResponse.json();
   };
 
   const generateDescription = (e) => {
@@ -1228,11 +1317,7 @@ const AddBox = ({
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [
-    isDropdownOpen,
-    showImageOptions,
-    searchDropdownOpen,
-  ]);
+  }, [isDropdownOpen, showImageOptions, searchDropdownOpen]);
 
   const handleDropdownToggle = (index) => {
     if (isDropdownOpen === index) {
@@ -1295,34 +1380,34 @@ const AddBox = ({
       setSearchState: setDescriptionSearch,
       filteredOptions: filteredDescriptions,
       dictionary: descriptionDict,
-      fieldKey: 'description',
-      idKey: 'descriptionId',
-      openKey: 'descriptionOpen',
-      placeholder: 'Search descriptions...',
-      noResultsText: 'No descriptions found'
+      fieldKey: "description",
+      idKey: "descriptionId",
+      openKey: "descriptionOpen",
+      placeholder: "Search descriptions...",
+      noResultsText: "No descriptions found",
     },
     brand: {
       searchState: brandSearch,
       setSearchState: setBrandSearch,
       filteredOptions: filteredBrands,
       dictionary: brandDict,
-      fieldKey: 'brand',
-      idKey: 'brandId',
-      openKey: 'brandOpen',
-      placeholder: 'Search brands...',
-      noResultsText: 'No brands found'
+      fieldKey: "brand",
+      idKey: "brandId",
+      openKey: "brandOpen",
+      placeholder: "Search brands...",
+      noResultsText: "No brands found",
     },
     size: {
       searchState: sizeSearch,
       setSearchState: setSizeSearch,
       filteredOptions: filteredSizes,
       dictionary: sizeDict,
-      fieldKey: 'size',
-      idKey: 'sizeId',
-      openKey: 'sizeOpen',
-      placeholder: 'Search sizes...',
-      noResultsText: 'No sizes found'
-    }
+      fieldKey: "size",
+      idKey: "sizeId",
+      openKey: "sizeOpen",
+      placeholder: "Search sizes...",
+      noResultsText: "No sizes found",
+    },
   };
 
   return (
@@ -1660,7 +1745,17 @@ const AddBox = ({
                         )}
                       </td>
                       <td className={styles.tableLg}>
-                      <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={contents} setContents={setContents} index={index} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"description"}
+                          contents={contents}
+                          setContents={setContents}
+                          index={index}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </td>
                       <td className={styles.tableReg}>
                         <input
@@ -1681,11 +1776,30 @@ const AddBox = ({
                         />
                       </td>
                       <td className={styles.tableReg}>
-                        <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={contents} setContents={setContents} index={index} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"brand"}
+                          contents={contents}
+                          setContents={setContents}
+                          index={index}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </td>
                       <td className={styles.tableReg}>
-                       <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={contents} setContents={setContents} index={index} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"size"}
+                          contents={contents}
+                          setContents={setContents}
+                          index={index}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </td>
                       <td className={styles.tableReg}>
                         <input
@@ -2129,8 +2243,17 @@ const AddBox = ({
                         )}
                       </td>
                       <td className={styles.tableLg}>
-                      <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={contents} setContents={setContents} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"description"}
+                          contents={contents}
+                          setContents={setContents}
+                          index={null}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </td>
                       <td className={styles.tableReg}>
                         <input
@@ -2150,12 +2273,30 @@ const AddBox = ({
                         />
                       </td>
                       <td className={styles.tableReg}>
-                      <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={contents} setContents={setContents} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"brand"}
+                          contents={contents}
+                          setContents={setContents}
+                          index={null}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </td>
                       <td className={styles.tableReg}>
-                      <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={contents} setContents={setContents} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"size"}
+                          contents={contents}
+                          setContents={setContents}
+                          index={null}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </td>
                       <td className={styles.tableReg}>
                         <input
@@ -2331,7 +2472,17 @@ const AddBox = ({
                     <div className={styles.mobileField}>
                       <label className={styles.mobileLabel}>Description</label>
                       <div className={styles.mobileValue}>
-                      <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"description"}
+                          contents={null}
+                          setContents={null}
+                          index={null}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </div>
                     </div>
 
@@ -2357,16 +2508,34 @@ const AddBox = ({
                     <div className={styles.mobileField}>
                       <label className={styles.mobileLabel}>Brand Style</label>
                       <div className={styles.mobileValue}>
-                      <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"brand"}
+                          contents={null}
+                          setContents={null}
+                          index={null}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </div>
                     </div>
 
                     <div className={styles.mobileField}>
                       <label className={styles.mobileLabel}>Size</label>
                       <div className={styles.mobileValue}>
-                      <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                        <Dropdown
+                          configs={DROPDOWN_CONFIGS}
+                          config_type={"size"}
+                          contents={null}
+                          setContents={null}
+                          index={null}
+                          setUnsavedChanges={setUnsavedChanges}
+                          refresh={refresh}
+                          currentItem={currentItem}
+                          setCurrentItem={setCurrentItem}
+                        />
                       </div>
                     </div>
 

@@ -75,7 +75,7 @@ export default function MultiOpen({
                 src={item.image}
                 style={{ width: "100%", objectFit: "contain" }}
               ></img>
-              <h4>Box #: {item.boxId ? boxDict[item.boxId]?.boxId : ""}</h4>
+              <h4>Box #: {item.boxId ? boxDict[item.boxId]?.boxId : "No box"}</h4>
               <h4>
                 Location:{" "}
                 {item.location ? item.location : boxDict[item.boxId].location}

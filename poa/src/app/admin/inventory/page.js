@@ -67,6 +67,7 @@ function Inventory() {
   const [paginate, setPaginate] = useState(0);
   const [numItemsPage, setNumItemsPage] = useState(20);
   const [numPages, setNumPages] = useState(0);
+  const [showAll, setShowAll] = useState(false)
 
   const getBoxes = async () => {
     const response = await fetch("/api/inventory/box", {
@@ -123,6 +124,8 @@ function Inventory() {
       combos: resultCombos.data,
     });
   };
+  
+
   const contentDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
@@ -378,7 +381,7 @@ function Inventory() {
             return 0; // No sorting
         }
       })
-      .slice(paginate * numItemsPage, paginate * numItemsPage + numItemsPage);
+      .slice(showAll ? 0 : paginate * numItemsPage, showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage);
   }, [
     inventory,
     page,
@@ -390,7 +393,8 @@ function Inventory() {
     sizeDict,
     sortBy,
     sortOrder,
-    paginate
+    paginate, 
+    showAll
   ]);
 
   // Filter boxes based on page selection and search
@@ -813,24 +817,25 @@ function Inventory() {
         {filter === "line items" && (
           <>
           <div className={styles.pages}>
-          {paginate > 0 && <div
+          {paginate > 0 && !showAll && <div
             className={styles.paginate}
             onClick={() => setPaginate(paginate - 1)}
           >
             {paginate}
           </div>}
-          <div
+          {!showAll && <div
             className={styles.paginate}
             style={{ backgroundColor: "rgb(140, 140, 140)" }}
           >
             {paginate + 1}
-          </div>
-          {paginate < numPages - 1 && <div
+          </div>}
+          {paginate < numPages - 1 && !showAll && <div
             className={styles.paginate}
             onClick={() => setPaginate(paginate + 1)}
           >
             {paginate + 2}
           </div>}
+          <div style={{marginLeft:"auto"}} className={styles.paginate} onClick={() => setShowAll(!showAll)}>{showAll ? "Show Pages" : "Show All"}</div>
         </div>
           <table
             className={styles.inventoryTable}
