@@ -50,7 +50,7 @@ export async function GET(request) {
         details: error.message,
       },
       { status: 500 }
-    );
+    ); 
   }
 }
 export async function POST(request) {
