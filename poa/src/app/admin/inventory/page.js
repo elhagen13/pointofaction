@@ -710,10 +710,6 @@ function Inventory() {
             return 0; // No sorting
         }
       })
-      .slice(
-        showAll ? 0 : paginate * numItemsPage,
-        showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage
-      );
   }, [
     inventory,
     page,
