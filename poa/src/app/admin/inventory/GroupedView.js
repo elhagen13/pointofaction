@@ -75,7 +75,7 @@ export default function GroupedView({
       >
         <h2>
           {sortedItems.length} colors found for "
-          {brandDict[items[0].brandId]?.brand || item.brand} {items[0].style}"
+          {brandDict[items[0].brandId]?.brand || items[0].brand} {items[0].style}"
         </h2>
         <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
           <div
