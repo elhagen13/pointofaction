@@ -393,6 +393,7 @@
   flex-direction: row;
   gap: 10px;
   overflow-x: scroll;
+  padding:3px;
 }
 
 .availableColors div{
@@ -401,6 +402,7 @@
   border-radius: 4px;
   align-items: center;
   height: fit-content;
+  padding: 5px;
   transition: all 0.5 ease-in-out
 
 
