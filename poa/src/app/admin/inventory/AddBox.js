@@ -918,7 +918,16 @@ const AddBox = ({
           }`;
 
           const itemToPush = {
-            key: key,
+            style: content.style || "No style",
+            color: content.color || "No color",
+            descriptionId: content.descriptionId || null,
+            description: content.description || null,
+            brandId: content.brandId || null,
+            brand: content.brand || null,
+            sizeId: content.sizeId || null,
+            size: content.size || null,
+            
+            
             totalQuant: content.quantity,
             totalReserved: 0,
             items: [

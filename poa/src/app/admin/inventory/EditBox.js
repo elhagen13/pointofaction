@@ -644,7 +644,7 @@ const AddBox = ({
     setContents([...contents, itemToCopy]);
   };
 
-  const removeItemDB = async (id, key) => {
+  const removeItemDB = async (id, content) => {
     const itemResponse = await fetch(`/api/inventory/item/${id}`, {
       method: "DELETE",
       headers: {
@@ -664,7 +664,14 @@ const AddBox = ({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        key: key,
+        style: content.style || "No style",
+        color: content.color || "No color",
+        descriptionId: content.descriptionId || null,
+        description: content.description || null,
+        brandId: content.brandId || null,
+        brand: content.brand || null,
+        sizeId: content.sizeId || null,
+        size: content.size || null,
         deleteMode: true,
         inventoryId: id,
       }),
@@ -907,7 +914,7 @@ const AddBox = ({
           change.changes.push(
             `Item (${itemDescriptor(itemToDelete)}) removed from box.`
           );
-          await removeItemDB(itemToDelete._id, key);
+          await removeItemDB(itemToDelete._id, itemToDelete);
         } catch (error) {
           console.error(`Failed to delete item ${itemToDelete._id}:`, error);
         }
@@ -1023,7 +1030,14 @@ const AddBox = ({
 
             const itemToPush = {
               inventoryId: itemResult.data._id,
-              key: key,
+              style: content.style || "No style",
+              color: content.color || "No color",
+              descriptionId: content.descriptionId || null,
+              description: content.description || null,
+              brandId: content.brandId || null,
+              brand: content.brand || null,
+              sizeId: content.sizeId || null,
+              size: content.size || null,
               totalQuant: content.quantity,
               totalReserved: 0,
               items: [
@@ -1177,7 +1191,14 @@ const AddBox = ({
 
     const itemToPush = {
       inventoryId: itemResult.data._id,
-      key: key,
+      style: content.style || "No style",
+      color: content.color || "No color",
+      descriptionId: content.descriptionId || null,
+      description: content.description || null,
+      brandId: content.brandId || null,
+      brand: content.brand || null,
+      sizeId: content.sizeId || null,
+      size: content.size || null,
       totalQuant: content.quantity,
       totalReserved: 0,
       items: [

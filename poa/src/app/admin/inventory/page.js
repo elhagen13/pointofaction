@@ -3,7 +3,12 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
 import { FaRegCopy, FaEye, FaArrowDown, FaArrowUp } from "react-icons/fa";
 import { IoSearch, IoChevronDown, IoChevronUp } from "react-icons/io5";
-import { MdPublic, MdOutlinePublicOff } from "react-icons/md";
+import {
+  MdPublic,
+  MdOutlinePublicOff,
+  MdLayers,
+  MdViewColumn,
+} from "react-icons/md";
 import { HiCash } from "react-icons/hi";
 
 import AddItem from "./AddItem.js";
@@ -11,6 +16,8 @@ import AddBox from "./AddBox.js";
 import EditItem from "./EditItem.js";
 import EditBox from "./EditBox.js";
 import MultiOpen from "./MultiOpen.js";
+import GroupedView from "./GroupedView.js";
+import ColumnManager from "./components/ColumnManager";
 
 import Popup from "@/app/components/popups/Popup";
 import { useUser } from "@clerk/nextjs";
@@ -33,7 +40,10 @@ function Inventory() {
   const [editItemOpen, setEditItemOpen] = useState(null);
   const [editBoxOpen, setEditBoxOpen] = useState(null);
 
+  const [columnManagerOpen, setColumnManagerOpen] = useState(false);
+
   const [multiOpen, setMultiOpen] = useState(null);
+  const [groupedView, setGroupedView] = useState(null);
 
   const [inventory, setInventory] = useState([]);
   const [boxes, setBoxes] = useState([]);
@@ -65,9 +75,35 @@ function Inventory() {
   const { user } = useUser();
 
   const [paginate, setPaginate] = useState(0);
-  const [numItemsPage, setNumItemsPage] = useState(20);
+  const [numItemsPage, setNumItemsPage] = useState(15);
   const [numPages, setNumPages] = useState(0);
-  const [showAll, setShowAll] = useState(false)
+  const [showAll, setShowAll] = useState(false);
+
+  const [columns, setColumns] = useState({
+    lineItems: [
+      { Image: true },
+      { Description: true },
+      { Style: true },
+      { Brand: true },
+      { Color: true },
+      { Size: true },
+      { Quantity: true },
+      { Box: true },
+      { Location: true },
+      { Price: false },
+      { Visibility: true },
+    ],
+    boxes: [
+      { Image: true },
+      { "Box Id.": true },
+      { Description: true },
+      { Location: true },
+      { "Total Quantity": true },
+      { Discount: true },
+      { "Min.": true },
+      { Visibility: true },
+    ],
+  });
 
   const getBoxes = async () => {
     const response = await fetch("/api/inventory/box", {
@@ -85,6 +121,7 @@ function Inventory() {
   useEffect(() => {
     getInventory();
     getItemOptions();
+    if(localStorage.getItem("columns")) setColumns(JSON.parse(localStorage.getItem("columns")))
   }, []);
 
   const refresh = () => {
@@ -92,6 +129,7 @@ function Inventory() {
     getItemOptions();
     getBoxes();
   };
+
 
   const getItemOptions = async () => {
     let response = await fetch("/api/details/brands", {
@@ -124,7 +162,6 @@ function Inventory() {
       combos: resultCombos.data,
     });
   };
-  
 
   const contentDict = useMemo(() => {
     const dict = {};
@@ -300,6 +337,7 @@ function Inventory() {
         });
       });
     }
+
     setNumPages(
       Math.floor(
         groupedItems.length / numItemsPage +
@@ -381,7 +419,10 @@ function Inventory() {
             return 0; // No sorting
         }
       })
-      .slice(showAll ? 0 : paginate * numItemsPage, showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage);
+      .slice(
+        showAll ? 0 : paginate * numItemsPage,
+        showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage
+      );
   }, [
     inventory,
     page,
@@ -393,8 +434,8 @@ function Inventory() {
     sizeDict,
     sortBy,
     sortOrder,
-    paginate, 
-    showAll
+    paginate,
+    showAll,
   ]);
 
   // Filter boxes based on page selection and search
@@ -483,6 +524,211 @@ function Inventory() {
       return searchWords.every((word) => boxText.includes(word));
     });
   }, [boxes, contentDict, page, searchValue, selectedSearchOption, boxDict]);
+
+  const filteredGroups = useMemo(() => {
+    let items = inventory;
+
+    // First, group the items (before filtering)
+    let dict = {};
+    for (const item of items) {
+      const style = item.style.toLowerCase();
+      const brand = item.brandId || item.brand.toLowerCase();
+      const key = `${style}, ${brand}`;
+
+      if (!dict[key]) {
+        dict[key] = [item];
+      } else {
+        dict[key].push(item);
+      }
+    }
+
+    let groupedItems = Object.values(dict);
+    // Now filter the groups based on search criteria
+    if (searchValue.trim() !== "") {
+      const searchTerm = searchValue.toLowerCase().trim();
+
+      groupedItems = groupedItems.filter((group) => {
+        // Check if ANY item in the group matches the search
+        return group.some((item) => {
+          if (selectedSearchOption !== "all") {
+            // Keep existing single-field search logic
+            switch (selectedSearchOption) {
+              case "style code":
+                return item.style?.toLowerCase().includes(searchTerm);
+              case "brand style":
+                // Check both direct brand and brandId reference
+                const brandText =
+                  item.brandId && brandDict[item.brandId.toString()]
+                    ? brandDict[item.brandId.toString()].brand
+                    : item.brand || "";
+                return brandText.toLowerCase().includes(searchTerm);
+              case "color":
+                return item.color?.toLowerCase().includes(searchTerm);
+              case "description":
+                // Check both direct description and descriptionId reference
+                const descriptionText =
+                  item.descriptionId &&
+                  descriptionDict[item.descriptionId.toString()]
+                    ? descriptionDict[item.descriptionId.toString()].description
+                    : item.description || "";
+                return descriptionText.toLowerCase().includes(searchTerm);
+              case "size":
+                // Check both direct size and sizeId reference
+                const sizeText =
+                  item.sizeId && sizeDict[item.sizeId.toString()]
+                    ? sizeDict[item.sizeId.toString()].size
+                    : item.size || "";
+                return sizeText.toLowerCase().includes(searchTerm);
+              case "quantity":
+                return item.quantity?.toString().includes(searchTerm);
+              case "box":
+                const boxId = boxDict[item.boxId?.toString()]?.boxId;
+                return boxId?.toLowerCase().includes(searchTerm);
+              case "location":
+                const location = boxDict[item.boxId?.toString()]?.location;
+                return location?.toLowerCase().includes(searchTerm);
+              default:
+                return false;
+            }
+          }
+
+          // For "all" search - multi-word logic
+          const searchWords = searchTerm
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((word) => word.length > 0);
+
+          if (searchWords.length === 0) return true;
+
+          // Combine all searchable text for this item (handling referenced fields)
+          const brandText =
+            item.brandId && brandDict[item.brandId.toString()]
+              ? brandDict[item.brandId.toString()].brand
+              : item.brand || "";
+          const descriptionText =
+            item.descriptionId && descriptionDict[item.descriptionId.toString()]
+              ? descriptionDict[item.descriptionId.toString()].description
+              : item.description || "";
+          const sizeText =
+            item.sizeId && sizeDict[item.sizeId.toString()]
+              ? sizeDict[item.sizeId.toString()].size
+              : item.size || "";
+
+          const itemText = [
+            item.style || "",
+            brandText,
+            item.color || "",
+            descriptionText,
+            sizeText,
+            item.quantity?.toString() || "",
+            boxDict[item.boxId?.toString()]?.boxId || "",
+            boxDict[item.boxId?.toString()]?.location || "",
+          ]
+            .join(" ")
+            .toLowerCase();
+
+          console.log("ITEMTEXT:", itemText);
+          console.log("searchWORDS:", searchWords);
+
+          // Check if ALL search words are found in the combined text
+          return searchWords.every((word) => itemText.includes(word));
+        });
+      });
+    }
+
+    return groupedItems
+      .sort((a, b) => {
+        const getTextForSort = (group, field) => {
+          const item = group[0];
+          switch (field) {
+            case "description":
+              return item.descriptionId &&
+                descriptionDict[item.descriptionId.toString()]
+                ? descriptionDict[item.descriptionId.toString()].description
+                : item.description || "";
+            case "style":
+              return item.style || "";
+            case "brand":
+              return item.brandId && brandDict[item.brandId.toString()]
+                ? brandDict[item.brandId.toString()].brand
+                : item.brand || "";
+            case "color":
+              return item.color || "";
+            case "size":
+              return item.sizeId && sizeDict[item.sizeId.toString()]
+                ? sizeDict[item.sizeId.toString()].size
+                : item.size || "";
+            case "quantity":
+              return item.quantity || 0;
+            case "box":
+              return boxDict[item.boxId]?.boxId || 0;
+            default:
+              return "";
+          }
+        };
+
+        switch (sortBy) {
+          case "description":
+            const aDesc = getTextForSort(a, "description").toLowerCase();
+            const bDesc = getTextForSort(b, "description").toLowerCase();
+            return sortOrder
+              ? aDesc.localeCompare(bDesc)
+              : bDesc.localeCompare(aDesc);
+          case "style":
+            const aStyle = getTextForSort(a, "style").toLowerCase();
+            const bStyle = getTextForSort(b, "style").toLowerCase();
+            return sortOrder
+              ? aStyle.localeCompare(bStyle)
+              : bStyle.localeCompare(aStyle);
+          case "brand":
+            const aBrand = getTextForSort(a, "brand").toLowerCase();
+            const bBrand = getTextForSort(b, "brand").toLowerCase();
+            return sortOrder
+              ? aBrand.localeCompare(bBrand)
+              : bBrand.localeCompare(aBrand);
+          case "color":
+            const aColor = getTextForSort(a, "color").toLowerCase();
+            const bColor = getTextForSort(b, "color").toLowerCase();
+            return sortOrder
+              ? aColor.localeCompare(bColor)
+              : bColor.localeCompare(aColor);
+          case "size":
+            const aSize = getTextForSort(a, "size").toLowerCase();
+            const bSize = getTextForSort(b, "size").toLowerCase();
+            return sortOrder
+              ? aSize.localeCompare(bSize)
+              : bSize.localeCompare(aSize);
+          case "quantity":
+            const aQty = getTextForSort(a, "quantity");
+            const bQty = getTextForSort(b, "quantity");
+            return sortOrder ? aQty - bQty : bQty - aQty;
+          case "box":
+            const aBox = getTextForSort(a, "box");
+            const bBox = getTextForSort(b, "box");
+            return sortOrder ? aBox - bBox : bBox - aBox;
+          default:
+            return 0; // No sorting
+        }
+      })
+      .slice(
+        showAll ? 0 : paginate * numItemsPage,
+        showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage
+      );
+  }, [
+    inventory,
+    page,
+    searchValue,
+    selectedSearchOption,
+    boxDict,
+    brandDict,
+    descriptionDict,
+    sizeDict,
+    sortBy,
+    sortOrder,
+    paginate,
+    showAll,
+  ]);
+
   const getInventory = async () => {
     const response = await fetch("/api/inventory/item", {
       method: "GET",
@@ -701,13 +947,18 @@ function Inventory() {
     return same || "N/A";
   };
 
+  const getVisibleColumns = (viewType) => {
+    const currentColumns = columns[viewType] || [];
+    return currentColumns.filter((column) => Object.values(column)[0]);
+  };
+
   return (
     <div
       className={styles.inventoryBackground}
       style={{ color: "black", position: "relative" }}
     >
       {popup && <Popup closePopup={() => setPopup(null)} popupType={popup} />}
-      <div className={styles.pageSelection}>
+      <div className={styles.addSelection}>
         <button className={styles.button} onClick={() => setAddItemOpen(true)}>
           Add Item
         </button>
@@ -721,7 +972,10 @@ function Inventory() {
           <input
             className={styles.searchInput}
             value={searchValue}
-            onChange={(e) => {setPaginate(0); setSearchValue(e.target.value)}}
+            onChange={(e) => {
+              setPaginate(0);
+              setSearchValue(e.target.value);
+            }}
             placeholder={`Search ${selectedSearchOption === "all" ? "everything" : selectedSearchOption}...`}
           />
           <div
@@ -768,6 +1022,23 @@ function Inventory() {
               <input
                 type="radio"
                 name="filterType"
+                value="grouped"
+                checked={filter === "grouped"}
+                onChange={() => setFilter("grouped")}
+              />{" "}
+              Group View
+            </label>
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "5px",
+                alignItems: "center",
+              }}
+            >
+              <input
+                type="radio"
+                name="filterType"
                 value="line items"
                 checked={filter === "line items"}
                 onChange={() => setFilter("line items")}
@@ -800,12 +1071,9 @@ function Inventory() {
                 style={{
                   backgroundColor: page === opt ? colors[index] : "#f0f0f0",
                   color: page === opt ? "white" : "black",
-                  border: "1px solid #ccc",
-                  padding: "8px 16px",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
                 }}
+                className={`${styles.pageButton}`}
+                disabled={filter === "grouped"}
               >
                 {opt}
               </button>
@@ -815,311 +1083,283 @@ function Inventory() {
       </div>
       <div style={{ overflowX: "scroll" }}>
         {filter === "line items" && (
-          <>
           <div className={styles.pages}>
-          {paginate > 0 && !showAll && <div
-            className={styles.paginate}
-            onClick={() => setPaginate(paginate - 1)}
-          >
-            {paginate}
-          </div>}
-          {!showAll && <div
-            className={styles.paginate}
-            style={{ backgroundColor: "rgb(140, 140, 140)" }}
-          >
-            {paginate + 1}
-          </div>}
-          {paginate < numPages - 1 && !showAll && <div
-            className={styles.paginate}
-            onClick={() => setPaginate(paginate + 1)}
-          >
-            {paginate + 2}
-          </div>}
-          <div style={{marginLeft:"auto"}} className={styles.paginate} onClick={() => setShowAll(!showAll)}>{showAll ? "Show Pages" : "Show All"}</div>
-        </div>
-          <table
-            className={styles.inventoryTable}
-            style={{ borderCollapse: "collapse", borderRadius: "10px" }}
-          >
-            <thead>
-              <tr style={{ backgroundColor: "#ebebeb" }}>
-                <th className={styles.tableSm}>Item</th>
-                <th
-                  style={{ minWidth: "200px", cursor: "pointer" }}
-                  onClick={() => {
-                    setSortBy("description");
-                    setSortOrder(!sortOrder);
-                  }}
-                >
-                  Description
-                  {sortBy === "description" ? (
-                    sortOrder ? (
-                      <FaArrowDown
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    ) : (
-                      <FaArrowUp
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    )
-                  ) : (
-                    ""
-                  )}
-                </th>
-                <th
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    setSortBy("style");
-                    setSortOrder(!sortOrder);
-                  }}
-                >
-                  Style Code
-                  {sortBy === "style" ? (
-                    sortOrder ? (
-                      <FaArrowDown
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    ) : (
-                      <FaArrowUp
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    )
-                  ) : (
-                    ""
-                  )}
-                </th>
-                <th
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    setSortBy("brand");
-                    setSortOrder(!sortOrder);
-                  }}
-                >
-                  Brand Style
-                  {sortBy === "brand" ? (
-                    sortOrder ? (
-                      <FaArrowDown
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    ) : (
-                      <FaArrowUp
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    )
-                  ) : (
-                    ""
-                  )}
-                </th>
-                <th
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    setSortBy("color");
-                    setSortOrder(!sortOrder);
-                  }}
-                >
-                  Color
-                  {sortBy === "color" ? (
-                    sortOrder ? (
-                      <FaArrowDown
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    ) : (
-                      <FaArrowUp
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    )
-                  ) : (
-                    ""
-                  )}
-                </th>
-                <th
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    setSortBy("size");
-                    setSortOrder(!sortOrder);
-                  }}
-                >
-                  Size
-                  {sortBy === "size" ? (
-                    sortOrder ? (
-                      <FaArrowDown
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    ) : (
-                      <FaArrowUp
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    )
-                  ) : (
-                    ""
-                  )}
-                </th>
-                <th
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    setSortBy("quantity");
-                    setSortOrder(!sortOrder);
-                  }}
-                >
-                  Quantity
-                  {sortBy === "quantity" ? (
-                    sortOrder ? (
-                      <FaArrowDown
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    ) : (
-                      <FaArrowUp
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    )
-                  ) : (
-                    ""
-                  )}
-                </th>
-                <th
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    setSortBy("box");
-                    setSortOrder(!sortOrder);
-                  }}
-                >
-                  Box
-                  {sortBy === "box" ? (
-                    sortOrder ? (
-                      <FaArrowDown
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    ) : (
-                      <FaArrowUp
-                        style={{
-                          marginLeft: "5px",
-                          transform: "translateY(2px)",
-                        }}
-                      />
-                    )
-                  ) : (
-                    ""
-                  )}
-                </th>
-                <th>Location</th>
-                <th>Price</th>
-                <th>Visibility</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredInventory.map((item, index) => (
-                <tr
-                  key={index}
-                  style={{
-                    backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-                    overflow: "scroll",
-                  }}
-                  onClick={() => {
-                    getLocation(item, true);
-                    if (
-                      item.length === 1 &&
-                      boxDict[item[0].boxId?.toString()]
-                    ) {
-                      setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
-                    } else if (item.length === 1) {
-                      setEditItemOpen(item[0]);
-                    } else setMultiOpen(item);
-                  }}
-                >
-                  <td
-                    className={styles.tableSm}
-                    style={{ position: "relative" }}
-                  >
-                    <img src={item[0].image} alt={`Item ${index + 1}`} />
-                  </td>
-                  <td style={{ minWidth: "100px" }}>{getDescription(item)}</td>
-                  <td style={{ minWidth: "100px" }}>{item[0].style}</td>
-                  <td style={{ minWidth: "100px" }}>{getBrand(item)}</td>
-                  <td style={{ minWidth: "100px" }}>{item[0].color}</td>
-                  <td style={{ minWidth: "100px" }}>{getSize(item)}</td>
-                  <td style={{ minWidth: "100px" }}>
-                    {item.reduce((acc, cur) => acc + cur.quantity, 0)}
-                  </td>
-                  {boxDict[item[0].boxId?.toString()] ? (
-                    <td
-                      onClick={() =>
-                        setEditBoxOpen(boxDict[item.boxId?.toString()])
-                      }
-                      style={{ cursor: "pointer", minWidth: "100px" }}
-                    >
-                      {getBox(item)}
-                    </td>
-                  ) : (
-                    <td style={{ minWidth: "100px" }}>N/A</td>
-                  )}
-                  <td style={{ minWidth: "100px" }}>{getLocation(item)}</td>
-                  <td style={{ minWidth: "100px" }}>
-                    {getPrice(item) !== "Multi"
-                      ? `$${getPrice(item)}`
-                      : "Multi"}
-                  </td>
-                  <td style={{ minWidth: "100px" }}>
-                    {item.every((i) => i.public) ? (
-                      <MdPublic color="green" />
-                    ) : item.some((i) => i.public) ? (
-                      <MdPublic color="orange" />
-                    ) : (
-                      <MdOutlinePublicOff color="red" />
-                    )}
+            {paginate > 0 && !showAll && (
+              <div
+                className={styles.paginate}
+                onClick={() => setPaginate(paginate - 1)}
+              >
+                {paginate}
+              </div>
+            )}
+            {!showAll && (
+              <div
+                className={styles.paginate}
+                style={{ backgroundColor: "rgb(140, 140, 140)" }}
+              >
+                {paginate + 1}
+              </div>
+            )}
+            {paginate < numPages - 1 && !showAll && (
+              <div
+                className={styles.paginate}
+                onClick={() => setPaginate(paginate + 1)}
+              >
+                {paginate + 2}
+              </div>
+            )}
+            <div
+              style={{ marginLeft: "auto" }}
+              className={styles.paginate}
+              onClick={() => setShowAll(!showAll)}
+            >
+              {showAll ? "Show Pages" : "Show All"}
+            </div>
+          </div>
+        )}
+        {filter !== "grouped" && <div style={{width:"100%", position: "relative", display:"flex", }}>
+        <button
+          style={{marginLeft:"auto", marginBottom:"10px", backgroundColor: "white"}}
+          className={styles.pageButton}
+          onClick={() => setColumnManagerOpen(!columnManagerOpen)}
+        >
+          <MdViewColumn style={{ marginRight: "5px" }} />
+          {columnManagerOpen ? "Close Column Manager" : "Manage Columns"}
+        </button>
+        {columnManagerOpen && (
+        <ColumnManager
+          isOpen={columnManagerOpen}
+          onClose={() => setColumnManagerOpen(false)}
+          columns={columns}
+          setColumns={setColumns}
+          viewType={filter === "boxes" ? "boxes" : "lineItems"}
+        />
+      )}
+        </div>}
 
-                    {item.every((i) => i.sale) ? (
-                      <HiCash color="blue" />
-                    ) : item.some((i) => i.sale) ? (
-                      <HiCash color="orange" />
-                    ) : (
-                      <></>
-                    )}
-                  </td>
-                </tr>
+        {filter === "grouped" && (
+          <>
+            <div className={styles.filteredGroupImageGrid}>
+              {filteredGroups.map((group) => (
+                <div className={styles.group} onClick={() => setGroupedView(group)}>
+                  <div className={styles.groupImageContainer}>
+                    <img src={group[0].image}></img>
+                  </div>
+                  <div style={{ fontWeight: "bold" }}>
+                    {brandDict[group[0].brandId]?.brand || group[0].brand}{" "}
+                    {group[0].style}
+                  </div>
+                  <div>
+                    {descriptionDict[group[0].descriptionId]?.description ||
+                      group[0].description}{" "}
+                    {group[0].description}
+                  </div>
+                  <button
+                    className={styles.groupedViewButton}
+                  >
+                    <MdLayers />
+                    {group.length} variants found
+                  </button>
+                </div>
               ))}
-            </tbody>
-          </table>
-          
-        </>
+            </div>
+          </>
+        )}
+        {filter === "line items" && (
+          <>
+            <table
+              className={styles.inventoryTable}
+              style={{ borderCollapse: "collapse", borderRadius: "10px" }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: "#ebebeb" }}>
+                  {getVisibleColumns("lineItems").map((column, index) => {
+                    const columnName = Object.keys(column)[0];
+                    const isSortable = [
+                      "Description",
+                      "Style",
+                      "Brand",
+                      "Color",
+                      "Size",
+                      "Quantity",
+                      "Box",
+                    ].includes(columnName);
+
+                    return (
+                      <th
+                        key={columnName}
+                        className={columnName === "Image" ? styles.tableSm : ""}
+                        style={{
+                          ...(columnName === "Description" && {
+                            minWidth: "200px",
+                          }),
+                          ...(isSortable && { cursor: "pointer" }),
+                        }}
+                        onClick={() => {
+                          if (isSortable) {
+                            const sortValue = columnName
+                              .toLowerCase()
+                              .replace(" ", "");
+                            setSortBy(
+                              sortValue === "brand" ? "brand" : sortValue
+                            );
+                            setSortOrder(!sortOrder);
+                          }
+                        }}
+                      >
+                        {columnName}
+                        {isSortable &&
+                          sortBy ===
+                            columnName.toLowerCase().replace(" ", "") &&
+                          (sortOrder ? (
+                            <FaArrowDown
+                              style={{
+                                marginLeft: "5px",
+                                transform: "translateY(2px)",
+                              }}
+                            />
+                          ) : (
+                            <FaArrowUp
+                              style={{
+                                marginLeft: "5px",
+                                transform: "translateY(2px)",
+                              }}
+                            />
+                          ))}
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredInventory.map((item, index) => (
+                  <tr
+                    key={index}
+                    style={{
+                      backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                      overflow: "scroll",
+                    }}
+                    onClick={() => {
+                      getLocation(item, true);
+                      if (
+                        item.length === 1 &&
+                        boxDict[item[0].boxId?.toString()]
+                      ) {
+                        setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
+                      } else if (item.length === 1) {
+                        setEditItemOpen(item[0]);
+                      } else setMultiOpen(item);
+                    }}
+                  >
+                    {getVisibleColumns("lineItems").map((column) => {
+                      const columnName = Object.keys(column)[0];
+
+                      switch (columnName) {
+                        case "Image":
+                          return (
+                            <td
+                              key={columnName}
+                              className={styles.tableSm}
+                              style={{ position: "relative" }}
+                            >
+                              <img
+                                src={item[0].image}
+                                alt={`Item ${index + 1}`}
+                              />
+                            </td>
+                          );
+                        case "Description":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {getDescription(item)}
+                            </td>
+                          );
+                        case "Style":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {item[0].style}
+                            </td>
+                          );
+                        case "Brand":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {getBrand(item)}
+                            </td>
+                          );
+                        case "Color":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {item[0].color}
+                            </td>
+                          );
+                        case "Size":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {getSize(item)}
+                            </td>
+                          );
+                        case "Quantity":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {item.reduce((acc, cur) => acc + cur.quantity, 0)}
+                            </td>
+                          );
+                        case "Box":
+                          return boxDict[item[0].boxId?.toString()] ? (
+                            <td
+                              key={columnName}
+                              onClick={() =>
+                                setEditBoxOpen(boxDict[item.boxId?.toString()])
+                              }
+                              style={{ cursor: "pointer", minWidth: "100px" }}
+                            >
+                              {getBox(item)}
+                            </td>
+                          ) : (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              N/A
+                            </td>
+                          );
+                        case "Location":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {getLocation(item)}
+                            </td>
+                          );
+                        case "Price":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {getPrice(item) !== "Multi"
+                                ? `$${getPrice(item)}`
+                                : "Multi"}
+                            </td>
+                          );
+                        case "Visibility":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {item.every((i) => i.public) ? (
+                                <MdPublic color="green" />
+                              ) : item.some((i) => i.public) ? (
+                                <MdPublic color="orange" />
+                              ) : (
+                                <MdOutlinePublicOff color="red" />
+                              )}
+                              {item.every((i) => i.sale) ? (
+                                <HiCash color="blue" />
+                              ) : item.some((i) => i.sale) ? (
+                                <HiCash color="orange" />
+                              ) : null}
+                            </td>
+                          );
+                        default:
+                          return <td key={columnName}></td>;
+                      }
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
         {filter === "boxes" && (
           <table
@@ -1132,15 +1372,18 @@ function Inventory() {
           >
             <thead style={{ textAlign: "left" }}>
               <tr style={{ backgroundColor: "#ebebeb" }}>
-                <th>Box</th>
-                <th>Box Id</th>
-                <th>Description</th>
-                <th>Location</th>
-                <th>Total Quant.</th>
-                <th>Discount</th>
-                <th>Min.</th>
-                <th>Visibility</th>
-                <th></th>
+                {getVisibleColumns("boxes").map((column) => {
+                  const columnName = Object.keys(column)[0];
+                  return (
+                    <th
+                      key={columnName}
+                      className={columnName === "Image" ? styles.tableSm : ""}
+                    >
+                      {columnName}
+                    </th>
+                  );
+                })}
+                <th></th> {/* For the copy button column */}
               </tr>
             </thead>
             <tbody>
@@ -1153,86 +1396,122 @@ function Inventory() {
                     cursor: "pointer",
                   }}
                 >
-                  <td
-                    style={{ position: "relative" }}
-                    onClick={() => setEditBoxOpen(box)}
-                  >
-                    <div className={styles.tableSm}>
-                      <img src={box.image} alt={`Item ${index + 1}`} />
-                    </div>
-                  </td>
-                  <td
-                    onClick={() => setEditBoxOpen(box)}
-                    style={{ minWidth: "100px" }}
-                  >
-                    {box.boxId}
-                  </td>
-                  <td
-                    onClick={() => setEditBoxOpen(box)}
-                    style={{ minWidth: "100px" }}
-                  >
-                    {box.description.length > 80
-                      ? box.description.slice(0, 80) + "..."
-                      : box.description}
-                  </td>
-                  <td
-                    onClick={() => setEditBoxOpen(box)}
-                    style={{ minWidth: "100px" }}
-                  >
-                    {box.location}
-                  </td>
-                  <td
-                    onClick={() => setEditBoxOpen(box)}
-                    style={{ minWidth: "100px" }}
-                  >
-                    {contentDict[box._id.toString()]?.reduce(
-                      (acc, cur) => acc + cur.quantity,
-                      0
-                    ) || 0}
-                  </td>
-                  <td
-                    onClick={() => setEditBoxOpen(box)}
-                    style={{ minWidth: "100px" }}
-                  >
-                    {contentDict[box._id]
-                      ? contentDict[box._id][0].sale
-                        ? `${box.discount}%`
-                        : "N/A"
-                      : "N/A"}
-                  </td>
-                  <td
-                    onClick={() => setEditBoxOpen(box)}
-                    style={{ minWidth: "100px" }}
-                  >
-                    {contentDict[box._id]
-                      ? contentDict[box._id][0].sale
-                        ? `$${box.minPrice}`
-                        : "N/A"
-                      : "N/A"}
-                  </td>
-                  <td
-                    onClick={() => setEditBoxOpen(box)}
-                    style={{ minWidth: "100px" }}
-                  >
-                    {contentDict[box._id] ? (
-                      contentDict[box._id][0].public ? (
-                        <MdPublic color="green" />
-                      ) : (
-                        <MdOutlinePublicOff color="red" />
-                      )
-                    ) : (
-                      <MdOutlinePublicOff color="red" />
-                    )}
-                    {contentDict[box._id] ? (
-                      contentDict[box._id][0].sale ? (
-                        <HiCash color="blue" />
-                      ) : (
-                        ""
-                      )
-                    ) : (
-                      ""
-                    )}
-                  </td>
+                  {getVisibleColumns("boxes").map((column) => {
+                    const columnName = Object.keys(column)[0];
+
+                    switch (columnName) {
+                      case "Image":
+                        return (
+                          <td
+                            key={columnName}
+                            style={{ position: "relative" }}
+                            onClick={() => setEditBoxOpen(box)}
+                          >
+                            <div className={styles.tableSm}>
+                              <img src={box.image} alt={`Item ${index + 1}`} />
+                            </div>
+                          </td>
+                        );
+                      case "Box Id.":
+                        return (
+                          <td
+                            key={columnName}
+                            onClick={() => setEditBoxOpen(box)}
+                            style={{ minWidth: "100px" }}
+                          >
+                            {box.boxId}
+                          </td>
+                        );
+                      case "Description":
+                        return (
+                          <td
+                            key={columnName}
+                            onClick={() => setEditBoxOpen(box)}
+                            style={{ minWidth: "100px" }}
+                          >
+                            {box.description.length > 80
+                              ? box.description.slice(0, 80) + "..."
+                              : box.description}
+                          </td>
+                        );
+                      case "Location":
+                        return (
+                          <td
+                            key={columnName}
+                            onClick={() => setEditBoxOpen(box)}
+                            style={{ minWidth: "100px" }}
+                          >
+                            {box.location}
+                          </td>
+                        );
+                      case "Total Quantity":
+                        return (
+                          <td
+                            key={columnName}
+                            onClick={() => setEditBoxOpen(box)}
+                            style={{ minWidth: "100px" }}
+                          >
+                            {contentDict[box._id.toString()]?.reduce(
+                              (acc, cur) => acc + cur.quantity,
+                              0
+                            ) || 0}
+                          </td>
+                        );
+                      case "Discount":
+                        return (
+                          <td
+                            key={columnName}
+                            onClick={() => setEditBoxOpen(box)}
+                            style={{ minWidth: "100px" }}
+                          >
+                            {contentDict[box._id]
+                              ? contentDict[box._id][0].sale
+                                ? `${box.discount}%`
+                                : "N/A"
+                              : "N/A"}
+                          </td>
+                        );
+                      case "Min.":
+                        return (
+                          <td
+                            key={columnName}
+                            onClick={() => setEditBoxOpen(box)}
+                            style={{ minWidth: "100px" }}
+                          >
+                            {contentDict[box._id]
+                              ? contentDict[box._id][0].sale
+                                ? `$${box.minPrice}`
+                                : "N/A"
+                              : "N/A"}
+                          </td>
+                        );
+                      case "Visibility":
+                        return (
+                          <td
+                            key={columnName}
+                            onClick={() => setEditBoxOpen(box)}
+                            style={{ minWidth: "100px" }}
+                          >
+                            {contentDict[box._id] ? (
+                              contentDict[box._id][0].public ? (
+                                <MdPublic color="green" />
+                              ) : (
+                                <MdOutlinePublicOff color="red" />
+                              )
+                            ) : (
+                              <MdOutlinePublicOff color="red" />
+                            )}
+                            {contentDict[box._id] ? (
+                              contentDict[box._id][0].sale ? (
+                                <HiCash color="blue" />
+                              ) : null
+                            ) : null}
+                          </td>
+                        );
+                      default:
+                        return <td key={columnName}></td>;
+                    }
+                  })}
                   <td>
                     <FaRegCopy onClick={() => duplicateBox(box)} />
                   </td>
@@ -1242,7 +1521,6 @@ function Inventory() {
           </table>
         )}
       </div>
-      
 
       {addItemOpen && (
         <AddItem
@@ -1296,6 +1574,18 @@ function Inventory() {
           sizeDict={sizeDict}
           descriptionDict={descriptionDict}
           brandDict={brandDict}
+        />
+      )}
+      {groupedView !== null && (
+        <GroupedView
+          items={groupedView}
+          onClose={() => setGroupedView(null)}
+          boxDict={boxDict}
+          sizeDict={sizeDict}
+          brandDict={brandDict}
+          descriptionDict={descriptionDict}
+          setEditBoxOpen={setEditBoxOpen}
+          setEditItemOpen={setEditItemOpen}
         />
       )}
     </div>

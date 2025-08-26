@@ -28,7 +28,7 @@ export default function EditItem({
 }) {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [popup, setPopup] = useState(null);
-  const [page, setPage] = useState("item")
+  const [page, setPage] = useState("item");
 
   return (
     <Overlay
@@ -39,26 +39,34 @@ export default function EditItem({
       unsavedChanges={unsavedChanges}
       setUnsavedChanges={setUnsavedChanges}
     >
-      {page === "item" && <Edit
-        item={item}
-        onClose={onClose}
-        refresh={refresh}
-        boxes={boxes}
-        items={items}
-        options={options}
-        setUnsavedChanges={setUnsavedChanges}
-        unsavedChanges={unsavedChanges}
-        popup={popup}
-        setPopup={setPopup}
-        deletePopup={deletePopup}
-        setPage={setPage}
-      />}
-      {page === "preset" && 
-      <EditPresets options={options} prevPage={"item"} setPage={setPage} refresh={refresh} setPopup={setPopup}/>}
+      {page === "item" && (
+        <Edit
+          item={item}
+          onClose={onClose}
+          refresh={refresh}
+          boxes={boxes}
+          items={items}
+          options={options}
+          setUnsavedChanges={setUnsavedChanges}
+          unsavedChanges={unsavedChanges}
+          popup={popup}
+          setPopup={setPopup}
+          deletePopup={deletePopup}
+          setPage={setPage}
+        />
+      )}
+      {page === "preset" && (
+        <EditPresets
+          options={options}
+          prevPage={"item"}
+          setPage={setPage}
+          refresh={refresh}
+          setPopup={setPopup}
+        />
+      )}
     </Overlay>
   );
 }
-
 
 const Edit = ({
   item,
@@ -372,7 +380,7 @@ const Edit = ({
       const success = await submitDb();
       if (success) {
         setUnsavedChanges(false);
-        setPopup("success")
+        setPopup("success");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -389,7 +397,6 @@ const Edit = ({
   };
 
   const submitDb = async () => {
-
     if (!location.trim() && !box) {
       setUploadError("Please enter an item location");
       return false;
@@ -447,7 +454,6 @@ const Edit = ({
 
       const itemResult = await itemResponse.json();
 
-
       if (itemResult.success) {
         console.log("Item edited successfully:", itemResult.data);
       } else {
@@ -466,7 +472,14 @@ const Edit = ({
 
       const itemToPush = {
         inventoryId: itemResult.data._id,
-        key: key,
+        style: content.style || "No style",
+        color: content.color || "No color",
+        descriptionId: content.descriptionId || null,
+        description: content.description || null,
+        brandId: content.brandId || null,
+        brand: content.brand || null,
+        sizeId: content.sizeId || null,
+        size: content.size || null,
         totalQuant: currentItem.quantity,
         totalReserved: 0,
         items: [
@@ -625,8 +638,6 @@ const Edit = ({
     currentItem,
   ]);
 
-  
-
   const downloadItemPDF = async () => {
     try {
       const pdf = new jsPDF({
@@ -703,34 +714,34 @@ const Edit = ({
       setSearchState: setDescriptionSearch,
       filteredOptions: filteredDescriptions,
       dictionary: descriptionDict,
-      fieldKey: 'description',
-      idKey: 'descriptionId',
-      openKey: 'descriptionOpen',
-      placeholder: 'Search descriptions...',
-      noResultsText: 'No descriptions found'
+      fieldKey: "description",
+      idKey: "descriptionId",
+      openKey: "descriptionOpen",
+      placeholder: "Search descriptions...",
+      noResultsText: "No descriptions found",
     },
     brand: {
       searchState: brandSearch,
       setSearchState: setBrandSearch,
       filteredOptions: filteredBrands,
       dictionary: brandDict,
-      fieldKey: 'brand',
-      idKey: 'brandId',
-      openKey: 'brandOpen',
-      placeholder: 'Search brands...',
-      noResultsText: 'No brands found'
+      fieldKey: "brand",
+      idKey: "brandId",
+      openKey: "brandOpen",
+      placeholder: "Search brands...",
+      noResultsText: "No brands found",
     },
     size: {
       searchState: sizeSearch,
       setSearchState: setSizeSearch,
       filteredOptions: filteredSizes,
       dictionary: sizeDict,
-      fieldKey: 'size',
-      idKey: 'sizeId',
-      openKey: 'sizeOpen',
-      placeholder: 'Search sizes...',
-      noResultsText: 'No sizes found'
-    }
+      fieldKey: "size",
+      idKey: "sizeId",
+      openKey: "sizeOpen",
+      placeholder: "Search sizes...",
+      noResultsText: "No sizes found",
+    },
   };
 
   return (
@@ -819,7 +830,7 @@ const Edit = ({
             </div>
           </div>
           <div className={styles.formInput}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
               <label>Item Details</label>
               <label
                 style={{ cursor: "pointer" }}
@@ -999,7 +1010,17 @@ const Edit = ({
                     )}
                   </td>
                   <td className={styles.tableLg}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"description"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -1019,12 +1040,30 @@ const Edit = ({
                     />
                   </td>
                   <td className={styles.tableReg}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"brand"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </td>
                   <td className={styles.tableReg}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"size"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -1195,8 +1234,17 @@ const Edit = ({
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Description</label>
                   <div className={styles.mobileValue}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"description"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </div>
                 </div>
 
@@ -1222,16 +1270,34 @@ const Edit = ({
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Brand Style</label>
                   <div className={styles.mobileValue}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"brand"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </div>
                 </div>
 
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Size</label>
                   <div className={styles.mobileValue}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"size"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </div>
                 </div>
 

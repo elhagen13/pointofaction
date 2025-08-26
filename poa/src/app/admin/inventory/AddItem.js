@@ -50,15 +50,23 @@ export default function AddItem({ onClose, refresh, options }) {
           setPopup={setPopup}
         />
       )}
-      {page === "qr" && <QrPopup setPage={setPage} item={item} onClose={onClose} />}
-      {page === "preset" && 
-      <EditPresets options={options} prevPage={"box"} setPage={setPage} refresh={refresh} setPopup={setPopup}/>}
+      {page === "qr" && (
+        <QrPopup setPage={setPage} item={item} onClose={onClose} />
+      )}
+      {page === "preset" && (
+        <EditPresets
+          options={options}
+          prevPage={"box"}
+          setPage={setPage}
+          refresh={refresh}
+          setPopup={setPopup}
+        />
+      )}
     </Overlay>
   );
 }
 
 const QrPopup = ({ item, onClose }) => {
-
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Escape") {
@@ -424,7 +432,13 @@ const AddBox = ({
   };
 
   const handleSubmitBox = async () => {
-    if (!currentItem.description.trim() || !currentItem.style.trim() || !currentItem.brand.trim() || !currentItem.size.trim() || !currentItem.color.trim()) {
+    if (
+      !currentItem.description.trim() ||
+      !currentItem.style.trim() ||
+      !currentItem.brand.trim() ||
+      !currentItem.size.trim() ||
+      !currentItem.color.trim()
+    ) {
       setUploadError("Please enter all item fields for the item");
       return false;
     }
@@ -432,7 +446,6 @@ const AddBox = ({
       setUploadError("Please enter an item location");
       return false;
     }
-   
 
     const success = await submitDb();
     if (success) {
@@ -530,7 +543,16 @@ const AddBox = ({
 
       const itemToPush = {
         inventoryId: itemResult.data._id,
-        key: key,
+
+        style: content.style || "No style",
+        color: content.color || "No color",
+        descriptionId: content.descriptionId || null,
+        description: content.description || null,
+        brandId: content.brandId || null,
+        brand: content.brand || null,
+        sizeId: content.sizeId || null,
+        size: content.size || null,
+
         totalQuant: currentItem.quantity,
         totalReserved: 0,
         items: [
@@ -843,34 +865,34 @@ const AddBox = ({
       setSearchState: setDescriptionSearch,
       filteredOptions: filteredDescriptions,
       dictionary: descriptionDict,
-      fieldKey: 'description',
-      idKey: 'descriptionId',
-      openKey: 'descriptionOpen',
-      placeholder: 'Search descriptions...',
-      noResultsText: 'No descriptions found'
+      fieldKey: "description",
+      idKey: "descriptionId",
+      openKey: "descriptionOpen",
+      placeholder: "Search descriptions...",
+      noResultsText: "No descriptions found",
     },
     brand: {
       searchState: brandSearch,
       setSearchState: setBrandSearch,
       filteredOptions: filteredBrands,
       dictionary: brandDict,
-      fieldKey: 'brand',
-      idKey: 'brandId',
-      openKey: 'brandOpen',
-      placeholder: 'Search brands...',
-      noResultsText: 'No brands found'
+      fieldKey: "brand",
+      idKey: "brandId",
+      openKey: "brandOpen",
+      placeholder: "Search brands...",
+      noResultsText: "No brands found",
     },
     size: {
       searchState: sizeSearch,
       setSearchState: setSizeSearch,
       filteredOptions: filteredSizes,
       dictionary: sizeDict,
-      fieldKey: 'size',
-      idKey: 'sizeId',
-      openKey: 'sizeOpen',
-      placeholder: 'Search sizes...',
-      noResultsText: 'No sizes found'
-    }
+      fieldKey: "size",
+      idKey: "sizeId",
+      openKey: "sizeOpen",
+      placeholder: "Search sizes...",
+      noResultsText: "No sizes found",
+    },
   };
 
   return (
@@ -897,7 +919,7 @@ const AddBox = ({
             </div>
           </div>
           <div className={styles.formInput}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
               <label>Item Details</label>
               <label
                 style={{ cursor: "pointer" }}
@@ -1081,8 +1103,17 @@ const AddBox = ({
                     )}
                   </td>
                   <td className={styles.tableLg}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={null} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"description"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={null}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -1103,12 +1134,30 @@ const AddBox = ({
                     />
                   </td>
                   <td className={styles.tableReg}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={null} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"brand"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={null}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </td>
                   <td className={styles.tableReg}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={null} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"size"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={null}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </td>
                   <td className={styles.tableReg}>
                     <input
@@ -1283,8 +1332,17 @@ const AddBox = ({
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Description</label>
                   <div className={styles.mobileValue}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"description"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"description"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </div>
                 </div>
 
@@ -1311,16 +1369,34 @@ const AddBox = ({
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Brand</label>
                   <div className={styles.mobileValue}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"brand"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"brand"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </div>
                 </div>
 
                 <div className={styles.mobileField}>
                   <label className={styles.mobileLabel}>Size</label>
                   <div className={styles.mobileValue}>
-                  <Dropdown configs={DROPDOWN_CONFIGS} config_type={"size"} contents={null} setContents={null} index={null} setUnsavedChanges={setUnsavedChanges} refresh={refresh} currentItem={currentItem} setCurrentItem={setCurrentItem}/>
-
+                    <Dropdown
+                      configs={DROPDOWN_CONFIGS}
+                      config_type={"size"}
+                      contents={null}
+                      setContents={null}
+                      index={null}
+                      setUnsavedChanges={setUnsavedChanges}
+                      refresh={refresh}
+                      currentItem={currentItem}
+                      setCurrentItem={setCurrentItem}
+                    />
                   </div>
                 </div>
 
@@ -1508,5 +1584,5 @@ const AddBox = ({
         </form>
       </div>
     </div>
-
-  )}
+  );
+};
