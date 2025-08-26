@@ -401,7 +401,7 @@
   flex-direction: column;
   border-radius: 4px;
   align-items: center;
-  height: fit-content;
+  height: 100%;
   padding: 5px;
   transition: all 0.5 ease-in-out
 
