@@ -1,9 +1,9 @@
-.productGrid{
+.productGrid {
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 30px;
-}
+  }
 
 .productCard{
     grid-column: span 1;
@@ -87,6 +87,36 @@ position: fixed;
     display: grid;
 }
 
+
+.cartRow{
+    min-width: 70vw;
+    height: max(100px, 10vw);
+    padding: 10px;
+    box-shadow: 0 0 2px gray;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+
+}
+
+
+
+.imageContainer{
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    outline: 1px solid #c9c9ca;
+    border-radius: 5px;
+}
+
+.rowImage{
+    height: 100%;
+    object-fit: cover;
+}
+
 .box{
     display: flex;
     flex-direction: column;
@@ -102,20 +132,21 @@ position: fixed;
     font-weight: bold;
 }
 
-.tableRow td{
-    min-width: 100px;
-    text-align: left;
+.sizeBreakdown{
+    margin-left: auto;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+
 }
 
-.tableRow th{
-    text-align: left;
+.column{
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
 }
-
 
 @media(max-width: 769px){
-    .productGrid{
-        grid-template-columns: repeat(3, 1fr)
-    }
 
     .top{
         flex-direction: column;

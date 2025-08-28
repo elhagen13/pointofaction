@@ -11,7 +11,7 @@ export default function SetQuantity({
 }) {
   const [sizes, setSizes] = useState([]);
   const [orderQuant, setOrderQuant] = useState([]);
-
+  const [sizeToItemMap, setSizeToItemMap] = useState({}); // Maps size to item with that size
 
   const getPriority = (size) => {
     if (size.includes("oz")) {
@@ -38,6 +38,7 @@ export default function SetQuantity({
         return 8;
     }
   };
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -50,41 +51,48 @@ export default function SetQuantity({
 
   const onSubmit = () => {
     let addedItems = [];
-    const currentBrand = items[0].brand || items[0].brandId;
-  
+    const currentBrand = items[0].brand || brandDict[items[0].brandId]?.brand;
+    const currentDescription = items[0].description || descriptionDict[items[0].descriptionId]?.description;
+
     orderQuant.forEach((order, index) => {
       if (order !== 0 && parseInt(order) > 0) {
+        const sizeKey = sizes[index][0];
+        const itemForSize = sizeToItemMap[sizeKey];
+        
         addedItems.push({
+          image: items[0].image, // Assuming all items share the same image
+          price: itemForSize ? itemForSize.price : items[0].price, // Use specific item's price
           style: items[0].style,
+          description: currentDescription,
           brand: currentBrand,
           color: items[0].color,
-          size: sizes[index][0],
+          size: sizeKey,
           quantity: parseInt(order)
         });
       }
     });
-  
+
     const curCart = [];
-    const prevCart = getCartFromStorage(); 
-    
+    const prevCart = getCartFromStorage();
+
     // Remove existing items that match
     for (const item of prevCart) {
       if (item.style === items[0].style && 
+          item.description === currentDescription && // Fixed: was comparing style === description
           item.brand === currentBrand &&
           item.color === items[0].color) {
         continue;
       }
       curCart.push(item);
     }
-    
+
     const finalCart = curCart.concat(addedItems);
-    saveCartToStorage(finalCart); 
-    
+    saveCartToStorage(finalCart);
+
     onClose();
   };
-  
 
-const getCartFromStorage = () => {
+  const getCartFromStorage = () => {
     try {
       const cartData = localStorage.getItem("cart");
       if (!cartData) return [];
@@ -97,7 +105,7 @@ const getCartFromStorage = () => {
       return [];
     }
   };
-  
+
   // Safe function to save cart to localStorage
   const saveCartToStorage = (cart) => {
     try {
@@ -106,57 +114,72 @@ const getCartFromStorage = () => {
       console.error("Failed to save cart to localStorage:", error);
     }
   };
-  
+
   // Updated useEffect with safe parsing
   useEffect(() => {
     let tempDict = {};
+    let tempSizeToItemMap = {};
+    console.log(items)
     for (const item of items) {
       let size = item.size || sizeDict[item.sizeId].size;
+      const availableQuantity = item.quantity - (item.reserved ? item.reserved : 0);
+      console.log(item, size, availableQuantity)
+      
       if (!tempDict[size]) {
-        tempDict[size] = item.quantity - (item.reserved ? item.reserved : 0);
+        tempDict[size] = {
+          available: availableQuantity,
+          reserved: item.reserved || 0
+        };
+        tempSizeToItemMap[size] = item;
       } else {
-        tempDict[size] += item.quantity - (item.reserved ? item.reserved : 0);
+        tempDict[size].available += availableQuantity;
+        tempDict[size].reserved += (item.reserved || 0)
+        if (!tempSizeToItemMap[size]) {
+          tempSizeToItemMap[size] = item;
+        }
       }
     }
-    
+
     const previouslyAddedSizes = {};
-    const prevCart = getCartFromStorage(); // Use safe function
-    
+    const prevCart = getCartFromStorage();
+
     for (const item of prevCart) {
       if (item.style === items[0].style && 
-          item.brand === (items[0].brand || items[0].brandId) &&
-          item.color === items[0].color) {
+          item.brand === (items[0].brand || brandDict[items[0].brandId]?.brand) &&
+          item.color === items[0].color &&
+          item.description === (items[0].description || descriptionDict[items[0].descriptionId]?.description)) {
         previouslyAddedSizes[item.size] = item.quantity;
       }
     }
-    
+
     const arr = [];
     for (const [key, val] of Object.entries(tempDict)) {
       arr.push([key, val]);
     }
-  
+
     // Sort first
     arr.sort((a, b) => {
       return getPriority(a[0]) - getPriority(b[0]);
     });
-  
+
     // Create orderQuant based on sorted array
     let orderQuantArr = arr.map(([size]) => {
       return previouslyAddedSizes[size] || 0;
     });
-  
+
+    console.log(arr)
+
     setOrderQuant(orderQuantArr);
     setSizes(arr);
+    setSizeToItemMap(tempSizeToItemMap);
   }, [items]);
-  
-
 
   const validateInput = () => {
     setOrderQuant(
       orderQuant.map((quant, index) => {
         const numQuant = parseInt(quant) || 0; // Handle empty strings and NaN
-        if (numQuant > sizes[index][1]) {
-          return sizes[index][1];
+        if (numQuant > sizes[index][1].available) {
+          return sizes[index][1].available;
         }
         return Math.max(0, numQuant); // Ensure non-negative
       })
@@ -197,8 +220,10 @@ const getCartFromStorage = () => {
             className={styles.box}
           >
             <div>Size</div>
+            <div>Reserved</div>
             <div>Available</div>
-            <div>Size</div>
+            <div>Order</div>
+            
           </div>
           <div
             style={{
@@ -226,9 +251,10 @@ const getCartFromStorage = () => {
                 gridTemplateColumns: `repeat(${sizes.length}, calc(100% / ${sizes.length}))`,
               }}
             >
-              {sizes.map((available, index) => (
-                <div key={index} style={{ padding: "0 10px" }}>
-                  {available[1]}
+              {sizes.map((reserved, index) => (
+                <div key={index} style={{ padding: "0 10px", color:"#ababab" }}>
+                  {console.log(sizeToItemMap)}
+                    {reserved[1].reserved}
                 </div>
               ))}
             </div>
@@ -239,9 +265,20 @@ const getCartFromStorage = () => {
               }}
             >
               {sizes.map((available, index) => (
-                <div style={{ padding: "0 10px" }}>
+                <div key={index} style={{ padding: "0 10px" }}>
+                  {available[1].available}
+                </div>
+              ))}
+            </div>
+            <div
+              className={styles.row}
+              style={{
+                gridTemplateColumns: `repeat(${sizes.length}, calc(100% / ${sizes.length}))`,
+              }}
+            >
+              {sizes.map((available, index) => (
+                <div key={index} style={{ padding: "0 10px" }}>
                   <input
-                    key={index}
                     type="number"
                     min={0}
                     max={sizes[index][1]}

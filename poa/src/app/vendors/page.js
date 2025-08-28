@@ -112,6 +112,33 @@ export default function Vendors(){
         }
         </div>
         <div className={styles.title}>
+            Headwear
+        </div>
+        <div className={styles.vendorList}>
+            {
+                [...headwear].reverse().map((vendor, index) => (
+                    <>
+                    {
+                        !vendor.blocked ? 
+                        <div onClick={() => vendorClick(vendor.link)}>
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.imageLink} className={styles.image}/>
+                            </div>
+                            {vendor.company}
+                        </div>
+                        :
+                        <Link key={index} href={vendor.link} target="_blank">
+                            <div className={styles.imageContainer}>
+                                <img src={vendor.imageLink} className={styles.image}/>
+                            </div>
+                            {vendor.company}
+                        </Link>
+                    }               
+                    </>
+                ))
+            }
+        </div>
+        <div className={styles.title}>
             Tops
         </div>
         <div className={styles.vendorList}>
@@ -162,33 +189,6 @@ export default function Vendors(){
                         </Link>
                     }               
                 </>
-                ))
-            }
-        </div>
-        <div className={styles.title}>
-            Headwear
-        </div>
-        <div className={styles.vendorList}>
-            {
-                headwear.map((vendor, index) => (
-                    <>
-                    {
-                        !vendor.blocked ? 
-                        <div onClick={() => vendorClick(vendor.link)}>
-                            <div className={styles.imageContainer}>
-                                <img src={vendor.imageLink} className={styles.image}/>
-                            </div>
-                            {vendor.company}
-                        </div>
-                        :
-                        <Link key={index} href={vendor.link} target="_blank">
-                            <div className={styles.imageContainer}>
-                                <img src={vendor.imageLink} className={styles.image}/>
-                            </div>
-                            {vendor.company}
-                        </Link>
-                    }               
-                    </>
                 ))
             }
         </div>

@@ -148,7 +148,7 @@ const categories = {
     tops: ["NorthFace", "Fossa", "Landway"],
     outerwear: ["NorthFace", "Fossa", "Landway", "Carhartt", "Berne", "DRI DUCK"],
     activewear: ["NorthFace", "Landway"],
-    headwear: ["Richardson", "Pacific", "Flexfit", "Outdoor Cap", "Otto", "Nissin"],
+    headwear: [ "Nissin", "Otto", "Outdoor Cap", "Richardson", "Pacific", "Flexfit", "Richardson"],
     workwear: ["ChefWorks", "Daystar Apparel"],
     drinkware: ["Numo", "ETS Express", "JDS", "Polar Camel"]
 };

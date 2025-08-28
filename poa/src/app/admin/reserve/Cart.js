@@ -1,18 +1,19 @@
 import styles from "./reserve.module.css";
 import { useState, useEffect } from "react";
-import { FaRegTrashAlt } from "react-icons/fa";
-
+import { FaCheckCircle, FaRegTrashAlt, FaTrash } from "react-icons/fa";
 
 export default function Cart({
   onClose,
-  sizeDict,
   brandDict,
   descriptionDict,
-  filteredInventory
+  fullInventory,
+  refresh,
 }) {
   const [cart, setCart] = useState([]);
-  const [imageDict, setImageDict] = useState({})
-  
+  const [groupedCart, setGroupedCart] = useState({});
+  const [total, setTotal] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -27,7 +28,6 @@ export default function Cart({
     try {
       const cartData = localStorage.getItem("cart");
       if (!cartData) return [];
-
       const parsed = JSON.parse(cartData);
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
@@ -47,51 +47,238 @@ export default function Cart({
   };
 
   useEffect(() => {
-    setCart(getCartFromStorage())
-  }, [])
+    setCart(getCartFromStorage());
+  }, []);
 
-  const refresh = () => {
-    setCart(getCartFromStorage())
-  }
+  // Remove all items that match the group (style, brand, description, color)
+  const removeGroupFromCart = (groupKey) => {
+    const updatedCart = cart.filter((item) => {
+      const itemKey = `${item.color}, ${item.brand}, ${item.description}, ${item.style}`;
+      return itemKey !== groupKey;
+    });
 
-  const removeFromCart = (index) => {
-    const tempCart = cart
-    tempCart.splice(index, 1);
-    saveCartToStorage(tempCart);
-    refresh();
-  }
+    saveCartToStorage(updatedCart);
+    setCart(updatedCart);
+  };
 
- 
+  useEffect(() => {
+    const cartGrouped = {};
+    for (const item of cart) {
+      let key = `${item.color}, ${item.brand}, ${item.description}, ${item.style}`;
+      if (!cartGrouped[key]) {
+        cartGrouped[key] = {
+          image: item.image,
+          color: item.color,
+          brand: item.brand,
+          price: item.price,
+          description: item.description,
+          style: item.style,
+          sizes: {},
+        };
+        cartGrouped[key]["sizes"][item.size] = {
+          quantity: item.quantity,
+          price: item.price,
+        };
+      } else if (!cartGrouped[key]["sizes"][item.size]) {
+        cartGrouped[key]["sizes"][item.size] = {
+          quantity: item.quantity,
+          price: item.price,
+        };
+      } else {
+        cartGrouped[key]["sizes"][item.size]["quantity"] += item.quantity;
+      }
+    }
+    setGroupedCart(cartGrouped);
+  }, [cart]);
+
+  //Get total
+  useEffect(() => {
+    setTotal(
+      Object.values(groupedCart)
+        ?.reduce(
+          (prev, cur) =>
+            prev +
+            Object.values(cur.sizes).reduce((pr, c) => {
+              return pr + parseInt(c.price) * c.quantity;
+            }, 0),
+          0
+        )
+        .toFixed(2)
+    );
+  }, [groupedCart]);
+
+  const reserveCart = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    
+    const reservationResults = [];
+    const failedReservations = [];
+    
+    try {
+      // Process all cart items
+      for (const item of cart) {
+        
+        try {
+          const reservation = await uploadReserve(item);
+          
+          if (reservation.ok) {
+            const data = await reservation.json();
+            reservationResults.push({
+              item: item,
+              success: true,
+              data: data
+            });
+          } else {
+            const errorData = await reservation.json();
+            failedReservations.push({
+              item: item,
+              error: errorData.error || `HTTP ${reservation.status}`
+            });
+          }
+        } catch (itemError) {
+          console.error('Error processing item:', item, itemError);
+          failedReservations.push({
+            item: item,
+            error: itemError.message
+          });
+        }
+      }
+      setSubmitting(false);
+      setCart([]);
+      setGroupedCart({});
+      refresh()
+      saveCartToStorage([])
+      onClose();
+      
+    } catch (error) {
+      console.error('Cart reservation error:', error);
+      alert('An error occurred while reserving items. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const uploadReserve = async (item) => {
+    // Validate required fields
+    if (!item.style || !item.color || (!item.brand && !item.size) || !item.quantity) {
+      throw new Error('Missing required item fields');
+    }
+    
+    if (item.quantity <= 0) {
+      throw new Error('Invalid quantity');
+    }
+    
+    try {
+      const result = await fetch("/api/catalog", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          style: item.style,
+          color: item.color,
+          brand: item.brand,
+          size: item.size,
+          quantityToReserve: item.quantity,
+        }),
+      });
+      
+      return result; // Return the Response object so we can check .ok
+    } catch (fetchError) {
+      console.error('Fetch error:', fetchError);
+      throw new Error(`Network error: ${fetchError.message}`);
+    }
+  };
+  
+
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-        <table>
-        <thead>
-        <tr className={styles.tableRow}>
-            <th>Item</th>
-            <th>Style</th>
-            <th>Brand</th>
-            <th>Color</th>
-            <th>Size</th>
-            <th>Quantity</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        {cart.map((cartItem, index) => (
-            <tr className={styles.tableRow}>
-                <td></td>
-                <td>{cartItem.style}</td>
-                <td>{brandDict[cartItem.brand]?.brand || cartItem.brand}</td>
-                <td>{cartItem.color}</td>
-                <td>{cartItem.size}</td>
-                <td>{cartItem.quantity}</td>
-                <td onClick={() => removeFromCart(index)}><FaRegTrashAlt/></td>
-
-            </tr>
+        {Object.entries(groupedCart).map(([groupKey, item], index) => (
+          <div key={index} className={styles.cartRow}>
+            <div className={styles.imageContainer}>
+              <img src={item.image} className={styles.rowImage}></img>
+            </div>
+            <div style={{ fontWeight: "bold" }}>
+              <div>
+                {brandDict[item.brand]?.brand || item.brand || ""} {item.style}{" "}
+                {descriptionDict[item.description]?.description ||
+                  item.description ||
+                  ""}
+              </div>
+              <div style={{ color: "gray" }}>{item.color}</div>
+            </div>
+            <div className={styles.sizeBreakdown}>
+              <div
+                className={styles.column}
+                style={{ textAlign: "right", fontWeight: "bold" }}
+              >
+                <div style={{ padding: "5px" }}>Size</div>
+                <div style={{ padding: "5px" }}>Quantity</div>
+                <div style={{ padding: "5px" }}>Price</div>
+              </div>
+              {Object.entries(item.sizes).map(([sizeKey, val]) => (
+                <div key={sizeKey} className={styles.column}>
+                  <div style={{ backgroundColor: "#a1b1cc", padding: "5px" }}>
+                    {sizeKey}{" "}
+                  </div>
+                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
+                    {val.quantity}
+                  </div>
+                  <div style={{ backgroundColor: "#c8d3e6", padding: "5px" }}>
+                    ${val.price}
+                  </div>
+                </div>
+              ))}
+              <div
+                className={styles.column}
+                style={{ fontWeight: "bold", textAlign: "right" }}
+              >
+                <div style={{ padding: "5px", fontWeight: "bold" }}>Total</div>
+                <div style={{ padding: "5px" }}>
+                  {Object.values(item.sizes).reduce((prev, cur) => {
+                    return prev + cur.quantity;
+                  }, 0)}
+                </div>
+                <div style={{ padding: "5px" }}>
+                  $
+                  {Object.values(item.sizes)
+                    .reduce((prev, cur) => {
+                      return prev + parseInt(cur.price) * cur.quantity;
+                    }, 0)
+                    .toFixed(2)}
+                </div>
+              </div>
+            </div>
+            <FaTrash
+              style={{ color: "red", margin: "20px", cursor: "pointer" }}
+              onClick={() => removeGroupFromCart(groupKey)}
+              title="Remove entire group"
+            />
+          </div>
         ))}
-        </tbody>
-        </table>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "end",
+            paddingTop: "0",
+          }}
+        >
+          <div
+            className={styles.shoppingButton}
+            onClick={(e) => reserveCart(e)}
+          >
+            {submitting ? (
+              "Submitting..."
+            ) : (
+              <>
+                Reserve
+                <FaCheckCircle />
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -116,7 +116,8 @@ export default function GroupedView({
                     boxShadow: "0 0 3px gray",
                     backgroundColor:
                       selectedColor === key ? "#a2bdac" : "rgb(219, 213, 213)",
-                    width:"100px",
+                    maxWidth:"150px",
+                    height:"100%",
                     wordBreak:"break-word"
                   }}
                   onClick={() => {
@@ -130,6 +131,8 @@ export default function GroupedView({
                       width: "75px",
                       height: "75px",
                       objectFit: "cover",
+                      borderRadius:"5px"
+
                     }}
                   ></img>
                   <div style={{ fontWeight: "bold", marginTop: "10px" }} >

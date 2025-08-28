@@ -462,44 +462,6 @@ const Edit = ({
         return false;
       }
 
-      const key = `${currentItem.style || "No style"}-${currentItem.color || "No color"}-${
-        currentItem.size || sizeDict[content.sizeId]?.size || "No size"
-      }-${currentItem.brand || brandDict[currentItem.brandId]?.brand || "No brand"}-${
-        currentItem.description ||
-        descriptionDict[currentItem.descriptionId]?.description ||
-        "No description"
-      }`;
-
-      const itemToPush = {
-        inventoryId: itemResult.data._id,
-        style: content.style || "No style",
-        color: content.color || "No color",
-        descriptionId: content.descriptionId || null,
-        description: content.description || null,
-        brandId: content.brandId || null,
-        brand: content.brand || null,
-        sizeId: content.sizeId || null,
-        size: content.size || null,
-        totalQuant: currentItem.quantity,
-        totalReserved: 0,
-        items: [
-          {
-            inventoryId: itemResult.data._id,
-            quantAvailable: currentItem.quantity,
-            reserved: [],
-          },
-        ],
-      };
-      const catalogResponse = await fetch("/api/catalog", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(itemToPush),
-      });
-
-      const catalogResult = await catalogResponse.json();
-
       return true;
     } catch (error) {
       console.error("Network error:", error);

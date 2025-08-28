@@ -37,7 +37,6 @@ function Inventory() {
     getInventory();
     getItemOptions();
   }, []);
-  console.log("options", options);
 
   const getItemOptions = async () => {
     let response = await fetch("/api/details/brands", {
@@ -117,6 +116,8 @@ function Inventory() {
     return dict;
   }, [boxes]);
 
+
+
   const filteredInventory = useMemo(() => {
     let items = inventory;
 
@@ -125,7 +126,7 @@ function Inventory() {
     for (const item of items) {
       const style = item.style.toLowerCase();
       const color = item.color.toLowerCase();
-      const brand = item.brandId || item.brand.toLowerCase();
+      const brand = item.brand?.toLowerCase() || brandDict[item.brandId]?.brand.toLowerCase() || "N/A"
       const key = `${style}, ${color}, ${brand}`;
 
       if (!dict[key]) {
@@ -243,11 +244,12 @@ function Inventory() {
         <IoCart onClick={() => setCartOpen(true)} style={{fontSize:"40px", color:"#2563EB", cursor:"pointer"}}/>
       </div>
       <div className={styles.productGrid}>
-        {filteredInventory.map((grouping) => {
+        {filteredInventory.map((grouping, index) => {
           const representative = grouping[0];
           return (
-            <div className={styles.productCard}>
+            <div key={index} className={styles.productCard} onClick={() => setSelectedItem(grouping)}>
               <img
+                style={{objectFit:"contain"}}
                 src={representative.image}
                 className={styles.productImage}
               ></img>
@@ -266,7 +268,7 @@ function Inventory() {
                     descriptionDict[representative.descriptionId]?.description}
                 </div>
               </div>
-              <div onClick={() => setSelectedItem(grouping)}style={{width:"100%", display:"flex", justifyContent:"end", padding:"20px", paddingTop: "0"}}>
+              <div style={{width:"100%", display:"flex", justifyContent:"end", padding:"20px", paddingTop: "0"}}>
                 <div className={styles.shoppingButton}>
                     <FiShoppingBag/>
                     Add
@@ -277,7 +279,7 @@ function Inventory() {
         })}
       </div>
       {selectedItem && <SetQuantity onClose={() => setSelectedItem(null)} items={selectedItem} sizeDict={sizeDict} brandDict={brandDict} descriptionDict={descriptionDict}/>}
-      {cartOpen && <Cart onClose={() => setCartOpen(false)} sizeDict={sizeDict} brandDict={brandDict} descriptionDict={descriptionDict} groupedInventory={filteredInventory}/>}
+      {cartOpen && <Cart onClose={() => setCartOpen(false)} brandDict={brandDict} descriptionDict={descriptionDict} fullInventory={inventory} refresh={getInventory}/>}
     </div>
   );
 }
