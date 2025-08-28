@@ -939,22 +939,6 @@ const AddBox = ({
             ],
           };
 
-          const catalogResponse = await fetch("/api/catalog", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(itemToPush),
-          });
-
-          const catalogResult = await catalogResponse.json();
-
-          if (!catalogResult.success) {
-            console.error("Error creating item:", catalogResult.error);
-            console.error("Details:", catalogResult.details);
-            throw new Error(itemResult.error || "Unknown error creating item");
-          }
-
           console.log("Item created successfully:", itemResult.data);
           console.log("Message:", itemResult.message);
         } catch (itemError) {

@@ -240,7 +240,7 @@ function Inventory() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <div style={{display:"flex", justifyContent:"end"}}>
+      <div style={{display:"flex", justifyContent:"end", marginBottom:"10px"}}>
         <IoCart onClick={() => setCartOpen(true)} style={{fontSize:"40px", color:"#2563EB", cursor:"pointer"}}/>
       </div>
       <div className={styles.productGrid}>

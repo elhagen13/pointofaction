@@ -658,31 +658,7 @@ const AddBox = ({
       throw new Error(data.error || "Unknown error deleting item");
     }
 
-    const catalogResponse = await fetch(`/api/catalog`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        style: content.style || "No style",
-        color: content.color || "No color",
-        descriptionId: content.descriptionId || null,
-        description: content.description || null,
-        brandId: content.brandId || null,
-        brand: content.brand || null,
-        sizeId: content.sizeId || null,
-        size: content.size || null,
-        deleteMode: true,
-        inventoryId: id,
-      }),
-    });
-
-    const catalogData = await catalogResponse.json();
-    if (!data.success || !catalogData.success) {
-      console.error("Error deleting item:", data.error);
-      console.error("Details:", data.details);
-      throw new Error(data.error || "Unknown error deleting item");
-    }
+    
     console.log("Item deleted successfully:", data.data);
     console.log("Message:", data.message);
     return data;
@@ -1033,36 +1009,6 @@ const AddBox = ({
               console.log("continue");
             }
 
-            /*const itemToPush = {
-              inventoryId: itemResult.data._id,
-              style: content.style || "No style",
-              color: content.color || "No color",
-              descriptionId: content.descriptionId || null,
-              description: content.description || null,
-              brandId: content.brandId || null,
-              brand: content.brand || null,
-              sizeId: content.sizeId || null,
-              size: content.size || null,
-              totalQuant: content.quantity,
-              totalReserved: 0,
-              items: [
-                {
-                  inventoryId: itemResult.data._id,
-                  quantAvailable: content.quantity,
-                  reserved: [],
-                },
-              ],
-            };
-            console.log("itemToPush", itemToPush);
-            const catalogResponse = await fetch("/api/catalog", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(itemToPush),
-            });
-
-            const catalogResult = await catalogResponse.json();*/
           }
         } catch (error) {
           console.error(`Error processing item:`, error);
@@ -1214,15 +1160,7 @@ const AddBox = ({
         },
       ],
     };
-    const catalogResponse = await fetch("/api/catalog", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(itemToPush),
-    });
-
-    const catalogResult = await catalogResponse.json();
+    
   };
 
   const generateDescription = (e) => {

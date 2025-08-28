@@ -13,6 +13,7 @@ export default function Cart({
   const [groupedCart, setGroupedCart] = useState({});
   const [total, setTotal] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [orderNum, setOrderNum] = useState("")
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -143,6 +144,7 @@ export default function Cart({
           });
         }
       }
+      console.log(reservationResults)
       setSubmitting(false);
       setCart([]);
       setGroupedCart({});
@@ -263,9 +265,10 @@ export default function Cart({
             display: "flex",
             justifyContent: "end",
             paddingTop: "0",
+            gap:"10px"
           }}
         >
-          <input placeholder="existing order #"/>
+          <input placeholder="existing order #?"/>
           <div
             className={styles.shoppingButton}
             onClick={(e) => reserveCart(e)}
