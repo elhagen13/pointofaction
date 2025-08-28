@@ -248,11 +248,12 @@ function Inventory() {
           const representative = grouping[0];
           return (
             <div key={index} className={styles.productCard} onClick={() => setSelectedItem(grouping)}>
-              <img
+              <div style={{width:"100%", backgroundColor:"white"}}><img
                 style={{objectFit:"contain"}}
                 src={representative.image}
                 className={styles.productImage}
               ></img>
+              </div>
               <div className={styles.productCardDescription}>
                 <div>Style #: {representative.style}</div>
                 <div>
