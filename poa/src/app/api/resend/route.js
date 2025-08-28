@@ -63,7 +63,7 @@ async function handleProductRequest(formData) {
 
   const emailData = {
     from: "onboarding@resend.dev",
-    to: ["ella.kl.hagen@gmail.com", "austin@pointofaction.com"],
+    to: ["austin@pointofaction.com"],
     subject: `Add Product Request - ${company}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -126,7 +126,7 @@ async function handleStoreRequest(formData) {
 
   return {
     from: "onboarding@resend.dev",
-    to: ["ella.kl.hagen@gmail.com","austin@pointofaction.com"],
+    to: ["austin@pointofaction.com"],
     subject: `Store Request: ${company}`,
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -168,7 +168,7 @@ async function handleNotificationRequest(formData) {
 
   return {
     from: "onboarding@resend.dev",
-    to: ["ella.kl.hagen@gmail.com", "austin@pointofaction.com"],
+    to: ["austin@pointofaction.com"],
     subject:  `Notification Request: ${firstName} ${lastName}`,
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -214,7 +214,7 @@ async function handleProductPurchase(formData) {
   console.log(shippingAddress)
   return {
     from: "onboarding@resend.dev",
-    to: ["ella.kl.hagen@gmail.com", "austin@pointofaction.com"],
+    to: ["austin@pointofaction.com"],
     subject:  `Overflow Item Purchased: ${name}`,
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
