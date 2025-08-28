@@ -1260,7 +1260,7 @@ function Inventory() {
                               style={{ position: "relative" }}
                             >
                               <img
-                                style={{objectFit:"contain"}}
+                                style={{objectFit:"contain", backgroundColor:"white"}}
                                 src={item[0].image}
                                 alt={`Item ${index + 1}`}
                               />
