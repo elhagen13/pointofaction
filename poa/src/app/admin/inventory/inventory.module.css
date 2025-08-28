@@ -432,6 +432,14 @@
 .availableSizes div{
   overflow: hidden;
 }
+
+.groupedDescription{
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; 
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
 .sizeTable{
   height: 100%;
   display: inline-block;

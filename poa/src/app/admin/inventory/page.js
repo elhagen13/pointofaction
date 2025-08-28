@@ -1145,12 +1145,13 @@ function Inventory() {
                     {brandDict[group[0].brandId]?.brand || group[0].brand}{" "}
                     {group[0].style}
                   </div>
-                  <div>
+                  <div className={styles.groupedDescription}>
                     {descriptionDict[group[0].descriptionId]?.description ||
                       group[0].description}{" "}
                     {group[0].description}
                   </div>
                   <button
+                   style={{marginTop:"auto"}}
                     className={styles.groupedViewButton}
                   >
                     <MdLayers />
