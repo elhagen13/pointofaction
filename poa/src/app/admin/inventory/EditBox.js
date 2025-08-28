@@ -815,6 +815,19 @@ const AddBox = ({
     } ${item.color || "No color"}`;
   };
 
+  const contentChanged = (content, origContentsDict) => {
+    const original = origContentsDict[content._id];
+    for (const [key, value] of Object.entries(content)) {
+      console.log(
+        `key: ${key}, value:${value}, original:${original}, ${original[key] || "N/A"}`
+      );
+      if (value !== original[key]) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   async function uploadBox() {
     console.log(getBox);
     let change = {
@@ -1004,7 +1017,7 @@ const AddBox = ({
                 },
                 body: JSON.stringify(itemData),
               });
-            } else {
+            } else if (contentChanged(content, origContentsDict)) {
               itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
                 method: "PATCH",
                 headers: {
@@ -1012,23 +1025,15 @@ const AddBox = ({
                 },
                 body: JSON.stringify(itemData),
               });
+              const itemResult = await itemResponse.json();
+              if (!itemResult.success) {
+                console.error("Error with item:", itemResult.error);
+                throw new Error(itemResult.error || "Unknown error with item");
+              }
+              console.log("continue");
             }
-            const itemResult = await itemResponse.json();
-            if (!itemResult.success) {
-              console.error("Error with item:", itemResult.error);
-              throw new Error(itemResult.error || "Unknown error with item");
-            }
-            console.log("continue");
 
-            const key = `${content.style || "No style"}-${content.color || "No color"}-${
-              content.size || sizeDict[content.sizeId]?.size || "No size"
-            }-${content.brand || brandDict[content.brandId]?.brand || "No brand"}-${
-              content.description ||
-              descriptionDict[content.descriptionId]?.description ||
-              "No description"
-            }`;
-
-            const itemToPush = {
+            /*const itemToPush = {
               inventoryId: itemResult.data._id,
               style: content.style || "No style",
               color: content.color || "No color",
@@ -1057,7 +1062,7 @@ const AddBox = ({
               body: JSON.stringify(itemToPush),
             });
 
-            const catalogResult = await catalogResponse.json();
+            const catalogResult = await catalogResponse.json();*/
           }
         } catch (error) {
           console.error(`Error processing item:`, error);

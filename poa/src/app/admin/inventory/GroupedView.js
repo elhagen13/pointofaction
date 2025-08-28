@@ -116,6 +116,8 @@ export default function GroupedView({
                     boxShadow: "0 0 3px gray",
                     backgroundColor:
                       selectedColor === key ? "#a2bdac" : "rgb(219, 213, 213)",
+                    width:"100px",
+                    wordBreak:"break-word"
                   }}
                   onClick={() => {
                     setSelectedColor(key);
@@ -130,7 +132,7 @@ export default function GroupedView({
                       objectFit: "cover",
                     }}
                   ></img>
-                  <div style={{ fontWeight: "bold", marginTop: "10px" }}>
+                  <div style={{ fontWeight: "bold", marginTop: "10px" }} >
                     {key}
                   </div>
                   <div style={{ marginBottom: "10px" }}>{val.totalQuant}</div>
@@ -144,7 +146,7 @@ export default function GroupedView({
                     ([key, val]) => (
                       <div
                         className={styles.sizeTable}
-                        style={{ height: "100%", cursor: "pointer" }}
+                        style={{ height: "100%", cursor: "pointer", minWidth:"50px" }}
                         onClick={() => {
                           setSelectedSize(key);
                         }}
@@ -153,6 +155,7 @@ export default function GroupedView({
                           style={{
                             fontWeight: "bold",
                             backgroundColor: "#d1d1d1",
+                            
                           }}
                         >
                           {key}
