@@ -1516,6 +1516,7 @@ const AddBox = ({
                   src={imageUrl}
                   alt="Uploaded"
                   className={styles.previewImage}
+                  style={{objectFit:"contain"}}
                 />
                 <button
                   type="button"
@@ -1630,6 +1631,8 @@ const AddBox = ({
                                 ? 0.5
                                 : 1,
                             transition: "opacity 0.2s",
+                            objectFit: "contain",
+                            backgroundColor:"white"
                           }}
                           title="Click to change image"
                         />
@@ -2189,6 +2192,7 @@ const AddBox = ({
                                 cursor: "pointer",
                                 opacity: imageUploading ? 0.5 : 1,
                                 transition: "opacity 0.2s",
+                                backgroundColor:"white"
                               }}
                               title="Click to change image"
                             />

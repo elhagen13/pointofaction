@@ -1139,7 +1139,7 @@ function Inventory() {
               {filteredGroups.map((group) => (
                 <div className={styles.group} onClick={() => setGroupedView(group)}>
                   <div className={styles.groupImageContainer}>
-                    <img src={group[0].image}></img>
+                    <img src={group[0].image} style={{objectFit:"contain"}}></img>
                   </div>
                   <div style={{ fontWeight: "bold" }}>
                     {brandDict[group[0].brandId]?.brand || group[0].brand}{" "}
@@ -1260,6 +1260,7 @@ function Inventory() {
                               style={{ position: "relative" }}
                             >
                               <img
+                                style={{objectFit:"contain"}}
                                 src={item[0].image}
                                 alt={`Item ${index + 1}`}
                               />

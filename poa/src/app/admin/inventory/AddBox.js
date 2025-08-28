@@ -1217,6 +1217,8 @@ const AddBox = ({
                                 ? 0.5
                                 : 1,
                             transition: "opacity 0.2s",
+                            objectFit:"contain",
+                            backgroundColor:"white"
                           }}
                           title="Click to change image"
                         />
@@ -1641,8 +1643,12 @@ const AddBox = ({
                                 cursor: "pointer",
                                 opacity: imageUploading ? 0.5 : 1,
                                 transition: "opacity 0.2s",
+                                objectFit:"contain",
+                                backgroundColor:"white"
+
                               }}
                               title="Click to change image"
+                              
                             />
                             <IoIosRemoveCircle
                               style={{
@@ -1871,6 +1877,8 @@ const AddBox = ({
                                 transition: "opacity 0.2s",
                                 maxWidth: "100px",
                                 maxHeight: "100px",
+                                objectFit:"contain",
+                                backgroundColor:"white"
                               }}
                               title="Click to change image"
                             />

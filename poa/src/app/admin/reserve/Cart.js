@@ -265,6 +265,7 @@ export default function Cart({
             paddingTop: "0",
           }}
         >
+          <input placeholder="existing order #"/>
           <div
             className={styles.shoppingButton}
             onClick={(e) => reserveCart(e)}
