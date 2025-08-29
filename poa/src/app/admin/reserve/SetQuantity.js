@@ -119,11 +119,9 @@ export default function SetQuantity({
   useEffect(() => {
     let tempDict = {};
     let tempSizeToItemMap = {};
-    console.log(items)
     for (const item of items) {
       let size = item.size || sizeDict[item.sizeId].size;
       const availableQuantity = item.quantity - (item.reserved ? item.reserved : 0);
-      console.log(item, size, availableQuantity)
       
       if (!tempDict[size]) {
         tempDict[size] = {
@@ -167,7 +165,6 @@ export default function SetQuantity({
       return previouslyAddedSizes[size] || 0;
     });
 
-    console.log(arr)
 
     setOrderQuant(orderQuantArr);
     setSizes(arr);
@@ -253,7 +250,6 @@ export default function SetQuantity({
             >
               {sizes.map((reserved, index) => (
                 <div key={index} style={{ padding: "0 10px", color:"#ababab" }}>
-                  {console.log(sizeToItemMap)}
                     {reserved[1].reserved}
                 </div>
               ))}

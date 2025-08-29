@@ -124,10 +124,10 @@ function Inventory() {
     if(localStorage.getItem("columns")) setColumns(JSON.parse(localStorage.getItem("columns")))
   }, []);
 
-  const refresh = () => {
-    getInventory();
-    getItemOptions();
-    getBoxes();
+  const refresh = async() => {
+    await getInventory();
+    await getItemOptions();
+    await getBoxes();
   };
 
 
@@ -532,7 +532,7 @@ function Inventory() {
     let dict = {};
     for (const item of items) {
       const style = item.style.toLowerCase();
-      const brand = item.brandId || item.brand.toLowerCase();
+      const brand = brandDict[item.brandId]?.brand?.toLowerCase() || item.brand?.toLowerCase() || "N/A";
       const key = `${style}, ${brand}`;
 
       if (!dict[key]) {
@@ -1136,8 +1136,8 @@ function Inventory() {
         {filter === "grouped" && (
           <>
             <div className={styles.filteredGroupImageGrid}>
-              {filteredGroups.map((group) => (
-                <div className={styles.group} onClick={() => setGroupedView(group)}>
+              {filteredGroups.map((group, index) => (
+                <div className={styles.group} onClick={() => setGroupedView(index)}>
                   <div className={styles.groupImageContainer}>
                     <img src={group[0].image} style={{objectFit:"contain"}}></img>
                   </div>
@@ -1147,8 +1147,7 @@ function Inventory() {
                   </div>
                   <div className={styles.groupedDescription}>
                     {descriptionDict[group[0].descriptionId]?.description ||
-                      group[0].description}{" "}
-                    {group[0].description}
+                      group[0].description}
                   </div>
                   <button
                    style={{marginTop:"auto"}}
@@ -1576,7 +1575,7 @@ function Inventory() {
       )}
       {groupedView !== null && (
         <GroupedView
-          items={groupedView}
+          items={filteredGroups[groupedView]}
           onClose={() => setGroupedView(null)}
           boxDict={boxDict}
           sizeDict={sizeDict}
@@ -1584,6 +1583,7 @@ function Inventory() {
           descriptionDict={descriptionDict}
           setEditBoxOpen={setEditBoxOpen}
           setEditItemOpen={setEditItemOpen}
+          refresh={refresh}
         />
       )}
     </div>

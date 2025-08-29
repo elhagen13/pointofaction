@@ -1,6 +1,7 @@
 import styles from "./reserve.module.css";
 import { useState, useEffect } from "react";
 import { FaCheckCircle, FaRegTrashAlt, FaTrash } from "react-icons/fa";
+import { useUser } from "@clerk/nextjs";
 
 export default function Cart({
   onClose,
@@ -13,7 +14,8 @@ export default function Cart({
   const [groupedCart, setGroupedCart] = useState({});
   const [total, setTotal] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [orderNum, setOrderNum] = useState("")
+
+  const {user} = useUser();
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -145,6 +147,38 @@ export default function Cart({
         }
       }
       console.log(reservationResults)
+      let items = [];
+      for(const res of reservationResults){
+        for(const item of res.data.reservationDetails){
+          items.push({
+            itemId: item.itemId,
+            quantReserved: item.quantityReservedFromThisItem
+          })
+        }
+        
+      }
+      console.log(items)
+      try{
+        const completeReservation = await fetch(
+          "/api/catalog/reservation", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              orderTitle: "",
+              items: items,
+              status: "Incomplete",
+              internal: true,
+              customer: user.fullName,
+            }),
+          }
+        )
+      }
+      catch{
+        console.error('Error finalizing reservation:', item, itemError);
+      }
+
       setSubmitting(false);
       setCart([]);
       setGroupedCart({});
@@ -268,7 +302,6 @@ export default function Cart({
             gap:"10px"
           }}
         >
-          <input placeholder="existing order #?"/>
           <div
             className={styles.shoppingButton}
             onClick={(e) => reserveCart(e)}

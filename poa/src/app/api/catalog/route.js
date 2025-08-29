@@ -1,9 +1,8 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 
-// MongoDB connection string - replace with your actual connection string
 const MONGODB_URI = process.env.MONGO_URI;
 const DATABASE_NAME = "test";
-const COLLECTION_NAME = "catalog";
+const COLLECTION_NAME = "inventory";
 
 let cachedClient = null;
 let cachedDb = null;
@@ -12,7 +11,6 @@ async function connectToDatabase() {
   if (cachedClient && cachedDb) {
     return { client: cachedClient, db: cachedDb };
   }
-
   try {
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
@@ -26,216 +24,143 @@ async function connectToDatabase() {
   }
 }
 
-export async function GET(request) {
+export async function PATCH(request, res) {
   try {
     const { db } = await connectToDatabase();
-    const collection = db.collection(COLLECTION_NAME);
-
-    // Execute query
-    const catalogItems = await collection
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
-
-    return Response.json({
-      success: true,
-      data: catalogItems,
-    });
-  } catch (error) {
-    console.error("GET error:", error);
-    return Response.json(
-      {
-        success: false,
-        error: "Failed to fetch catalog items",
-        details: error.message,
-      },
-      { status: 500 }
-    ); 
-  }
-}
-export async function POST(request) {
-  try {
-    const { db } = await connectToDatabase();
-    const collection = db.collection(COLLECTION_NAME);
+    const inventory = db.collection(COLLECTION_NAME);
+    const brands = db.collection("brands");
+    const sizes = db.collection("sizes");
 
     // Parse request body
-    const body = await request.json();
-    console.log("POST body:", body);
+    const { style, color, brand, size, quantityToReserve } = await request.json();
 
-    // Handle delete mode
-    if (body.deleteMode && body.inventoryId) {
-      const existingItem = await collection.findOne({ key: body.key });
-
-      if (!existingItem) {
-        return Response.json(
-          {
-            success: false,
-            error: "Catalog item not found",
-            message: "Cannot delete from non-existent catalog item",
-          },
-          { status: 404 }
-        );
-      }
-
-      // Find the item to delete
-      const itemToDelete = existingItem.items.find(
-        (item) => item.inventoryId === body.inventoryId
+    // Validation
+    if (!style || !color || (!brand && !size) || !quantityToReserve) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
+    }
 
-      if (!itemToDelete) {
-        return Response.json(
-          {
-            success: false,
-            error: "Item not found",
-            message: "No item found with the specified inventoryId",
-          },
-          { status: 404 }
-        );
-      }
+    if (quantityToReserve <= 0) {
+      return new Response(
+        JSON.stringify({ error: "quantityToReserve must be greater than 0" }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-      // Remove the item and adjust totalQuant
-      const result = await collection.findOneAndUpdate(
-        { key: body.key },
-        {
-          $pull: { items: { inventoryId: body.inventoryId } },
-          $inc: { totalQuant: -itemToDelete.quantAvailable },
-          $set: { updatedAt: new Date() },
+    // Get brandId and sizeId if needed (await the promises!)
+    let brandId = null;
+    let sizeId = null;
+    
+    if (brand) {
+      const brandDoc = await brands.findOne({ brand: brand });
+      brandId = brandDoc?._id;
+    }
+    
+    if (size) {
+      const sizeDoc = await sizes.findOne({ size: size });
+      sizeId = sizeDoc?._id;
+    }
+
+    const query = {
+      style,
+      color,
+      ...(brandId && { brandId: String(brandId) }),
+      ...(sizeId && { sizeId: String(sizeId) })
+    };
+    
+
+    console.log("Final query being sent:", JSON.stringify(query));
+
+    // Find matching items and sort by reserved quantity (most to least)
+    const matches = await inventory.find(query)
+      .sort({ reserved: -1, _id: 1 })
+      .toArray();
+    
+    console.log(matches)
+
+    const totalAvailable = matches.reduce((total, item) => {
+      const reserved = item.reserved || 0;
+      const available = Math.max(0, item.quantity - reserved);
+      return total + available;
+    }, 0);
+
+    if (totalAvailable < quantityToReserve) {
+      throw new Error(`Insufficient inventory. Requested: ${quantityToReserve}, Available: ${totalAvailable}`);
+    }
+
+    let remainingToReserve = quantityToReserve;
+    const updatedItems = [];
+    const reservationDetails = [];
+
+    // Process items in order (most reserved first)
+    for (const item of matches) {
+      if (remainingToReserve <= 0) break;
+
+      const currentReserved = item.reserved || 0;
+      const availableInThisItem = Math.max(0, item.quantity - currentReserved);
+      
+      if (availableInThisItem === 0) continue; 
+
+      // Determine how much to reserve from this item
+      const toReserveFromThisItem = Math.min(remainingToReserve, availableInThisItem);
+      const newReservedTotal = currentReserved + toReserveFromThisItem;
+
+      // Update the item
+      const updatedItem = await inventory.findOneAndUpdate(
+        {_id: new ObjectId(item._id)},
+        { 
+          $set: {
+            reserved: newReservedTotal,
+            updatedAt: new Date()
+          }  
         },
         { returnDocument: "after" }
       );
 
-      return Response.json(
-        {
-          success: true,
-          data: result.value,
-          message: "Item deleted successfully",
-        },
-        { status: 200 }
-      );
+      updatedItems.push(updatedItem);
+      reservationDetails.push({
+        itemId: item._id,
+        previousReserved: currentReserved,
+        newReserved: newReservedTotal,
+        quantityReservedFromThisItem: toReserveFromThisItem,
+        availableAfterReservation: item.quantity - newReservedTotal
+      });
+
+      remainingToReserve -= toReserveFromThisItem;
     }
 
-    // ---- UPDATE / ADD MODE ----
+    const result = {
+      success: true,
+      totalQuantityReserved: quantityToReserve,
+      itemsUpdated: updatedItems.length,
+      reservationDetails,
+      updatedItems: updatedItems.map(item => ({
+        _id: item._id,
+        style: item.style,
+        color: item.color,
+        quantity: item.quantity,
+        reserved: item.reserved,
+        available: item.quantity - (item.reserved || 0)
+      }))
+    };
 
-    // Step 1: Remove this inventoryId from *any other key* where it exists
-    const docsWithItem = await collection
-      .find(
-        { "items.inventoryId": body.inventoryId },
-        { projection: { items: 1, _id: 1, key: 1 } }
-      )
-      .toArray();
+    return new Response(
+      JSON.stringify(result),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  
 
-    for (const doc of docsWithItem) {
-      if (doc.key !== body.key) {
-        const itemToRemove = doc.items.find(
-          (i) => i.inventoryId === body.inventoryId
-        );
-        if (itemToRemove) {
-          await collection.updateOne(
-            { _id: doc._id },
-            {
-              $pull: { items: { inventoryId: body.inventoryId } },
-              $inc: { totalQuant: -itemToRemove.quantAvailable },
-              $set: { updatedAt: new Date() },
-            }
-          );
-          console.log(
-            `Removed inventoryId ${body.inventoryId} from key ${doc.key}`
-          );
-        }
-      }
-    }
-
-    const existingItem = await collection.findOne({ key: body.key });
-
-    // If key already exists in the catalog
-    if (existingItem) {
-      // Check if the inventoryId already exists inside this key
-      const itemExists = existingItem.items.some(
-        (i) => i.inventoryId === body.inventoryId
-      );
-
-      let result;
-
-      if (itemExists) {
-        // Update the existing item inside items[]
-        result = await collection.findOneAndUpdate(
-          { key: body.key, "items.inventoryId": body.inventoryId },
-          {
-            $set: {
-              "items.$.quantAvailable": body.items[0].quantAvailable,
-              updatedAt: new Date(),
-            },
-            $inc: {
-              totalQuant:
-                body.items[0].quantAvailable -
-                existingItem.items.find(
-                  (i) => i.inventoryId === body.inventoryId
-                ).quantAvailable,
-            },
-          },
-          { returnDocument: "after" }
-        );
-      } else {
-        // If inventoryId not in this key yet → push it
-        result = await collection.findOneAndUpdate(
-          { key: body.key },
-          {
-            $push: { items: { $each: body.items } },
-            $inc: { totalQuant: body.totalQuant },
-            $set: { updatedAt: new Date() },
-          },
-          { returnDocument: "after" }
-        );
-      }
-
-      return Response.json(
-        {
-          success: true,
-          data: result.value,
-          message: itemExists
-            ? "Catalog item updated successfully"
-            : "New item added to catalog key",
-        },
-        { status: 200 }
-      );
-    } else {
-      // Create a new key
-      const catalogItemDocument = {
-        key: body.key,
-        totalQuant: body.totalQuant,
-        totalReserved: body.totalReserved || 0,
-        items: body.items,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const result = await collection.insertOne(catalogItemDocument);
-
-      if (result.acknowledged) {
-        const createdCatalogItem = await collection.findOne({
-          _id: result.insertedId,
-        });
-        return Response.json(
-          {
-            success: true,
-            data: createdCatalogItem,
-            message: "Catalog item created successfully",
-          },
-          { status: 201 }
-        );
-      } else {
-        throw new Error("Failed to insert document");
-      }
-    }
+    
   } catch (error) {
-    console.error("POST error:", error);
-    return Response.json(
-      {
-        success: false,
-        error: "Failed to process catalog item",
-        details: error.message,
-      },
-      { status: 500 }
+    console.error("PATCH error:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: "Internal server error",
+        details: error.message 
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }

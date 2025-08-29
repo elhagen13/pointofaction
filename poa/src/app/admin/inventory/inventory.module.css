@@ -45,19 +45,30 @@
   cursor: not-allowed;
 }
 
-.discreetButton {
+.discreetButton, .addToReservationButton {
   background-color: white;
   transition: all 0.2s ease-out;
   width: fit-content;
   padding: 5px;
   border: 2px solid white;
 }
-.discreetButton:hover {
+.discreetButton, .addToReservationButton:hover {
   border-radius: 10px;
   border-color: #bedaf5;
   color: #5c6e7f;
   cursor: pointer;
   background-color: rgb(250, 250, 250);
+}
+
+.addToReservationButton{
+  border: 2px solid rgb(208, 208, 208);
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.addToReservationButton:disabled{
+  cursor: not-allowed;
 }
 
 .history {
@@ -321,7 +332,7 @@
 .filteredGroupImageGrid {
   padding: 3px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 0.25fr));
   gap: 30px;
 }
 
@@ -379,13 +390,11 @@
 }
 
 .scrollableContainer div{
-  min-width: 200px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 2px;
   font-weight: bold;
- 
-
 }
 
 .availableColors{
@@ -414,12 +423,34 @@
 
 
 
-.matchingInventory{
+.matchingInventory {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
   gap: 10px;
   max-width: 75%;
+  overflow: hidden;
+  padding: 2px;
+  transition: all 0.2s ease-in-out;
+  transform-origin: center center;
+}
+
+.matchingInventory.loading {
+  opacity: 0;
+  filter: blur(2px);
+  max-width: 100%;
+  padding: 20px 0;
+}
+
+.loaderOverlay{
+  transition: display 0.5s ease-out;
+  display: none;
+}
+
+
+
+.loaderOverlay.visible{
+  display: block;
 }
 
 .availableSizes{
@@ -440,6 +471,76 @@
   -webkit-box-orient: vertical;
   text-overflow: ellipsis;
 }
+
+.addToReservation{
+  width: fit-content;
+  border: 3px double rgb(226, 225, 225);
+  border-radius: 5px;
+  padding: 5px;
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+  display: flex;
+  gap: 40px;
+}
+
+.reservationQuant{
+  width: 5rem;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 5px;
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  background-color: white;
+  color: black;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.reservationQuant:focus {
+  outline: none;
+  border-color: #538561;
+  box-shadow: 0 0 0 3px rgba(83, 133, 97, 0.1);
+}
+
+.reservation{
+  width: 100%;
+  font-weight: bold;
+  padding: 5px;
+  border-bottom: 1px solid rgb(232, 231, 231);
+  transition: background-color 0.3s ease-in-out;
+  cursor: pointer;
+  position: relative;
+
+}
+
+.reservation:hover{
+  background-color:  rgb(212, 212, 212);
+
+}
+
+.reservationOptions{
+  max-height: 100px;
+  overflow-y: scroll;
+  width: fit-content;
+  min-width: 5rem;
+}
+
+.reservationPreview{
+  position: fixed;
+  background-color: white;
+  box-shadow: 0 0 2px rgb(135, 135, 135);
+  border-radius: 10px;
+  padding: 10px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  font-weight: normal;
+
+
+}
 .sizeTable{
   height: 100%;
   display: inline-block;
@@ -456,11 +557,13 @@
 
 .heightTransitionMin {
   max-height: 0px;
-  padding: 0
+  padding: 0 5px;
+  border: none;
+  color: white;
 }
 
 .heightTransitionMax {
-  max-height: 400px;
+  max-height: 2000px;
 
 }
 /*table styles*/
@@ -745,6 +848,25 @@
   justify-content: space-between;
   align-items: center;
 }
+
+.reservedBar {
+  width: 100%;
+  height: 20px;
+  background-color: blue;
+  position: relative; 
+}
+
+.reserved{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10%;
+  height: 100%;
+  background-color: green;
+  z-index: 10000000
+}
+
+
 
 @media (max-width: 768px) {
   .imageAndLocation {

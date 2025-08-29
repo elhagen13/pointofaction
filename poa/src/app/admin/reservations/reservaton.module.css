@@ -1,0 +1,18 @@
+.reservationTable{
+    width: 100%;
+    display: table;
+}
+
+.reservationTable thead tr th{
+    text-align: left;
+}
+
+.status{
+    display: flex; 
+    align-items: center;
+    gap: 5px;
+}
+
+.columnItem{
+    padding: 5px;
+}

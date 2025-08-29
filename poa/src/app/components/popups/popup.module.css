@@ -1,11 +1,12 @@
 .popup {
-    position: absolute;
+    position: fixed;
     max-width: 20rem;
     right: 50%;
-    top: 1rem;
+    bottom: 1rem;
     transform: translateX(50%);
     border-radius: 10px;
     overflow: hidden; /* This clips the timed bar to the border radius */
+    z-index: 99999999
   }
   
   .popupInner {
