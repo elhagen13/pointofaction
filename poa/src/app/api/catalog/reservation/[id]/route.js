@@ -46,7 +46,7 @@ export async function GET(request, { params }) {
       );
     }
 
-    const items = await collection.find({"items.itemId": id}).toArray();
+    const items = await collection.find({"_id": new ObjectId(id)}).toArray();
     
     if (items.length === 0) {
       return Response.json(
@@ -81,7 +81,7 @@ export async function PATCH(request, { params }) {
       const { db } = await connectToDatabase();
       const collection = db.collection(COLLECTION_NAME);
       const { id } = await params;
-      const { reservationDetails } = await request.json();
+      const { reservationDetails, status } = await request.json();
   
       // Validate ObjectId format
       if (!ObjectId.isValid(id)) {
@@ -90,39 +90,55 @@ export async function PATCH(request, { params }) {
           { status: 400 }
         );
       }
-  
-      // Process each reservation detail
-      for (const detail of reservationDetails) {
-        const { itemId, newReserved } = detail;
-  
-        // Try to update existing item first
+
+      if(status){
         const updateExisting = await collection.updateOne(
           { 
             _id: new ObjectId(id),
-            "items.itemId": itemId 
           },
           { 
             $set: { 
-              "items.$.quantReserved": newReserved 
+              status: status
             } 
           }
         );
+      }
   
-        // If no existing item was updated, push new item
-        if (updateExisting.matchedCount === 0) {
-          await collection.updateOne(
-            { _id: new ObjectId(id) },
+      // Process each reservation detail
+      if(reservationDetails){
+        for (const detail of reservationDetails) {
+          const { itemId, newReserved } = detail;
+    
+          // Try to update existing item first
+          const updateExisting = await collection.updateOne(
             { 
-              $push: { 
-                items: { 
-                  itemId: itemId, 
-                  quantReserved: newReserved 
-                } 
+              _id: new ObjectId(id),
+              "items.itemId": itemId 
+            },
+            { 
+              $set: { 
+                "items.$.quantReserved": newReserved 
               } 
             }
           );
+    
+          // If no existing item was updated, push new item
+          if (updateExisting.matchedCount === 0) {
+            await collection.updateOne(
+              { _id: new ObjectId(id) },
+              { 
+                $push: { 
+                  items: { 
+                    itemId: itemId, 
+                    quantReserved: newReserved 
+                  } 
+                } 
+              }
+            );
+          }
         }
       }
+      
   
       return Response.json({ success: true, message: 'Reservation updated successfully' });
   

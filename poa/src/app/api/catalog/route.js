@@ -164,3 +164,44 @@ export async function PATCH(request, res) {
     );
   }
 }
+
+export async function POST(request) {
+  try {
+    const { db } = await connectToDatabase();
+    const collection = db.collection(COLLECTION_NAME);
+    
+    const { itemIds } = await request.json();
+    var objectIds = itemIds.map(id => new ObjectId(id))
+    
+    const items = await collection.find({"_id": {$in: objectIds}}).toArray();
+    
+    if (items.length === 0) {
+      return Response.json(
+        {
+          success: false,
+          error: 'No items found with this ID'
+        },
+        { status: 404 }
+      );
+    }
+
+    return Response.json({
+      success: true,
+      data: items
+    });
+
+  } catch (error) {
+    console.error('GET error:', error);
+    return Response.json(
+      {
+        success: false,
+        error: 'Failed to fetch items',
+        details: error.message
+      },
+      { status: 500 }
+    );
+  }
+}
+
+
+  

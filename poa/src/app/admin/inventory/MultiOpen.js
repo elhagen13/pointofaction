@@ -28,6 +28,8 @@ export default function MultiOpen({
   descriptionDict,
   brandDict,
 }) {
+  const [boxTotals, setBoxTotals] = useState({});
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -37,14 +39,62 @@ export default function MultiOpen({
   const handleModalClick = (e) => {
     e.stopPropagation();
   };
-  console.log(items);
+
+  const getTotal = async (id) => {
+    if (!id) return 0;
+    
+    try {
+      const response = await fetch(`/api/inventory/box/${id}`, {
+        method: "GET",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      return result.data?.reduce((a, b) => a + (b.quantity || 0), 0) || 0;
+    } catch (error) {
+      console.error(`Error fetching total for box ${id}:`, error);
+      return 0;
+    }
+  };
+
+  // Fetch totals for all unique box IDs
+  useEffect(() => {
+    const uniqueBoxIds = [...new Set(items.map(item => item.boxId).filter(Boolean))];
+    
+    const fetchTotals = async () => {
+      const totals = {};
+      
+      for (const boxId of uniqueBoxIds) {
+        totals[boxId] = await getTotal(boxId);
+      }
+      
+      setBoxTotals(totals);
+    };
+
+    if (uniqueBoxIds.length > 0) {
+      fetchTotals();
+    }
+  }, [items]);
 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
-      <div className={styles.addItem} onClick={handleModalClick} style={{width:"100%", display: "flex", flexDirection:"column", gap:"20px"}}>
+      <div
+        className={styles.addItem}
+        onClick={handleModalClick}
+        style={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}
+      >
         <h2>
-          Matching inventory: {items[0].color}{" "}{items[0].brand || brandDict[items[0].brandId].brand}{" "}
-          {items[0].size || sizeDict[items[0].sizeId].size} {items[0].style}
+          Matching inventory: {items[0]?.color}{" "}
+          {items[0]?.brand || brandDict[items[0]?.brandId]?.brand}{" "}
+          {items[0]?.size || sizeDict[items[0]?.sizeId]?.size} {items[0]?.style}
         </h2>
         <h3 style={{ color: "gray" }}>{items.length} results found</h3>
         <div
@@ -55,12 +105,13 @@ export default function MultiOpen({
             marginTop: "30px",
           }}
         >
-          {items.map((item) => (
+          {items.map((item, index) => (
             <div
+              key={item.id || index} // Use item.id if available, otherwise index
               onClick={() => {
                 onClose();
                 item.boxId ? setEditBoxOpen(boxDict[item.boxId]) : setEditItemOpen(item)
-            }}
+              }}
               style={{
                 gridColumn: "span 1",
                 boxShadow: "0 0 4px gray",
@@ -73,20 +124,32 @@ export default function MultiOpen({
             >
               <img
                 src={item.image}
+                alt={`${item.color} ${item.style}`}
                 style={{ width: "100%", objectFit: "contain" }}
-              ></img>
-              <h4>Box #: {item.boxId ? boxDict[item.boxId]?.boxId : "No box"}</h4>
+              />
+              <h4>
+                Box #: {item.boxId ? boxDict[item.boxId]?.boxId : "No box"}
+              </h4>
               <h4>
                 Location:{" "}
-                {item.location ? item.location : boxDict[item.boxId].location}
+                {item.location || boxDict[item.boxId]?.location || "N/A"}
               </h4>
               <h4>Quantity Remaining: {item.quantity}</h4>
-              <h4 style={{color:"gray"}}>
+              <h4 style={{ color: "gray" }}>
                 Description:{" "}
                 {item.description ||
-                  descriptionDict[item.descriptionId].description}
+                  descriptionDict[item.descriptionId]?.description ||
+                  "N/A"}
               </h4>
-              <h4 style={{color:"gray"}}>Brand: {item.brand || (brandDict[item.brandId] ? brandDict[item.brandId].brand : "N/A")}</h4>
+              <h4 style={{ color: "gray" }}>
+                Brand:{" "}
+                {item.brand ||
+                  brandDict[item.brandId]?.brand ||
+                  "N/A"}
+              </h4>
+              <h4>
+                Box Total: {item.boxId ? (boxTotals[item.boxId] ?? "Loading...") : "N/A"}
+              </h4>
             </div>
           ))}
         </div>

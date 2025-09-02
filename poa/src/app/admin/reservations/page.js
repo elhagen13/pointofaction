@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import styles from "./reservaton.module.css";
+import Reservation from "./Reservation";
 
 export default function Reservations() {
   const [reservations, setReservations] = useState([]);
+  const [reservation, setReservation] = useState(null)
 
   const statusColor = {
     Incomplete: "#db8e86",
@@ -23,8 +25,9 @@ export default function Reservations() {
     setReservations(result.data);
   };
 
+
   return (
-    <div>
+    <div className={styles.page}>
         <h1>Order Requests</h1>
       <table className={styles.reservationTable}>
         <thead>
@@ -43,6 +46,7 @@ export default function Reservations() {
               style={{
                 backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
               }}
+              onClick={() => setReservation(reservation)}
             >
               <td className={styles.columnItem}>
                 {reservation.sequentialId.toString().padStart(5, "0")}
@@ -72,6 +76,7 @@ export default function Reservations() {
           ))}
         </tbody>
       </table>
+      {reservation !== null && <Reservation onClose={() => setReservation(null)} reservation={reservation}/>}
     </div>
   );
 }

@@ -27,6 +27,54 @@ async function connectToDatabase() {
   }
 }
 
+// GET items by itemId
+export async function GET(request, { params }) {
+  try {
+    const { db } = await connectToDatabase();
+    const collection = db.collection("inventory");
+    const { id } = await params;
+
+    // Validate ObjectId format
+    if (!ObjectId.isValid(id)) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Invalid item ID format'
+        },
+        { status: 400 }
+      );
+    }
+
+    const items = await collection.find({"boxId": id}).toArray();
+    
+    if (items.length === 0) {
+      return Response.json(
+        {
+          success: false,
+          error: 'No items found with this ID'
+        },
+        { status: 404 }
+      );
+    }
+
+    return Response.json({
+      success: true,
+      data: items
+    });
+
+  } catch (error) {
+    console.error('GET error:', error);
+    return Response.json(
+      {
+        success: false,
+        error: 'Failed to fetch items',
+        details: error.message
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(request, { params }) {
   try {
     const { db } = await connectToDatabase();

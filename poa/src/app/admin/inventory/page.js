@@ -208,9 +208,14 @@ function Inventory() {
     const dict = {};
     boxes.forEach((box) => {
       dict[box._id.toString()] = box;
+      dict[box._id.toString()].items = []
     });
+
+    
     return dict;
   }, [boxes]);
+
+ 
 
   // Filter inventory based on page selection and search, then group
   const filteredInventory = useMemo(() => {

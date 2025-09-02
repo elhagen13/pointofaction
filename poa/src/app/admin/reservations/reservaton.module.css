@@ -1,18 +1,187 @@
-.reservationTable{
-    width: 100%;
-    display: table;
+.reservationTable {
+  width: 100%;
+  display: table;
+  border-collapse: collapse;
 }
 
-.reservationTable thead tr th{
-    text-align: left;
+.reservationTable thead tr th {
+  text-align: left;
 }
 
-.status{
-    display: flex; 
+.status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.columnItem {
+  padding: 5px;
+}
+
+.page {
+  width: 100%;
+  padding: 20px;
+}
+
+.imageContainer {
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border: 1px solid rgb(221, 220, 220);
+  border-radius: 5px;
+  background-color: white;
+}
+
+.imageContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.reservationItemTable {
+  margin-top: 30px;
+  display: table;
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.reservationItemTable tbody tr td,
+.reservationItemTable thead tr th {
+  padding: 5px;
+  max-width: 100px;
+}
+
+.dropdown{
+    width: fit-content;
+    background-color: white;
+    border-radius: 10px;
+    margin-top: 5px;
+    position: absolute;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 5px;
+
 }
 
-.columnItem{
+.dropdownButton{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 140px;
+    border: 2px solid white;
+    border-radius: 5px;
     padding: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    color: gray;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.confirm{
+    padding: 5px;
+    border: 2px solid rgb(49, 121, 60);
+    color: rgb(49, 121, 60);
+    background-color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease-in-out;
+}
+
+.confirm:hover{
+    background-color: rgb(49, 121, 60);
+    color: white;
+    border-radius: 8px;
+}
+
+.confirm:disabled{
+    background-color: rgb(223, 222, 222);
+    border-color: gray;
+    cursor: not-allowed;
+}
+.numPulled{
+    width: 3rem;
+    border: 0.5px solid rgb(231, 231, 231);
+    padding: 5px;
+    font-size: 1rem;
+    border-radius: 5px;
+    
+}
+
+/**
+Reservation progress bar
+*/
+
+.progressBarContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.progressBar {
+  width: 80%;
+  position: relative;
+  height: 35px;
+  padding: 2px;
+}
+
+.line {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 3px;
+  background-color: rgb(192, 192, 192);
+}
+
+.fulfilled {
+  height: 3px;
+  background-color: green;
+  transition: width 1s ease-in-out;
+}
+
+.fulfilledCircle {
+  background-color: green;
+  transition:
+    width 1s ease-in-out,
+    height 1s ease-in-out;
+  transform-origin: center;
+  width: 0;
+  height: 0;
+}
+
+.fulfilledCircle.loaded {
+  width: 100%;
+  height: 100%;
+}
+
+.circle {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  background-color: rgb(192, 192, 192);
+  border-radius: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  overflow: hidden;
+  transition: all 1s ease-in-out;
+}
+
+.circle:nth-of-type(1) {
+  left: 0;
+}
+
+.circle:nth-of-type(2) {
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.circle:nth-of-type(3) {
+  left: 100%;
+  transform: translate(-50%, -50%);
 }

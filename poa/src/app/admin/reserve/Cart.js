@@ -219,7 +219,7 @@ export default function Cart({
         }),
       });
       
-      return result; // Return the Response object so we can check .ok
+      return result;
     } catch (fetchError) {
       console.error('Fetch error:', fetchError);
       throw new Error(`Network error: ${fetchError.message}`);
