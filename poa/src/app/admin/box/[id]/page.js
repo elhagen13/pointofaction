@@ -158,10 +158,23 @@ export default function Box() {
       editedOn: new Date(),
       changes: [],
     };
+    console.log(items)
 
+    /*
     for (const item of items) {
-      if (!item.quantity) {
+      if (!item.quantity || !parseInt(item.quantity)) {
         alert("Item quantity not valid");
+        return;
+      }
+    }*/
+
+    for (const [index, item] of items.entries()) {
+      const changeValue = changes[index] || 0;
+      const currentQuantity = item.quantity || 0;
+      const newQuantity = currentQuantity + (negatives[index] ? 1 : -1) * changeValue;
+      
+      if (newQuantity < 0) {
+        alert(`Item ${index + 1} would have negative quantity`);
         return;
       }
     }
@@ -170,8 +183,7 @@ export default function Box() {
       try {
         const newData = {
           ...item,
-          quantity:
-            item.quantity + (negatives[index] ? 1 : -1) * changes[index],
+          quantity: Math.max(0, (item.quantity || 0) + (negatives[index] ? 1 : -1) * (changes[index] || 0)),
         };
 
         if (changes[index] && changes[index] !== 0) {
@@ -314,10 +326,13 @@ export default function Box() {
   };
 
   const onChanges = (e, index) => {
+    const value = e.target.value;
+    const numValue = value === '' ? 0 : parseInt(value) || 0;
     const newChanges = [...changes];
-    newChanges[index] = e.target.value;
+    newChanges[index] = numValue;
     setChanges(newChanges);
   };
+  
 
   const onPosNeg = (index) => {
     const newNegatives = [...negatives];
@@ -391,7 +406,6 @@ export default function Box() {
                     </div>
                     <div>
                       <span style={{ fontWeight: "bold" }}>Size:</span>{" "}
-                      {console.log(item)}
                       {item.size ||
                         (sizeDict[item.sizeId]
                           ? sizeDict[item.sizeId].size
