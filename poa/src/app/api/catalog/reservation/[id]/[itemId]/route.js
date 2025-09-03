@@ -32,6 +32,7 @@ export async function PATCH(request, { params }) {
     try {
       const { db } = await connectToDatabase();
       const collection = db.collection(COLLECTION_NAME);
+      const inventory = db.collection("inventory")
       const { id, itemId } = await params;
   
       const { newAmount } = await request.json();
@@ -48,8 +49,21 @@ export async function PATCH(request, { params }) {
         {_id: new ObjectId(id),
           "items.itemId": itemId },
         {
-          $set: {
+          $inc: {
             "items.$.pulled": newAmount
+          }
+        }
+      )
+
+      //remove or add the new amount from the inventory item
+      await inventory.updateOne(
+        {
+          _id: new ObjectId(itemId),
+        },
+        {
+          $inc: {
+            quantity: newAmount * -1,
+            reserved: newAmount * -1
           }
         }
       )

@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef} from "react";
+import React from "react"
 import styles from "./reserve.module.css";
 import { FiShoppingBag } from "react-icons/fi";
 import { Fis } from "aws-sdk";
@@ -7,9 +8,12 @@ import SetQuantity from "./SetQuantity";
 import Cart from "./Cart"
 import { IoCart, IoSearch, IoChevronDown,  } from "react-icons/io5";
 
-function Inventory() {
-  const [quantityPopup, setQuantityPopup] = useState(false);
+function Inventory({params}) {
+  const { id } = React.use(params);
   const [selectedItem, setSelectedItem] = useState(null)
+
+  const [reservation, setReservation] = useState(null)
+  const [cart, setCart] = useState(null)
 
   const [inventory, setInventory] = useState([]);
   const [boxes, setBoxes] = useState([]);
@@ -30,11 +34,16 @@ function Inventory() {
 
   const [options, setOptions] = useState({});
 
+
+
   useEffect(() => {
     getInventory();
+    getReservation();
     getItemOptions();
   }, []);
 
+
+  
   const getItemOptions = async () => {
     let response = await fetch("/api/details/brands", {
       method: "GET",
@@ -66,16 +75,12 @@ function Inventory() {
   const contentDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
-      if (item.boxId) {
-        const boxIdStr = item.boxId?.toString();
-        if (!dict[boxIdStr]) {
-          dict[boxIdStr] = [];
-        }
-        dict[boxIdStr].push(item);
-      }
+      dict[item._id.toString()] = item
     });
     return dict;
   }, [inventory]);
+
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -114,7 +119,6 @@ function Inventory() {
     options.brands.forEach((item) => {
       dict[item._id.toString()] = item;
     });
-    console.log("hmmm");
     return dict;
   }, [options]);
 
@@ -126,6 +130,51 @@ function Inventory() {
     return dict;
   }, [boxes]);
 
+  useEffect(() => {
+    if(!reservation || Object.keys(contentDict).length <= 0) return
+    let reserved = []
+    for(const item of reservation.items){
+      reserved.push(contentDict[item.itemId.toString()])
+    }
+    console.log("reserved", reserved)
+    let dict = {}
+    console.log(brandDict)
+    for (const item of reserved) {
+      const style = item.style.toLowerCase();
+      const color = item.color.toLowerCase();
+      const brand = item.brand?.toLowerCase() || brandDict[item.brandId]?.brand.toLowerCase() || "N/A";
+      const size = item.size?.toLowerCase() || sizeDict[item.sizeId]?.size.toLowerCase() || "N/A"
+      const key = `${style}, ${color}, ${brand}, ${size}`;
+
+      console.log(reservation.items.find(res => res.itemId === item._id))
+      const prevItem = reservation.items.find(res => res.itemId === item._id)
+      const quantity = prevItem.quantReserved
+      console.log(prevItem)
+      const pulled = prevItem.pulled || 0
+
+      
+      if (!dict[key]) {
+        dict[key] = {
+          brand: item.brand || brandDict[item.brandId]?.brand || "N/A",
+          color: item.color,
+          description: item.description || descriptionDict[item.descriptionId]?.description || "N/A",
+          image: item.image,
+          price: item.price,
+          quantity: quantity,
+          pulled: pulled,
+          size: item.size || sizeDict[item.sizeId]?.size || "N/A",
+          style: item.style,
+        };
+      }
+      else{
+        dict[key].quantity += quantity
+        dict[key].pulled += pulled
+      }
+    }
+    console.log(Object.values(dict))
+    setCart(Object.values(dict))
+
+  }, [reservation, contentDict, sizeDict, descriptionDict, brandDict])
   const handleOptionSelect = (option) => {
     setSelectedSearchOption(option);
     setIsDropdownOpen(false);
@@ -246,9 +295,20 @@ function Inventory() {
     setInventory(result.data);
   };
 
+  const getReservation = async () => {
+    const response = await fetch(`/api/catalog/reservation/${id}`, {
+      method: "GET",
+    });
+
+    const result = await response.json();
+
+    setReservation(result.data[0]);
+  };
+
   return (
     <div style={{ padding: "20px" }}>
-      <div style={{display:"flex", justifyContent:"space-between", marginBottom:"10px"}}>
+      <h2 >Editing Contents of Reservation {reservation?.sequentialId.toString().padStart(5, "0") || ""}</h2>
+      <div style={{display:"flex", justifyContent:"space-between", margin:"20px 0 10px 0"}}>
       <div className={styles.searchContainer} ref={dropdownRef}>
           <IoSearch className={styles.search} />
           <input
@@ -321,8 +381,8 @@ function Inventory() {
           );
         })}
       </div>
-      {selectedItem && <SetQuantity onClose={() => setSelectedItem(null)} items={selectedItem} sizeDict={sizeDict} brandDict={brandDict} descriptionDict={descriptionDict}/>}
-      {cartOpen && <Cart onClose={() => setCartOpen(false)} brandDict={brandDict} descriptionDict={descriptionDict} fullInventory={inventory} refresh={getInventory}/>}
+      {selectedItem && <SetQuantity onClose={() => setSelectedItem(null)} items={selectedItem} sizeDict={sizeDict} brandDict={brandDict} descriptionDict={descriptionDict} cart={cart} setCart={setCart}/>}
+      {cartOpen && <Cart onClose={() => setCartOpen(false)} brandDict={brandDict} descriptionDict={descriptionDict} fullInventory={inventory} refresh={getInventory} cart={cart} setCart={setCart}/>}
     </div>
   );
 }

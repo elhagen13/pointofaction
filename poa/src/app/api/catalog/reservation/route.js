@@ -85,6 +85,7 @@ export async function POST(request) {
     const reservationDocument = {
       sequentialId: sequentialId,
       orderTitle: body.orderTitle,
+      soIn: body.soIn,
       items: body.items,
       status: "Incomplete",
       internal: body.internal,

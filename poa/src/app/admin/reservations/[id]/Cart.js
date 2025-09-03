@@ -8,10 +8,10 @@ export default function Cart({
   onClose,
   brandDict,
   descriptionDict,
-  fullInventory,
   refresh,
+  cart,
+  setCart
 }) {
-  const [cart, setCart] = useState([]);
   const [groupedCart, setGroupedCart] = useState({});
   const [total, setTotal] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -30,32 +30,7 @@ export default function Cart({
   const handleModalClick = (e) => {
     e.stopPropagation();
   };
-
-  const getCartFromStorage = () => {
-    try {
-      const cartData = localStorage.getItem("cart");
-      if (!cartData) return [];
-      const parsed = JSON.parse(cartData);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      console.warn("Invalid cart data in localStorage, resetting cart:", error);
-      localStorage.removeItem("cart");
-      return [];
-    }
-  };
-
-  // Safe function to save cart to localStorage
-  const saveCartToStorage = (cart) => {
-    try {
-      localStorage.setItem("cart", JSON.stringify(cart));
-    } catch (error) {
-      console.error("Failed to save cart to localStorage:", error);
-    }
-  };
-
-  useEffect(() => {
-    setCart(getCartFromStorage());
-  }, []);
+  useEffect(() => {console.log("cart", cart)}, [cart])
 
   // Remove all items that match the group (style, brand, description, color)
   const removeGroupFromCart = (groupKey) => {
@@ -229,7 +204,6 @@ export default function Cart({
       throw new Error(`Network error: ${fetchError.message}`);
     }
   };
-  console.log(Object.entries(groupedCart))
 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>

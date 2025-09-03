@@ -4,6 +4,9 @@ import styles from "./reservaton.module.css";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { BeatLoader } from "react-spinners";
 import { IoIosCheckmarkCircleOutline } from "react-icons/io";
+import ProgressBar from "./ProgressBar";
+import { FiEdit } from "react-icons/fi";
+import Link from "next/link";
 
 export default function Reservation({ onClose, reservation }) {
   {
@@ -165,7 +168,7 @@ const Order = ({ reservation }) => {
       updateReservation(newStatus);
       setStatus(newStatus);
     }
-    return newStatus;
+    return [newStatus, complete];
   };
 
   useEffect(() => {
@@ -209,69 +212,60 @@ const Order = ({ reservation }) => {
   return (
     <div>
       <div className={styles.progressBarContainer}>
-        <div className={styles.progressBar}>
-          <div className={styles.line}>
-            <div className={styles.fulfilled} style={{ width: "0%" }} />
-          </div>
-          <div className={styles.circle}>
-            <div
-              className={styles.fulfilledCircle}
-              style={{
-                width: stage === "incomplete" ? "0%" : "100%",
-                height: stage === "incomplete" ? "0%" : "100%",
-              }}
-            />
-          </div>
-          <div className={styles.circle} />
-          <div className={styles.circle} />
-        </div>
+        <ProgressBar
+          steps={reservationItems.length || 0}
+          stepsComplete={checkCompleteness()[1]}
+        />
       </div>
-      <table className={styles.reservationItemTable}>
-        <thead>
-          <tr style={{ backgroundColor: "#c5ced9" }}>
-            <th style={{ padding: "10px" }}>Order #</th>
-            <th>Order Title</th>
-            <th>Customer Id</th>
-            <th>Status</th>
-            <th>SO#/In#</th>
-            <th>Purchase Date</th>
-            <th>Last Edited</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style={{ backgroundColor: "#dde4ed" }}>
-            <td style={{ padding: "10px" }}>
-              {reservation.sequentialId?.toString().padStart(5, "0")}
-            </td>
-            <td>{reservation.orderTitle || "N/A"}</td>
-            <td>{reservation.customer}</td>
-            <td>
-              <div
-                className={styles.dropdownButton}
-                style={{ border: "none", width: "fit-content" }}
-              >
+      <div className={styles.tableContainer} style={{marginTop:"30px"}}>
+        <table className={styles.reservationItemTable}>
+          <thead>
+            <tr style={{ backgroundColor: "#c5ced9" }}>
+              <th style={{ padding: "10px" }}>Order #</th>
+              <th>Order Title</th>
+              <th>Customer Id</th>
+              <th>Status</th>
+              <th>SO#/In#</th>
+              <th>Purchase Date</th>
+              <th>Last Edited</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ backgroundColor: "#dde4ed" }}>
+              <td style={{ padding: "10px" }}>
+                {reservation.sequentialId?.toString().padStart(5, "0")}
+              </td>
+              <td>{reservation.orderTitle || "N/A"}</td>
+              <td>{reservation.customer}</td>
+              <td>
                 <div
-                  style={{
-                    width: "10px",
-                    height: "10px",
-                    borderRadius: "10px",
-                    backgroundColor:
-                      checkCompleteness() === "Incomplete"
-                        ? "#db8e86"
-                        : checkCompleteness() === "Complete"
-                          ? "#aad99e"
-                          : "#e0d28b",
-                  }}
-                />
-                {checkCompleteness()}
-              </div>
-            </td>
-            <td>{reservation.soin}</td>
-            <td>{new Date(reservation.createdAt).toLocaleString()}</td>
-            <td>{new Date(reservation.updatedAt).toLocaleString()}</td>
-          </tr>
-        </tbody>
-      </table>
+                  className={styles.dropdownButton}
+                  style={{ border: "none", width: "fit-content" }}
+                >
+                  <div
+                    style={{
+                      width: "10px",
+                      height: "10px",
+                      borderRadius: "10px",
+                      cursor: "default",
+                      backgroundColor:
+                        checkCompleteness()[0] === "Incomplete"
+                          ? "#db8e86"
+                          : checkCompleteness()[0] === "Complete"
+                            ? "#aad99e"
+                            : "#e0d28b",
+                    }}
+                  />
+                  {checkCompleteness()[0]}
+                </div>
+              </td>
+              <td>{reservation.soIn || "N/A"}</td>
+              <td>{new Date(reservation.createdAt).toLocaleString()}</td>
+              <td>{new Date(reservation.updatedAt).toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       {loading && (
         <div
@@ -282,85 +276,87 @@ const Order = ({ reservation }) => {
         </div>
       )}
       {!loading && (
-        <table className={styles.reservationItemTable}>
-          <thead>
-            <tr style={{ backgroundColor: "#c5ced9" }}>
-              <th style={{ padding: "10px" }}>Item</th>
-              <th>Style</th>
-              <th>Brand</th>
-              <th>Color</th>
-              <th>Size</th>
-              <th>Quantity</th>
-              <th>Status</th>
-              <th>Box #</th>
-              <th>Location</th>
-              <th>Last Edited</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservationItems.map((item, index) => (
-              <tr
-                style={{
-                  backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
-                }}
-              >
-                <td>
-                  <div className={styles.imageContainer}>
-                    <img src={item.image}></img>
-                  </div>
-                </td>
-                <td>{item.style}</td>
-                <td>{item.brand || brandDict[item.brandId]?.brand || "N/A"}</td>
-                <td>{item.color}</td>
-                <td>{item.size || sizeDict[item.sizeId]?.size || "N/A"}</td>
-                <td>
-                  <Quantity
-                    reservation={reservation}
-                    item={reservationDict[item._id]}
-                    setDict={setReservationDict}
-                    dict={reservationDict}
-                    prev={reservationDict[item._id].pulled}
-                    max={reservationDict[item._id].quantReserved}
-                    checkCompleteness={checkCompleteness}
-                    refresh={refresh}
-                  />
-                </td>
-                <td>
-                  <Status
-                    reservation={reservation}
-                    item={reservationDict[item._id]}
-                    setDict={setReservationDict}
-                    dict={reservationDict}
-                    prev={reservationDict[item._id].pulled}
-                    max={reservationDict[item._id].quantReserved}
-                    checkCompleteness={checkCompleteness}
-                    refresh={refresh}
-                  />
-                </td>
-                <td>{boxDict[item.boxId]?.boxId || "N/A"}</td>
-                <td>
-                  {item.location || boxDict[item.boxId]?.location || "N/A"}
-                </td>
-                <td>{new Date(item.updatedAt).toLocaleString()}</td>
+        <>
+        <div className={styles.edit}>
+          <Link href={`/admin/reservations/${reservation._id}`}> 
+          <button>Edit <FiEdit/></button>
+          </Link>
+        </div>
+        <div className={styles.tableContainer}>
+          <table className={styles.reservationItemTable}>
+            <thead>
+              <tr style={{ backgroundColor: "#c5ced9" }}>
+                <th style={{ padding: "10px" }}>Item</th>
+                <th>Style</th>
+                <th>Brand</th>
+                <th>Color</th>
+                <th>Size</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Box #</th>
+                <th>Location</th>
+                <th>Last Edited</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {reservationItems.map((item, index) => (
+                <tr
+                  style={{
+                    backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
+                  }}
+                >
+                  <td>
+                    <div className={styles.imageContainer}>
+                      <img src={item.image}></img>
+                    </div>
+                  </td>
+                  <td>{item.style}</td>
+                  <td>
+                    {item.brand || brandDict[item.brandId]?.brand || "N/A"}
+                  </td>
+                  <td>{item.color}</td>
+                  <td>{item.size || sizeDict[item.sizeId]?.size || "N/A"}</td>
+                  <td>
+                    <Quantity
+                      reservation={reservation}
+                      item={reservationDict[item._id]}
+                      setDict={setReservationDict}
+                      dict={reservationDict}
+                      prev={reservationDict[item._id].pulled}
+                      max={reservationDict[item._id].quantReserved}
+                      checkCompleteness={checkCompleteness}
+                      refresh={refresh}
+                    />
+                  </td>
+                  <td>
+                    <Status
+                      reservation={reservation}
+                      item={reservationDict[item._id]}
+                      setDict={setReservationDict}
+                      dict={reservationDict}
+                      prev={reservationDict[item._id].pulled}
+                      max={reservationDict[item._id].quantReserved}
+                      checkCompleteness={checkCompleteness}
+                      refresh={refresh}
+                    />
+                  </td>
+                  <td>{boxDict[item.boxId]?.boxId || "N/A"}</td>
+                  <td>
+                    {item.location || boxDict[item.boxId]?.location || "N/A"}
+                  </td>
+                  <td>{new Date(item.updatedAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        </>
       )}
     </div>
   );
 };
 
-const Quantity = ({
-  reservation,
-  item,
-  setDict,
-  dict,
-  prev,
-  max,
-  checkCompleteness,
-  refresh,
-}) => {
+const Quantity = ({ reservation, item, setDict, dict, prev, max }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const dropdownRef = useRef(null);
   const [value, setValue] = useState(max);
@@ -384,7 +380,7 @@ const Quantity = ({
 
   const validate = () => {
     if (isNaN(value)) setValue(prev);
-    else setValue(parseInt(value));
+    else setValue(Math.min(parseInt(value), parseInt(max)));
   };
 
   const saveChanges = async () => {
@@ -400,7 +396,7 @@ const Quantity = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          newAmount: value,
+          newAmount: value - parseInt(prev),
         }),
       }
     );
@@ -428,6 +424,7 @@ const Quantity = ({
       setSubmitting(false);
     }
   };
+
 
   return (
     <div ref={dropdownRef}>
@@ -472,7 +469,7 @@ const Status = ({ item }) => {
     <div>
       <div
         className={styles.dropdownButton}
-        style={{ border: "none", width: "fit-content" }}
+        style={{ border: "none", width: "fit-content", cursor: "default" }}
       >
         <div
           style={{

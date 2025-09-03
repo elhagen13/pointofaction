@@ -29,13 +29,16 @@ export default function Reservations() {
   return (
     <div className={styles.page}>
         <h1>Order Requests</h1>
-      <table className={styles.reservationTable}>
+        <div className={styles.tableContainer}>
+
+      <table className={styles.reservationItemTable}>
         <thead>
-          <tr>
-            <th>Order #</th>
+          <tr style={{ backgroundColor: "#c5ced9" }}>
+            <th style={{ padding: "10px" }}>Order #</th>
             <th>Order Title</th>
             <th>Customer Id</th>
             <th>Status</th>
+            <th>SO#/IN#</th>
             <th>Purchase Date</th>
             <th>Last Edited</th>
           </tr>
@@ -43,28 +46,40 @@ export default function Reservations() {
         <tbody>
           {reservations.map((reservation, index) => (
             <tr
-              style={{
-                backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-              }}
+            style={{
+              backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
+            }}
               onClick={() => setReservation(reservation)}
             >
-              <td className={styles.columnItem}>
+              <td style={{ padding: "10px" }}>
                 {reservation.sequentialId.toString().padStart(5, "0")}
               </td>
-              <td className={styles.columnItem}>{reservation.orderTitle}</td>
-              <td className={styles.columnItem}>{reservation.customer}</td>
-              <td className={styles.columnItem}>
-                <div className={styles.status}>
-                  <div
-                    style={{
-                      width: "10px",
-                      height: "10px",
-                      borderRadius: "10px",
-                      backgroundColor: statusColor[reservation.status],
-                    }}
-                  ></div>
-                  {reservation.status}
-                </div>
+              <td>{reservation.orderTitle}</td>
+              <td>{reservation.customer}</td>
+              <td>
+              <div
+                className={styles.dropdownButton}
+                style={{ border: "none", width: "fit-content" }}
+              >
+                <div
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "10px",
+                    cursor:"default",
+                    backgroundColor:
+                      reservation.status === "Incomplete"
+                        ? "#db8e86"
+                        : reservation.status === "Complete"
+                          ? "#aad99e"
+                          : "#e0d28b",
+                  }}
+                />
+                {reservation.status}
+              </div>
+              </td>
+              <td>
+                {reservation.soIn || "N/A"}
               </td>
               <td className={styles.columnItem}>
                 {new Date(reservation.createdAt).toLocaleString()}
@@ -76,6 +91,7 @@ export default function Reservations() {
           ))}
         </tbody>
       </table>
+      </div>
       {reservation !== null && <Reservation onClose={() => setReservation(null)} reservation={reservation}/>}
     </div>
   );
