@@ -59,7 +59,7 @@ export async function PATCH(request, res) {
     }
     
     if (size) {
-      const sizeDoc = await sizes.findOne({ size: size });
+      const sizeDoc = await sizes.findOne({ size: { $regex: size, $options: 'i'} });
       sizeId = sizeDoc?._id;
     }
 
@@ -164,6 +164,8 @@ export async function PATCH(request, res) {
     );
   }
 }
+
+
 
 export async function POST(request) {
   try {

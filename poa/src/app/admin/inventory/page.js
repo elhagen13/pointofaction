@@ -12,7 +12,7 @@ import {
 import { HiCash } from "react-icons/hi";
 
 import AddItem from "./AddItem.js";
-import AddBox from "./AddBox.js";
+import AddBox from "../../components/admin/AddBox.js";
 import EditItem from "./EditItem.js";
 import EditBox from "./EditBox.js";
 import MultiOpen from "./MultiOpen.js";
@@ -121,15 +121,15 @@ function Inventory() {
   useEffect(() => {
     getInventory();
     getItemOptions();
-    if(localStorage.getItem("columns")) setColumns(JSON.parse(localStorage.getItem("columns")))
+    if (localStorage.getItem("columns"))
+      setColumns(JSON.parse(localStorage.getItem("columns")));
   }, []);
 
-  const refresh = async() => {
+  const refresh = async () => {
     await getInventory();
     await getItemOptions();
     await getBoxes();
   };
-
 
   const getItemOptions = async () => {
     let response = await fetch("/api/details/brands", {
@@ -208,14 +208,11 @@ function Inventory() {
     const dict = {};
     boxes.forEach((box) => {
       dict[box._id.toString()] = box;
-      dict[box._id.toString()].items = []
+      dict[box._id.toString()].items = [];
     });
 
-    
     return dict;
   }, [boxes]);
-
- 
 
   // Filter inventory based on page selection and search, then group
   const filteredInventory = useMemo(() => {
@@ -537,7 +534,10 @@ function Inventory() {
     let dict = {};
     for (const item of items) {
       const style = item.style.toLowerCase();
-      const brand = brandDict[item.brandId]?.brand?.toLowerCase() || item.brand?.toLowerCase() || "N/A";
+      const brand =
+        brandDict[item.brandId]?.brand?.toLowerCase() ||
+        item.brand?.toLowerCase() ||
+        "N/A";
       const key = `${style}, ${brand}`;
 
       if (!dict[key]) {
@@ -641,80 +641,79 @@ function Inventory() {
       });
     }
 
-    return groupedItems
-      .sort((a, b) => {
-        const getTextForSort = (group, field) => {
-          const item = group[0];
-          switch (field) {
-            case "description":
-              return item.descriptionId &&
-                descriptionDict[item.descriptionId.toString()]
-                ? descriptionDict[item.descriptionId.toString()].description
-                : item.description || "";
-            case "style":
-              return item.style || "";
-            case "brand":
-              return item.brandId && brandDict[item.brandId.toString()]
-                ? brandDict[item.brandId.toString()].brand
-                : item.brand || "";
-            case "color":
-              return item.color || "";
-            case "size":
-              return item.sizeId && sizeDict[item.sizeId.toString()]
-                ? sizeDict[item.sizeId.toString()].size
-                : item.size || "";
-            case "quantity":
-              return item.quantity || 0;
-            case "box":
-              return boxDict[item.boxId]?.boxId || 0;
-            default:
-              return "";
-          }
-        };
-
-        switch (sortBy) {
+    return groupedItems.sort((a, b) => {
+      const getTextForSort = (group, field) => {
+        const item = group[0];
+        switch (field) {
           case "description":
-            const aDesc = getTextForSort(a, "description").toLowerCase();
-            const bDesc = getTextForSort(b, "description").toLowerCase();
-            return sortOrder
-              ? aDesc.localeCompare(bDesc)
-              : bDesc.localeCompare(aDesc);
+            return item.descriptionId &&
+              descriptionDict[item.descriptionId.toString()]
+              ? descriptionDict[item.descriptionId.toString()].description
+              : item.description || "";
           case "style":
-            const aStyle = getTextForSort(a, "style").toLowerCase();
-            const bStyle = getTextForSort(b, "style").toLowerCase();
-            return sortOrder
-              ? aStyle.localeCompare(bStyle)
-              : bStyle.localeCompare(aStyle);
+            return item.style || "";
           case "brand":
-            const aBrand = getTextForSort(a, "brand").toLowerCase();
-            const bBrand = getTextForSort(b, "brand").toLowerCase();
-            return sortOrder
-              ? aBrand.localeCompare(bBrand)
-              : bBrand.localeCompare(aBrand);
+            return item.brandId && brandDict[item.brandId.toString()]
+              ? brandDict[item.brandId.toString()].brand
+              : item.brand || "";
           case "color":
-            const aColor = getTextForSort(a, "color").toLowerCase();
-            const bColor = getTextForSort(b, "color").toLowerCase();
-            return sortOrder
-              ? aColor.localeCompare(bColor)
-              : bColor.localeCompare(aColor);
+            return item.color || "";
           case "size":
-            const aSize = getTextForSort(a, "size").toLowerCase();
-            const bSize = getTextForSort(b, "size").toLowerCase();
-            return sortOrder
-              ? aSize.localeCompare(bSize)
-              : bSize.localeCompare(aSize);
+            return item.sizeId && sizeDict[item.sizeId.toString()]
+              ? sizeDict[item.sizeId.toString()].size
+              : item.size || "";
           case "quantity":
-            const aQty = getTextForSort(a, "quantity");
-            const bQty = getTextForSort(b, "quantity");
-            return sortOrder ? aQty - bQty : bQty - aQty;
+            return item.quantity || 0;
           case "box":
-            const aBox = getTextForSort(a, "box");
-            const bBox = getTextForSort(b, "box");
-            return sortOrder ? aBox - bBox : bBox - aBox;
+            return boxDict[item.boxId]?.boxId || 0;
           default:
-            return 0; // No sorting
+            return "";
         }
-      })
+      };
+
+      switch (sortBy) {
+        case "description":
+          const aDesc = getTextForSort(a, "description").toLowerCase();
+          const bDesc = getTextForSort(b, "description").toLowerCase();
+          return sortOrder
+            ? aDesc.localeCompare(bDesc)
+            : bDesc.localeCompare(aDesc);
+        case "style":
+          const aStyle = getTextForSort(a, "style").toLowerCase();
+          const bStyle = getTextForSort(b, "style").toLowerCase();
+          return sortOrder
+            ? aStyle.localeCompare(bStyle)
+            : bStyle.localeCompare(aStyle);
+        case "brand":
+          const aBrand = getTextForSort(a, "brand").toLowerCase();
+          const bBrand = getTextForSort(b, "brand").toLowerCase();
+          return sortOrder
+            ? aBrand.localeCompare(bBrand)
+            : bBrand.localeCompare(aBrand);
+        case "color":
+          const aColor = getTextForSort(a, "color").toLowerCase();
+          const bColor = getTextForSort(b, "color").toLowerCase();
+          return sortOrder
+            ? aColor.localeCompare(bColor)
+            : bColor.localeCompare(aColor);
+        case "size":
+          const aSize = getTextForSort(a, "size").toLowerCase();
+          const bSize = getTextForSort(b, "size").toLowerCase();
+          return sortOrder
+            ? aSize.localeCompare(bSize)
+            : bSize.localeCompare(aSize);
+        case "quantity":
+          const aQty = getTextForSort(a, "quantity");
+          const bQty = getTextForSort(b, "quantity");
+          return sortOrder ? aQty - bQty : bQty - aQty;
+        case "box":
+          const aBox = getTextForSort(a, "box");
+          const bBox = getTextForSort(b, "box");
+          return sortOrder ? aBox - bBox : bBox - aBox;
+        default:
+          return 0; // No sorting
+      }
+    });
   }, [
     inventory,
     page,
@@ -1118,33 +1117,45 @@ function Inventory() {
             </div>
           </div>
         )}
-        {filter !== "grouped" && <div style={{width:"100%", position: "relative", display:"flex", }}>
-        <button
-          style={{marginLeft:"auto", marginBottom:"10px", backgroundColor: "white"}}
-          className={styles.pageButton}
-          onClick={() => setColumnManagerOpen(!columnManagerOpen)}
-        >
-          <MdViewColumn style={{ marginRight: "5px" }} />
-          {columnManagerOpen ? "Close Column Manager" : "Manage Columns"}
-        </button>
-        {columnManagerOpen && (
-        <ColumnManager
-          isOpen={columnManagerOpen}
-          onClose={() => setColumnManagerOpen(false)}
-          columns={columns}
-          setColumns={setColumns}
-          viewType={filter === "boxes" ? "boxes" : "lineItems"}
-        />
-      )}
-        </div>}
+        {filter !== "grouped" && (
+          <div style={{ width: "100%", position: "relative", display: "flex" }}>
+            <button
+              style={{
+                marginLeft: "auto",
+                marginBottom: "10px",
+                backgroundColor: "white",
+              }}
+              className={styles.pageButton}
+              onClick={() => setColumnManagerOpen(!columnManagerOpen)}
+            >
+              <MdViewColumn style={{ marginRight: "5px" }} />
+              {columnManagerOpen ? "Close Column Manager" : "Manage Columns"}
+            </button>
+            {columnManagerOpen && (
+              <ColumnManager
+                isOpen={columnManagerOpen}
+                onClose={() => setColumnManagerOpen(false)}
+                columns={columns}
+                setColumns={setColumns}
+                viewType={filter === "boxes" ? "boxes" : "lineItems"}
+              />
+            )}
+          </div>
+        )}
 
         {filter === "grouped" && (
           <>
             <div className={styles.filteredGroupImageGrid}>
               {filteredGroups.map((group, index) => (
-                <div className={styles.group} onClick={() => setGroupedView(index)}>
+                <div
+                  className={styles.group}
+                  onClick={() => setGroupedView(index)}
+                >
                   <div className={styles.groupImageContainer}>
-                    <img src={group[0].image} style={{objectFit:"contain"}}></img>
+                    <img
+                      src={group[0].image}
+                      style={{ objectFit: "contain" }}
+                    ></img>
                   </div>
                   <div style={{ fontWeight: "bold" }}>
                     {brandDict[group[0].brandId]?.brand || group[0].brand}{" "}
@@ -1155,7 +1166,7 @@ function Inventory() {
                       group[0].description}
                   </div>
                   <button
-                   style={{marginTop:"auto"}}
+                    style={{ marginTop: "auto" }}
                     className={styles.groupedViewButton}
                   >
                     <MdLayers />
@@ -1264,7 +1275,10 @@ function Inventory() {
                               style={{ position: "relative" }}
                             >
                               <img
-                                style={{objectFit:"contain", backgroundColor:"white"}}
+                                style={{
+                                  objectFit: "contain",
+                                  backgroundColor: "white",
+                                }}
                                 src={item[0].image}
                                 alt={`Item ${index + 1}`}
                               />

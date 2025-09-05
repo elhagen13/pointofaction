@@ -156,14 +156,6 @@ const Order = ({ reservation }) => {
           ? "Incomplete"
           : "In Progress";
 
-    console.log("Status calculation:", {
-      complete,
-      partial,
-      none,
-      totalItems,
-      newStatus,
-    });
-
     if (newStatus !== status) {
       updateReservation(newStatus);
       setStatus(newStatus);

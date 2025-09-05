@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { FaCheckCircle, FaRegTrashAlt, FaTrash } from "react-icons/fa";
 import {TbShoppingCartCancel} from "react-icons/tb"
 import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+
 
 export default function Cart({
   onClose,
@@ -11,6 +13,8 @@ export default function Cart({
   fullInventory,
   refresh,
 }) {
+
+  const router = useRouter();
   const [cart, setCart] = useState([]);
   const [groupedCart, setGroupedCart] = useState({});
   const [total, setTotal] = useState(0);
@@ -117,16 +121,15 @@ export default function Cart({
   const reserveCart = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-
+    
     const reservationResults = [];
     const failedReservations = [];
-
+    
     try {
-      // Process all cart items
+      // Process all cart items first
       for (const item of cart) {
         try {
           const reservation = await uploadReserve(item);
-
           if (reservation.ok) {
             const data = await reservation.json();
             reservationResults.push({
@@ -149,7 +152,25 @@ export default function Cart({
           });
         }
       }
-      console.log(reservationResults);
+  
+      // Check if there were any failures
+      if (failedReservations.length > 0) {
+        console.error("Failed reservations:", failedReservations);
+        
+        // Show user-friendly error message
+        const errorMessages = failedReservations.map(failure => 
+          `${failure.item.style} (${failure.item.color}): ${failure.error}`
+        ).join('\n');
+        
+        alert(`Cannot complete reservation due to the following errors:\n\n${errorMessages}`);
+        
+        setSubmitting(false);
+        return; // Exit early - don't create reservation
+      }
+  
+      // Only proceed if all items were successfully reserved
+      console.log("All items successfully reserved:", reservationResults);
+      
       let items = [];
       for (const res of reservationResults) {
         for (const item of res.data.reservationDetails) {
@@ -159,7 +180,9 @@ export default function Cart({
           });
         }
       }
-      console.log(items);
+      
+      console.log("Items for final reservation:", items);
+  
       try {
         const completeReservation = await fetch("/api/catalog/reservation", {
           method: "POST",
@@ -175,16 +198,29 @@ export default function Cart({
             customer: user.fullName,
           }),
         });
-      } catch {
-        console.error("Error finalizing reservation:", item, itemError);
-      }
+  
+        if (!completeReservation.ok) {
+          const errorData = await completeReservation.json();
+          throw new Error(errorData.error || `HTTP ${completeReservation.status}`);
+        }
 
-      setSubmitting(false);
-      setCart([]);
-      setGroupedCart({});
-      refresh();
-      saveCartToStorage([]);
-      onClose();
+        const data = await completeReservation.json()
+
+        // Success! Clear cart and close
+        setCart([]);
+        setGroupedCart({});
+        refresh();
+        saveCartToStorage([]);
+        onClose();
+        router.push(`/admin/reservations?id=${data.data._id}`)
+        
+       
+        
+      } catch (finalizeError) {
+        console.error("Error finalizing reservation:", finalizeError);
+        alert("Items were reserved but failed to create final reservation");
+      }
+      
     } catch (error) {
       console.error("Cart reservation error:", error);
       alert("An error occurred while reserving items. Please try again.");
@@ -192,7 +228,7 @@ export default function Cart({
       setSubmitting(false);
     }
   };
-
+  
   const uploadReserve = async (item) => {
     // Validate required fields
     if (
@@ -203,11 +239,11 @@ export default function Cart({
     ) {
       throw new Error("Missing required item fields");
     }
-
+    
     if (item.quantity <= 0) {
       throw new Error("Invalid quantity");
     }
-
+  
     try {
       const result = await fetch("/api/catalog", {
         method: "PATCH",
@@ -222,14 +258,15 @@ export default function Cart({
           quantityToReserve: item.quantity,
         }),
       });
-
+  
       return result;
     } catch (fetchError) {
       console.error("Fetch error:", fetchError);
+      alert("Insufficient inventory: please reload")
       throw new Error(`Network error: ${fetchError.message}`);
     }
   };
-  console.log(Object.entries(groupedCart))
+  console.log(Object.entries)
 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>

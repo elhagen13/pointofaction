@@ -436,7 +436,7 @@ export default function GroupedView({
                       (item) =>
                         (sizeDict[item.sizeId]?.size || item.size) ===
                         selectedSize
-                    )).length
+                    )).length || "N/A"
                   }{" "}
                   boxes with item
                 </div>
@@ -474,6 +474,9 @@ export default function GroupedView({
                           {boxDict[item.boxId]?.location ||
                             item.location ||
                             "N/A"}
+                        </div>
+                        <div>
+                          Quantity: {item.quantity}
                         </div>
                         <div
                           style={{ height: "40px", position: "relative" }}

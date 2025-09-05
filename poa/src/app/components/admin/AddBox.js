@@ -22,15 +22,17 @@ import { useUser } from "@clerk/nextjs";
 import AddOption from "@/app/components/admin/addOptions/AddOption";
 import EditPresets from "@/app/components/admin/editPresets/EditPresets";
 import Overlay from "@/app/components/popups/Overlay";
-import Dropdown from "./Dropdown";
+import Dropdown from "../../admin/inventory/Dropdown";
 
 export default function AddItem({
   onClose,
   refresh,
   options,
-  savedInfo,
-  setSavedInfo,
+  savedInfo = null,
+  setSavedInfo = null,
+  appendToBox = null,
 }) {
+  console.log("hello");
   const [page, setPage] = useState("box");
   const [box, setBox] = useState({});
 
@@ -59,6 +61,7 @@ export default function AddItem({
           unsavedChanges={unsavedChanges}
           popup={popup}
           setPopup={setPopup}
+          appendToBox={appendToBox}
         />
       )}
       {page === "qr" && (
@@ -207,27 +210,28 @@ const AddBox = ({
   setUnsavedChanges,
   popup,
   setPopup,
+  appendToBox,
 }) => {
   const [boxDescription, setBoxDescription] = useState(
-    savedInfo.addBox.boxDescription || ""
+    savedInfo?.addBox?.boxDescription || ""
   );
   const [boxLocation, setBoxLocation] = useState(
-    savedInfo.addBox.boxLocation || ""
+    savedInfo?.addBox?.boxLocation || ""
   );
-  const [contents, setContents] = useState(savedInfo.addBox.contents || []);
+  const [contents, setContents] = useState(savedInfo?.addBox?.contents || []);
   const [imageUrl, setImageUrl] = useState(
-    savedInfo.addBox.imageUrl ||
+    savedInfo?.addBox?.imageUrl ||
       "https://companystores.s3.us-east-1.amazonaws.com/sale-items/corrugated-cube_52a4bb18-a30d-468d-baa7-61b0c7a2f842.jpg.webp"
   );
   const [minimumPrice, setMinimumPrice] = useState(
-    savedInfo.addBox.minimumPrice || 0
+    savedInfo?.addBox?.minimumPrice || 0
   );
   /*admin (always clicked), public inventory, sale*/
   const [visibility, setVisibility] = useState(
-    savedInfo.addBox.visibility || ["admin"]
+    savedInfo?.addBox?.visibility || ["admin"]
   );
   const [boxDiscount, setBoxDiscount] = useState(
-    savedInfo.addBox.boxDiscount || 20
+    savedInfo?.addBox?.boxDiscount || 20
   );
   const [currentItem, setCurrentItem] = useState({
     imageUrl:
@@ -498,22 +502,30 @@ const AddBox = ({
     setSearchDropdownOpen(false);
   };
 
+  useEffect(() => {
+    console.log("Contents", contents);
+  }, [contents]);
+  useEffect(() => {
+    console.log(savedInfo);
+  }, []);
+
   /**
    * Save information the user puts in
    */
   useEffect(() => {
-    setSavedInfo({
-      ...savedInfo,
-      addBox: {
-        boxDescription: boxDescription,
-        boxLocation: boxLocation,
-        contents: contents,
-        imageUrl: imageUrl,
-        visibility: visibility,
-        boxDiscount: boxDiscount,
-        minimumPrice: minimumPrice,
-      },
-    });
+    setSavedInfo &&
+      setSavedInfo({
+        ...savedInfo,
+        addBox: {
+          boxDescription: boxDescription,
+          boxLocation: boxLocation,
+          contents: contents,
+          imageUrl: imageUrl,
+          visibility: visibility,
+          boxDiscount: boxDiscount,
+          minimumPrice: minimumPrice,
+        },
+      });
   }, [
     boxDescription,
     boxLocation,
@@ -792,6 +804,27 @@ const AddBox = ({
       }
     }
 
+    if (appendToBox) {
+      const boxData = {
+        history: [
+          {
+            user: user?.fullName,
+            createdOn: new Date(),
+          },
+        ],
+        imageLink: imageUrl,
+        location: boxLocation,
+        description: boxDescription,
+        ...(visibility.includes("sale") && {
+          discount: boxDiscount,
+          minPrice: minimumPrice,
+        }),
+      };
+      appendToBox(boxData);
+      onClose();
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -926,8 +959,7 @@ const AddBox = ({
             brand: content.brand || null,
             sizeId: content.sizeId || null,
             size: content.size || null,
-            
-            
+
             totalQuant: content.quantity,
             totalReserved: 0,
             items: [
@@ -1172,7 +1204,7 @@ const AddBox = ({
                     >
                       Unit Price
                     </th>
-                    <th></th>
+                    {appendToBox === null && <th></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -1191,18 +1223,21 @@ const AddBox = ({
                         style={{ position: "relative" }}
                       >
                         <img
-                          src={item.imageUrl}
+                          src={item.imageUrl || item.image}
                           alt={`Item ${index + 1}`}
-                          onClick={() => handleThumbnailClick(index)}
+                          onClick={() =>
+                            appendToBox === null && handleThumbnailClick(index)
+                          }
                           style={{
-                            cursor: "pointer",
+                            cursor:
+                              appendToBox === null ? "pointer" : "default",
                             opacity:
                               selectedItemIndex === index && imageUploading
                                 ? 0.5
                                 : 1,
                             transition: "opacity 0.2s",
-                            objectFit:"contain",
-                            backgroundColor:"white"
+                            objectFit: "contain",
+                            backgroundColor: "white",
                           }}
                           title="Click to change image"
                         />
@@ -1354,6 +1389,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1372,6 +1408,7 @@ const AddBox = ({
                             minHeight: "auto",
                             width: "100%",
                           }}
+                          disabled={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1385,6 +1422,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1398,6 +1436,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1416,6 +1455,7 @@ const AddBox = ({
                             minHeight: "auto",
                             width: "100%",
                           }}
+                          disabled={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1437,6 +1477,7 @@ const AddBox = ({
                             minHeight: "auto",
                             width: "100%",
                           }}
+                          disabled={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1466,55 +1507,60 @@ const AddBox = ({
                             minHeight: "auto",
                             width: "100%",
                           }}
+                          disabled={appendToBox !== null}
                         />
                       </td>
-                      <td
-                        style={{
-                          display: "flex",
-                          flexDirection: "row",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          width: "100%",
-                          height: "60px",
-                          gap: "20px",
-                        }}
-                      >
-                        <div
-                          onClick={() => copyItem(index)}
-                          style={{ cursor: "pointer" }}
+                      {appendToBox === null && (
+                        <td
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            width: "100%",
+                            height: "60px",
+                            gap: "20px",
+                          }}
                         >
-                          <FaRegCopy />
-                        </div>
+                          <div
+                            onClick={() => copyItem(index)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <FaRegCopy />
+                          </div>
 
-                        <div
-                          onClick={() => removeItem(index)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <FaRegTrashAlt />
-                        </div>
-                      </td>
+                          <div
+                            onClick={() => removeItem(index)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <FaRegTrashAlt />
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div
-              style={{
-                color: "gray",
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "row",
-                gap: "15px",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              onClick={() => {
-                newItemOpen && cancelNewItem();
-                setNewItemOpen(!newItemOpen);
-              }}
-            >
-              <IoIosAddCircle style={{ color: "green", fontSize: "30px" }} />
-            </div>
+            {appendToBox === null && (
+              <div
+                style={{
+                  color: "gray",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "15px",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onClick={() => {
+                  newItemOpen && cancelNewItem();
+                  setNewItemOpen(!newItemOpen);
+                }}
+              >
+                <IoIosAddCircle style={{ color: "green", fontSize: "30px" }} />
+              </div>
+            )}
             {newItemOpen && (
               <div>
                 <div
@@ -1627,12 +1673,10 @@ const AddBox = ({
                                 cursor: "pointer",
                                 opacity: imageUploading ? 0.5 : 1,
                                 transition: "opacity 0.2s",
-                                objectFit:"contain",
-                                backgroundColor:"white"
-
+                                objectFit: "contain",
+                                backgroundColor: "white",
                               }}
                               title="Click to change image"
-                              
                             />
                             <IoIosRemoveCircle
                               style={{
@@ -1721,6 +1765,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1751,6 +1796,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1764,6 +1810,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1861,8 +1908,8 @@ const AddBox = ({
                                 transition: "opacity 0.2s",
                                 maxWidth: "100px",
                                 maxHeight: "100px",
-                                objectFit:"contain",
-                                backgroundColor:"white"
+                                objectFit: "contain",
+                                backgroundColor: "white",
                               }}
                               title="Click to change image"
                             />
@@ -1956,6 +2003,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </div>
                     </div>
@@ -1995,6 +2043,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </div>
                     </div>
@@ -2015,6 +2064,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          disabledInput={appendToBox !== null}
                         />
                       </div>
                     </div>
@@ -2101,96 +2151,102 @@ const AddBox = ({
             )}
           </div>
 
-          <div>
-            <label style={{ fontWeight: "bold" }}>Visibility</label>
-            <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
+          {appendToBox === null && (
+            <>
               <div>
-                <input
-                  type="radio"
-                  id="radio1"
-                  name="radioGroup"
-                  value="admin"
-                  checked
-                  readOnly
-                />
-                <label htmlFor="radio1" style={{ marginLeft: "5px" }}>
-                  Admin
-                </label>
-                <br />
-              </div>
-              <div>
-                <input
-                  type="checkbox"
-                  id="checkbox1"
-                  name="public"
-                  value="public"
-                  checked={visibility.includes("public")}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setVisibility([...visibility, "public"]);
-                    } else {
-                      setVisibility(
-                        visibility.filter((item) => item !== "public")
-                      );
-                    }
-                  }}
-                />
-                <label htmlFor="checkbox1" style={{ marginLeft: "5px" }}>
-                  Public
-                </label>
-                <br />
+                <label style={{ fontWeight: "bold" }}>Visibility</label>
+                <div
+                  style={{ display: "flex", flexDirection: "row", gap: "20px" }}
+                >
+                  <div>
+                    <input
+                      type="radio"
+                      id="radio1"
+                      name="radioGroup"
+                      value="admin"
+                      checked
+                      readOnly
+                    />
+                    <label htmlFor="radio1" style={{ marginLeft: "5px" }}>
+                      Admin
+                    </label>
+                    <br />
+                  </div>
+                  <div>
+                    <input
+                      type="checkbox"
+                      id="checkbox1"
+                      name="public"
+                      value="public"
+                      checked={visibility.includes("public")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setVisibility([...visibility, "public"]);
+                        } else {
+                          setVisibility(
+                            visibility.filter((item) => item !== "public")
+                          );
+                        }
+                      }}
+                    />
+                    <label htmlFor="checkbox1" style={{ marginLeft: "5px" }}>
+                      Public
+                    </label>
+                    <br />
+                  </div>
+
+                  <div>
+                    <input
+                      type="checkbox"
+                      id="checkbox2"
+                      name="sale"
+                      value="sale"
+                      checked={visibility.includes("sale")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setVisibility([...visibility, "sale"]);
+                        } else {
+                          setVisibility(
+                            visibility.filter((item) => item !== "sale")
+                          );
+                        }
+                      }}
+                    />
+
+                    <label htmlFor="checkbox2" style={{ marginLeft: "5px" }}>
+                      Sale
+                    </label>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <input
-                  type="checkbox"
-                  id="checkbox2"
-                  name="sale"
-                  value="sale"
-                  checked={visibility.includes("sale")}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setVisibility([...visibility, "sale"]);
-                    } else {
-                      setVisibility(
-                        visibility.filter((item) => item !== "sale")
-                      );
-                    }
-                  }}
-                />
-
-                <label htmlFor="checkbox2" style={{ marginLeft: "5px" }}>
-                  Sale
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {visibility.includes("sale") && (
-            <div className={styles.horizontal}>
-              <div className={styles.formInput}>
-                <label>Discount</label>
-                <input
-                  className={styles.input}
-                  onChange={(e) =>
-                    setBoxDiscount(e.target.value.replace(/[^0-9.]/g, ""))
-                  }
-                  value={`${boxDiscount}%`}
-                  required
-                />
-              </div>
-              <div className={styles.formInput}>
-                <label>Minimum Purchase</label>
-                <input
-                  className={styles.input}
-                  onChange={(e) =>
-                    setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
-                  }
-                  value={`${minimumPrice}`}
-                  required
-                />
-              </div>
-            </div>
+              {visibility.includes("sale") && (
+                <div className={styles.horizontal}>
+                  <div className={styles.formInput}>
+                    <label>Discount</label>
+                    <input
+                      className={styles.input}
+                      onChange={(e) =>
+                        setBoxDiscount(e.target.value.replace(/[^0-9.]/g, ""))
+                      }
+                      value={`${boxDiscount}%`}
+                      required
+                    />
+                  </div>
+                  <div className={styles.formInput}>
+                    <label>Minimum Purchase</label>
+                    <input
+                      className={styles.input}
+                      onChange={(e) =>
+                        setMinimumPrice(e.target.value.replace(/[^0-9.]/g, ""))
+                      }
+                      value={`${minimumPrice}`}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {uploadError && <div className={styles.error}>{uploadError}</div>}
@@ -2199,7 +2255,7 @@ const AddBox = ({
             style={{ width: "100%", display: "flex", justifyContent: "end" }}
           >
             <button className={styles.button} onClick={handleSubmitBox}>
-              Upload & Finalize
+              {appendToBox ? "Add To New Box" : "Upload & Finalize"}
             </button>
           </div>
         </form>

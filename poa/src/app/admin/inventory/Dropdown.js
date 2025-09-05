@@ -11,7 +11,8 @@ export default function Dropdown({
   setUnsavedChanges,
   refresh,
   currentItem,
-  setCurrentItem
+  setCurrentItem,
+  disabledInput=false
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -245,6 +246,7 @@ export default function Dropdown({
   return (
     <div ref={dropdownRef} style={{ position: "relative", width:"100%"}}>
       <input
+        disabled={disabledInput}
         style={{width:"100%"}}
         className={styles.input}
         onFocus={() => setIsOpen(true)}

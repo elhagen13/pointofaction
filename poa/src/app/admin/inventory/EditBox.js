@@ -438,7 +438,7 @@ const AddBox = ({
       // Title
       pdf.setFontSize(24);
       pdf.setFont(undefined, "bold");
-      pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
+      pdf.text(`Box ${box?.boxId}`, 2, 1, { align: "center" });
       const maxQrY = pageHeight - qrSize - bottomMargin;
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
