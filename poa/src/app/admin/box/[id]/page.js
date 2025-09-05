@@ -8,6 +8,7 @@ import { CiCirclePlus, CiCircleMinus } from "react-icons/ci";
 
 import styles from "./page.module.css";
 import { useUser } from "@clerk/nextjs";
+import { BeatLoader } from "react-spinners";
 export default function Box() {
   const { id } = useParams();
   const [items, setItems] = useState([]);
@@ -32,6 +33,11 @@ export default function Box() {
   const [movedIndex, setMovedIndex] = useState(null);
 
   const [options, setOptions] = useState({});
+
+  const [editLocation, setEditLocation] = useState(false);
+  const [newLocation, setNewLocation] = useState("")
+
+  const [submitting, setSubmitting] = useState(false)
 
   const { user } = useUser();
 
@@ -158,32 +164,32 @@ export default function Box() {
       editedOn: new Date(),
       changes: [],
     };
-    console.log(items)
+    console.log(items);
 
-    /*
-    for (const item of items) {
-      if (!item.quantity || !parseInt(item.quantity)) {
-        alert("Item quantity not valid");
-        return;
-      }
-    }*/
 
     for (const [index, item] of items.entries()) {
       const changeValue = changes[index] || 0;
       const currentQuantity = item.quantity || 0;
-      const newQuantity = currentQuantity + (negatives[index] ? 1 : -1) * changeValue;
-      
+      const newQuantity =
+        currentQuantity + (negatives[index] ? 1 : -1) * changeValue;
+
       if (newQuantity < 0) {
         alert(`Item ${index + 1} would have negative quantity`);
         return;
       }
     }
 
+    setSubmitting(true)
+
     for (const [index, item] of items.entries()) {
       try {
         const newData = {
           ...item,
-          quantity: Math.max(0, (item.quantity || 0) + (negatives[index] ? 1 : -1) * (changes[index] || 0)),
+          quantity: Math.max(
+            0,
+            (item.quantity || 0) +
+              (negatives[index] ? 1 : -1) * (changes[index] || 0)
+          ),
         };
 
         if (changes[index] && changes[index] !== 0) {
@@ -200,11 +206,17 @@ export default function Box() {
           },
           body: JSON.stringify(newData),
         });
+
+
+       
+
+
       } catch {
         alert("Error encountered while updating quantities, please try again");
         return false;
       }
     }
+ 
     try {
       const boxResponse = await fetch(`/api/inventory/box/${boxId}`, {
         method: "PATCH",
@@ -213,6 +225,7 @@ export default function Box() {
         },
         body: JSON.stringify({
           history: change,
+          ...(editLocation && newLocation !== "" && {location: newLocation.trim()})
         }),
       });
       const data = await boxResponse.json();
@@ -224,6 +237,7 @@ export default function Box() {
       console.log("Box updated successfully:", data.data);
       console.log(change);
     } catch {
+      setSubmitting(false)
       console.error("Error updating box");
       throw new Error("Unknown error updating box");
     }
@@ -233,6 +247,7 @@ export default function Box() {
     setChanges([]);
     setNegatives([]);
     setEdit(false);
+    setSubmitting(false)
   };
 
   const handleFileSelect = (e) => {
@@ -327,12 +342,11 @@ export default function Box() {
 
   const onChanges = (e, index) => {
     const value = e.target.value;
-    const numValue = value === '' ? 0 : parseInt(value) || 0;
+    const numValue = value === "" ? 0 : parseInt(value) || 0;
     const newChanges = [...changes];
     newChanges[index] = numValue;
     setChanges(newChanges);
   };
-  
 
   const onPosNeg = (index) => {
     const newNegatives = [...negatives];
@@ -351,14 +365,35 @@ export default function Box() {
         <div className={styles.scanPage}>
           <h2 className={styles.separateRow}>
             Box #{id} Contents
-            <IoAddCircleOutline
-              fontSize="32px"
-              style={{ marginRight: "15px" }}
-              onClick={() => setAdd(!add)}
-            />
+            <div>
+              <MdEdit
+                fontSize="32px"
+                style={{ marginRight: "15px" }}
+                onClick={() => {setEditLocation(!editLocation); setNewLocation("")}}
+              />
+              <IoAddCircleOutline
+                fontSize="32px"
+                style={{ marginRight: "15px" }}
+                onClick={() => setAdd(!add)}
+              />
+            </div>
           </h2>
-          <div className={styles.saveChanges} onClick={handleChanges}>
-            Save Changes
+          {editLocation && (
+            <input
+              className={styles.numberInput}
+              style={{
+                width: "100%",
+                fontSize: "1rem",
+                textAlign: "left",
+                padding: "10px",
+              }}
+              placeholder="New location... (optional)"
+              value={newLocation}
+              onChange={(e) => setNewLocation(e.target.value)}
+            />
+          )}
+          <div className={styles.saveChanges} onClick={handleChanges} disabled={submitting}>
+            {submitting ? <BeatLoader/> : "Save Changes"}
           </div>
           <div
             style={{ fontWeight: "bold", fontSize: "20px", color: "#c4413f" }}
@@ -428,7 +463,9 @@ export default function Box() {
                   >
                     {item.quantity}
                   </span>{" "}
-                  {changes[index] && changes[index] !== 0 && changes[index] !== ""
+                  {changes[index] &&
+                  changes[index] !== 0 &&
+                  changes[index] !== ""
                     ? item.quantity +
                       (negatives[index] ? 1 : -1) * changes[index]
                     : ""}{" "}
