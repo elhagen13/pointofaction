@@ -158,7 +158,60 @@
     border-radius: 5px;
     
 }
+.paginationType{
+  display: flex;
+  gap: 30px;
+  margin: 20px 10px;
+  font-weight: bold;
+  position: relative;
+}
 
+.filter{
+  z-index: 1;
+  transition: color 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+
+.slider{
+  position: absolute;
+  background-color: blue;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  transform: translate(-10px, -5px);
+  border-radius: 10px;
+  transition: all 0.2s ease-in-out
+}
+
+.input{
+  width: auto;
+  height: 1.t
+}
+
+.save{
+  width: fit-content;
+  border: 2px solid rgb(91, 138, 91);
+  background-color: white;
+  color:rgb(91, 138, 91);
+  font-weight: bold;
+  padding: 5px 10px;
+  margin-top: 10px;
+  margin-left: auto;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  transition: all 0.2 ease-in-out
+}
+
+.save:hover{
+  background-color: rgb(234, 234, 234)
+}
+
+.save:disabled{
+  background-color: rgb(216, 216, 216);
+  border: 2px solid gray;
+  color: gray;
+}
 /**
 Reservation progress bar
 */

@@ -33,9 +33,11 @@ export async function PATCH(request, { params }) {
       const { db } = await connectToDatabase();
       const collection = db.collection(COLLECTION_NAME);
       const inventory = db.collection("inventory")
+      const boxes = db.collection("boxes")
       const { id, itemId } = await params;
   
-      const { newAmount } = await request.json();
+      const { newAmount, history } = await request.json();
+      console.log(history)
   
       // Validate ObjectId format
       if (!ObjectId.isValid(id)) {
@@ -66,6 +68,27 @@ export async function PATCH(request, { params }) {
             reserved: newAmount * -1
           }
         }
+      )
+
+      const historyDoc = {}
+      if(history !== undefined){
+        historyDoc.history = history
+      }
+
+      const box = await inventory.findOne({
+        _id: new ObjectId(itemId)
+      })
+
+      console.log(box)
+
+
+      await boxes.updateOne({
+        _id: new ObjectId(box.boxId)
+      }, 
+      {
+        $push: historyDoc
+      }
+
       )
   
       return Response.json({ success: true, message: 'Reservation updated successfully' });

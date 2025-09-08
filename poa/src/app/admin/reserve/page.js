@@ -4,12 +4,12 @@ import styles from "./reserve.module.css";
 import { FiShoppingBag } from "react-icons/fi";
 import { Fis } from "aws-sdk";
 import SetQuantity from "./SetQuantity";
-import Cart from "./Cart"
-import { IoCart, IoSearch, IoChevronDown,  } from "react-icons/io5";
+import Cart from "./Cart";
+import { IoCart, IoSearch, IoChevronDown } from "react-icons/io5";
 
 function Inventory() {
   const [quantityPopup, setQuantityPopup] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null)
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const [inventory, setInventory] = useState([]);
   const [boxes, setBoxes] = useState([]);
@@ -22,11 +22,11 @@ function Inventory() {
     "style code",
     "brand style",
     "color",
-    "description",    
+    "description",
   ];
   const [selectedSearchOption, setSelectedSearchOption] = useState("all");
 
-  const [cartOpen, setCartOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false);
 
   const [options, setOptions] = useState({});
 
@@ -114,7 +114,6 @@ function Inventory() {
     options.brands.forEach((item) => {
       dict[item._id.toString()] = item;
     });
-    console.log("hmmm");
     return dict;
   }, [options]);
 
@@ -131,7 +130,6 @@ function Inventory() {
     setIsDropdownOpen(false);
   };
 
-
   const filteredInventory = useMemo(() => {
     let items = inventory;
 
@@ -140,7 +138,10 @@ function Inventory() {
     for (const item of items) {
       const style = item.style.toLowerCase();
       const color = item.color.toLowerCase();
-      const brand = item.brand?.toLowerCase() || brandDict[item.brandId]?.brand.toLowerCase() || "N/A"
+      const brand =
+        item.brand?.toLowerCase() ||
+        brandDict[item.brandId]?.brand.toLowerCase() ||
+        "N/A";
       const key = `${style}, ${color}, ${brand}`;
 
       if (!dict[key]) {
@@ -234,7 +235,19 @@ function Inventory() {
     descriptionDict,
   ]);
 
+  const getCartFromStorage = () => {
+    try {
+      const cartData = localStorage.getItem("cart");
+      if (!cartData) return [];
 
+      const parsed = JSON.parse(cartData);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn("Invalid cart data in localStorage, resetting cart:", error);
+      localStorage.removeItem("cart");
+      return [];
+    }
+  };
 
   const getInventory = async () => {
     const response = await fetch("/api/inventory/item", {
@@ -248,8 +261,14 @@ function Inventory() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <div style={{display:"flex", justifyContent:"space-between", marginBottom:"10px"}}>
-      <div className={styles.searchContainer} ref={dropdownRef}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: "10px",
+        }}
+      >
+        <div className={styles.searchContainer} ref={dropdownRef}>
           <IoSearch className={styles.search} />
           <input
             className={styles.searchInput}
@@ -283,18 +302,48 @@ function Inventory() {
             </div>
           )}
         </div>
-        <IoCart onClick={() => setCartOpen(true)} style={{fontSize:"40px", color:"#2563EB", cursor:"pointer"}}/>
+        <div style={{ position: "relative" }}>
+          <div
+            style={{
+              position: "absolute",
+              right: "-5px",
+              top: "-5px",
+              backgroundColor: "white",
+              color: "#2563EB",
+              border: "2px solid #2563EB",
+              aspectRatio: "1 / 1",
+              minWidth: "25px",
+              minHeight: "25px",
+              borderRadius: "100px",
+              display:"flex",
+              justifyContent:"center",
+              alignItems:"center",
+              fontWeight:"bold"
+            }}
+          >
+            {getCartFromStorage().length}
+          </div>
+          <IoCart
+            onClick={() => setCartOpen(true)}
+            style={{ fontSize: "40px", color: "#2563EB", cursor: "pointer" }}
+          />
+        </div>
       </div>
       <div className={styles.productGrid}>
         {filteredInventory.map((grouping, index) => {
           const representative = grouping[0];
           return (
-            <div key={index} className={styles.productCard} onClick={() => setSelectedItem(grouping)}>
-              <div style={{width:"100%", backgroundColor:"white"}}><img
-                style={{objectFit:"contain"}}
-                src={representative.image}
-                className={styles.productImage}
-              ></img>
+            <div
+              key={index}
+              className={styles.productCard}
+              onClick={() => setSelectedItem(grouping)}
+            >
+              <div style={{ width: "100%", backgroundColor: "white" }}>
+                <img
+                  style={{ objectFit: "contain" }}
+                  src={representative.image}
+                  className={styles.productImage}
+                ></img>
               </div>
               <div className={styles.productCardDescription}>
                 <div>Style #: {representative.style}</div>
@@ -311,18 +360,42 @@ function Inventory() {
                     descriptionDict[representative.descriptionId]?.description}
                 </div>
               </div>
-              <div style={{width:"100%", display:"flex", justifyContent:"end", padding:"20px", paddingTop: "0"}}>
+              <div
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "end",
+                  padding: "20px",
+                  paddingTop: "0",
+                }}
+              >
                 <div className={styles.shoppingButton}>
-                    <FiShoppingBag/>
-                    Add
+                  <FiShoppingBag />
+                  Add
                 </div>
               </div>
             </div>
           );
         })}
       </div>
-      {selectedItem && <SetQuantity onClose={() => setSelectedItem(null)} items={selectedItem} sizeDict={sizeDict} brandDict={brandDict} descriptionDict={descriptionDict}/>}
-      {cartOpen && <Cart onClose={() => setCartOpen(false)} brandDict={brandDict} descriptionDict={descriptionDict} fullInventory={inventory} refresh={getInventory}/>}
+      {selectedItem && (
+        <SetQuantity
+          onClose={() => setSelectedItem(null)}
+          items={selectedItem}
+          sizeDict={sizeDict}
+          brandDict={brandDict}
+          descriptionDict={descriptionDict}
+        />
+      )}
+      {cartOpen && (
+        <Cart
+          onClose={() => setCartOpen(false)}
+          brandDict={brandDict}
+          descriptionDict={descriptionDict}
+          fullInventory={inventory}
+          refresh={getInventory}
+        />
+      )}
     </div>
   );
 }

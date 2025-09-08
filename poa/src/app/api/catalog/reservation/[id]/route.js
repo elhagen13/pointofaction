@@ -2,7 +2,7 @@ import { MongoClient, ObjectId } from "mongodb";
 
 // MongoDB connection string - replace with your actual connection string
 const MONGODB_URI = process.env.MONGO_URI;
-const DATABASE_NAME = "testing";
+const DATABASE_NAME = "test";
 const COLLECTION_NAME = "reservations";
 
 let cachedClient = null;
@@ -80,7 +80,7 @@ export async function PATCH(request, { params }) {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
     const { id } = await params;
-    const { reservationDetails, status } = await request.json();
+    const { reservationDetails, status, soIn, orderTitle } = await request.json();
 
     // Validate ObjectId format
     if (!ObjectId.isValid(id)) {
@@ -90,14 +90,16 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    if (status) {
+    if (status || soIn || orderTitle) {
       const updateExisting = await collection.updateOne(
         {
           _id: new ObjectId(id),
         },
         {
           $set: {
-            status: status,
+            ...(status && { status: status }),
+            ...(soIn && { soIn: soIn }),
+            ...(orderTitle && { orderTitle: orderTitle }),
           },
         }
       );

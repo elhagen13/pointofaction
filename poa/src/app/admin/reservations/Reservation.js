@@ -1,12 +1,13 @@
 "use client";
 import Overlay from "@/app/components/popups/Overlay";
-import styles from "./reservaton.module.css";
+import styles from "./reservation.module.css";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { BeatLoader } from "react-spinners";
 import { IoIosCheckmarkCircleOutline } from "react-icons/io";
 import ProgressBar from "./ProgressBar";
 import { FiEdit } from "react-icons/fi";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 
 export default function Reservation({ onClose, reservation }) {
   {
@@ -27,6 +28,13 @@ const Order = ({ reservation }) => {
   const [reservationDict, setReservationDict] = useState({});
   const [options, setOptions] = useState({});
   const [boxes, setBoxes] = useState([]);
+
+  const [originalOrderTitle, setOriginalOrderTitle] = useState(reservation.orderTitle || "");
+  const [originalSoIn, setOriginalSoIn] = useState(reservation.soIn || "");
+  const [orderTitle, setOrderTitle] = useState(reservation.orderTitle || "");
+  const [soIn, setSoIn] = useState(reservation.soIn || "");
+  const [submitting, setSubmitting] = useState(false)
+
 
   useEffect(() => {
     checkCompleteness();
@@ -49,6 +57,8 @@ const Order = ({ reservation }) => {
       dict[item._id]["id"] = item._id;
     }
   }, [reservationItems]);
+
+
 
   const refresh = () => {
     getReservation();
@@ -181,6 +191,32 @@ const Order = ({ reservation }) => {
     });
   };
 
+  const editReservation = async () => {
+    setSubmitting(true)
+    const result = await fetch(`/api/catalog/reservation/${reservation._id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        soIn: soIn,
+        orderTitle: orderTitle
+      }),
+    });
+    console.log(result)
+
+
+    if(result.ok){
+      setOriginalOrderTitle(orderTitle);
+      setOriginalSoIn(soIn);
+    }
+    else{
+      alert("Error updating fields")
+    }
+    setSubmitting(false)
+  };
+
+
   const fetchReservationItems = async () => {
     const result = await fetch("/api/catalog", {
       method: "POST",
@@ -227,7 +263,7 @@ const Order = ({ reservation }) => {
               <td style={{ padding: "10px" }}>
                 {reservation.sequentialId?.toString().padStart(5, "0")}
               </td>
-              <td>{reservation.orderTitle || "N/A"}</td>
+              <td><input className={styles.dropdownButton} value={orderTitle} onChange={(e) => setOrderTitle(e.target.value)}/></td>
               <td>{reservation.customer}</td>
               <td>
                 <div
@@ -251,12 +287,15 @@ const Order = ({ reservation }) => {
                   {checkCompleteness()[0]}
                 </div>
               </td>
-              <td>{reservation.soIn || "N/A"}</td>
+              <td><input className={styles.dropdownButton} value={soIn} onChange={(e) => setSoIn(e.target.value)}/></td>
               <td>{new Date(reservation.createdAt).toLocaleString()}</td>
               <td>{new Date(reservation.updatedAt).toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
+        {(soIn !== originalSoIn || orderTitle !== originalOrderTitle) && 
+        <button className={styles.save} disabled={submitting} onClick={editReservation}>{submitting ? <BeatLoader size={7}/> : "Save Changes"}
+          </button>}
       </div>
 
       {loading && (
@@ -267,7 +306,7 @@ const Order = ({ reservation }) => {
           <BeatLoader />
         </div>
       )}
-      {!loading && (
+      {!loading &&  (
         <>
         <div className={styles.edit}>
           <Link href={`/admin/reservations/${reservation._id}`}> 
@@ -312,10 +351,11 @@ const Order = ({ reservation }) => {
                     <Quantity
                       reservation={reservation}
                       item={reservationDict[item._id]}
+                      itemStr={`${brandDict[item.brandId]?.brand || item.brand || "No Brand"} ${item.color} ${sizeDict[item.sizeId]?.size || item.size || "No Size"} ${item.style}`}
                       setDict={setReservationDict}
                       dict={reservationDict}
                       prev={reservationDict[item._id].pulled}
-                      max={reservationDict[item._id].quantReserved}
+                      max={reservationDict[item._id].quantReserved - reservationDict[item._id].pulled}
                       checkCompleteness={checkCompleteness}
                       refresh={refresh}
                     />
@@ -348,11 +388,12 @@ const Order = ({ reservation }) => {
   );
 };
 
-const Quantity = ({ reservation, item, setDict, dict, prev, max }) => {
+const Quantity = ({ reservation, item, itemStr, setDict, dict, prev, max }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const dropdownRef = useRef(null);
   const [value, setValue] = useState(max);
   const [submitting, setSubmitting] = useState(false);
+  const {user} = useUser();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -380,6 +421,12 @@ const Quantity = ({ reservation, item, setDict, dict, prev, max }) => {
     validate();
     console.log(item);
 
+    let change = {
+      user: user.fullName,
+      editedOn: new Date(),
+      changes: [`${value} ${itemStr} pulled for reservation ${reservation.sequentialId}`],
+    };
+
     const result = await fetch(
       `/api/catalog/reservation/${reservation._id}/${item.id}`,
       {
@@ -388,7 +435,8 @@ const Quantity = ({ reservation, item, setDict, dict, prev, max }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          newAmount: value - parseInt(prev),
+          newAmount: value,
+          history: change
         }),
       }
     );
@@ -402,7 +450,7 @@ const Quantity = ({ reservation, item, setDict, dict, prev, max }) => {
           ...prevDict,
           [item.id]: {
             ...prevDict[item.id],
-            pulled: value,
+            pulled: value + prev,
           },
         };
 
