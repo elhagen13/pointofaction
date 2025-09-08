@@ -27,12 +27,15 @@ function Inventory() {
   const [selectedSearchOption, setSelectedSearchOption] = useState("all");
 
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0); // Add state for cart count
 
   const [options, setOptions] = useState({});
 
   useEffect(() => {
     getInventory();
     getItemOptions();
+    // Initialize cart count after component mounts
+    updateCartCount();
   }, []);
 
   const getItemOptions = async () => {
@@ -235,7 +238,13 @@ function Inventory() {
     descriptionDict,
   ]);
 
+  // Safe localStorage access with proper error handling
   const getCartFromStorage = () => {
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') {
+      return [];
+    }
+
     try {
       const cartData = localStorage.getItem("cart");
       if (!cartData) return [];
@@ -244,10 +253,34 @@ function Inventory() {
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
       console.warn("Invalid cart data in localStorage, resetting cart:", error);
-      localStorage.removeItem("cart");
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem("cart");
+      }
       return [];
     }
   };
+
+  // Function to update cart count
+  const updateCartCount = () => {
+    if (typeof window !== 'undefined') {
+      const cart = getCartFromStorage();
+      setCartCount(cart.length);
+    }
+  };
+
+  // Listen for storage changes to update cart count
+  useEffect(() => {
+    const handleStorageChange = () => {
+      updateCartCount();
+    };
+
+    // Listen for custom cart update events
+    window.addEventListener('cartUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('cartUpdated', handleStorageChange);
+    };
+  }, []);
 
   const getInventory = async () => {
     const response = await fetch("/api/inventory/item", {
@@ -321,10 +354,13 @@ function Inventory() {
               fontWeight:"bold"
             }}
           >
-            {getCartFromStorage().length}
+            {cartCount}
           </div>
           <IoCart
-            onClick={() => setCartOpen(true)}
+            onClick={() => {
+              setCartOpen(true);
+              updateCartCount(); // Update count when opening cart
+            }}
             style={{ fontSize: "40px", color: "#2563EB", cursor: "pointer" }}
           />
         </div>
@@ -385,15 +421,20 @@ function Inventory() {
           sizeDict={sizeDict}
           brandDict={brandDict}
           descriptionDict={descriptionDict}
+          onCartUpdate={updateCartCount} // Pass update function to child
         />
       )}
       {cartOpen && (
         <Cart
-          onClose={() => setCartOpen(false)}
+          onClose={() => {
+            setCartOpen(false);
+            updateCartCount(); // Update count when closing cart
+          }}
           brandDict={brandDict}
           descriptionDict={descriptionDict}
           fullInventory={inventory}
           refresh={getInventory}
+          onCartUpdate={updateCartCount} // Pass update function to child
         />
       )}
     </div>

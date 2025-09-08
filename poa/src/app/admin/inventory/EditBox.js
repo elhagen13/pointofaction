@@ -191,11 +191,15 @@ const AddBox = ({
    */
   const handleKeyDown = useCallback(
     (event) => {
+      if ((event.metaKey || event.shiftKey) && event.code === 'KeyQ') {
+        downloadBoxPDF();
+    }  
+
       if (event.key === "Enter") {
-        if (popup === "unsaved") {
-          handleSubmitBox();
-        } else if (popup === "success") {
+        if (popup === "success") {
           onClose();
+        } else{
+          handleSubmitBox();
         }
       }
 
@@ -289,6 +293,17 @@ const AddBox = ({
       const matchingItems = result.data.filter(
         (item) => item.boxId === box._id
       );
+
+      const newItems = [];
+      if (matchingItems.every((item) => item.public)) {
+        newItems.push("public");
+      }
+      if (matchingItems.every((item) => item.sale)) {
+        newItems.push("sale");
+      }
+
+      setVisibility([...visibility, ...newItems]);
+
       setContents(matchingItems);
       setOriginalContents(matchingItems);
 
@@ -658,7 +673,6 @@ const AddBox = ({
       throw new Error(data.error || "Unknown error deleting item");
     }
 
-    
     console.log("Item deleted successfully:", data.data);
     console.log("Message:", data.message);
     return data;
@@ -716,6 +730,7 @@ const AddBox = ({
       alert("Please fill in all fields and upload an image");
       return;
     }
+    console.log(contents)
     for (const item of contents) {
       if (
         (!item.description && !item.descriptionId) ||
@@ -951,6 +966,21 @@ const AddBox = ({
       console.log("Box updated successfully:", data.data);
       console.log(change);
       const boxId = data.data._id;
+
+      const changeVisibility = await fetch(
+        `/api/inventory/box/${box._id}/items`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sale: visibility.includes("sale"),
+            pub: visibility.includes("public"),
+          }),
+        }
+      );
+
       for (const content of contents) {
         try {
           //STEP 1: if it is taken out of the box, then change
@@ -1008,7 +1038,6 @@ const AddBox = ({
               }
               console.log("continue");
             }
-
           }
         } catch (error) {
           console.error(`Error processing item:`, error);
@@ -1160,7 +1189,6 @@ const AddBox = ({
         },
       ],
     };
-    
   };
 
   const generateDescription = (e) => {
@@ -1454,7 +1482,7 @@ const AddBox = ({
                   src={imageUrl}
                   alt="Uploaded"
                   className={styles.previewImage}
-                  style={{objectFit:"contain"}}
+                  style={{ objectFit: "contain" }}
                 />
                 <button
                   type="button"
@@ -1570,7 +1598,7 @@ const AddBox = ({
                                 : 1,
                             transition: "opacity 0.2s",
                             objectFit: "contain",
-                            backgroundColor:"white"
+                            backgroundColor: "white",
                           }}
                           title="Click to change image"
                         />
@@ -2056,6 +2084,7 @@ const AddBox = ({
                         filteredCombos.map((option, index) => (
                           <div
                             key={index}
+                            style={{display:"flex", alignItems:"center", gap:"10px"}}
                             className={`${styles.dropdownItem}`}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -2063,6 +2092,9 @@ const AddBox = ({
                             }}
                             data-dropdown
                           >
+                            <div style={{width:"30px", height:"30px", overflow:"hidden"}}>
+                            <img style={{width:"100%", height:"100%", objectFit:"contain"}}src={option.image}/>
+                            </div>
                             {getCommonDescription(option)}
                           </div>
                         ))
@@ -2130,7 +2162,7 @@ const AddBox = ({
                                 cursor: "pointer",
                                 opacity: imageUploading ? 0.5 : 1,
                                 transition: "opacity 0.2s",
-                                backgroundColor:"white"
+                                backgroundColor: "white",
                               }}
                               title="Click to change image"
                             />
@@ -2665,7 +2697,7 @@ const AddBox = ({
             </div>
           </div>
           {visibility.includes("sale") && (
-            <div className={styles.horizontal}>
+            <div className={styles.horizontal} style={{zIndex: 0}}>
               <div className={styles.formInput}>
                 <label>Discount</label>
                 <input

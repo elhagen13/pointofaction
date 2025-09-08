@@ -1599,6 +1599,7 @@ const AddBox = ({
                         filteredCombos.map((option, index) => (
                           <div
                             key={index}
+                            style={{display:"flex", alignItems:"center", gap:"10px"}}
                             className={`${styles.dropdownItem}`}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1606,6 +1607,9 @@ const AddBox = ({
                             }}
                             data-dropdown
                           >
+                            <div style={{width:"30px", height:"30px", overflow:"hidden"}}>
+                            <img style={{width:"100%", height:"100%", objectFit:"contain"}}src={option.image}/>
+                            </div>
                             {getCommonDescription(option)}
                           </div>
                         ))
@@ -2221,7 +2225,7 @@ const AddBox = ({
               </div>
 
               {visibility.includes("sale") && (
-                <div className={styles.horizontal}>
+                <div className={styles.horizontal} style={{zIndex: 0}}>
                   <div className={styles.formInput}>
                     <label>Discount</label>
                     <input

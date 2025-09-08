@@ -8,6 +8,7 @@ import AddVendorItem from "./addVendor";
 import AddOverstock from "./addInventory"
 import AddReservation from "./addReservation"
 import EditSale from "./editSale.js"
+import EditEmails from "./editEmails"
 import Calendar from "../components/Calendar";
 
 function Admin() {
@@ -186,6 +187,7 @@ function Admin() {
         </div>
       )}
       <EditSale/>
+      <EditEmails/>
       <AddCompanyStore />
       <AddGalleryItem/>
       <AddVendorItem/>

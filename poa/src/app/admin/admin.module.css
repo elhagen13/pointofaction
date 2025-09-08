@@ -542,6 +542,84 @@ input:checked + .slider:before {
   font-weight: normal;
 }
 
+.options{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.formOptionsContainer{
+  box-shadow: 0 0 2px 2px rgb(227, 227, 227);
+  border-radius: 10px;
+  padding: 20px;
+}
+.formOptions{
+  
+  font-size: 1.25rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+}
+
+.chevron{
+  transition: all 0.2s ease-in-out
+}
+.rotated{
+  transform: rotate(180deg)
+}
+
+.recipients{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipient{
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.emailTrash:hover,.optionAdd:hover{
+  color: rgb(206, 21, 21);
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+.optionAdd{
+  color: gray;
+}
+
+
+
+.save{
+  width: fit-content;
+  border: 2px solid rgb(91, 138, 91);
+  background-color: white;
+  color:rgb(91, 138, 91);
+  font-weight: bold;
+  padding: 5px 10px;
+  margin-top: 10px;
+  margin-left: auto;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  transition: all 0.2 ease-in-out
+}
+
+.save:hover{
+  background-color: rgb(234, 234, 234)
+}
+
+.save:disabled{
+  background-color: rgb(216, 216, 216);
+  border: 2px solid gray;
+  color: gray;
+}
+
+
+
 /* Responsive breakpoints */
 @media (max-width: 768px) {
   .admin {

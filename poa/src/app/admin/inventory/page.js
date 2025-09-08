@@ -1510,16 +1510,16 @@ function Inventory() {
                           >
                             {contentDict[box._id] ? (
                               contentDict[box._id][0].public ? (
-                                <MdPublic color="green" />
+                                <MdPublic color="green" title="Public"/>
                               ) : (
-                                <MdOutlinePublicOff color="red" />
+                                <MdOutlinePublicOff color="red" title="Admin Only"/>
                               )
                             ) : (
-                              <MdOutlinePublicOff color="red" />
+                              <MdOutlinePublicOff color="red" title="Admin Only"/>
                             )}
                             {contentDict[box._id] ? (
                               contentDict[box._id][0].sale ? (
-                                <HiCash color="blue" />
+                                <HiCash color="blue" title="On Sale"/>
                               ) : null
                             ) : null}
                           </td>
