@@ -1,8 +1,118 @@
-// src/app/api/resend/route.js
-import { Resend } from "resend";
+// src/app/api/email/route.js
+import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
+import { MongoClient } from 'mongodb';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create transporter (configure for your email provider)
+const transporter = nodemailer.createTransport({
+  // For Gmail
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER, // your gmail address
+    pass: process.env.EMAIL_PASS  // your app password
+  }
+  
+  // For other SMTP providers, use:
+  // host: process.env.SMTP_HOST,
+  // port: process.env.SMTP_PORT,
+  // secure: process.env.SMTP_SECURE === 'true',
+  // auth: {
+  //   user: process.env.SMTP_USER,
+  //   pass: process.env.SMTP_PASS
+  // }
+});
+
+
+// MongoDB connection string - replace with your actual connection string
+const MONGODB_URI = process.env.MONGO_URI;
+const DATABASE_NAME = 'test';
+const COLLECTION_NAME = 'emails';
+
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  try {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    const db = client.db(DATABASE_NAME);
+
+    cachedClient = client;
+    cachedDb = db;
+
+    return { client, db };
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    throw error;
+  }
+}
+
+
+export async function GET(request){
+  try {
+    const { db } = await connectToDatabase();
+    const collection = db.collection(COLLECTION_NAME);
+    
+    // Exeute query
+    const permissions = await collection
+    .find({})
+    .toArray();
+
+    return Response.json({
+      success: true,
+      data: permissions,
+    });
+    
+  } catch (error) {
+    console.error('GET error:', error);
+    return Response.json(
+      { 
+        success: false, 
+        error: 'Failed to fetch eamil permissions',
+        details: error.message 
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request, { params }) {
+  try {
+    const { db } = await connectToDatabase();
+    const collection = db.collection(COLLECTION_NAME);
+    const {type, recipients} = await request.json();
+    console.log(type, recipients)
+    collection.findOneAndUpdate({
+      type: type,
+    }, {
+      $set: {
+        recipients: recipients
+      }
+    })
+    
+    return Response.json({
+      success: true,
+      message: 'Box updated successfully'
+    });
+    
+  } catch (error) {
+    console.error('PATCH error:', error);
+    
+    return Response.json(
+      {
+        success: false,
+        error: 'Failed to update email',
+        details: error.message
+      },
+      { status: 500 }
+    );
+  }
+}
+
 
 export async function POST(request) {
   try {
@@ -13,20 +123,26 @@ export async function POST(request) {
 
     console.log("Form type received:", formType);
 
-    let emailData;
+    const { db } = await connectToDatabase();
+    const collection = db.collection(COLLECTION_NAME);
 
+    const newForm = formType.split("-").map(word => [...word][0].toUpperCase() + [...word].slice(1).join("")).join(" ");
+    console.log(newForm)
+    const data = await collection.findOne({type: newForm})
+   
+    let emailData;
     switch (formType) {
       case "product-request":
-        emailData = await handleProductRequest(formData);
+        emailData = await handleProductRequest(formData, data.recipients);
         break;
       case "store-request":
-        emailData = await handleStoreRequest(formData);
+        emailData = await handleStoreRequest(formData, data.recipients);
         break;
       case "notification-request":
-        emailData = await handleNotificationRequest(formData);
+        emailData = await handleNotificationRequest(formData, data.recipients);
         break;
-      case "product-purchase":
-        emailData = await handleProductPurchase(formData)
+      case "product-reservation":
+        emailData = await handleProductPurchase(formData, data.recipients);
         break;
       default:
         return NextResponse.json(
@@ -35,7 +151,7 @@ export async function POST(request) {
         );
     }
 
-    const emailResponse = await resend.emails.send(emailData);
+    const emailResponse = await transporter.sendMail(emailData);
     return NextResponse.json({ success: true, data: emailResponse });
   } catch (error) {
     console.error("Email sending error:", error);
@@ -49,7 +165,7 @@ export async function POST(request) {
   }
 }
 
-async function handleProductRequest(formData) {
+async function handleProductRequest(formData, recipients) {
   const email = formData.get("email");
   const firstName = formData.get("firstName");
   const lastName = formData.get("lastName");
@@ -62,8 +178,9 @@ async function handleProductRequest(formData) {
   const imageFile = formData.get("image");
 
   const emailData = {
-    from: "onboarding@resend.dev",
-    to: ["austin@pointofaction.com"],
+    from: process.env.EMAIL_USER, // Changed from resend sender
+    to: recipients,
+    replyTo: email, // Allow replying to the sender
     subject: `Add Product Request - ${company}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -116,7 +233,7 @@ async function handleProductRequest(formData) {
 }
 
 // Contact Form Handler
-async function handleStoreRequest(formData) {
+async function handleStoreRequest(formData, recipients) {
   const email = formData.get("email");
   const firstName = formData.get("firstName");
   const lastName = formData.get("lastName");
@@ -125,8 +242,9 @@ async function handleStoreRequest(formData) {
   const additionalInfo = formData.get("additionalInfo");
 
   return {
-    from: "onboarding@resend.dev",
-    to: ["austin@pointofaction.com"],
+    from: process.env.EMAIL_USER,
+    to: recipients,
+    replyTo: email,
     subject: `Store Request: ${company}`,
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -159,7 +277,7 @@ async function handleStoreRequest(formData) {
 }
 
 // Support Ticket Handler
-async function handleNotificationRequest(formData) {
+async function handleNotificationRequest(formData, recipients) {
   const email = formData.get("email");
   const firstName = formData.get("firstName");
   const lastName = formData.get("lastName");
@@ -167,9 +285,10 @@ async function handleNotificationRequest(formData) {
   const choice = formData.get("choice");
 
   return {
-    from: "onboarding@resend.dev",
-    to: ["austin@pointofaction.com"],
-    subject:  `Notification Request: ${firstName} ${lastName}`,
+    from: process.env.EMAIL_USER,
+    to: recipients,
+    replyTo: email,
+    subject: `Notification Request: ${firstName} ${lastName}`,
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
@@ -198,10 +317,8 @@ async function handleNotificationRequest(formData) {
   };
 }
 
-
-async function handleProductPurchase(formData) {
-
-  console.log(formData)
+async function handleProductPurchase(formData, recipients) {
+  console.log(formData);
   const name = formData.get("name");
   const email = formData.get("email");
   const phone = formData.get("phone");
@@ -211,11 +328,13 @@ async function handleProductPurchase(formData) {
   const total = formData.get("total");
   const shipping = formData.get("shipping");
   const shippingAddress = formData.get("shippingAddress");
-  console.log(shippingAddress)
+  console.log(shippingAddress);
+  
   return {
-    from: "onboarding@resend.dev",
-    to: ["austin@pointofaction.com"],
-    subject:  `Overflow Item Purchased: ${name}`,
+    from: process.env.EMAIL_USER,
+    to: recipients,
+    replyTo: email,
+    subject: `Overflow Item Purchased: ${name}`,
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
