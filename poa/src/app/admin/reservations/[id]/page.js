@@ -136,15 +136,31 @@ export default function Reservation({ params }) {
     let cartList = [];
     console.log(reservation, contentDict);
     for (const item of reservation.items) {
-      cartList.push({
+      if(contentDict[item.itemId]){
+        cartList.push({
         ...contentDict[item.itemId],
         inOrder: item.quantReserved || 0,
         pulledAlready: item.pulled || 0,
-      });
+      })
+    }
+    
+      else{
+        cartList.push({
+          image: item.image,
+          brand: item.brand,
+          style: item.style,
+          description: item.description,
+          size: item.size,
+          inOrder: item.quantReserved || 0,
+          pulledAlready: item.pulled || 0,
+        })
+      }
+      
     }
     console.log("Cart List", cartList);
 
     let cartDict = {};
+  
 
     for (const item of cartList) {
       let brand =
@@ -215,6 +231,7 @@ export default function Reservation({ params }) {
         cartDict[key].sizes[size].reserved += item.reserved;
       }
     }
+    console.log("CARTDICT", cartDict)
     setItems(Object.values(cartDict));
   }, [
     inventory,

@@ -359,7 +359,7 @@ function Inventory() {
           <IoCart
             onClick={() => {
               setCartOpen(true);
-              updateCartCount(); // Update count when opening cart
+              updateCartCount();
             }}
             style={{ fontSize: "40px", color: "#2563EB", cursor: "pointer" }}
           />
@@ -432,6 +432,7 @@ function Inventory() {
           }}
           brandDict={brandDict}
           descriptionDict={descriptionDict}
+          sizeDict={sizeDict}
           fullInventory={inventory}
           refresh={getInventory}
           onCartUpdate={updateCartCount} // Pass update function to child

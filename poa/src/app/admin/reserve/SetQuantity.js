@@ -8,6 +8,7 @@ export default function SetQuantity({
   sizeDict,
   brandDict,
   descriptionDict,
+  onCartUpdate
 }) {
   const [sizes, setSizes] = useState([]);
   const [orderQuant, setOrderQuant] = useState([]);
@@ -78,7 +79,7 @@ export default function SetQuantity({
     // Remove existing items that match
     for (const item of prevCart) {
       if (item.style === items[0].style && 
-          item.description === currentDescription && // Fixed: was comparing style === description
+          item.description === currentDescription && 
           item.brand === currentBrand &&
           item.color === items[0].color) {
         continue;
@@ -88,7 +89,7 @@ export default function SetQuantity({
 
     const finalCart = curCart.concat(addedItems);
     saveCartToStorage(finalCart);
-
+    onCartUpdate()
     onClose();
   };
 

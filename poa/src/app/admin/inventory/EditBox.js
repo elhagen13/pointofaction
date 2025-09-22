@@ -151,6 +151,24 @@ const AddBox = ({
   const dropdownRef = useRef(null);
   const [searchValue, setSearchValue] = useState("");
 
+  const [anyDropdownOpen, setAnyDropdownOpen] = useState(false);
+  const [openDropdownCount, setOpenDropdownCount] = useState(0);
+
+  const contentsRef = useRef(contents);
+
+
+  const handleDropdownStateChange = useCallback((isOpen) => {
+    setOpenDropdownCount(prev => {
+      const newCount = isOpen ? prev + 1 : Math.max(0, prev - 1);
+      setAnyDropdownOpen(newCount > 0);
+      return newCount;
+    });
+  }, []);
+
+  useEffect(() => {
+  contentsRef.current = contents;
+}, [contents]);
+
   const checkCurrent = useCallback(() => {
     // Check if user has entered any meaningful data for the current item
     const hasData =
@@ -193,12 +211,18 @@ const AddBox = ({
     (event) => {
       if ((event.metaKey || event.shiftKey) && event.code === 'KeyQ') {
         downloadBoxPDF();
-    }  
+      }
 
       if (event.key === "Enter") {
+        // Check if any dropdown is currently open
+        if (anyDropdownOpen || searchDropdownOpen || isDropdownOpen !== null) {
+          // Let the dropdown handle the Enter key
+          return;
+        }
+
         if (popup === "success") {
           onClose();
-        } else{
+        } else {
           handleSubmitBox();
         }
       }
@@ -213,7 +237,7 @@ const AddBox = ({
         }
       }
     },
-    [popup, onClose, unsavedChanges, checkCurrent]
+    [popup, onClose, unsavedChanges, checkCurrent, anyDropdownOpen, searchDropdownOpen, isDropdownOpen]
   );
 
   useEffect(() => {
@@ -332,12 +356,12 @@ const AddBox = ({
 
   useEffect(() => {
     const initialVisibility = ["admin"];
-    if (box?.public) initialVisibility.push("public");
-    if (box?.sale) initialVisibility.push("sale");
 
+    if (boxDict[box._id]?.public) initialVisibility.push("public")
+    if (boxDict[box._id]?.sale) initialVisibility.push("sale")
     setVisibility(initialVisibility);
     setOriginalVisibility(initialVisibility);
-  }, [box]);
+  }, [box, boxDict]);
 
   // Filter boxes based on search term
   const filteredBoxes = boxes.filter(
@@ -716,54 +740,60 @@ const AddBox = ({
   };
 
   const handleSubmitBox = async (e) => {
-    if (e) e.preventDefault();
-    if (isSubmitting) {
-      return;
-    }
+  if (e) e.preventDefault();
+  if (isSubmitting) {
+    return;
+  }
+  
+  // Use the ref for the current contents throughout the function
+  const currentContents = contentsRef.current;
+  
+  if (
+    !boxDescription ||
+    !boxLocation ||
+    !imageUrl ||
+    currentContents.length < 1 ||
+    (visibility.includes("sale") && !(boxDiscount && minimumPrice))
+  ) {
+    alert("Please fill in all fields and upload an image");
+    return;
+  }
+  
+  for (const item of currentContents) {
     if (
-      !boxDescription ||
-      !boxLocation ||
-      !imageUrl ||
-      contents.length < 1 ||
-      (visibility.includes("sale") && !(boxDiscount && minimumPrice))
+      (!item.description && !item.descriptionId) ||
+      !item.style ||
+      (!item.size && !item.sizeId) ||
+      (!item.brand && !item.brandId) ||
+      !item.color ||
+      !item.quantity ||
+      !item.price
     ) {
-      alert("Please fill in all fields and upload an image");
+      alert("One of the items in the box is missing a field");
       return;
     }
-    console.log(contents)
-    for (const item of contents) {
-      if (
-        (!item.description && !item.descriptionId) ||
-        !item.style ||
-        (!item.size && !item.sizeId) ||
-        (!item.brand && !item.brandId) ||
-        !item.color ||
-        !item.quantity ||
-        !item.price
-      ) {
-        alert("One of the items in the box is missing a field");
-        return;
-      }
-    }
-    if (!checkCurrent()) {
-      return;
-    }
+  }
+  
+  if (!checkCurrent()) {
+    return;
+  }
 
-    setIsSubmitting(true);
-    try {
-      const success = await uploadBox();
-      if (success) {
-        setUnsavedChanges(false);
-        setPopup("success");
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Error submitting form: " + error.message);
-    } finally {
-      setIsSubmitting(false); // Always reset, even on error
-      refresh();
+  setIsSubmitting(true);
+  try {
+    // Pass the current contents to uploadBox
+    const success = await uploadBox(currentContents);
+    if (success) {
+      setUnsavedChanges(false);
+      setPopup("success");
     }
-  };
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    alert("Error submitting form: " + error.message);
+  } finally {
+    setIsSubmitting(false);
+    refresh();
+  }
+};
 
   const positionDropdown = (dropdownElement, triggerElement) => {
     if (!dropdownElement || !triggerElement) return;
@@ -795,23 +825,17 @@ const AddBox = ({
   };
 
   const itemDescriptor = (item) => {
-    return `${
-      item.brand || brandDict[item.brandId]?.brand || "No brand"
-    } ${item.style || "No style"} ${
-      item.description ||
+    return `${item.brand || brandDict[item.brandId]?.brand || "No brand"
+      } ${item.style || "No style"} ${item.description ||
       descriptionDict[item.descriptionId]?.description ||
       "No description"
-    } ${
-      item.size || sizeDict[item.sizeId]?.size || "No size"
-    } ${item.color || "No color"}`;
+      } ${item.size || sizeDict[item.sizeId]?.size || "No size"
+      } ${item.color || "No color"}`;
   };
 
   const contentChanged = (content, origContentsDict) => {
     const original = origContentsDict[content._id];
     for (const [key, value] of Object.entries(content)) {
-      console.log(
-        `key: ${key}, value:${value}, original:${original}, ${original[key] || "N/A"}`
-      );
       if (value !== original[key]) {
         return true;
       }
@@ -819,8 +843,7 @@ const AddBox = ({
     return false;
   };
 
-  async function uploadBox() {
-    console.log(getBox);
+  async function uploadBox(currentContents = contents) {
     let change = {
       user: user.fullName,
       editedOn: new Date(),
@@ -873,7 +896,7 @@ const AddBox = ({
       return content[field];
     }
 
-    for (const newContent of contents) {
+    for (const newContent of currentContents) {
       /**if there is an id it's an item that was already there pre-edit */
       if (newContent._id) {
         const origContent = origContentsDict[newContent._id];
@@ -901,18 +924,16 @@ const AddBox = ({
 
     try {
       const itemsToDelete = originalContents.filter((original) => {
-        return !contents.some(
+        return !currentContents.some(
           (current) => current._id && current._id === original._id
         );
       });
       for (const itemToDelete of itemsToDelete) {
-        const key = `${itemToDelete.style || "No style"}-${itemToDelete.color || "No color"}-${
-          itemToDelete.size || sizeDict[itemToDelete.sizeId]?.size || "No size"
-        }-${itemToDelete.brand || brandDict[itemToDelete.brandId]?.brand || "No brand"}-${
-          itemToDelete.description ||
+        const key = `${itemToDelete.style || "No style"}-${itemToDelete.color || "No color"}-${itemToDelete.size || sizeDict[itemToDelete.sizeId]?.size || "No size"
+          }-${itemToDelete.brand || brandDict[itemToDelete.brandId]?.brand || "No brand"}-${itemToDelete.description ||
           descriptionDict[itemToDelete.descriptionId]?.description ||
           "No description"
-        }`;
+          }`;
 
         try {
           change.changes.push(
@@ -923,7 +944,7 @@ const AddBox = ({
           console.error(`Failed to delete item ${itemToDelete._id}:`, error);
         }
       }
-      for (const content of contents) {
+      for (const content of currentContents) {
         if (content.removed) {
           change.changes.push(
             `Item (${itemDescriptor(content)}) removed from box`
@@ -946,7 +967,7 @@ const AddBox = ({
           discount: boxDiscount,
           minPrice: minimumPrice,
         }),
-        contents: contents,
+        contents: currentContents,
       };
       if (change.changes.length >= 1) boxData.history = change;
 
@@ -981,7 +1002,7 @@ const AddBox = ({
         }
       );
 
-      for (const content of contents) {
+      for (const content of currentContents) {
         try {
           //STEP 1: if it is taken out of the box, then change
           if (content.removed) {
@@ -1047,8 +1068,7 @@ const AddBox = ({
       setOrigDescription(boxDescription);
       setOrigLocation(boxLocation);
       setOrigImageUrl(imageUrl);
-      setOriginalContents(contents);
-      setReload(reload + 1);
+      setOriginalContents(currentContents);
       setHistory([...history, change]);
       return true;
     } catch (error) {
@@ -1161,13 +1181,11 @@ const AddBox = ({
       return false;
     }
 
-    const key = `${content.style || "No style"}-${content.color || "No color"}-${
-      content.size || sizeDict[content.sizeId]?.size || "No size"
-    }-${currentItem.brand || brandDict[content.brandId]?.brand || "No brand"}-${
-      content.description ||
+    const key = `${content.style || "No style"}-${content.color || "No color"}-${content.size || sizeDict[content.sizeId]?.size || "No size"
+      }-${currentItem.brand || brandDict[content.brandId]?.brand || "No brand"}-${content.description ||
       descriptionDict[content.descriptionId]?.description ||
       "No description"
-    }`;
+      }`;
 
     const itemToPush = {
       inventoryId: itemResult.data._id,
@@ -1358,13 +1376,11 @@ const AddBox = ({
   };
 
   const getCommonDescription = (preset) => {
-    return `${preset.color} ${preset.size || sizeDict[preset.sizeId]?.size || "N/A"} ${
-      preset.brand || brandDict[preset.brandId]?.brand || "N/A"
-    } ${preset.style} ${
-      preset.description ||
+    return `${preset.color} ${preset.size || sizeDict[preset.sizeId]?.size || "N/A"} ${preset.brand || brandDict[preset.brandId]?.brand || "N/A"
+      } ${preset.style} ${preset.description ||
       descriptionDict[preset.descriptionId]?.description ||
       "N/A"
-    } $${preset.price}`;
+      } $${preset.price}`;
   };
   const DROPDOWN_CONFIGS = {
     description: {
@@ -1402,6 +1418,9 @@ const AddBox = ({
     },
   };
 
+  useEffect(() => {
+    console.log(contents)
+  }, [contents])
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
@@ -1426,6 +1445,7 @@ const AddBox = ({
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <label>Box Description</label>
               <button
+                type="button"
                 className={styles.button}
                 onClick={(e) => generateDescription(e)}
                 style={{
@@ -1750,6 +1770,7 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1781,6 +1802,8 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
+
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1794,6 +1817,8 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
+
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -1961,13 +1986,12 @@ const AddBox = ({
                               filteredBoxes.map((b, boxIndex) => (
                                 <div
                                   key={boxIndex}
-                                  className={`${styles.dropdownItem} ${
-                                    !item.removed &&
+                                  className={`${styles.dropdownItem} ${!item.removed &&
                                     ((!item.boxId && b.boxId === box.boxId) ||
                                       item.boxId === b._id)
-                                      ? styles.selected
-                                      : ""
-                                  }`}
+                                    ? styles.selected
+                                    : ""
+                                    }`}
                                   onClick={() => {
                                     updateExistingContent(
                                       index,
@@ -2084,7 +2108,7 @@ const AddBox = ({
                         filteredCombos.map((option, index) => (
                           <div
                             key={index}
-                            style={{display:"flex", alignItems:"center", gap:"10px"}}
+                            style={{ display: "flex", alignItems: "center", gap: "10px" }}
                             className={`${styles.dropdownItem}`}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -2092,8 +2116,8 @@ const AddBox = ({
                             }}
                             data-dropdown
                           >
-                            <div style={{width:"30px", height:"30px", overflow:"hidden"}}>
-                            <img style={{width:"100%", height:"100%", objectFit:"contain"}}src={option.image}/>
+                            <div style={{ width: "30px", height: "30px", overflow: "hidden" }}>
+                              <img style={{ width: "100%", height: "100%", objectFit: "contain" }} src={option.image} />
                             </div>
                             {getCommonDescription(option)}
                           </div>
@@ -2253,6 +2277,8 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
+
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -2283,6 +2309,8 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
+
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -2296,6 +2324,8 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
+
                         />
                       </td>
                       <td className={styles.tableReg}>
@@ -2482,6 +2512,8 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
+
                         />
                       </div>
                     </div>
@@ -2518,6 +2550,8 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
+
                         />
                       </div>
                     </div>
@@ -2535,6 +2569,8 @@ const AddBox = ({
                           refresh={refresh}
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
+                          onDropdownStateChange={handleDropdownStateChange}
+
                         />
                       </div>
                     </div>
@@ -2697,7 +2733,7 @@ const AddBox = ({
             </div>
           </div>
           {visibility.includes("sale") && (
-            <div className={styles.horizontal} style={{zIndex: 0}}>
+            <div className={styles.horizontal} style={{ zIndex: 0 }}>
               <div className={styles.formInput}>
                 <label>Discount</label>
                 <input
@@ -2808,6 +2844,7 @@ const AddBox = ({
           >
             <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
               <button
+                type="button"
                 className={styles.button}
                 style={{ backgroundColor: "#a83a32" }}
                 onClick={(e) => handleDelete("all", e)}
@@ -2815,6 +2852,7 @@ const AddBox = ({
                 Delete All
               </button>
               <button
+                type="button"
                 className={styles.button}
                 style={{
                   backgroundColor: "white",

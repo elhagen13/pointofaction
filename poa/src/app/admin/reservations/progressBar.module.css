@@ -34,6 +34,7 @@
 
 .innerLine{
     height: 100%;
+    max-width: 100%;
     transition: width 1s linear;
     background-color: green
 }

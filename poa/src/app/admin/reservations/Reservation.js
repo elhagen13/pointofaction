@@ -8,6 +8,8 @@ import ProgressBar from "./ProgressBar";
 import { FiEdit } from "react-icons/fi";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
+import { IoWarning } from "react-icons/io5";
+
 
 export default function Reservation({ onClose, reservation }) {
   {
@@ -24,6 +26,7 @@ const Order = ({ reservation }) => {
   let stage = "incomplete";
   const [status, setStatus] = useState(reservation.status);
   const [reservationItems, setReservationItems] = useState([]);
+  const [deletedItems, setDeletedItems] = useState([])
   const [loading, setLoading] = useState(true);
   const [reservationDict, setReservationDict] = useState({});
   const [options, setOptions] = useState({});
@@ -34,7 +37,7 @@ const Order = ({ reservation }) => {
   const [orderTitle, setOrderTitle] = useState(reservation.orderTitle || "");
   const [soIn, setSoIn] = useState(reservation.soIn || "");
   const [submitting, setSubmitting] = useState(false)
-
+  console.log(reservation)
 
   useEffect(() => {
     checkCompleteness();
@@ -52,6 +55,7 @@ const Order = ({ reservation }) => {
       };
     }
     setReservationDict(dict);
+    console.log("DICT",)
 
     for (const item of reservationItems) {
       dict[item._id]["id"] = item._id;
@@ -206,11 +210,11 @@ const Order = ({ reservation }) => {
     console.log(result)
 
 
-    if(result.ok){
+    if (result.ok) {
       setOriginalOrderTitle(orderTitle);
       setOriginalSoIn(soIn);
     }
-    else{
+    else {
       alert("Error updating fields")
     }
     setSubmitting(false)
@@ -218,6 +222,11 @@ const Order = ({ reservation }) => {
 
 
   const fetchReservationItems = async () => {
+
+    //gets all inventory items that have an Id that is included in the reservation
+    //if an inventory item has been deleted it should present the default options that were
+    //put in on the creation of the reservation which were the current descriptors at time of 
+    //creation
     const result = await fetch("/api/catalog", {
       method: "POST",
       headers: {
@@ -228,8 +237,19 @@ const Order = ({ reservation }) => {
       }),
     });
 
+
     if (result.ok) {
       const body = await result.json();
+
+      let deleted = []
+      for (const item of reservation.items) {
+        console.log(item)
+        if (!body.data.find((i) => i._id === item.itemId)) {
+          deleted.push(item)
+        }
+      }
+      setDeletedItems(deleted)
+      console.log(deleted)
       setReservationItems(body.data);
       setLoading(false);
       console.log(body.data);
@@ -245,7 +265,7 @@ const Order = ({ reservation }) => {
           stepsComplete={checkCompleteness()[1]}
         />
       </div>
-      <div className={styles.tableContainer} style={{marginTop:"30px"}}>
+      <div className={styles.tableContainer} style={{ marginTop: "30px" }}>
         <table className={styles.reservationItemTable}>
           <thead>
             <tr style={{ backgroundColor: "#c5ced9" }}>
@@ -263,7 +283,7 @@ const Order = ({ reservation }) => {
               <td style={{ padding: "10px" }}>
                 {reservation.sequentialId?.toString().padStart(5, "0")}
               </td>
-              <td><input className={styles.dropdownButton} value={orderTitle} onChange={(e) => setOrderTitle(e.target.value)}/></td>
+              <td><input className={styles.dropdownButton} value={orderTitle} onChange={(e) => setOrderTitle(e.target.value)} /></td>
               <td>{reservation.customer}</td>
               <td>
                 <div
@@ -287,14 +307,14 @@ const Order = ({ reservation }) => {
                   {checkCompleteness()[0]}
                 </div>
               </td>
-              <td><input className={styles.dropdownButton} value={soIn} onChange={(e) => setSoIn(e.target.value)}/></td>
+              <td><input className={styles.dropdownButton} value={soIn} onChange={(e) => setSoIn(e.target.value)} /></td>
               <td>{new Date(reservation.createdAt).toLocaleString()}</td>
               <td>{new Date(reservation.updatedAt).toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
-        {(soIn !== originalSoIn || orderTitle !== originalOrderTitle) && 
-        <button className={styles.save} disabled={submitting} onClick={editReservation}>{submitting ? <BeatLoader size={7}/> : "Save Changes"}
+        {(soIn !== originalSoIn || orderTitle !== originalOrderTitle) &&
+          <button className={styles.save} disabled={submitting} onClick={editReservation}>{submitting ? <BeatLoader size={7} /> : "Save Changes"}
           </button>}
       </div>
 
@@ -306,82 +326,136 @@ const Order = ({ reservation }) => {
           <BeatLoader />
         </div>
       )}
-      {!loading &&  (
+      {!loading && (
         <>
-        <div className={styles.edit}>
-          <Link href={`/admin/reservations/${reservation._id}`}> 
-          <button>Edit <FiEdit/></button>
-          </Link>
-        </div>
-        <div className={styles.tableContainer}>
-          <table className={styles.reservationItemTable}>
-            <thead>
-              <tr style={{ backgroundColor: "#c5ced9" }}>
-                <th style={{ padding: "10px" }}>Item</th>
-                <th>Style</th>
-                <th>Brand</th>
-                <th>Color</th>
-                <th>Size</th>
-                <th>Quantity</th>
-                <th>Status</th>
-                <th>Box #</th>
-                <th>Location</th>
-                <th>Last Edited</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reservationItems.map((item, index) => (
-                <tr
-                  style={{
-                    backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
-                  }}
-                >
-                  <td>
-                    <div className={styles.imageContainer}>
-                      <img src={item.image}></img>
-                    </div>
-                  </td>
-                  <td>{item.style}</td>
-                  <td>
-                    {item.brand || brandDict[item.brandId]?.brand || "N/A"}
-                  </td>
-                  <td>{item.color}</td>
-                  <td>{item.size || sizeDict[item.sizeId]?.size || "N/A"}</td>
-                  <td>
-                    <Quantity
-                      reservation={reservation}
-                      item={reservationDict[item._id]}
-                      itemStr={`${brandDict[item.brandId]?.brand || item.brand || "No Brand"} ${item.color} ${sizeDict[item.sizeId]?.size || item.size || "No Size"} ${item.style}`}
-                      setDict={setReservationDict}
-                      dict={reservationDict}
-                      prev={reservationDict[item._id].pulled}
-                      max={reservationDict[item._id].quantReserved - reservationDict[item._id].pulled}
-                      checkCompleteness={checkCompleteness}
-                      refresh={refresh}
-                    />
-                  </td>
-                  <td>
-                    <Status
-                      reservation={reservation}
-                      item={reservationDict[item._id]}
-                      setDict={setReservationDict}
-                      dict={reservationDict}
-                      prev={reservationDict[item._id].pulled}
-                      max={reservationDict[item._id].quantReserved}
-                      checkCompleteness={checkCompleteness}
-                      refresh={refresh}
-                    />
-                  </td>
-                  <td>{boxDict[item.boxId]?.boxId || "N/A"}</td>
-                  <td>
-                    {item.location || boxDict[item.boxId]?.location || "N/A"}
-                  </td>
-                  <td>{new Date(item.updatedAt).toLocaleString()}</td>
+          <div className={styles.edit}>
+            <Link href={`/admin/reservations/${reservation._id}`}>
+              <button>Edit <FiEdit /></button>
+            </Link>
+          </div>
+          <div className={styles.tableContainer}>
+            <table className={styles.reservationItemTable}>
+              <thead>
+                <tr style={{ backgroundColor: "#c5ced9" }}>
+                  <th style={{ padding: "10px" }}>Item</th>
+                  <th>Style</th>
+                  <th>Brand</th>
+                  <th>Color</th>
+                  <th>Size</th>
+                  <th>Quantity</th>
+                  <th>Status</th>
+                  <th>Box #</th>
+                  <th>Location</th>
+                  <th>Last Edited</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {reservationItems.map((item, index) => (
+                  <tr
+                    style={{
+                      backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
+                    }}
+                  >
+                    <td>
+                      <div className={styles.imageContainer}>
+                        <img src={item.image}></img>
+                      </div>
+                    </td>
+                    <td>{item.style}</td>
+                    <td>
+                      {item.brand || brandDict[item.brandId]?.brand || "N/A"}
+                    </td>
+                    <td>{item.color}</td>
+                    <td>{item.size || sizeDict[item.sizeId]?.size || "N/A"}</td>
+                    <td>
+                      <Quantity
+                        reservation={reservation}
+                        item={reservationDict[item._id]}
+                        itemStr={`${brandDict[item.brandId]?.brand || item.brand || "No Brand"} ${item.color} ${sizeDict[item.sizeId]?.size || item.size || "No Size"} ${item.style}`}
+                        setDict={setReservationDict}
+                        dict={reservationDict}
+                        prev={reservationDict[item._id].pulled}
+                        max={reservationDict[item._id].quantReserved - reservationDict[item._id].pulled}
+                        checkCompleteness={checkCompleteness}
+                        refresh={refresh}
+                      />
+                    </td>
+                    <td>
+                      <Status
+                        reservation={reservation}
+                        item={reservationDict[item._id]}
+                        setDict={setReservationDict}
+                        dict={reservationDict}
+                        prev={reservationDict[item._id].pulled}
+                        max={reservationDict[item._id].quantReserved}
+                        checkCompleteness={checkCompleteness}
+                        refresh={refresh}
+                      />
+                    </td>
+                    <td>{boxDict[item.boxId]?.boxId || "N/A"}</td>
+                    <td>
+                      {item.location || boxDict[item.boxId]?.location || "N/A"}
+                    </td>
+                    <td>{new Date(item.updatedAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+                {deletedItems.map((item, index) => (
+                  <tr
+                    style={{
+                      backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
+                    }}
+                  >
+                    <td>
+                      <div className={styles.imageContainer}>
+                        <img src={item.image}></img>
+                      </div>
+                    </td>
+                    <td>{item.style}</td>
+                    <td>
+                      {item.brand || brandDict[item.brandId]?.brand || "N/A"}
+                    </td>
+                    <td>{item.color}</td>
+                    <td>{item.size || "N/A"}</td>
+                    <td>
+                      <Quantity
+                        reservation={reservation}
+                        item={reservationDict[item.itemId]}
+                        itemStr={`${brandDict[item.brandId]?.brand || item.brand || "No Brand"} ${item.color} ${sizeDict[item.sizeId]?.size || item.size || "No Size"} ${item.style}`}
+                        setDict={setReservationDict}
+                        dict={reservationDict}
+                        prev={reservationDict[item.itemId].pulled}
+                        max={reservationDict[item.itemId].quantReserved - reservationDict[item.itemId].pulled}
+                        checkCompleteness={checkCompleteness}
+                        refresh={refresh}
+                      />
+                    </td>
+                    <td>
+                      <Status
+                        reservation={reservation}
+                        item={reservationDict[item.itemId]}
+                        setDict={setReservationDict}
+                        dict={reservationDict}
+                        prev={reservationDict[item.itemId].pulled}
+                        max={reservationDict[item.itemId].quantReserved}
+                        checkCompleteness={checkCompleteness}
+                        refresh={refresh}
+                      />
+                    </td>
+                    <td>{item.boxId || "N/A"}</td>
+                    <td>
+                      {item.location || boxDict[item.boxId]?.location || "N/A"}
+                    </td>
+                    <td> 
+                      <div style={{width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", paddingRight:"20px"}}>
+                        N/A
+                        <IoWarning size={20} style={{color:"#AD2B10", cursor:"pointer"}} title="Item has since been removed from inventory, details reflect state at time of creation."/>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </div>
@@ -393,7 +467,7 @@ const Quantity = ({ reservation, item, itemStr, setDict, dict, prev, max }) => {
   const dropdownRef = useRef(null);
   const [value, setValue] = useState(max);
   const [submitting, setSubmitting] = useState(false);
-  const {user} = useUser();
+  const { user } = useUser();
 
   useEffect(() => {
     function handleClickOutside(event) {

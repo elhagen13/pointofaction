@@ -1,7 +1,7 @@
 import styles from "./reserve.module.css";
 import { useState, useEffect } from "react";
 import { FaCheckCircle, FaRegTrashAlt, FaTrash } from "react-icons/fa";
-import {TbShoppingCartCancel} from "react-icons/tb"
+import { TbShoppingCartCancel } from "react-icons/tb"
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
@@ -10,6 +10,7 @@ export default function Cart({
   onClose,
   brandDict,
   descriptionDict,
+  sizeDict,
   fullInventory,
   refresh,
 }) {
@@ -21,7 +22,11 @@ export default function Cart({
   const [submitting, setSubmitting] = useState(false);
 
   const [orderTitle, setOrderTitle] = useState("");
-  const [soin, setSoIn] = useState("")
+  const [soin, setSoIn] = useState("");
+
+  const [selectionType, setSelectionType] = useState("auto");
+
+  const [boxOptions, setBoxOptions] = useState(null)
 
   const { user } = useUser();
 
@@ -118,13 +123,40 @@ export default function Cart({
     );
   }, [groupedCart]);
 
+  const getMatching = async(style, color, brand, size) => {
+    try {
+        const matching = await fetch(`/api/catalog?style=${style}&color=${color}&brand=${brand}&size=${size}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+        });
+
+        if (!matching.ok) {
+          const errorData = await completeReservation.json();
+          throw new Error(errorData.error || `HTTP ${completeReservation.status}`);
+        }
+
+        const data = await matching.json()
+
+        setBoxOptions(data)
+
+
+      } catch (finalizeError) {
+        console.error("Error finalizing reservation:", finalizeError);
+        alert("Items were reserved but failed to create final reservation");
+      }
+
+  }
+
   const reserveCart = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    
+
     const reservationResults = [];
     const failedReservations = [];
-    
+
     try {
       // Process all cart items first
       for (const item of cart) {
@@ -152,37 +184,45 @@ export default function Cart({
           });
         }
       }
-  
+
       // Check if there were any failures
       if (failedReservations.length > 0) {
         console.error("Failed reservations:", failedReservations);
-        
+
         // Show user-friendly error message
-        const errorMessages = failedReservations.map(failure => 
+        const errorMessages = failedReservations.map(failure =>
           `${failure.item.style} (${failure.item.color}): ${failure.error}`
         ).join('\n');
-        
+
         alert(`Cannot complete reservation due to the following errors:\n\n${errorMessages}`);
-        
+
         setSubmitting(false);
         return; // Exit early - don't create reservation
       }
-  
+
       // Only proceed if all items were successfully reserved
       console.log("All items successfully reserved:", reservationResults);
-      
+
       let items = [];
       for (const res of reservationResults) {
         for (const item of res.data.reservationDetails) {
           items.push({
             itemId: item.itemId,
+            image: item.image,
+            color: item.color,
+            style: item.style,
+            brand: brandDict[item.brand.toString()]?.brand || item.brand || "No Brand",
+            size: sizeDict[item.size.toString()]?.size || item.size || "No Size",
+            description: descriptionDict[item.description?.toString()]?.description || item.description || "No Description",
+            location: item.location,
+            boxId: item.boxId || "N/A",
             quantReserved: item.quantityReservedFromThisItem,
           });
         }
       }
-      
+
       console.log("Items for final reservation:", items);
-  
+
       try {
         const completeReservation = await fetch("/api/catalog/reservation", {
           method: "POST",
@@ -198,7 +238,7 @@ export default function Cart({
             customer: user.fullName,
           }),
         });
-  
+
         if (!completeReservation.ok) {
           const errorData = await completeReservation.json();
           throw new Error(errorData.error || `HTTP ${completeReservation.status}`);
@@ -213,14 +253,14 @@ export default function Cart({
         saveCartToStorage([]);
         onClose();
         router.push(`/admin/reservations?id=${data.data._id}`)
-        
-       
-        
+
+
+
       } catch (finalizeError) {
         console.error("Error finalizing reservation:", finalizeError);
         alert("Items were reserved but failed to create final reservation");
       }
-      
+
     } catch (error) {
       console.error("Cart reservation error:", error);
       alert("An error occurred while reserving items. Please try again.");
@@ -228,7 +268,7 @@ export default function Cart({
       setSubmitting(false);
     }
   };
-  
+
   const uploadReserve = async (item) => {
     // Validate required fields
     if (
@@ -239,11 +279,11 @@ export default function Cart({
     ) {
       throw new Error("Missing required item fields");
     }
-    
+
     if (item.quantity <= 0) {
       throw new Error("Invalid quantity");
     }
-  
+
     try {
       const result = await fetch("/api/catalog", {
         method: "PATCH",
@@ -258,7 +298,7 @@ export default function Cart({
           quantityToReserve: item.quantity,
         }),
       });
-  
+
       return result;
     } catch (fetchError) {
       console.error("Fetch error:", fetchError);
@@ -266,134 +306,167 @@ export default function Cart({
       throw new Error(`Network error: ${fetchError.message}`);
     }
   };
-  console.log(Object.entries)
 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div className={styles.addItem} onClick={handleModalClick}>
-      {Object.entries(groupedCart).length > 0 ?
-      <>
-        {Object.entries(groupedCart).map(([groupKey, item], index) => (
-          <div key={index} className={styles.cartRow}>
-            <div className={styles.imageContainer}>
-              <img src={item.image} className={styles.rowImage}></img>
+        {Object.entries(groupedCart).length > 0 ?
+          <>
+            {Object.entries(groupedCart).map(([groupKey, item], index) => (
+              <div key={index} className={styles.cartRow} onClick={() => console.log(item)}>
+                <div className={styles.imageContainer} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <img src={item.image} className={styles.rowImage}></img>
+                </div>
+                <div style={{ fontWeight: "bold" }}>
+                  <div>
+                    {brandDict[item.brand]?.brand || item.brand || ""} {item.style}{" "}
+                    {descriptionDict[item.description]?.description ||
+                      item.description ||
+                      ""}
+                  </div>
+                  <div style={{ color: "gray" }}>{item.color}</div>
+                </div>
+                <div className={styles.sizeBreakdown}>
+                  <div
+                    className={styles.column}
+                    style={{ textAlign: "right", fontWeight: "bold" }}
+                  >
+                    <div style={{ padding: "5px" }}>Size</div>
+                    <div style={{ padding: "5px" }}>Quantity</div>
+                    <div style={{ padding: "5px" }}>Price</div>
+                  </div>
+                  {Object.entries(item.sizes).map(([sizeKey, val]) => (
+                    <div key={sizeKey} className={styles.column}>
+                      <div style={{ backgroundColor: "#a1b1cc", padding: "5px" }}>
+                        {sizeKey}{" "}
+                      </div>
+                      <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
+                        {val.quantity}
+                      </div>
+                      <div style={{ backgroundColor: "#c8d3e6", padding: "5px" }}>
+                        ${val.price}
+                      </div>
+                    </div>
+                  ))}
+                  <div
+                    className={styles.column}
+                    style={{ fontWeight: "bold", textAlign: "right" }}
+                  >
+                    <div style={{ padding: "5px", fontWeight: "bold" }}>Total</div>
+                    <div style={{ padding: "5px" }}>
+                      {Object.values(item.sizes).reduce((prev, cur) => {
+                        return prev + cur.quantity;
+                      }, 0)}
+                    </div>
+                    <div style={{ padding: "5px" }}>
+                      $
+                      {Object.values(item.sizes)
+                        .reduce((prev, cur) => {
+                          return prev + parseInt(cur.price) * cur.quantity;
+                        }, 0)
+                        .toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                <FaTrash
+                  style={{ color: "red", margin: "20px", cursor: "pointer" }}
+                  onClick={() => removeGroupFromCart(groupKey)}
+                  title="Remove entire group"
+                />
+              </div>
+            ))}
+            <div style={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "end",
+              alignItems: "center",
+              gap: "10px",
+              margin: "10px 0"
+            }}>
+
+              <input type="radio" id="auto" value="auto" checked={selectionType === "auto"} onClick={() => setSelectionType("auto")} />
+              <label for="auto">Auto Selection</label><br />
+
+              <input type="radio" id="manual" value="manual" checked={selectionType === "manual"} onClick={() => { setSelectionType("manual"); console.log(cart) }} />
+              <label for="manual">Manual Selection</label><br />
+
             </div>
-            <div style={{ fontWeight: "bold" }}>
+            {
+              selectionType == "manual" &&
               <div>
-                {brandDict[item.brand]?.brand || item.brand || ""} {item.style}{" "}
-                {descriptionDict[item.description]?.description ||
-                  item.description ||
-                  ""}
+                {
+                  cart.map((cartItem, index) => (
+                    <div key={index} className={styles.manualSelection}>
+                      <div className={styles.imageContainer} style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                        <img src={cartItem.image} className={styles.rowImage}></img>
+                        <div className={styles.opacityFilter}></div>
+                      </div>
+                      {cartItem.brand} {cartItem.style} {cartItem.description} {cartItem.size}
+                      <div style={{marginLeft:"auto", fontSize:"32px", marginRight:"10px"}}>{cartItem.quantity}</div>
+                    </div>
+                  ))
+                }
+
               </div>
-              <div style={{ color: "gray" }}>{item.color}</div>
-            </div>
-            <div className={styles.sizeBreakdown}>
-              <div
-                className={styles.column}
-                style={{ textAlign: "right", fontWeight: "bold" }}
-              >
-                <div style={{ padding: "5px" }}>Size</div>
-                <div style={{ padding: "5px" }}>Quantity</div>
-                <div style={{ padding: "5px" }}>Price</div>
-              </div>
-              {Object.entries(item.sizes).map(([sizeKey, val]) => (
-                <div key={sizeKey} className={styles.column}>
-                  <div style={{ backgroundColor: "#a1b1cc", padding: "5px" }}>
-                    {sizeKey}{" "}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    {val.quantity}
-                  </div>
-                  <div style={{ backgroundColor: "#c8d3e6", padding: "5px" }}>
-                    ${val.price}
-                  </div>
-                </div>
-              ))}
-              <div
-                className={styles.column}
-                style={{ fontWeight: "bold", textAlign: "right" }}
-              >
-                <div style={{ padding: "5px", fontWeight: "bold" }}>Total</div>
-                <div style={{ padding: "5px" }}>
-                  {Object.values(item.sizes).reduce((prev, cur) => {
-                    return prev + cur.quantity;
-                  }, 0)}
-                </div>
-                <div style={{ padding: "5px" }}>
-                  $
-                  {Object.values(item.sizes)
-                    .reduce((prev, cur) => {
-                      return prev + parseInt(cur.price) * cur.quantity;
-                    }, 0)
-                    .toFixed(2)}
-                </div>
-              </div>
-            </div>
-            <FaTrash
-              style={{ color: "red", margin: "20px", cursor: "pointer" }}
-              onClick={() => removeGroupFromCart(groupKey)}
-              title="Remove entire group"
-            />
-          </div>
-        ))}
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "space-between",
-            paddingTop: "0",
-            gap: "10px",
-          }}
-        >
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-          >
+            }
             <div
               style={{
+                width: "100%",
                 display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap:"5px",
-                fontWeight:"bold",
-                justifyContent:"space-between"
+                justifyContent: "space-between",
+                paddingTop: "0",
+                gap: "10px",
               }}
             >
-              Order Title: <input className={styles.input} value={orderTitle} onChange={(e) => setOrderTitle(e.target.value)}/>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: "5px",
+                    fontWeight: "bold",
+                    justifyContent: "space-between"
+                  }}
+                >
+                  Order Title: <input className={styles.input} value={orderTitle} onChange={(e) => setOrderTitle(e.target.value)} />
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: "5px",
+                    fontWeight: "bold",
+                    justifyContent: "space-between"
+                  }}
+                >
+                  SO#/IN#: <input className={styles.input} value={soin} onChange={(e) => setSoIn(e.target.value)} />
+                </div>
+              </div>
+              <div
+                className={styles.shoppingButton}
+                style={{ height: "fit-content" }}
+                onClick={(e) => reserveCart(e)}
+              >
+                {submitting ? (
+                  "Submitting..."
+                ) : (
+                  <>
+                    Reserve
+                    <FaCheckCircle />
+                  </>
+                )}
+              </div>
             </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap:"5px",
-                fontWeight:"bold",
-                justifyContent:"space-between"
-              }}
-            >
-              SO#/IN#: <input className={styles.input} value={soin} onChange={(e) => setSoIn(e.target.value)}/>
-            </div>
+          </>
+          :
+          <div style={{ fontWeight: "bold", fontSize: "30px", fontStyle: "italic", color: "#d6d6d6", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            Cart empty
+            <TbShoppingCartCancel size={40} />
           </div>
-          <div
-            className={styles.shoppingButton}
-            style={{ height: "fit-content" }}
-            onClick={(e) => reserveCart(e)}
-          >
-            {submitting ? (
-              "Submitting..."
-            ) : (
-              <>
-                Reserve
-                <FaCheckCircle />
-              </>
-            )}
-          </div>
-        </div>
-        </>
-        :
-        <div style={{fontWeight:"bold", fontSize:"30px", fontStyle:"italic", color:"#d6d6d6", display:"flex", flexDirection:"column", alignItems:"center"}}>
-          Cart empty
-          <TbShoppingCartCancel size={40}/>
-        </div>
         }
       </div>
     </div>

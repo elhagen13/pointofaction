@@ -24,10 +24,78 @@ async function connectToDatabase() {
   }
 }
 
+export async function GET(request) {
+  try {
+    const { db } = await connectToDatabase();
+    const inventory = db.collection(COLLECTION_NAME);
+    const boxes = db.collection("boxes");
+    const brands = db.collection("brands");
+    const sizes = db.collection("sizes");
+
+    // Parse query parameters from URL
+    const url = new URL(request.url);
+    const style = url.searchParams.get('style');
+    const color = url.searchParams.get('color');
+    const brand = url.searchParams.get('brand');
+    const size = url.searchParams.get('size');
+
+    // Validation - require at least style and color, plus either brand or size
+    if (!style || !color || (!brand && !size)) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: style, color, and either brand or size" }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get brandId and sizeId if needed
+    let brandId = null;
+    let sizeId = null;
+
+    if (brand) {
+      const brandDoc = await brands.findOne({ brand: brand });
+      brandId = brandDoc?._id;
+    }
+
+    if (size) {
+      const sizeDoc = await sizes.findOne({ size: { $regex: size, $options: 'i' } });
+      sizeId = sizeDoc?._id;
+    }
+
+    const query = {
+      style,
+      color,
+      ...(brandId && { brandId: String(brandId) }),
+      ...(sizeId && { sizeId: String(sizeId) })
+    };
+
+    // Find matching items and sort by available quantity (least to most)
+    const matches = await inventory.find(
+      query
+    ).toArray();
+
+    
+    return new Response(
+      JSON.stringify(matches),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error("GET error:", error);
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+        details: error.message
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
 export async function PATCH(request, res) {
   try {
     const { db } = await connectToDatabase();
     const inventory = db.collection(COLLECTION_NAME);
+    const boxes = db.collection("boxes");
     const brands = db.collection("brands");
     const sizes = db.collection("sizes");
 
@@ -52,14 +120,14 @@ export async function PATCH(request, res) {
     // Get brandId and sizeId if needed (await the promises!)
     let brandId = null;
     let sizeId = null;
-    
+
     if (brand) {
       const brandDoc = await brands.findOne({ brand: brand });
       brandId = brandDoc?._id;
     }
-    
+
     if (size) {
-      const sizeDoc = await sizes.findOne({ size: { $regex: size, $options: 'i'} });
+      const sizeDoc = await sizes.findOne({ size: { $regex: size, $options: 'i' } });
       sizeId = sizeDoc?._id;
     }
 
@@ -69,16 +137,26 @@ export async function PATCH(request, res) {
       ...(brandId && { brandId: String(brandId) }),
       ...(sizeId && { sizeId: String(sizeId) })
     };
-    
+
 
     console.log("Final query being sent:", JSON.stringify(query));
 
     // Find matching items and sort by reserved quantity (most to least)
-    const matches = await inventory.find(query)
-      .sort({ reserved: -1, _id: 1 })
-      .toArray();
-    
-    console.log(matches)
+    const matches = await inventory.aggregate([
+      { $match: query },
+      {
+        $addFields: {
+          availableQuantity: {
+            $subtract: [{ $ifNull: ["$quantity", 0] },
+            { $ifNull: ["$reserved", 0] }]
+          }
+        }
+      },
+      { $sort: { availableQuantity: 1, _id: 1 } }
+    ]).toArray();
+
+    console.log("MATCHES-", matches)
+
 
     const totalAvailable = matches.reduce((total, item) => {
       const reserved = item.reserved || 0;
@@ -96,12 +174,13 @@ export async function PATCH(request, res) {
 
     // Process items in order (most reserved first)
     for (const item of matches) {
+      console.log(item)
       if (remainingToReserve <= 0) break;
 
       const currentReserved = item.reserved || 0;
       const availableInThisItem = Math.max(0, item.quantity - currentReserved);
-      
-      if (availableInThisItem === 0) continue; 
+
+      if (availableInThisItem === 0) continue;
 
       // Determine how much to reserve from this item
       const toReserveFromThisItem = Math.min(remainingToReserve, availableInThisItem);
@@ -109,19 +188,38 @@ export async function PATCH(request, res) {
 
       // Update the item
       const updatedItem = await inventory.findOneAndUpdate(
-        {_id: new ObjectId(item._id)},
-        { 
+        { _id: new ObjectId(item._id) },
+        {
           $set: {
             reserved: newReservedTotal,
             updatedAt: new Date()
-          }  
+          }
         },
         { returnDocument: "after" }
       );
 
+      let box = null;
+      if (item.boxId) {
+        box = await boxes.findOne(
+          { _id: new ObjectId(item.boxId) }
+        )
+      }
+
       updatedItems.push(updatedItem);
       reservationDetails.push({
         itemId: item._id,
+        image: item.image,
+        style: item.style,
+        ...(item.brandId && { brand: item.brandId }),
+        ...(item.brand && { brand: item.brand }),
+        color: item.color,
+        ...(item.sizeId && { size: item.sizeId }),
+        ...(item.size && { size: item.size }),
+        ...(item.location && { location: item.location }),
+        ...(box && {
+          boxId: box.boxId,
+          location: box.location
+        }),
         previousReserved: currentReserved,
         newReserved: newReservedTotal,
         quantityReservedFromThisItem: toReserveFromThisItem,
@@ -150,15 +248,15 @@ export async function PATCH(request, res) {
       JSON.stringify(result),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-  
 
-    
+
+
   } catch (error) {
     console.error("PATCH error:", error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: "Internal server error",
-        details: error.message 
+        details: error.message
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
@@ -171,12 +269,12 @@ export async function POST(request) {
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
-    
+
     const { itemIds } = await request.json();
     var objectIds = itemIds.map(id => new ObjectId(id))
-    
-    const items = await collection.find({"_id": {$in: objectIds}}).toArray();
-    
+
+    const items = await collection.find({ "_id": { $in: objectIds } }).toArray();
+
     if (items.length === 0) {
       return Response.json(
         {
@@ -206,4 +304,3 @@ export async function POST(request) {
 }
 
 
-  

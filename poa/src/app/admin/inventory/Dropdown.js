@@ -12,7 +12,8 @@ export default function Dropdown({
   refresh,
   currentItem,
   setCurrentItem,
-  disabledInput=false
+  disabledInput = false,
+  onDropdownStateChange,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -21,12 +22,16 @@ export default function Dropdown({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const configDict = configs[config_type]?.dictionary || {};
-  
+
+  // Notify parent when dropdown state changes
+  useEffect(() => {
+    onDropdownStateChange?.(isOpen);
+  }, [isOpen, onDropdownStateChange]);
+
   const getCurrentValue = () => {
     if (index !== undefined && index !== null && contents) {
       return contents[index]?.[config_type] || "";
     }
-    console.log(currentItem)
     return currentItem?.[config_type] || "";
   };
 
@@ -184,6 +189,7 @@ export default function Dropdown({
 
   const selectFromDropdown = (e, optionIndex) => {
     e.preventDefault();
+    e.stopPropagation(); // Stop event from bubbling up
     const filteredOptions = configs[config_type]?.filteredOptions || [];
     const selectedOption = filteredOptions[optionIndex];
     
@@ -205,18 +211,21 @@ export default function Dropdown({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
+        e.stopPropagation();
         setHighlightedIndex((prev) =>
           prev < filteredOptions.length - 1 ? prev + 1 : 0
         );
         break;
       case "ArrowUp":
         e.preventDefault();
+        e.stopPropagation();
         setHighlightedIndex((prev) =>
           prev > 0 ? prev - 1 : filteredOptions.length - 1
         );
         break;
       case "Enter":
         e.preventDefault();
+        e.stopPropagation(); // Prevent parent form submission
         if (
           highlightedIndex >= 0 &&
           highlightedIndex < filteredOptions.length
@@ -226,6 +235,7 @@ export default function Dropdown({
         break;
       case "Escape":
         e.preventDefault();
+        e.stopPropagation();
         setIsOpen(false);
         setHighlightedIndex(-1);
         // Revert to original value
@@ -289,6 +299,7 @@ export default function Dropdown({
             }}
             onMouseDown={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               addOptDb(config_type, searchState);
             }}
           >
@@ -308,6 +319,7 @@ export default function Dropdown({
             }}
             onMouseDown={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               updateValue(searchState, null);
               setIsOpen(false);
             }}
