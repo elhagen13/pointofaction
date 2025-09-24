@@ -282,3 +282,29 @@ Reservation progress bar
   left: 100%;
   transform: translate(-50%, -50%);
 }
+
+.button {
+  background-color: #538561;
+  color: white;
+  font-weight: bold;
+  border: none;
+  outline: none;
+  padding: 12px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  min-height: 44px; /* Touch-friendly minimum size */
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.button:hover {
+  background-color: rgb(50, 120, 50);
+}
+
+.button:active {
+  transform: scale(0.98);
+}

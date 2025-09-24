@@ -4,6 +4,7 @@ import { FaCheckCircle, FaRegTrashAlt, FaTrash } from "react-icons/fa";
 import { TbShoppingCartCancel } from "react-icons/tb"
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { IoIosCheckmarkCircle } from "react-icons/io";
 
 
 export default function Cart({
@@ -26,9 +27,14 @@ export default function Cart({
 
   const [selectionType, setSelectionType] = useState("auto");
 
-  const [boxOptions, setBoxOptions] = useState(null)
+  const [boxOptions, setBoxOptions] = useState({});
+  const [optionsIndex, setOptionsIndex] = useState(null);
+
+  const [currentStatus, setCurrentStatus] = useState([])
 
   const { user } = useUser();
+
+  const [manualSelections, setManualSelections] = useState({})
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -66,6 +72,7 @@ export default function Cart({
     setCart(getCartFromStorage());
   }, []);
 
+
   // Remove all items that match the group (style, brand, description, color)
   const removeGroupFromCart = (groupKey) => {
     const updatedCart = cart.filter((item) => {
@@ -76,6 +83,47 @@ export default function Cart({
     saveCartToStorage(updatedCart);
     setCart(updatedCart);
   };
+
+  // Calculate the total quantity that will be taken from selected boxes for a given cart item
+  const calculateSelectedQuantity = (cartItemIndex) => {
+    const cartItem = cart[cartItemIndex];
+    if (!cartItem) return 0;
+
+    const itemBoxOptions = boxOptions[cartItemIndex];
+    if (!itemBoxOptions) return 0;
+
+    const selectedBoxes = itemBoxOptions.filter(box => manualSelections[`${cartItemIndex}-${box._id}`]);
+
+    selectedBoxes.sort((a, b) => a.boxSequentialId - b.boxSequentialId);
+
+    let totalSelected = 0;
+    let remainingNeeded = cartItem.quantity;
+
+    for (const box of selectedBoxes) {
+      const availableInBox = box.quantity - (box.reserved || 0);
+      const toTakeFromBox = Math.min(availableInBox, remainingNeeded);
+
+      totalSelected += toTakeFromBox;
+      remainingNeeded -= toTakeFromBox;
+
+      if (remainingNeeded <= 0) break;
+    }
+
+    return Math.min(totalSelected, cartItem.quantity);
+  };
+
+  useEffect(() => {
+    let arr = [];
+    for (let i = 0; i < cart.length; i++) {
+      if (selectionType === "manual") {
+        arr.push(calculateSelectedQuantity(i));
+      } else {
+        arr.push(0);
+      }
+    }
+    setCurrentStatus(arr);
+  }, [cart, manualSelections, boxOptions, selectionType]);
+
 
   useEffect(() => {
     const cartGrouped = {};
@@ -123,31 +171,40 @@ export default function Cart({
     );
   }, [groupedCart]);
 
-  const getMatching = async(style, color, brand, size) => {
+  const getMatching = async (style, color, brand, size, cartItemIndex) => {
     try {
-        const matching = await fetch(`/api/catalog?style=${style}&color=${color}&brand=${brand}&size=${size}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const matching = await fetch(`/api/catalog?style=${style}&color=${color}&brand=${brand}&size=${size}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-        });
+      });
 
-        if (!matching.ok) {
-          const errorData = await completeReservation.json();
-          throw new Error(errorData.error || `HTTP ${completeReservation.status}`);
-        }
-
-        const data = await matching.json()
-
-        setBoxOptions(data)
-
-
-      } catch (finalizeError) {
-        console.error("Error finalizing reservation:", finalizeError);
-        alert("Items were reserved but failed to create final reservation");
+      if (!matching.ok) {
+        const errorData = await matching.json();
+        throw new Error(errorData.error || `HTTP ${matching.status}`);
       }
 
+      const data = await matching.json()
+      setBoxOptions(prev => ({
+        ...prev,
+        [cartItemIndex]: data
+      }));
+      console.log(data);
+      return;
+
+
+    } catch (finalizeError) {
+      console.error("Error finalizing reservation:", finalizeError);
+      alert("Items were reserved but failed to create final reservation");
+    }
+
+  }
+
+  const onItemClick = async (cartItem, index) => {
+    setOptionsIndex(index)
+    await getMatching(cartItem.style, cartItem.color, cartItem.brand, cartItem.size, index)
   }
 
   const reserveCart = async (e) => {
@@ -159,31 +216,75 @@ export default function Cart({
 
     try {
       // Process all cart items first
-      for (const item of cart) {
-        try {
-          const reservation = await uploadReserve(item);
-          if (reservation.ok) {
-            const data = await reservation.json();
-            reservationResults.push({
-              item: item,
-              success: true,
-              data: data,
-            });
-          } else {
-            const errorData = await reservation.json();
+      if (selectionType === "auto") {
+        for (const item of cart) {
+          try {
+            const reservation = await uploadReserveAuto(item);
+            if (reservation.ok) {
+              const data = await reservation.json();
+              reservationResults.push({
+                item: item,
+                success: true,
+                data: data,
+              });
+            } else {
+              const errorData = await reservation.json();
+              failedReservations.push({
+                item: item,
+                error: errorData.error || `HTTP ${reservation.status}`,
+              });
+            }
+          } catch (itemError) {
+            console.error("Error processing item:", item, itemError);
             failedReservations.push({
               item: item,
-              error: errorData.error || `HTTP ${reservation.status}`,
+              error: itemError.message,
             });
           }
-        } catch (itemError) {
-          console.error("Error processing item:", item, itemError);
-          failedReservations.push({
-            item: item,
-            error: itemError.message,
-          });
         }
       }
+      else if (selectionType === "manual") {
+        for (const [cartItemIndex, boxList] of Object.entries(boxOptions)) {
+          for (const box of boxList) {
+            const selectionKey = `${cartItemIndex}-${box._id}`;
+
+            // Only process selected boxes
+            if (manualSelections[selectionKey]) {
+              const quantityFromBox = getQuantityFromBox(box, parseInt(cartItemIndex));
+
+              if (quantityFromBox > 0) {
+                try {
+                  const reservation = await uploadReserveManual(box._id, quantityFromBox);
+                  if (reservation.ok) {
+                    const data = await reservation.json();
+                    reservationResults.push({
+                      item: box,
+                      success: true,
+                      data: data,
+                    });
+                  } else {
+                    const errorData = await reservation.json();
+                    failedReservations.push({
+                      item: box,
+                      error: errorData.error || `HTTP ${reservation.status}`,
+                    });
+                  }
+                } catch (itemError) {
+                  console.error("Error processing box:", box, itemError);
+                  failedReservations.push({
+                    item: box,
+                    error: itemError.message,
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+      else {
+        throw Error("Invalid selection type")
+      }
+
 
       // Check if there were any failures
       if (failedReservations.length > 0) {
@@ -269,7 +370,8 @@ export default function Cart({
     }
   };
 
-  const uploadReserve = async (item) => {
+
+  const uploadReserveAuto = async (item) => {
     // Validate required fields
     if (
       !item.style ||
@@ -305,6 +407,87 @@ export default function Cart({
       alert("Insufficient inventory: please reload")
       throw new Error(`Network error: ${fetchError.message}`);
     }
+  };
+
+  const uploadReserveManual = async (id, quantityToReserve) => {
+    // Validate required fields
+    if (!id || !quantityToReserve) {
+      throw new Error("Missing required fields: boxId and quantityToReserve");
+    }
+
+    if (quantityToReserve <= 0) {
+      throw new Error("Invalid quantity");
+    }
+
+    try {
+      const result = await fetch("/api/catalog/manual", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inventoryId: id,
+          quantityToReserve: quantityToReserve,
+        }),
+      });
+
+      return result;
+    } catch (fetchError) {
+      console.error("Fetch error:", fetchError);
+      alert("Insufficient inventory: please reload");
+      throw new Error(`Network error: ${fetchError.message}`);
+    }
+  };
+
+  const handleBoxSelection = (item, cartItemIndex) => {
+    const selectionKey = `${cartItemIndex}-${item._id}`;
+
+    setManualSelections(prev => {
+      if (prev[selectionKey]) {
+        // Removing selection
+        const { [selectionKey]: removed, ...rest } = prev;
+        return rest;
+      } else {
+        // Adding selection
+        return {
+          ...prev,
+          [selectionKey]: true
+        };
+      }
+    });
+  }
+
+  // Helper function to get the quantity that would be taken from a specific box
+  const getQuantityFromBox = (box, cartItemIndex) => {
+    const cartItem = cart[cartItemIndex];
+    if (!cartItem) return 0;
+
+    const selectionKey = `${cartItemIndex}-${box._id}`;
+    if (!manualSelections[selectionKey]) return 0;
+
+    // Get box options for this specific cart item
+    const itemBoxOptions = boxOptions[cartItemIndex];
+    if (!itemBoxOptions) return 0;
+
+    // Get all selected boxes for this cart item and sort them consistently
+    const selectedBoxes = itemBoxOptions.filter(b => manualSelections[`${cartItemIndex}-${b._id}`]);
+    selectedBoxes.sort((a, b) => a.boxSequentialId - b.boxSequentialId);
+
+    let remainingNeeded = cartItem.quantity;
+
+    for (const selectedBox of selectedBoxes) {
+      const availableInBox = selectedBox.quantity - (selectedBox.reserved || 0);
+      const toTakeFromBox = Math.min(availableInBox, remainingNeeded);
+
+      if (selectedBox._id === box._id) {
+        return toTakeFromBox;
+      }
+
+      remainingNeeded -= toTakeFromBox;
+      if (remainingNeeded <= 0) break;
+    }
+
+    return 0;
   };
 
   return (
@@ -396,14 +579,37 @@ export default function Cart({
               <div>
                 {
                   cart.map((cartItem, index) => (
-                    <div key={index} className={styles.manualSelection}>
-                      <div className={styles.imageContainer} style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                        <img src={cartItem.image} className={styles.rowImage}></img>
-                        <div className={styles.opacityFilter}></div>
+                    <>
+                      <div key={index} className={styles.manualSelection} onClick={() => onItemClick(cartItem, index)}>
+                        <div className={styles.imageContainer} style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                          <img src={cartItem.image} className={styles.rowImage}></img>
+                        </div>
+                        {cartItem.brand} {cartItem.style} {cartItem.description} {cartItem.size}
+                        <div style={{ marginLeft: "auto", fontSize: "32px", marginRight: "10px", color: (currentStatus[index] || 0) >= cartItem.quantity ? "green" : "black" }}>{currentStatus[index] || 0} / {cartItem.quantity}</div>
                       </div>
-                      {cartItem.brand} {cartItem.style} {cartItem.description} {cartItem.size}
-                      <div style={{marginLeft:"auto", fontSize:"32px", marginRight:"10px"}}>{cartItem.quantity}</div>
-                    </div>
+                      <div className={`${styles.boxGrid} ${optionsIndex === index && boxOptions[index] ? styles.visible : styles.notVisible}`}>
+                        {
+                          boxOptions[index] && boxOptions[index].map((box, i) => {
+                            const quantityFromThisBox = getQuantityFromBox(box, index);
+                            const availableQuantity = box.quantity - (box.reserved || 0);
+                            const selectionKey = `${index}-${box._id}`;
+
+                            return (
+                              <div key={i} onClick={() => handleBoxSelection(box, index)} className={manualSelections[selectionKey] ? styles.selected : ""} style={{ position: "relative", display: "flex", flexDirection: "column", gap: "10px" }}>
+                                <h3>#{box.boxSequentialId}</h3>
+                                <div>Available: {availableQuantity}</div>
+                                {manualSelections[selectionKey] && (
+                                  <div style={{ color: "green", fontWeight: "bold" }}>
+                                    Taking: {quantityFromThisBox}
+                                  </div>
+                                )}
+                                <IoIosCheckmarkCircle style={{ position: "absolute", right: "5px", bottom: "5px", display: manualSelections[selectionKey] ? "" : "none", color: "green" }} size={20} />
+                              </div>
+                            );
+                          })
+                        }
+                      </div>
+                    </>
                   ))
                 }
 
@@ -446,10 +652,11 @@ export default function Cart({
                   SO#/IN#: <input className={styles.input} value={soin} onChange={(e) => setSoIn(e.target.value)} />
                 </div>
               </div>
-              <div
+              <button
                 className={styles.shoppingButton}
                 style={{ height: "fit-content" }}
                 onClick={(e) => reserveCart(e)}
+                disabled={selectionType == "manual" && !cart.every((item, index) => item.quantity <= currentStatus[index])}
               >
                 {submitting ? (
                   "Submitting..."
@@ -459,7 +666,7 @@ export default function Cart({
                     <FaCheckCircle />
                   </>
                 )}
-              </div>
+              </button>
             </div>
           </>
           :

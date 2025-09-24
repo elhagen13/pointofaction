@@ -23,7 +23,6 @@ async function connectToDatabase() {
     throw error;
   }
 }
-
 export async function GET(request) {
   try {
     const { db } = await connectToDatabase();
@@ -61,19 +60,49 @@ export async function GET(request) {
       sizeId = sizeDoc?._id;
     }
 
-    const query = {
+    const matchQuery = {
       style,
       color,
       ...(brandId && { brandId: String(brandId) }),
-      ...(sizeId && { sizeId: String(sizeId) })
+      ...(sizeId && { sizeId: String(sizeId) }),
+      $expr: {
+        $gt: ["$quantity", "$reserved"]
+      }
     };
 
-    // Find matching items and sort by available quantity (least to most)
-    const matches = await inventory.find(
-      query
-    ).toArray();
+    // Use aggregation pipeline to join with boxes collection
+    const pipeline = [
+      { $match: matchQuery },
+      {
+        $addFields: {
+          boxObjectId: { $toObjectId: "$boxId" }
+        }
+      },
+      {
+        $lookup: {
+          from: "boxes",
+          localField: "boxObjectId",
+          foreignField: "_id",
+          as: "boxInfo"
+        }
+      },
+      {
+        $addFields: {
+          boxSequentialId: {
+            $arrayElemAt: ["$boxInfo.boxId", 0]
+          }
+        }
+      },
+      {
+        $project: {
+          boxInfo: 0, // Remove the boxInfo array from the final result
+          boxObjectId: 0 // Remove the temporary boxObjectId field
+        }
+      }
+    ];
 
-    
+    const matches = await inventory.aggregate(pipeline).toArray();
+
     return new Response(
       JSON.stringify(matches),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

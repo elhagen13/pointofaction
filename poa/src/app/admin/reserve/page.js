@@ -6,6 +6,7 @@ import { Fis } from "aws-sdk";
 import SetQuantity from "./SetQuantity";
 import Cart from "./Cart";
 import { IoCart, IoSearch, IoChevronDown } from "react-icons/io5";
+import Link from "next/link";
 
 function Inventory() {
   const [quantityPopup, setQuantityPopup] = useState(false);
@@ -264,7 +265,7 @@ function Inventory() {
   const updateCartCount = () => {
     if (typeof window !== 'undefined') {
       const cart = getCartFromStorage();
-      setCartCount(cart.length);
+      setCartCount(cart.reduce((a, b) => a + b.quantity, 0));
     }
   };
 
@@ -294,6 +295,9 @@ function Inventory() {
 
   return (
     <div style={{ padding: "20px" }}>
+      <div style={{display: "flex", justifyContent:"end", marginBottom:"15px"}}>
+        <Link className={styles.button} href="/admin/reservations">View Reservations</Link>
+      </div>
       <div
         style={{
           display: "flex",

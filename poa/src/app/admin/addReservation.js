@@ -28,13 +28,7 @@ function ReservationItems() {
                   color: "#538561",
                 }}
               >
-                Go to Reservations
-              </Link>
-              <Link
-                className={styles.button}
-                href="/admin/reserve"
-              >
-                Make Reservation
+                Reservations
               </Link>
             </div>
           </div>

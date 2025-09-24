@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState, useRef, useCallback, useMemo } from "rea
 import styles from "./reservation.module.css";
 import { useRouter, useSearchParams } from "next/navigation";
 import Reservation from "./Reservation";
+import Link from "next/link";
 
 // Create a separate component that uses useSearchParams
 function ReservationsContent() {
@@ -120,7 +121,10 @@ function ReservationsContent() {
 
   return (
     <div className={styles.page}>
-      <h1>Order Requests</h1>
+      <div style={{display:"flex", justifyContent:"space-between"}}>
+        <h1>Order Requests</h1>
+        <Link href="/admin/reserve" className={styles.button}>Place Reservation</Link>
+        </div>
       <div className={styles.paginationType}>
         <div
           className={styles.slider}
