@@ -328,6 +328,16 @@
   box-shadow: 0 0 3px 3px rgba(163, 201, 163, 0.734) !important;
 }
 
+.recommended{
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgb(56, 143, 190);
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
+}
+
 @media (max-width: 769px) {
   .top {
     flex-direction: column;

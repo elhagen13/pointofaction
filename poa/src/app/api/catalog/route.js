@@ -38,6 +38,8 @@ export async function GET(request) {
     const brand = url.searchParams.get('brand');
     const size = url.searchParams.get('size');
 
+    console.log(style, color, brand, size)
+
     // Validation - require at least style and color, plus either brand or size
     if (!style || !color || (!brand && !size)) {
       return new Response(
@@ -51,12 +53,12 @@ export async function GET(request) {
     let sizeId = null;
 
     if (brand) {
-      const brandDoc = await brands.findOne({ brand: brand });
+      const brandDoc = await brands.findOne({ brand: { $regex: `^${brand}$`, $options: 'i' } });
       brandId = brandDoc?._id;
     }
 
     if (size) {
-      const sizeDoc = await sizes.findOne({ size: { $regex: size, $options: 'i' } });
+      const sizeDoc = await sizes.findOne({ size: { $regex: `^${size}$`, $options: 'i' } });
       sizeId = sizeDoc?._id;
     }
 
@@ -151,12 +153,12 @@ export async function PATCH(request, res) {
     let sizeId = null;
 
     if (brand) {
-      const brandDoc = await brands.findOne({ brand: brand });
+      const brandDoc = await brands.findOne({ brand: { $regex: `^${brand}$`, $options: 'i' } });
       brandId = brandDoc?._id;
     }
 
     if (size) {
-      const sizeDoc = await sizes.findOne({ size: { $regex: size, $options: 'i' } });
+      const sizeDoc = await sizes.findOne({ size: { $regex: `^${size}$`, $options: 'i' } });
       sizeId = sizeDoc?._id;
     }
 

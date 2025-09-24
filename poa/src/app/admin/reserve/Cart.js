@@ -25,7 +25,7 @@ export default function Cart({
   const [orderTitle, setOrderTitle] = useState("");
   const [soin, setSoIn] = useState("");
 
-  const [selectionType, setSelectionType] = useState("auto");
+  const [selectionType, setSelectionType] = useState("manual");
 
   const [boxOptions, setBoxOptions] = useState({});
   const [optionsIndex, setOptionsIndex] = useState(null);
@@ -35,6 +35,8 @@ export default function Cart({
   const { user } = useUser();
 
   const [manualSelections, setManualSelections] = useState({})
+  
+  const [bestIndexes, setBestIndexes] = useState([])
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -171,7 +173,7 @@ export default function Cart({
     );
   }, [groupedCart]);
 
-  const getMatching = async (style, color, brand, size, cartItemIndex) => {
+  const getMatching = async (style, color, brand, size, cartItemIndex, quantity) => {
     try {
       const matching = await fetch(`/api/catalog?style=${style}&color=${color}&brand=${brand}&size=${size}`, {
         method: "GET",
@@ -187,6 +189,8 @@ export default function Cart({
       }
 
       const data = await matching.json()
+     
+
       setBoxOptions(prev => ({
         ...prev,
         [cartItemIndex]: data
@@ -202,10 +206,114 @@ export default function Cart({
 
   }
 
+ function findBestCombination(arr, target) {
+  let bestResult = null;
+  let bestScore = -Infinity;
+
+  function calculateScore(combination) {
+    const { indexes, sum, boxCount } = combination;
+    
+    // Calculate how much we're taking from each box
+    const takeAmounts = indexes.map(i => Math.min(arr[i], target));
+    const totalTaking = takeAmounts.reduce((sum, amt) => sum + amt, 0);
+    
+    // Count how many boxes we're completely emptying
+    const completelyEmptiedBoxes = takeAmounts.filter((take, idx) => 
+      take === arr[indexes[idx]]
+    ).length;
+    
+    // Prioritization scoring:
+    // 1. Exact match gets huge bonus
+    const exactMatchBonus = (sum === target) ? 1000 : 0;
+    
+    // 2. Prefer combinations that empty more boxes completely
+    const emptyBoxBonus = completelyEmptiedBoxes * 100;
+    
+    // 3. Prefer fewer total boxes used
+    const fewBoxesBonus = -boxCount * 10;
+    
+    // 4. Minimize waste (overfill penalty)
+    const wastePenalty = sum > target ? -(sum - target) * 5 : 0;
+    
+    // 5. If no exact match possible, prefer getting closer to target
+    const proximityBonus = exactMatchBonus === 0 ? -Math.abs(sum - target) : 0;
+    
+    return exactMatchBonus + emptyBoxBonus + fewBoxesBonus + wastePenalty + proximityBonus;
+  }
+
+  function backtrack(index, currentSum, currentIndexes) {
+    // Check if current combination is valid and potentially better
+    if (currentSum >= target || index === arr.length) {
+      if (currentIndexes.length > 0) {
+        const combination = {
+          indexes: [...currentIndexes],
+          values: currentIndexes.map(i => arr[i]),
+          sum: currentSum,
+          waste: Math.max(0, currentSum - target),
+          boxCount: currentIndexes.length,
+          completelyEmptied: currentIndexes.filter(i => arr[i] <= target - (currentSum - arr[i])).length
+        };
+        
+        const score = calculateScore(combination);
+        
+        if (score > bestScore) {
+          bestResult = combination;
+          bestScore = score;
+        }
+      }
+      
+      if (currentSum >= target) return; // Stop exploring this path if we've reached/exceeded target
+    }
+
+    // Continue exploring
+    for (let i = index; i < arr.length; i++) {
+      if (arr[i] > 0 && currentSum + arr[i] <= target * 2) { // Don't go too far over
+        currentIndexes.push(i);
+        backtrack(i + 1, currentSum + arr[i], currentIndexes);
+        currentIndexes.pop();
+      }
+    }
+  }
+
+  backtrack(0, 0, []);
+  
+  if (bestResult) {
+    // Add detailed info about what's being taken from each box
+    bestResult.takeDetails = bestResult.indexes.map(i => ({
+      boxIndex: i,
+      available: arr[i],
+      taking: Math.min(arr[i], target),
+      remaining: arr[i] - Math.min(arr[i], target),
+      completelyEmptied: Math.min(arr[i], target) === arr[i]
+    }));
+  }
+  
+  return bestResult || {
+    indexes: [],
+    values: [],
+    sum: 0,
+    waste: Infinity,
+    boxCount: 0,
+    message: 'No valid combination found'
+  };
+}
+
+
   const onItemClick = async (cartItem, index) => {
     setOptionsIndex(index)
-    await getMatching(cartItem.style, cartItem.color, cartItem.brand, cartItem.size, index)
+    await getMatching(cartItem.style, cartItem.color, cartItem.brand, cartItem.size, index, cartItem.quantity)
   }
+
+  useEffect(() => {
+    if(!boxOptions || !boxOptions[optionsIndex]) return
+
+    const numArr = boxOptions ? boxOptions[optionsIndex]?.map(item => item.quantity - (item.reserved || 0)) : []
+    const bestCombination = findBestCombination(numArr, cart[optionsIndex].quantity)
+    
+    setBestIndexes(bestCombination.indexes)
+    return;
+
+  }, [boxOptions])
 
   const reserveCart = async (e) => {
     e.preventDefault();
@@ -597,13 +705,18 @@ export default function Cart({
                             return (
                               <div key={i} onClick={() => handleBoxSelection(box, index)} className={manualSelections[selectionKey] ? styles.selected : ""} style={{ position: "relative", display: "flex", flexDirection: "column", gap: "10px" }}>
                                 <h3>#{box.boxSequentialId}</h3>
-                                <div>Available: {availableQuantity}</div>
+                                <div>Available: <span style={{textDecoration: manualSelections[selectionKey] ? "line-through" : ""}}>{availableQuantity}
+                                  </span>
+                                 {manualSelections[selectionKey] ? `  ${parseInt(availableQuantity) - parseInt(quantityFromThisBox)}` : ""}
+
+                                  </div>
                                 {manualSelections[selectionKey] && (
                                   <div style={{ color: "green", fontWeight: "bold" }}>
                                     Taking: {quantityFromThisBox}
                                   </div>
                                 )}
                                 <IoIosCheckmarkCircle style={{ position: "absolute", right: "5px", bottom: "5px", display: manualSelections[selectionKey] ? "" : "none", color: "green" }} size={20} />
+                                <span className={styles.recommended} style={{display: bestIndexes.includes(i) ? "" : "none"}}/>
                               </div>
                             );
                           })
