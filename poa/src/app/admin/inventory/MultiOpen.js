@@ -98,13 +98,9 @@ export default function MultiOpen({
         </h2>
         <h3 style={{ color: "gray" }}>{items.length} results found</h3>
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, 300px)",
-            gap: "20px",
-            marginTop: "30px",
-          }}
+          style={{display:"flex", flexDirection:"column", gap:"20px"}}
         >
+          
           {items.map((item, index) => (
             <div
               key={item.id || index} // Use item.id if available, otherwise index
@@ -113,19 +109,22 @@ export default function MultiOpen({
                 item.boxId ? setEditBoxOpen(boxDict[item.boxId]) : setEditItemOpen(item)
               }}
               style={{
-                gridColumn: "span 1",
+                width:"100%",
+                height:"100px",
                 boxShadow: "0 0 4px gray",
                 padding: "10px",
                 borderRadius: "10px",
                 overflow: "hidden",
                 display: "flex",
-                flexDirection: "column",
+                flexDirection: "row",
+                gap: "30px",
+                alignItems:"center"
               }}
             >
               <img
                 src={item.image}
                 alt={`${item.color} ${item.style}`}
-                style={{ width: "100%", objectFit: "contain" }}
+                style={{ height:"100%", objectFit: "contain" }}
               />
               <h4>
                 Box #: {item.boxId ? boxDict[item.boxId]?.boxId : "No box"}
@@ -134,19 +133,7 @@ export default function MultiOpen({
                 Location:{" "}
                 {item.location || boxDict[item.boxId]?.location || "N/A"}
               </h4>
-              <h4>Quantity Remaining: {item.quantity}</h4>
-              <h4 style={{ color: "gray" }}>
-                Description:{" "}
-                {item.description ||
-                  descriptionDict[item.descriptionId]?.description ||
-                  "N/A"}
-              </h4>
-              <h4 style={{ color: "gray" }}>
-                Brand:{" "}
-                {item.brand ||
-                  brandDict[item.brandId]?.brand ||
-                  "N/A"}
-              </h4>
+              <h4 style={{marginLeft:"auto"}}>Quantity Remaining: {item.quantity}</h4>
               <h4>
                 Box Total: {item.boxId ? (boxTotals[item.boxId] ?? "Loading...") : "N/A"}
               </h4>

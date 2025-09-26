@@ -1,7 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 
 const MONGODB_URI = process.env.MONGO_URI;
-const DATABASE_NAME = "test";
+const DATABASE_NAME = "testing";
 const COLLECTION_NAME = "inventory";
 
 let cachedClient = null;

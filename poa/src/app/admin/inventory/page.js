@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
-import { FaRegCopy, FaEye, FaArrowDown, FaArrowUp } from "react-icons/fa";
-import { IoSearch, IoChevronDown, IoChevronUp } from "react-icons/io5";
+import { FaRegCopy, FaEye, FaArrowDown, FaArrowUp, FaRegBell, FaRegBellSlash } from "react-icons/fa";
+import { IoSearch, IoChevronDown, IoChevronUp, IoEllipsisHorizontal } from "react-icons/io5";
+import { BiSelectMultiple, BiSolidSelectMultiple } from "react-icons/bi";
 import {
   MdPublic,
   MdOutlinePublicOff,
@@ -21,6 +22,8 @@ import ColumnManager from "./components/ColumnManager";
 
 import Popup from "@/app/components/popups/Popup";
 import { useUser } from "@clerk/nextjs";
+
+import SetAlert from "./components/SetAlert";
 
 function Inventory() {
   /*"all inventory", "boxes", "public", "sale"*/
@@ -70,6 +73,8 @@ function Inventory() {
     addItem: {},
   });
 
+  const [keys, setKeys] = useState([])
+
   const [popup, setPopup] = useState(null);
 
   const { user } = useUser();
@@ -78,6 +83,8 @@ function Inventory() {
   const [numItemsPage, setNumItemsPage] = useState(15);
   const [numPages, setNumPages] = useState(0);
   const [showAll, setShowAll] = useState(false);
+
+  const [multiEdit, setMultiEdit] = useState(false)
 
   const [columns, setColumns] = useState({
     lineItems: [
@@ -121,6 +128,7 @@ function Inventory() {
   useEffect(() => {
     getInventory();
     getItemOptions();
+    getKeys();
     if (localStorage.getItem("columns"))
       setColumns(JSON.parse(localStorage.getItem("columns")));
   }, []);
@@ -129,6 +137,7 @@ function Inventory() {
     await getInventory();
     await getItemOptions();
     await getBoxes();
+    await getKeys()
   };
 
   const getItemOptions = async () => {
@@ -163,6 +172,26 @@ function Inventory() {
     });
   };
 
+  const getKeys = async() => {
+    let response = await fetch("/api/inventory/tracker", {
+      method: "GET",
+    });
+
+    let result = await response.json();
+    console.log(result.data)
+    setKeys(result.data)
+
+  }
+
+  const keyDict = useMemo(() => {
+    const dict = {};
+    keys.forEach((item) => {
+      dict[item.key?.toString()] = item
+    });
+    return dict;
+  }, [keys]);
+
+  
   const contentDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
@@ -272,7 +301,7 @@ function Inventory() {
                 // Check both direct description and descriptionId reference
                 const descriptionText =
                   item.descriptionId &&
-                  descriptionDict[item.descriptionId.toString()]
+                    descriptionDict[item.descriptionId.toString()]
                     ? descriptionDict[item.descriptionId.toString()].description
                     : item.description || "";
                 return descriptionText.toLowerCase().includes(searchTerm);
@@ -343,7 +372,7 @@ function Inventory() {
     setNumPages(
       Math.floor(
         groupedItems.length / numItemsPage +
-          (groupedItems.length % numItemsPage !== 0 ? 1 : 0)
+        (groupedItems.length % numItemsPage !== 0 ? 1 : 0)
       )
     );
 
@@ -573,7 +602,7 @@ function Inventory() {
                 // Check both direct description and descriptionId reference
                 const descriptionText =
                   item.descriptionId &&
-                  descriptionDict[item.descriptionId.toString()]
+                    descriptionDict[item.descriptionId.toString()]
                     ? descriptionDict[item.descriptionId.toString()].description
                     : item.description || "";
                 return descriptionText.toLowerCase().includes(searchTerm);
@@ -952,6 +981,12 @@ function Inventory() {
     return currentColumns.filter((column) => Object.values(column)[0]);
   };
 
+  const getKey = (item) => {
+    return `${item[0]?.brand || brandDict[item[0]?.brandId]?.brand 
+                        || "No brand"}-${item[0].style || "No style"}-${item[0]?.size || sizeDict[item[0]?.sizeId]?.size
+                        || "No size"}`
+  }
+
   return (
     <div
       className={styles.inventoryBackground}
@@ -1118,10 +1153,18 @@ function Inventory() {
           </div>
         )}
         {filter !== "grouped" && (
-          <div style={{ width: "100%", position: "relative", display: "flex" }}>
+          <div style={{ width: "100%", position: "relative", display: "flex", justifyContent: "end", gap: "10px" }}>
+            {filter === "line items" && <button style={{
+              marginBottom: "10px",
+              backgroundColor: "white",
+            }}
+              className={styles.pageButton}
+              onClick={() => setMultiEdit(!multiEdit)}
+            >
+              <BiSelectMultiple style={{ marginRight: "5px" }} /> Edit Mode {multiEdit ? "Off" : "On"}
+            </button>}
             <button
               style={{
-                marginLeft: "auto",
                 marginBottom: "10px",
                 backgroundColor: "white",
               }}
@@ -1185,6 +1228,11 @@ function Inventory() {
             >
               <thead>
                 <tr style={{ backgroundColor: "#ebebeb" }}>
+                  {
+                      multiEdit &&
+                      <th></th>
+                    }
+                  
                   {getVisibleColumns("lineItems").map((column, index) => {
                     const columnName = Object.keys(column)[0];
                     const isSortable = [
@@ -1196,6 +1244,7 @@ function Inventory() {
                       "Quantity",
                       "Box",
                     ].includes(columnName);
+              
 
                     return (
                       <th
@@ -1222,7 +1271,7 @@ function Inventory() {
                         {columnName}
                         {isSortable &&
                           sortBy ===
-                            columnName.toLowerCase().replace(" ", "") &&
+                          columnName.toLowerCase().replace(" ", "") &&
                           (sortOrder ? (
                             <FaArrowDown
                               style={{
@@ -1240,15 +1289,24 @@ function Inventory() {
                           ))}
                       </th>
                     );
+                    
                   })}
+                  {
+                      multiEdit &&
+                      <th></th>
+                    }
                 </tr>
               </thead>
               <tbody>
-                {filteredInventory.map((item, index) => (
+                {filteredInventory.map((item, index) => {
+                  const quantity = item.reduce((acc, cur) => acc + cur.quantity, 0)
+                  return(
                   <tr
                     key={index}
                     style={{
-                      backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                      backgroundColor: (keyDict[getKey(item)] && quantity === 0) ? "#f5dcda" 
+                      : keyDict[getKey(item)]?.quantity > quantity ? 
+                      "#f5e9d5" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
                       overflow: "scroll",
                     }}
                     onClick={() => {
@@ -1263,6 +1321,10 @@ function Inventory() {
                       } else setMultiOpen(item);
                     }}
                   >
+                    {
+                      multiEdit &&
+                      <td className={styles.tableSm}  onClick={(e) => {e.stopPropagation()}}><input type="checkbox" /></td>
+                    }
                     {getVisibleColumns("lineItems").map((column) => {
                       const columnName = Object.keys(column)[0];
 
@@ -1317,17 +1379,14 @@ function Inventory() {
                         case "Quantity":
                           return (
                             <td key={columnName} style={{ minWidth: "100px" }}>
-                              {item.reduce((acc, cur) => acc + cur.quantity, 0)}
+                              {quantity}
                             </td>
                           );
                         case "Box":
                           return boxDict[item[0].boxId?.toString()] ? (
                             <td
                               key={columnName}
-                              onClick={() =>
-                                setEditBoxOpen(boxDict[item.boxId?.toString()])
-                              }
-                              style={{ cursor: "pointer", minWidth: "100px" }}
+                              style={{ minWidth: "100px" }}
                             >
                               {getBox(item)}
                             </td>
@@ -1371,8 +1430,15 @@ function Inventory() {
                           return <td key={columnName}></td>;
                       }
                     })}
-                  </tr>
-                ))}
+                    {
+                      multiEdit &&
+                      <td className={styles.tableSm} onClick={(e) => {e.stopPropagation(); console.log(getKey(item))}}>
+                        
+                        <SetAlert keyDict={keyDict} getKey={getKey} item={item} refresh={refresh}/>
+                        </td>
+                    }
+                  </tr>)
+                })}
               </tbody>
             </table>
           </>
@@ -1510,16 +1576,16 @@ function Inventory() {
                           >
                             {contentDict[box._id] ? (
                               contentDict[box._id][0].public ? (
-                                <MdPublic color="green" title="Public"/>
+                                <MdPublic color="green" title="Public" />
                               ) : (
-                                <MdOutlinePublicOff color="red" title="Admin Only"/>
+                                <MdOutlinePublicOff color="red" title="Admin Only" />
                               )
                             ) : (
-                              <MdOutlinePublicOff color="red" title="Admin Only"/>
+                              <MdOutlinePublicOff color="red" title="Admin Only" />
                             )}
                             {contentDict[box._id] ? (
                               contentDict[box._id][0].sale ? (
-                                <HiCash color="blue" title="On Sale"/>
+                                <HiCash color="blue" title="On Sale" />
                               ) : null
                             ) : null}
                           </td>

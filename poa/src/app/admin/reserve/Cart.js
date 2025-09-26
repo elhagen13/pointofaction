@@ -35,8 +35,14 @@ export default function Cart({
   const { user } = useUser();
 
   const [manualSelections, setManualSelections] = useState({})
-  
+
   const [bestIndexes, setBestIndexes] = useState([])
+
+  // New state to track quantity calculations for each cart item
+  const [quantityCalculations, setQuantityCalculations] = useState({});
+
+  // Track the order of box selections for each cart item
+  const [selectionOrder, setSelectionOrder] = useState({});
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -86,33 +92,78 @@ export default function Cart({
     setCart(updatedCart);
   };
 
-  // Calculate the total quantity that will be taken from selected boxes for a given cart item
-  const calculateSelectedQuantity = (cartItemIndex) => {
+  const calculateQuantityDistribution = (cartItemIndex, orderedBoxIds, recalculate = false) => {
     const cartItem = cart[cartItemIndex];
-    if (!cartItem) return 0;
+    if (!cartItem) return { totalSelected: 0, distribution: {} };
 
     const itemBoxOptions = boxOptions[cartItemIndex];
-    if (!itemBoxOptions) return 0;
+    if (!itemBoxOptions) return { totalSelected: 0, distribution: {} };
 
-    const selectedBoxes = itemBoxOptions.filter(box => manualSelections[`${cartItemIndex}-${box._id}`]);
+    // Check if we have existing calculations and selection order
+    const existingCalc = quantityCalculations[cartItemIndex];
+    const currentOrder = selectionOrder[cartItemIndex] || [];
 
-    selectedBoxes.sort((a, b) => a.boxSequentialId - b.boxSequentialId);
+    // Only use orderedBoxIds if they match our current selection order
+    const validOrderedBoxIds = orderedBoxIds.filter(id => currentOrder.includes(id));
+    const finalOrderedBoxIds = validOrderedBoxIds.length > 0 ?
+      validOrderedBoxIds :
+      currentOrder.filter(id => orderedBoxIds.includes(id));
 
-    let totalSelected = 0;
-    let remainingNeeded = cartItem.quantity;
-
-    for (const box of selectedBoxes) {
-      const availableInBox = box.quantity - (box.reserved || 0);
-      const toTakeFromBox = Math.min(availableInBox, remainingNeeded);
-
-      totalSelected += toTakeFromBox;
-      remainingNeeded -= toTakeFromBox;
-
-      if (remainingNeeded <= 0) break;
+    if (!recalculate && existingCalc &&
+      JSON.stringify(existingCalc.orderedBoxIds) === JSON.stringify(finalOrderedBoxIds)) {
+      return existingCalc;
     }
 
-    return Math.min(totalSelected, cartItem.quantity);
+    const orderedBoxes = finalOrderedBoxIds.map(boxId =>
+  itemBoxOptions.find(box => box._id === boxId)
+).filter(Boolean);
+
+    let remainingNeeded = cartItem.quantity;
+    const distribution = {};
+    let totalSelected = 0;
+
+    for (const box of orderedBoxes) {
+      const availableInBox = box.quantity - (box.reserved || 0);
+
+      if (remainingNeeded <= 0) {
+        distribution[box._id] = 0;
+      } else {
+        const toTakeFromBox = Math.min(availableInBox, remainingNeeded);
+        distribution[box._id] = toTakeFromBox;
+        totalSelected += toTakeFromBox;
+        remainingNeeded -= toTakeFromBox;
+      }
+    }
+
+    const result = {
+      totalSelected: Math.min(totalSelected, cartItem.quantity),
+      distribution,
+      orderedBoxIds: finalOrderedBoxIds
+    };
+
+    return result;
   };
+  const calculateSelectedQuantity = (cartItemIndex) => {
+  const cartItem = cart[cartItemIndex];
+  if (!cartItem) return 0;
+
+  const itemBoxOptions = boxOptions[cartItemIndex];
+  if (!itemBoxOptions) return 0;
+
+  const orderedBoxIds = selectionOrder[cartItemIndex] || [];
+
+  if (orderedBoxIds.length === 0) return 0;
+
+  const calculation = calculateQuantityDistribution(cartItemIndex, orderedBoxIds);
+
+  // Update the stored calculation
+  setQuantityCalculations(prev => ({
+    ...prev,
+    [cartItemIndex]: calculation
+  }));
+
+  return calculation.totalSelected;
+};
 
   useEffect(() => {
     let arr = [];
@@ -189,7 +240,7 @@ export default function Cart({
       }
 
       const data = await matching.json()
-     
+
 
       setBoxOptions(prev => ({
         ...prev,
@@ -206,97 +257,97 @@ export default function Cart({
 
   }
 
- function findBestCombination(arr, target) {
-  let bestResult = null;
-  let bestScore = -Infinity;
+  function findBestCombination(arr, target) {
+    let bestResult = null;
+    let bestScore = -Infinity;
 
-  function calculateScore(combination) {
-    const { indexes, sum, boxCount } = combination;
-    
-    // Calculate how much we're taking from each box
-    const takeAmounts = indexes.map(i => Math.min(arr[i], target));
-    const totalTaking = takeAmounts.reduce((sum, amt) => sum + amt, 0);
-    
-    // Count how many boxes we're completely emptying
-    const completelyEmptiedBoxes = takeAmounts.filter((take, idx) => 
-      take === arr[indexes[idx]]
-    ).length;
-    
-    // Prioritization scoring:
-    // 1. Exact match gets huge bonus
-    const exactMatchBonus = (sum === target) ? 1000 : 0;
-    
-    // 2. Prefer combinations that empty more boxes completely
-    const emptyBoxBonus = completelyEmptiedBoxes * 100;
-    
-    // 3. Prefer fewer total boxes used
-    const fewBoxesBonus = -boxCount * 10;
-    
-    // 4. Minimize waste (overfill penalty)
-    const wastePenalty = sum > target ? -(sum - target) * 5 : 0;
-    
-    // 5. If no exact match possible, prefer getting closer to target
-    const proximityBonus = exactMatchBonus === 0 ? -Math.abs(sum - target) : 0;
-    
-    return exactMatchBonus + emptyBoxBonus + fewBoxesBonus + wastePenalty + proximityBonus;
-  }
+    function calculateScore(combination) {
+      const { indexes, sum, boxCount } = combination;
 
-  function backtrack(index, currentSum, currentIndexes) {
-    // Check if current combination is valid and potentially better
-    if (currentSum >= target || index === arr.length) {
-      if (currentIndexes.length > 0) {
-        const combination = {
-          indexes: [...currentIndexes],
-          values: currentIndexes.map(i => arr[i]),
-          sum: currentSum,
-          waste: Math.max(0, currentSum - target),
-          boxCount: currentIndexes.length,
-          completelyEmptied: currentIndexes.filter(i => arr[i] <= target - (currentSum - arr[i])).length
-        };
-        
-        const score = calculateScore(combination);
-        
-        if (score > bestScore) {
-          bestResult = combination;
-          bestScore = score;
+      // Calculate how much we're taking from each box
+      const takeAmounts = indexes.map(i => Math.min(arr[i], target));
+      const totalTaking = takeAmounts.reduce((sum, amt) => sum + amt, 0);
+
+      // Count how many boxes we're completely emptying
+      const completelyEmptiedBoxes = takeAmounts.filter((take, idx) =>
+        take === arr[indexes[idx]]
+      ).length;
+
+      // Prioritization scoring:
+      // 1. Exact match gets huge bonus
+      const exactMatchBonus = (sum === target) ? 1000 : 0;
+
+      // 2. Prefer combinations that empty more boxes completely
+      const emptyBoxBonus = completelyEmptiedBoxes * 100;
+
+      // 3. Prefer fewer total boxes used
+      const fewBoxesBonus = -boxCount * 10;
+
+      // 4. Minimize waste (overfill penalty)
+      const wastePenalty = sum > target ? -(sum - target) * 5 : 0;
+
+      // 5. If no exact match possible, prefer getting closer to target
+      const proximityBonus = exactMatchBonus === 0 ? -Math.abs(sum - target) : 0;
+
+      return exactMatchBonus + emptyBoxBonus + fewBoxesBonus + wastePenalty + proximityBonus;
+    }
+
+    function backtrack(index, currentSum, currentIndexes) {
+      // Check if current combination is valid and potentially better
+      if (currentSum >= target || index === arr.length) {
+        if (currentIndexes.length > 0) {
+          const combination = {
+            indexes: [...currentIndexes],
+            values: currentIndexes.map(i => arr[i]),
+            sum: currentSum,
+            waste: Math.max(0, currentSum - target),
+            boxCount: currentIndexes.length,
+            completelyEmptied: currentIndexes.filter(i => arr[i] <= target - (currentSum - arr[i])).length
+          };
+
+          const score = calculateScore(combination);
+
+          if (score > bestScore) {
+            bestResult = combination;
+            bestScore = score;
+          }
+        }
+
+        if (currentSum >= target) return; // Stop exploring this path if we've reached/exceeded target
+      }
+
+      // Continue exploring
+      for (let i = index; i < arr.length; i++) {
+        if (arr[i] > 0 && currentSum + arr[i] <= target * 2) { // Don't go too far over
+          currentIndexes.push(i);
+          backtrack(i + 1, currentSum + arr[i], currentIndexes);
+          currentIndexes.pop();
         }
       }
-      
-      if (currentSum >= target) return; // Stop exploring this path if we've reached/exceeded target
     }
 
-    // Continue exploring
-    for (let i = index; i < arr.length; i++) {
-      if (arr[i] > 0 && currentSum + arr[i] <= target * 2) { // Don't go too far over
-        currentIndexes.push(i);
-        backtrack(i + 1, currentSum + arr[i], currentIndexes);
-        currentIndexes.pop();
-      }
-    }
-  }
+    backtrack(0, 0, []);
 
-  backtrack(0, 0, []);
-  
-  if (bestResult) {
-    // Add detailed info about what's being taken from each box
-    bestResult.takeDetails = bestResult.indexes.map(i => ({
-      boxIndex: i,
-      available: arr[i],
-      taking: Math.min(arr[i], target),
-      remaining: arr[i] - Math.min(arr[i], target),
-      completelyEmptied: Math.min(arr[i], target) === arr[i]
-    }));
+    if (bestResult) {
+      // Add detailed info about what's being taken from each box
+      bestResult.takeDetails = bestResult.indexes.map(i => ({
+        boxIndex: i,
+        available: arr[i],
+        taking: Math.min(arr[i], target),
+        remaining: arr[i] - Math.min(arr[i], target),
+        completelyEmptied: Math.min(arr[i], target) === arr[i]
+      }));
+    }
+
+    return bestResult || {
+      indexes: [],
+      values: [],
+      sum: 0,
+      waste: Infinity,
+      boxCount: 0,
+      message: 'No valid combination found'
+    };
   }
-  
-  return bestResult || {
-    indexes: [],
-    values: [],
-    sum: 0,
-    waste: Infinity,
-    boxCount: 0,
-    message: 'No valid combination found'
-  };
-}
 
 
   const onItemClick = async (cartItem, index) => {
@@ -305,11 +356,11 @@ export default function Cart({
   }
 
   useEffect(() => {
-    if(!boxOptions || !boxOptions[optionsIndex]) return
+    if (!boxOptions || !boxOptions[optionsIndex]) return
 
     const numArr = boxOptions ? boxOptions[optionsIndex]?.map(item => item.quantity - (item.reserved || 0)) : []
     const bestCombination = findBestCombination(numArr, cart[optionsIndex].quantity)
-    
+
     setBestIndexes(bestCombination.indexes)
     return;
 
@@ -548,54 +599,64 @@ export default function Cart({
   };
 
   const handleBoxSelection = (item, cartItemIndex) => {
-    const selectionKey = `${cartItemIndex}-${item._id}`;
+  const selectionKey = `${cartItemIndex}-${item._id}`;
+  const wasSelected = manualSelections[selectionKey];
 
-    setManualSelections(prev => {
-      if (prev[selectionKey]) {
-        // Removing selection
-        const { [selectionKey]: removed, ...rest } = prev;
-        return rest;
-      } else {
-        // Adding selection
-        return {
+  setManualSelections(prev => {
+    const newSelections = { ...prev };
+    const currentOrder = selectionOrder[cartItemIndex] || [];
+
+    if (wasSelected) {
+      // Deselecting
+      delete newSelections[selectionKey];
+
+      const isMostRecent = currentOrder[currentOrder.length - 1] === item._id;
+
+      const newOrder = currentOrder.filter(id => id !== item._id);
+      setSelectionOrder(prev => ({
+        ...prev,
+        [cartItemIndex]: newOrder
+      }));
+
+      if (!isMostRecent) {
+        // Recalculate because we're removing a box that's not the most recently selected
+        const calculation = calculateQuantityDistribution(cartItemIndex, newOrder, true);
+        setQuantityCalculations(prev => ({
           ...prev,
-          [selectionKey]: true
-        };
-      }
-    });
-  }
-
-  // Helper function to get the quantity that would be taken from a specific box
-  const getQuantityFromBox = (box, cartItemIndex) => {
-    const cartItem = cart[cartItemIndex];
-    if (!cartItem) return 0;
-
-    const selectionKey = `${cartItemIndex}-${box._id}`;
-    if (!manualSelections[selectionKey]) return 0;
-
-    // Get box options for this specific cart item
-    const itemBoxOptions = boxOptions[cartItemIndex];
-    if (!itemBoxOptions) return 0;
-
-    // Get all selected boxes for this cart item and sort them consistently
-    const selectedBoxes = itemBoxOptions.filter(b => manualSelections[`${cartItemIndex}-${b._id}`]);
-    selectedBoxes.sort((a, b) => a.boxSequentialId - b.boxSequentialId);
-
-    let remainingNeeded = cartItem.quantity;
-
-    for (const selectedBox of selectedBoxes) {
-      const availableInBox = selectedBox.quantity - (selectedBox.reserved || 0);
-      const toTakeFromBox = Math.min(availableInBox, remainingNeeded);
-
-      if (selectedBox._id === box._id) {
-        return toTakeFromBox;
+          [cartItemIndex]: calculation
+        }));
       }
 
-      remainingNeeded -= toTakeFromBox;
-      if (remainingNeeded <= 0) break;
+    } else {
+      // Selecting
+      newSelections[selectionKey] = true;
+
+      const newOrder = [...currentOrder, item._id];
+      setSelectionOrder(prev => ({
+        ...prev,
+        [cartItemIndex]: newOrder
+      }));
+
+      // Recalculate for new selection
+      const calculation = calculateQuantityDistribution(cartItemIndex, newOrder, true);
+      setQuantityCalculations(prev => ({
+        ...prev,
+        [cartItemIndex]: calculation
+      }));
     }
 
-    return 0;
+    return newSelections;
+  });
+};
+
+
+
+  // Updated helper function to get the quantity that would be taken from a specific box
+  const getQuantityFromBox = (box, cartItemIndex) => {
+    const calculation = quantityCalculations[cartItemIndex];
+    if (!calculation || !calculation.distribution) return 0;
+
+    return calculation.distribution[box._id] || 0;
   };
 
   return (
@@ -705,18 +766,18 @@ export default function Cart({
                             return (
                               <div key={i} onClick={() => handleBoxSelection(box, index)} className={manualSelections[selectionKey] ? styles.selected : ""} style={{ position: "relative", display: "flex", flexDirection: "column", gap: "10px" }}>
                                 <h3>#{box.boxSequentialId}</h3>
-                                <div>Available: <span style={{textDecoration: manualSelections[selectionKey] ? "line-through" : ""}}>{availableQuantity}
-                                  </span>
-                                 {manualSelections[selectionKey] ? `  ${parseInt(availableQuantity) - parseInt(quantityFromThisBox)}` : ""}
+                                <div>Available: <span style={{ textDecoration: manualSelections[selectionKey] ? "line-through" : "" }}>{availableQuantity}
+                                </span>
+                                  {manualSelections[selectionKey] ? `  ${parseInt(availableQuantity) - parseInt(quantityFromThisBox)}` : ""}
 
-                                  </div>
+                                </div>
                                 {manualSelections[selectionKey] && (
                                   <div style={{ color: "green", fontWeight: "bold" }}>
                                     Taking: {quantityFromThisBox}
                                   </div>
                                 )}
                                 <IoIosCheckmarkCircle style={{ position: "absolute", right: "5px", bottom: "5px", display: manualSelections[selectionKey] ? "" : "none", color: "green" }} size={20} />
-                                <span className={styles.recommended} style={{display: bestIndexes.includes(i) ? "" : "none"}}/>
+                                <span className={styles.recommended} style={{ display: bestIndexes.includes(i) ? "" : "none" }} />
                               </div>
                             );
                           })
