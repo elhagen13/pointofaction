@@ -381,6 +381,8 @@ function Inventory() {
       .sort((a, b) => {
         const getTextForSort = (group, field) => {
           const item = group[0];
+          const quantity = group.reduce((a, b) => a + b.quantity, 0)
+          console.log(quantity)
           switch (field) {
             case "description":
               return item.descriptionId &&
@@ -400,7 +402,7 @@ function Inventory() {
                 ? sizeDict[item.sizeId.toString()].size
                 : item.size || "";
             case "quantity":
-              return item.quantity || 0;
+              return quantity || 0;
             case "box":
               return boxDict[item.boxId]?.boxId || 0;
             default:
