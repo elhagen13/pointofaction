@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
 import { FaRegCopy, FaEye, FaArrowDown, FaArrowUp, FaRegBell, FaRegBellSlash } from "react-icons/fa";
-import { IoSearch, IoChevronDown, IoChevronUp, IoEllipsisHorizontal } from "react-icons/io5";
+import { IoSearch, IoChevronDown, IoChevronUp, IoEllipsisHorizontal, IoAlert, IoArrowDown, IoArrowUp } from "react-icons/io5";
 import { BiSelectMultiple, BiSolidSelectMultiple } from "react-icons/bi";
 import {
   MdPublic,
@@ -172,7 +172,7 @@ function Inventory() {
     });
   };
 
-  const getKeys = async() => {
+  const getKeys = async () => {
     let response = await fetch("/api/inventory/tracker", {
       method: "GET",
     });
@@ -191,8 +191,15 @@ function Inventory() {
     return dict;
   }, [keys]);
 
-  useEffect(() => {console.log(keyDict)}, [keyDict])
-  
+
+  const getKey = (item) => {
+    return `${item[0]?.brand || brandDict[item[0]?.brandId]?.brand
+      || "No brand"}-${item[0].style || "No style"}-${item[0]?.size || sizeDict[item[0]?.sizeId]?.size
+      || "No size"}-${item[0]?.color}`
+  }
+
+
+
   const contentDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
@@ -382,7 +389,6 @@ function Inventory() {
         const getTextForSort = (group, field) => {
           const item = group[0];
           const quantity = group.reduce((a, b) => a + b.quantity, 0)
-          console.log(quantity)
           switch (field) {
             case "description":
               return item.descriptionId &&
@@ -444,6 +450,14 @@ function Inventory() {
           case "quantity":
             const aQty = getTextForSort(a, "quantity");
             const bQty = getTextForSort(b, "quantity");
+            if (sortOrder === "alerts") {
+              const aDiff = (keyDict[getKey(a)]?.quantity || 0) - aQty;
+              const bDiff = (keyDict[getKey(b)]?.quantity || 0) - bQty
+
+              return bDiff - aDiff
+
+            }
+
             return sortOrder ? aQty - bQty : bQty - aQty;
           case "box":
             const aBox = getTextForSort(a, "box");
@@ -470,6 +484,7 @@ function Inventory() {
     sortOrder,
     paginate,
     showAll,
+    keyDict,
   ]);
 
   // Filter boxes based on page selection and search
@@ -984,12 +999,6 @@ function Inventory() {
     return currentColumns.filter((column) => Object.values(column)[0]);
   };
 
-  const getKey = (item) => {
-    return `${item[0]?.brand || brandDict[item[0]?.brandId]?.brand 
-                        || "No brand"}-${item[0].style || "No style"}-${item[0]?.size || sizeDict[item[0]?.sizeId]?.size
-                        || "No size"}-${item[0]?.color}`
-  }
-
 
 
   return (
@@ -1234,10 +1243,10 @@ function Inventory() {
               <thead>
                 <tr style={{ backgroundColor: "#ebebeb" }}>
                   {
-                      multiEdit &&
-                      <th></th>
-                    }
-                  
+                    multiEdit &&
+                    <th></th>
+                  }
+
                   {getVisibleColumns("lineItems").map((column, index) => {
                     const columnName = Object.keys(column)[0];
                     const isSortable = [
@@ -1249,7 +1258,7 @@ function Inventory() {
                       "Quantity",
                       "Box",
                     ].includes(columnName);
-              
+
 
                     return (
                       <th
@@ -1262,14 +1271,21 @@ function Inventory() {
                           ...(isSortable && { cursor: "pointer" }),
                         }}
                         onClick={() => {
+                          console.log(sortOrder)
                           if (isSortable) {
                             const sortValue = columnName
                               .toLowerCase()
                               .replace(" ", "");
+
                             setSortBy(
                               sortValue === "brand" ? "brand" : sortValue
                             );
-                            setSortOrder(!sortOrder);
+
+
+                            setSortOrder(sortValue !== "quantity" ? !sortOrder
+                              : sortOrder === "alerts" ? true : !sortOrder ? "alerts" : false
+                            );
+
                           }
                         }}
                       >
@@ -1277,176 +1293,181 @@ function Inventory() {
                         {isSortable &&
                           sortBy ===
                           columnName.toLowerCase().replace(" ", "") &&
-                          (sortOrder ? (
-                            <FaArrowDown
+                          (sortOrder === true? (
+                            <IoArrowDown
                               style={{
                                 marginLeft: "5px",
                                 transform: "translateY(2px)",
                               }}
                             />
-                          ) : (
-                            <FaArrowUp
+                          ) : !sortOrder ?  (
+                            <IoArrowUp
                               style={{
                                 marginLeft: "5px",
                                 transform: "translateY(2px)",
                               }}
                             />
-                          ))}
+                          ) :
+                            <IoAlert style={{
+                                marginLeft: "5px",
+                                transform: "translateY(2px)",
+                              }}/>
+                          )}
                       </th>
                     );
-                    
+
                   })}
                   {
-                      multiEdit &&
-                      <th></th>
-                    }
+                    multiEdit &&
+                    <th></th>
+                  }
                 </tr>
               </thead>
               <tbody>
                 {filteredInventory.map((item, index) => {
                   const quantity = item.reduce((acc, cur) => acc + cur.quantity, 0);
-                  const uniqueKey = getKey(item); 
+                  const uniqueKey = getKey(item);
 
-                  return(
-                  <tr
-                    key={uniqueKey}
-                    style={{
-                      backgroundColor: (keyDict[getKey(item)] && quantity === 0) ? "#f5dcda" 
-                      : (parseInt(keyDict[getKey(item)]?.quantity) > quantity) ? 
-                      "#f5e9d5" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-                      overflow: "scroll",
-                    }}
-                    onClick={() => {
-                      getLocation(item, true);
-                      if(quantity === 0) return;
-                      if (
-                        item.length === 1 &&
-                        boxDict[item[0].boxId?.toString()]
-                      ) {
-                        setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
-                      } else if (item.length === 1) {
-                        setEditItemOpen(item[0]);
-                      } else setMultiOpen(item);
-                    }}
-                  >
-                    {
-                      multiEdit &&
-                      <td className={styles.tableSm}  onClick={(e) => {e.stopPropagation()}}><input type="checkbox" /></td>
-                    }
-                    {getVisibleColumns("lineItems").map((column) => {
-                      const columnName = Object.keys(column)[0];
-
-                      switch (columnName) {
-                        case "Image":
-                          return (
-                            <td
-                              key={columnName}
-                              className={styles.tableSm}
-                              style={{ position: "relative" }}
-                            >
-                              <img
-                                style={{
-                                  objectFit: "contain",
-                                  backgroundColor: "white",
-                                }}
-                                src={item[0].image}
-                                alt={`Item ${index + 1}`}
-                              />
-                            </td>
-                          );
-                        case "Description":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {getDescription(item)}
-                            </td>
-                          );
-                        case "Style":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {item[0].style}
-                            </td>
-                          );
-                        case "Brand":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {getBrand(item)}
-                            </td>
-                          );
-                        case "Color":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {item[0].color}
-                            </td>
-                          );
-                        case "Size":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {getSize(item)}
-                            </td>
-                          );
-                        case "Quantity":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {quantity}
-                            </td>
-                          );
-                        case "Box":
-                          return boxDict[item[0].boxId?.toString()] ? (
-                            <td
-                              key={columnName}
-                              style={{ minWidth: "100px" }}
-                            >
-                              {quantity > 0 ? getBox(item) : 
-                              <div style={{cursor: "pointer"}}>N/A</div>}
-                            </td>
-                          ) : (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              N/A
-                            </td>
-                          );
-                        case "Location":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {quantity > 0 ? getLocation(item) : "N/A"}
-                            </td>
-                          );
-                        case "Price":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {getPrice(item) !== "Multi"
-                                ? `$${getPrice(item)}`
-                                : "Multi"}
-                            </td>
-                          );
-                        case "Visibility":
-                          return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
-                              {item.every((i) => i.public) ? (
-                                <MdPublic color="green" />
-                              ) : item.some((i) => i.public) ? (
-                                <MdPublic color="orange" />
-                              ) : (
-                                <MdOutlinePublicOff color="red" />
-                              )}
-                              {item.every((i) => i.sale) ? (
-                                <HiCash color="blue" />
-                              ) : item.some((i) => i.sale) ? (
-                                <HiCash color="orange" />
-                              ) : null}
-                            </td>
-                          );
-                        default:
-                          return <td key={columnName}></td>;
+                  return (
+                    <tr
+                      key={uniqueKey}
+                      style={{
+                        backgroundColor: (keyDict[getKey(item)] && quantity === 0) ? "#e2aeaaff"
+                          : (parseInt(keyDict[getKey(item)]?.quantity) > quantity) ?
+                            "#f1d7a9ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                        overflow: "scroll",
+                      }}
+                      onClick={() => {
+                        getLocation(item, true);
+                        if (quantity === 0) return;
+                        if (
+                          item.length === 1 &&
+                          boxDict[item[0].boxId?.toString()]
+                        ) {
+                          setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
+                        } else if (item.length === 1) {
+                          setEditItemOpen(item[0]);
+                        } else setMultiOpen(item);
+                      }}
+                    >
+                      {
+                        multiEdit &&
+                        <td className={styles.tableSm} onClick={(e) => { e.stopPropagation() }}><input type="checkbox" /></td>
                       }
-                    })}
-                    {
-                      multiEdit &&
-                      <td className={styles.tableSm} onClick={(e) => {e.stopPropagation(); console.log(getKey(item))}}>
-                        
-                        <SetAlert keyDict={keyDict} getKey={getKey} item={item} refresh={refresh}/>
+                      {getVisibleColumns("lineItems").map((column) => {
+                        const columnName = Object.keys(column)[0];
+
+                        switch (columnName) {
+                          case "Image":
+                            return (
+                              <td
+                                key={columnName}
+                                className={styles.tableSm}
+                                style={{ position: "relative" }}
+                              >
+                                <img
+                                  style={{
+                                    objectFit: "contain",
+                                    backgroundColor: "white",
+                                  }}
+                                  src={item[0].image}
+                                  alt={`Item ${index + 1}`}
+                                />
+                              </td>
+                            );
+                          case "Description":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {getDescription(item)}
+                              </td>
+                            );
+                          case "Style":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {item[0].style}
+                              </td>
+                            );
+                          case "Brand":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {getBrand(item)}
+                              </td>
+                            );
+                          case "Color":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {item[0].color}
+                              </td>
+                            );
+                          case "Size":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {getSize(item)}
+                              </td>
+                            );
+                          case "Quantity":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {quantity}
+                              </td>
+                            );
+                          case "Box":
+                            return boxDict[item[0].boxId?.toString()] ? (
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
+                                {quantity > 0 ? getBox(item) :
+                                  <div style={{ cursor: "pointer" }}>N/A</div>}
+                              </td>
+                            ) : (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                N/A
+                              </td>
+                            );
+                          case "Location":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {quantity > 0 ? getLocation(item) : "N/A"}
+                              </td>
+                            );
+                          case "Price":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {getPrice(item) !== "Multi"
+                                  ? `$${getPrice(item)}`
+                                  : "Multi"}
+                              </td>
+                            );
+                          case "Visibility":
+                            return (
+                              <td key={columnName} style={{ minWidth: "100px" }}>
+                                {item.every((i) => i.public) ? (
+                                  <MdPublic color="green" />
+                                ) : item.some((i) => i.public) ? (
+                                  <MdPublic color="orange" />
+                                ) : (
+                                  <MdOutlinePublicOff color="red" />
+                                )}
+                                {item.every((i) => i.sale) ? (
+                                  <HiCash color="blue" />
+                                ) : item.some((i) => i.sale) ? (
+                                  <HiCash color="orange" />
+                                ) : null}
+                              </td>
+                            );
+                          default:
+                            return <td key={columnName}></td>;
+                        }
+                      })}
+                      {
+                        multiEdit &&
+                        <td className={styles.tableSm} onClick={(e) => { e.stopPropagation(); console.log(getKey(item)) }}>
+
+                          <SetAlert keyDict={keyDict} getKey={getKey} item={item} refresh={refresh} />
                         </td>
-                    }
-                  </tr>)
+                      }
+                    </tr>)
                 })}
               </tbody>
             </table>
