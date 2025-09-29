@@ -101,10 +101,8 @@ export async function GET(request) {
       }
       
       // Create composite key
-      const compositeKey = `${resolvedBrand}-${item.style}-${resolvedSize}`;
-      
-      console.log(`Item ${item._id}: brand=${resolvedBrand}, style=${item.style}, size=${resolvedSize}, key=${compositeKey}`);
-      
+      const compositeKey = `${resolvedBrand}-${item.style}-${resolvedSize}-${item.color}`;
+            
       // Check if item should be included
       const shouldInclude = !item.archived || trackedKeys.includes(compositeKey);
       

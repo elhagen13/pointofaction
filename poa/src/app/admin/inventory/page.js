@@ -984,7 +984,7 @@ function Inventory() {
   const getKey = (item) => {
     return `${item[0]?.brand || brandDict[item[0]?.brandId]?.brand 
                         || "No brand"}-${item[0].style || "No style"}-${item[0]?.size || sizeDict[item[0]?.sizeId]?.size
-                        || "No size"}`
+                        || "No size"}-${item.color}`
   }
 
 
