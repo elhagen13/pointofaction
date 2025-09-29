@@ -191,6 +191,7 @@ function Inventory() {
     return dict;
   }, [keys]);
 
+  useEffect(() => {console.log(keyDict)}, [keyDict])
   
   const contentDict = useMemo(() => {
     const dict = {};
@@ -984,7 +985,7 @@ function Inventory() {
   const getKey = (item) => {
     return `${item[0]?.brand || brandDict[item[0]?.brandId]?.brand 
                         || "No brand"}-${item[0].style || "No style"}-${item[0]?.size || sizeDict[item[0]?.sizeId]?.size
-                        || "No size"}-${item.color}`
+                        || "No size"}-${item[0]?.color}`
   }
 
 
@@ -1302,12 +1303,13 @@ function Inventory() {
               <tbody>
                 {filteredInventory.map((item, index) => {
                   const quantity = item.reduce((acc, cur) => acc + cur.quantity, 0)
+
                   return(
                   <tr
                     key={index}
                     style={{
                       backgroundColor: (keyDict[getKey(item)] && quantity === 0) ? "#f5dcda" 
-                      : keyDict[getKey(item)]?.quantity > quantity ? 
+                      : (parseInt(keyDict[getKey(item)]?.quantity) < quantity) ? 
                       "#f5e9d5" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
                       overflow: "scroll",
                     }}
