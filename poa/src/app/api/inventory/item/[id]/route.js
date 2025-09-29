@@ -252,7 +252,9 @@ export async function DELETE(request, { params }) {
       }
   
       // Delete the document
-      const result = await collection.deleteOne({ _id: new ObjectId(id) });
+      const result = await collection.findOneAndUpdate({ _id: new ObjectId(id) }, {
+        $set: {archived: true}
+      });
   
       if (result.deletedCount === 0) {
         return Response.json(

@@ -987,6 +987,8 @@ function Inventory() {
                         || "No size"}`
   }
 
+
+
   return (
     <div
       className={styles.inventoryBackground}
@@ -1311,6 +1313,7 @@ function Inventory() {
                     }}
                     onClick={() => {
                       getLocation(item, true);
+                      if(quantity === 0) return;
                       if (
                         item.length === 1 &&
                         boxDict[item[0].boxId?.toString()]
@@ -1388,7 +1391,8 @@ function Inventory() {
                               key={columnName}
                               style={{ minWidth: "100px" }}
                             >
-                              {getBox(item)}
+                              {quantity > 0 ? getBox(item) : 
+                              <div style={{cursor: "pointer"}}>N/A</div>}
                             </td>
                           ) : (
                             <td key={columnName} style={{ minWidth: "100px" }}>
@@ -1398,7 +1402,7 @@ function Inventory() {
                         case "Location":
                           return (
                             <td key={columnName} style={{ minWidth: "100px" }}>
-                              {getLocation(item)}
+                              {quantity > 0 ? getLocation(item) : "N/A"}
                             </td>
                           );
                         case "Price":

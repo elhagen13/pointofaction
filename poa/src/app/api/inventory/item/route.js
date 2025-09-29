@@ -5,10 +5,12 @@ const MONGODB_URI = process.env.MONGO_URI;
 const DATABASE_NAME = "test";
 const COLLECTION_NAME = "inventory";
 
+
 let cachedClient = null;
 let cachedDb = null;
 
 async function connectToDatabase() {
+
   if (cachedClient && cachedDb) {
     return { client: cachedClient, db: cachedDb };
   }
@@ -32,29 +34,106 @@ export async function GET(request) {
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
-
-    // Exeute query
-    const inventory = await collection
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
+    const trackerCollection = db.collection("trackedInventory");
+    
+    // Step 1: Get all tracked keys
+    const trackedItems = await trackerCollection.find({}).toArray();
+    const trackedKeys = trackedItems.map(item => item.key);
+    console.log("Tracked keys:", trackedKeys);
+    
+    if (trackedKeys.length === 0) {
+      // If no tracked items, just return non-archived items
+      const inventory = await collection
+        .find({ archived: false })
+        .sort({ createdAt: -1 })
+        .toArray();
+        
+      return Response.json({
+        success: true,
+        data: inventory,
+      });
+    }
+    
+    // Step 2: Get all inventory items first
+    const allInventory = await collection.find({}).toArray();
+    console.log(`Found ${allInventory.length} inventory items`);
+    
+    // Step 3: Get all brands and sizes for lookup
+    const brandsCollection = db.collection("brands");
+    const sizesCollection = db.collection("sizes");
+    
+    const allBrands = await brandsCollection.find({}).toArray();
+    const allSizes = await sizesCollection.find({}).toArray();
+    
+    // Create lookup maps
+    const brandMap = {};
+    const sizeMap = {};
+    
+    allBrands.forEach(brand => {
+      brandMap[brand._id.toString()] = brand.brand;
+    });
+    
+    allSizes.forEach(size => {
+      sizeMap[size._id.toString()] = size.size;
+    });
+    
+    console.log("Brand map:", brandMap);
+    console.log("Size map:", sizeMap);
+    
+    // Step 4: Process each inventory item
+    const processedInventory = [];
+    
+    for (const item of allInventory) {
+      // Resolve brand
+      let resolvedBrand;
+      if (item.brandId && brandMap[item.brandId]) {
+        resolvedBrand = brandMap[item.brandId];
+      } else {
+        resolvedBrand = item.brand;
+      }
+      
+      // Resolve size
+      let resolvedSize;
+      if (item.sizeId && sizeMap[item.sizeId]) {
+        resolvedSize = sizeMap[item.sizeId];
+      } else {
+        resolvedSize = item.size;
+      }
+      
+      // Create composite key
+      const compositeKey = `${resolvedBrand}-${item.style}-${resolvedSize}`;
+      
+      console.log(`Item ${item._id}: brand=${resolvedBrand}, style=${item.style}, size=${resolvedSize}, key=${compositeKey}`);
+      
+      // Check if item should be included
+      const shouldInclude = !item.archived || trackedKeys.includes(compositeKey);
+      
+      if (shouldInclude) {
+        processedInventory.push(item);
+      }
+    }
+    
+    console.log(`Returning ${processedInventory.length} items`);
+    
+    // Step 5: Sort and return
+    processedInventory.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
     return Response.json({
       success: true,
-      data: inventory,
+      data: processedInventory,
     });
   } catch (error) {
     console.error("GET error:", error);
     return Response.json(
       {
         success: false,
-        error: "Failed to fetch images",
+        error: "Failed to fetch inventory",
         details: error.message,
       },
       { status: 500 }
     );
   }
 }
-
 export async function POST(request) {
   try {
     const { db } = await connectToDatabase();
@@ -74,6 +153,7 @@ export async function POST(request) {
       public: body.public,
       createdAt: new Date(),
       updatedAt: new Date(),
+      archived: false
     };
     // optional fields: if it is not in a box it should have the following
     if (body.box_id) itemDocument.boxId = body.box_id;
