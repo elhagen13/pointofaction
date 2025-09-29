@@ -1302,11 +1302,12 @@ function Inventory() {
               </thead>
               <tbody>
                 {filteredInventory.map((item, index) => {
-                  const quantity = item.reduce((acc, cur) => acc + cur.quantity, 0)
+                  const quantity = item.reduce((acc, cur) => acc + cur.quantity, 0);
+                  const uniqueKey = getKey(item); 
 
                   return(
                   <tr
-                    key={index}
+                    key={uniqueKey}
                     style={{
                       backgroundColor: (keyDict[getKey(item)] && quantity === 0) ? "#f5dcda" 
                       : (parseInt(keyDict[getKey(item)]?.quantity) > quantity) ? 
