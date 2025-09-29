@@ -1309,7 +1309,7 @@ function Inventory() {
                     key={index}
                     style={{
                       backgroundColor: (keyDict[getKey(item)] && quantity === 0) ? "#f5dcda" 
-                      : (parseInt(keyDict[getKey(item)]?.quantity) < quantity) ? 
+                      : (parseInt(keyDict[getKey(item)]?.quantity) > quantity) ? 
                       "#f5e9d5" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
                       overflow: "scroll",
                     }}
