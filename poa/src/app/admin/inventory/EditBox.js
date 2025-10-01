@@ -1853,13 +1853,7 @@ const AddBox = ({
                               parseInt(e.target.value) || ""
                             )
                           }
-                          onBlur={(e) =>
-                            updateExistingContent(
-                              index,
-                              "quantity",
-                              Math.min(parseInt(item.reserved), parseInt(e.target.value))
-                            )
-                          }
+                          
                           className={styles.input}
                           style={{
                             margin: 0,
