@@ -102,6 +102,7 @@
 .imageContainer {
   height: 100%;
   min-width: 150px;
+  max-width: 200px;
   aspect-ratio: 1 / 1;
   overflow: hidden;
   outline: 1px solid #c9c9ca;

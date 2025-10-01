@@ -114,9 +114,6 @@ export default function Reservation({ params }) {
     });
   };
 
-  useEffect(() => {
-    console.log("options", options);
-  }, [options]);
 
   useEffect(() => {
     console.log(reservation);
@@ -136,6 +133,7 @@ export default function Reservation({ params }) {
     let cartList = [];
     console.log(reservation, contentDict);
     for (const item of reservation.items) {
+      console.log(item, contentDict[item.itemId])
       if(contentDict[item.itemId]){
         cartList.push({
         ...contentDict[item.itemId],
@@ -149,6 +147,7 @@ export default function Reservation({ params }) {
           image: item.image,
           brand: item.brand,
           style: item.style,
+          color: item.color,
           description: item.description,
           size: item.size,
           inOrder: item.quantReserved || 0,
@@ -661,7 +660,7 @@ export default function Reservation({ params }) {
         <>
           <div key={index} className={styles.cartRow}>
             <div className={styles.imageContainer}>
-              <img src={item.image} className={styles.rowImage}></img>
+              <img src={item.image} className={styles.rowImage} ></img>
             </div>
             <div style={{ fontWeight: "bold" }}>
               <div>
