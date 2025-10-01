@@ -131,9 +131,11 @@ export default function Reservation({ params }) {
     if (!inventory || !reservation || Object.entries(contentDict).length <= 0)
       return;
     let cartList = [];
-    console.log(reservation, contentDict);
+
     for (const item of reservation.items) {
-      console.log(item, contentDict[item.itemId])
+      console.log("Looking for itemId:", item.itemId);
+console.log("Available inventory IDs:", Object.keys(contentDict));
+console.log("Match found:", !!contentDict[item.itemId]);
       if(contentDict[item.itemId]){
         cartList.push({
         ...contentDict[item.itemId],
