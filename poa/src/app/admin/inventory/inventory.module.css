@@ -348,6 +348,7 @@
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 0 2px 2px rgb(203, 203, 203);
+  position: relative;
   
 }
 
@@ -356,6 +357,22 @@
   height: 100%;
   object-fit: cover;
   aspect-ratio: 1 / 1;
+}
+
+.partialOverlay{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  clip-path: polygon(100% 0%, 0% 100%, 100% 100%);
+  background-color: rgba(216, 173, 43, 0.192); /* Yellow overlay with transparency */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  pointer-events: none;
 }
 
 .groupedViewButton {

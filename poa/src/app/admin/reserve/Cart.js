@@ -115,8 +115,8 @@ export default function Cart({
     }
 
     const orderedBoxes = finalOrderedBoxIds.map(boxId =>
-  itemBoxOptions.find(box => box._id === boxId)
-).filter(Boolean);
+      itemBoxOptions.find(box => box._id === boxId)
+    ).filter(Boolean);
 
     let remainingNeeded = cartItem.quantity;
     const distribution = {};
@@ -144,26 +144,26 @@ export default function Cart({
     return result;
   };
   const calculateSelectedQuantity = (cartItemIndex) => {
-  const cartItem = cart[cartItemIndex];
-  if (!cartItem) return 0;
+    const cartItem = cart[cartItemIndex];
+    if (!cartItem) return 0;
 
-  const itemBoxOptions = boxOptions[cartItemIndex];
-  if (!itemBoxOptions) return 0;
+    const itemBoxOptions = boxOptions[cartItemIndex];
+    if (!itemBoxOptions) return 0;
 
-  const orderedBoxIds = selectionOrder[cartItemIndex] || [];
+    const orderedBoxIds = selectionOrder[cartItemIndex] || [];
 
-  if (orderedBoxIds.length === 0) return 0;
+    if (orderedBoxIds.length === 0) return 0;
 
-  const calculation = calculateQuantityDistribution(cartItemIndex, orderedBoxIds);
+    const calculation = calculateQuantityDistribution(cartItemIndex, orderedBoxIds);
 
-  // Update the stored calculation
-  setQuantityCalculations(prev => ({
-    ...prev,
-    [cartItemIndex]: calculation
-  }));
+    // Update the stored calculation
+    setQuantityCalculations(prev => ({
+      ...prev,
+      [cartItemIndex]: calculation
+    }));
 
-  return calculation.totalSelected;
-};
+    return calculation.totalSelected;
+  };
 
   useEffect(() => {
     let arr = [];
@@ -449,7 +449,6 @@ export default function Cart({
       if (failedReservations.length > 0) {
         console.error("Failed reservations:", failedReservations);
 
-        // Show user-friendly error message
         const errorMessages = failedReservations.map(failure =>
           `${failure.item.style} (${failure.item.color}): ${failure.error}`
         ).join('\n');
@@ -505,6 +504,24 @@ export default function Cart({
         }
 
         const data = await completeReservation.json()
+
+        const formData = new FormData();
+        formData.append('formType', 'product-reservation');
+        formData.append('customer', user.fullName);
+        formData.append('email', user.primaryEmailAddress)
+        formData.append('reservation', data.data.sequentialId);
+        formData.append('orderTitle', orderTitle);
+        formData.append('soIn', soin);
+        formData.append('reservationQuantity', Object.values(cart).reduce((a, b) => a + b.quantity, 0 ))
+
+        console.log()
+        // Send form data to API
+        const emailResponse = await fetch('/api/resend', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!emailResponse.ok) throw Error
 
         // Success! Clear cart and close
         setCart([]);
@@ -599,27 +616,45 @@ export default function Cart({
   };
 
   const handleBoxSelection = (item, cartItemIndex) => {
-  const selectionKey = `${cartItemIndex}-${item._id}`;
-  const wasSelected = manualSelections[selectionKey];
+    const selectionKey = `${cartItemIndex}-${item._id}`;
+    const wasSelected = manualSelections[selectionKey];
 
-  setManualSelections(prev => {
-    const newSelections = { ...prev };
-    const currentOrder = selectionOrder[cartItemIndex] || [];
+    setManualSelections(prev => {
+      const newSelections = { ...prev };
+      const currentOrder = selectionOrder[cartItemIndex] || [];
 
-    if (wasSelected) {
-      // Deselecting
-      delete newSelections[selectionKey];
+      if (wasSelected) {
+        // Deselecting
+        delete newSelections[selectionKey];
 
-      const isMostRecent = currentOrder[currentOrder.length - 1] === item._id;
+        const isMostRecent = currentOrder[currentOrder.length - 1] === item._id;
 
-      const newOrder = currentOrder.filter(id => id !== item._id);
-      setSelectionOrder(prev => ({
-        ...prev,
-        [cartItemIndex]: newOrder
-      }));
+        const newOrder = currentOrder.filter(id => id !== item._id);
+        setSelectionOrder(prev => ({
+          ...prev,
+          [cartItemIndex]: newOrder
+        }));
 
-      if (!isMostRecent) {
-        // Recalculate because we're removing a box that's not the most recently selected
+        if (!isMostRecent) {
+          // Recalculate because we're removing a box that's not the most recently selected
+          const calculation = calculateQuantityDistribution(cartItemIndex, newOrder, true);
+          setQuantityCalculations(prev => ({
+            ...prev,
+            [cartItemIndex]: calculation
+          }));
+        }
+
+      } else {
+        // Selecting
+        newSelections[selectionKey] = true;
+
+        const newOrder = [...currentOrder, item._id];
+        setSelectionOrder(prev => ({
+          ...prev,
+          [cartItemIndex]: newOrder
+        }));
+
+        // Recalculate for new selection
         const calculation = calculateQuantityDistribution(cartItemIndex, newOrder, true);
         setQuantityCalculations(prev => ({
           ...prev,
@@ -627,27 +662,9 @@ export default function Cart({
         }));
       }
 
-    } else {
-      // Selecting
-      newSelections[selectionKey] = true;
-
-      const newOrder = [...currentOrder, item._id];
-      setSelectionOrder(prev => ({
-        ...prev,
-        [cartItemIndex]: newOrder
-      }));
-
-      // Recalculate for new selection
-      const calculation = calculateQuantityDistribution(cartItemIndex, newOrder, true);
-      setQuantityCalculations(prev => ({
-        ...prev,
-        [cartItemIndex]: calculation
-      }));
-    }
-
-    return newSelections;
-  });
-};
+      return newSelections;
+    });
+  };
 
 
 

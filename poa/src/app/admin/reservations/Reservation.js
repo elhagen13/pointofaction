@@ -3,12 +3,15 @@ import Overlay from "@/app/components/popups/Overlay";
 import styles from "./reservation.module.css";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { BeatLoader } from "react-spinners";
-import { IoIosCheckmarkCircleOutline } from "react-icons/io";
 import ProgressBar from "./ProgressBar";
-import { FiEdit } from "react-icons/fi";
+import { FiDownload, FiEdit } from "react-icons/fi";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { IoWarning } from "react-icons/io5";
+import jsPDF from "jspdf";
+import { autoTable } from 'jspdf-autotable'
+
+
 
 
 
@@ -258,6 +261,39 @@ const Order = ({ reservation }) => {
     return;
   };
 
+  const downloadReservation = () => {
+    try {
+      const pdf = new jsPDF();
+      pdf.setFont(undefined, 'bold')
+      pdf.text(`Reservation ${reservation.sequentialId}`, 15, 15)
+
+      let resList = []
+      for(const item of reservationItems){
+        resList.push([
+          brandDict[item.brandId].brand || item.brand || "No brand", 
+          item.style || "No style", 
+          sizeDict[item.sizeId].size|| item.size || "No brand",
+          item.quantity || "0 - Item pulled",
+          boxDict[item.boxId].boxId || "N/A",
+          boxDict[item.boxId].location || "N/A",
+
+
+        ])
+      }
+
+      autoTable(pdf, {
+        head: [["Brand", "Style", "Size", "Quantity", "Box #", "Location"]], 
+        body: resList,
+        startY: 20
+      })
+
+    
+      pdf.save(`table.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  }
+
   return (
     <div>
       <div className={styles.progressBarContainer}>
@@ -330,8 +366,9 @@ const Order = ({ reservation }) => {
       {!loading && (
         <>
           <div className={styles.edit}>
+            <button className={styles.downloadButton} onClick={downloadReservation}>Download <FiDownload /></button>
             <Link href={`/admin/reservations/${reservation._id}`}>
-              <button>Edit <FiEdit /></button>
+              <button className={styles.editButton}>Edit <FiEdit /></button>
             </Link>
           </div>
           <div className={styles.tableContainer}>
@@ -446,10 +483,10 @@ const Order = ({ reservation }) => {
                     <td>
                       {item.location || boxDict[item.boxId]?.location || "N/A"}
                     </td>
-                    <td> 
-                      <div style={{width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", paddingRight:"20px"}}>
+                    <td>
+                      <div style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", paddingRight: "20px" }}>
                         N/A
-                        <IoWarning size={20} style={{color:"#AD2B10", cursor:"pointer"}} title="Item has since been removed from inventory, details reflect state at time of creation."/>
+                        <IoWarning size={20} style={{ color: "#AD2B10", cursor: "pointer" }} title="Item has since been removed from inventory, details reflect state at time of creation." />
                       </div>
                     </td>
                   </tr>

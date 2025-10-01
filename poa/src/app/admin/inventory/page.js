@@ -137,7 +137,8 @@ function Inventory() {
     await getInventory();
     await getItemOptions();
     await getBoxes();
-    await getKeys()
+    await getKeys();
+
   };
 
   const getItemOptions = async () => {
@@ -271,8 +272,17 @@ function Inventory() {
     for (const item of items) {
       const style = item.style.toLowerCase();
       const color = item.color.toLowerCase();
-      const size = item.sizeId || item.size.toLowerCase();
-      const brand = item.brandId || item.brand.toLowerCase();
+
+      // Resolve size from ID or use direct value
+      const size = item.sizeId && sizeDict[item.sizeId.toString()]
+        ? sizeDict[item.sizeId.toString()].size.toLowerCase()
+        : (item.size || "n/a").toLowerCase();
+
+      // Resolve brand from ID or use direct value
+      const brand = item.brandId && brandDict[item.brandId.toString()]
+        ? brandDict[item.brandId.toString()].brand.toLowerCase()
+        : (item.brand || "n/a").toLowerCase();
+
       const key = `${style}, ${color}, ${size}, ${brand}`;
 
       if (!dict[key]) {
@@ -451,20 +461,29 @@ function Inventory() {
             const aQty = getTextForSort(a, "quantity");
             const bQty = getTextForSort(b, "quantity");
             if (sortOrder === "alerts") {
-              const aDiff = (keyDict[getKey(a)]?.quantity || 0) - aQty;
-              const bDiff = (keyDict[getKey(b)]?.quantity || 0) - bQty
+              const aHasAlert = keyDict[getKey(a)]?.quantity !== undefined;
+              const bHasAlert = keyDict[getKey(b)]?.quantity !== undefined;
 
-              return bDiff - aDiff
+              if (aHasAlert && !bHasAlert) return -1;
+              if (!aHasAlert && bHasAlert) return 1;
 
+              if (aHasAlert && bHasAlert) {
+                const aDiff = (keyDict[getKey(a)]?.quantity || 0) - aQty;
+                const bDiff = (keyDict[getKey(b)]?.quantity || 0) - bQty;
+                return bDiff - aDiff;
+              }
+
+              return bQty - aQty;
             }
 
             return sortOrder ? aQty - bQty : bQty - aQty;
+
           case "box":
             const aBox = getTextForSort(a, "box");
             const bBox = getTextForSort(b, "box");
             return sortOrder ? aBox - bBox : bBox - aBox;
           default:
-            return 0; // No sorting
+            return 0;
         }
       })
       .slice(
@@ -999,6 +1018,30 @@ function Inventory() {
     return currentColumns.filter((column) => Object.values(column)[0]);
   };
 
+  const zeroInventory = (item) => {
+    setSavedInfo({
+      addBox: {
+        contents: [
+          {
+            imageUrl: item[0].image,
+            descriptionId: item[0].descriptionId || null,
+            decription: item[0].description || null,
+            style: item[0].style,
+            brand: item[0].brand || null,
+            brandId: item[0].brandId || null,
+            size: item[0].size || null,
+            sizeId: item[0].sizeId || null,
+            color: item[0].color,
+            price: item[0].price
+          }
+        ]
+
+      },
+      addItem: { ...savedInfo.addItem }
+    })
+    setAddBoxOpen(true)
+  }
+
 
 
   return (
@@ -1210,9 +1253,16 @@ function Inventory() {
                 >
                   <div className={styles.groupImageContainer}>
                     <img
-                      src={group[0].image}
+                      
+                      src={group.find(item => item.color.toLowerCase().includes(searchValue.toLowerCase()))?.image || group[0].image }
                       style={{ objectFit: "contain" }}
-                    ></img>
+                    />
+                    {
+                      group.some(item => keyDict[getKey([item])]?.quantity > item.quantity) && (
+                        <div className={styles.partialOverlay}>
+                        </div>
+                      )
+                    }
                   </div>
                   <div style={{ fontWeight: "bold" }}>
                     {brandDict[group[0].brandId]?.brand || group[0].brand}{" "}
@@ -1293,14 +1343,14 @@ function Inventory() {
                         {isSortable &&
                           sortBy ===
                           columnName.toLowerCase().replace(" ", "") &&
-                          (sortOrder === true? (
+                          (sortOrder === true ? (
                             <IoArrowDown
                               style={{
                                 marginLeft: "5px",
                                 transform: "translateY(2px)",
                               }}
                             />
-                          ) : !sortOrder ?  (
+                          ) : !sortOrder ? (
                             <IoArrowUp
                               style={{
                                 marginLeft: "5px",
@@ -1309,9 +1359,9 @@ function Inventory() {
                             />
                           ) :
                             <IoAlert style={{
-                                marginLeft: "5px",
-                                transform: "translateY(2px)",
-                              }}/>
+                              marginLeft: "5px",
+                              transform: "translateY(2px)",
+                            }} />
                           )}
                       </th>
                     );
@@ -1339,7 +1389,10 @@ function Inventory() {
                       }}
                       onClick={() => {
                         getLocation(item, true);
-                        if (quantity === 0) return;
+                        if (quantity === 0) {
+                          zeroInventory(item);
+                          return;
+                        }
                         if (
                           item.length === 1 &&
                           boxDict[item[0].boxId?.toString()]
@@ -1699,6 +1752,11 @@ function Inventory() {
           setEditBoxOpen={setEditBoxOpen}
           setEditItemOpen={setEditItemOpen}
           refresh={refresh}
+          getKey={getKey}
+          keyDict={keyDict}
+          savedInfo={savedInfo}
+          setSavedInfo={setSavedInfo}
+          setAddBoxOpen={setAddBoxOpen}
         />
       )}
     </div>

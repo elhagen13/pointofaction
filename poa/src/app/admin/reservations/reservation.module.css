@@ -57,6 +57,7 @@
   width: 100%;
   display: flex;
   justify-content: end;
+  gap: 10px;
 }
 
 .edit button{
@@ -70,12 +71,17 @@
   transition: all 0.2s ease-in-out;
 }
 
-.edit button:hover{
+.edit button:hover {
   border: 2px solid rgb(88, 115, 152);
   border-radius: 10px;
   color: rgb(88, 115, 152);
 }
 
+.edit .downloadButton:hover {
+  border: 2px solid rgb(88, 152, 93);
+  border-radius: 10px;
+  color: rgb(88, 152, 93);
+}
 
 .reservationItemTable tbody tr td,
 .reservationItemTable thead tr th {

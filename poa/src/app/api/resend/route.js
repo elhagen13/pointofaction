@@ -318,55 +318,40 @@ async function handleNotificationRequest(formData, recipients) {
 }
 
 async function handleProductPurchase(formData, recipients) {
-  console.log(formData);
-  const name = formData.get("name");
-  const email = formData.get("email");
-  const phone = formData.get("phone");
-  const product = formData.get("product");
-  const price = formData.get("price");
-  const quantity = formData.get("quantity");
-  const total = formData.get("total");
-  const shipping = formData.get("shipping");
-  const shippingAddress = formData.get("shippingAddress");
-  console.log(shippingAddress);
+  const name = formData.get("customer");
+  const email = formData.get("email")
+  const reservation = formData.get("reservation");
+  const orderTitle = formData.get("orderTitle");
+  const soIn = formData.get("soIn");
+  const reservationQuantity = formData.get("reservationQuantity");
+
+
+
+ 
   
   return {
     from: process.env.EMAIL_USER,
     to: recipients,
     replyTo: email,
-    subject: `Overflow Item Purchased: ${name}`,
+    subject: `New Reservation`,
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
-      Overflow Item Purchased
+      Product Reserved
     </h2>
     
     <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-      <h3 style="color: #495057; margin-top: 0;">Contact Information</h3>
+      <h3 style="color: #495057; margin-top: 0;">Info</h3>
       <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-      <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
+      <p><strong>Reservation #:</strong> ${reservation}</a></p>
+      <p><strong>Order Title:</strong> ${orderTitle || "N/A"}</a></p>
+      <p><strong>SO#/IN#:</strong> ${soIn || "N/A"}</a></p>
+      <p><strong>Total Reservation Quantity:</strong> ${reservationQuantity || "N/A"}</a></p>
+
+
+
     </div>
-    
-    <div style="background-color: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0;">
-      <h3 style="color: #495057; margin-top: 0;">Product</h3>
-      <p><strong>Product:</strong> ${product}</p>
-      <p><strong>Unit Price:</strong> ${price}</p>
-      <p><strong>Order Quantity:</strong> ${quantity}</p>
-      <p><strong>Total:</strong> ${total}</p>
-    </div>
-    
-    <div style="background-color: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0;">
-      <h3 style="color: #495057; margin-top: 0;">Shipping</h3>
-      <p><strong>Needs to be shipped:</strong> ${shipping}</p>
-      <p><strong>Address:</strong> ${shippingAddress}</p>
-    </div>
-    
-    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
-      <p style="color: #6c757d; font-size: 14px;">
-        This email was sent from the notifications request form.
-      </p>
-    </div>
+      
   </div>
     `,
   };

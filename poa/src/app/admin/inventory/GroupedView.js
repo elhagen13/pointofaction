@@ -3,7 +3,7 @@ import { RiContractUpDownLine } from "react-icons/ri";
 import styles from "./inventory.module.css";
 import { useState, useEffect, useMemo } from "react";
 import { BeatLoader } from "react-spinners";
-import { IoSearch } from "react-icons/io5";
+import { IoAddSharp, IoSearch } from "react-icons/io5";
 
 export default function GroupedView({
   items,
@@ -15,6 +15,11 @@ export default function GroupedView({
   setEditBoxOpen,
   setEditItemOpen,
   refresh,
+  getKey,
+  keyDict,
+  savedInfo,
+  setSavedInfo,
+  setAddBoxOpen
 }) {
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -143,6 +148,36 @@ export default function GroupedView({
     );
   }, [colorDict, searchValue]);
 
+  const addToBox = () => {
+    console.log(descriptionDict)
+    if(!colorDict[selectedColor]) return;
+    const item = colorDict[selectedColor]?.items[0]
+    console.log(item)
+    const contents = [
+      {
+        imageUrl: item.image || "",
+        descriptionId: item.descriptionId || null,
+        description: item.description || null,
+        style: item.style || "", 
+        brandId: item.brandId || null,
+        brand: item.brand || null,
+        sizeId: item.sizeId || null,
+        size: item.size || null,
+        color: item.color || "",
+        price: item.price || 0
+      }
+    ]
+    console.log(contents)
+    setSavedInfo({
+      addItem: {...savedInfo.addItem},
+      addBox: {
+        contents: contents
+      }
+    })
+    setAddBoxOpen(true);
+    onClose();
+  }
+
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>
       <div
@@ -171,9 +206,10 @@ export default function GroupedView({
               paddingBottom: "10px",
             }}
           >
+
             <img
               src={colorDict[selectedColor]?.items[0].image}
-              style={{ width: "350px", height: "350px", objectFit: "cover" }}
+              style={{ width: "350px", height: "350px", objectFit: "contain" }}
             ></img>
             <div style={{ margin: "5px 10px" }}>
               <span style={{ fontWeight: "bold" }}>Description: </span>
@@ -226,15 +262,18 @@ export default function GroupedView({
                     setSelectedSize(null);
                   }}
                 >
-                  <img
-                    src={val.items[0].image}
-                    style={{
-                      width: "75px",
-                      height: "75px",
-                      objectFit: "cover",
-                      borderRadius: "5px",
-                    }}
-                  ></img>
+                  <div style={{ backgroundColor: "white", position: "relative" }}>
+                    <img
+                      src={val.items[0].image}
+                      style={{
+                        width: "75px",
+                        height: "75px",
+                        objectFit: "contain",
+                        borderRadius: "5px",
+                      }}
+                    ></img>
+                    {val.items.some(item => keyDict[getKey([item])]?.quantity > item.quantity) && <div className={styles.partialOverlay} />}
+                  </div>
                   <div style={{ fontWeight: "bold", marginTop: "10px" }}>
                     {key}
                   </div>
@@ -255,6 +294,7 @@ export default function GroupedView({
                           minWidth: "50px",
                         }}
                         onClick={() => {
+                          console.log(key, val)
                           setSelectedSize(key);
                         }}
                       >
@@ -270,7 +310,13 @@ export default function GroupedView({
                         <div
                           style={{
                             backgroundColor:
-                              selectedSize === key ? "#e8e8e8" : "#f0f0f0",
+                              (keyDict[`${brandDict[items[0].brandId]?.brand || items[0].brand}-${items[0].style}-${key}-${selectedColor}`]
+                                && val === 0
+                              ) ? "#e2aeaaff" :
+                                (keyDict[`${brandDict[items[0].brandId]?.brand ||
+                                  items[0].brand}-${items[0].style}-${key}-${selectedColor}`]?.quantity > val
+                                ) ? "#f1d7a9ff" :
+                                  selectedSize === key ? "#e8e8e8" : "#f0f0f0",
                           }}
                         >
                           {val}
@@ -382,7 +428,7 @@ export default function GroupedView({
                           return a;
                         }, 0)}
                       </span>
-                      {}
+                      { }
                     </div>
                     <div>
                       <span style={{ fontWeight: "bold", marginRight: "10px" }}>
@@ -543,9 +589,27 @@ export default function GroupedView({
                   }
                   return <></>;
                 })}
+              <div
+                className={styles.groupImageContainer}
+                style={{
+                  width: "200px",
+                  height: "200px",
+                  cursor: "pointer",
+                  position: "relative",
+                  backgroundColor: "#f0eeeeff",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center"
+                }}
+                onClick={addToBox}
+                >
+                <IoAddSharp size={50} style={{ color: "#9f9e9eff" }} />
+              </div>
+
             </div>
+
           </div>
-          
+
         </div>
       </div>
     </div>

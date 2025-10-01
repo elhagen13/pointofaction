@@ -15,8 +15,9 @@ import {
   IoIosAddCircle,
   IoIosCheckmarkCircle,
   IoIosRemoveCircle,
+  IoIosWarning,
 } from "react-icons/io";
-import { IoSearch } from "react-icons/io5";
+import { IoSearch, IoWarningOutline, IoWarningSharp } from "react-icons/io5";
 import { FiMinimize2, FiMaximize2 } from "react-icons/fi";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
 import EditPresets from "@/app/components/admin/editPresets/EditPresets";
@@ -1839,7 +1840,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td className={styles.tableReg} style={{position:"relative"}}>
                         <input
                           type="text"
                           pattern="[0-9]*"
@@ -1852,6 +1853,13 @@ const AddBox = ({
                               parseInt(e.target.value) || ""
                             )
                           }
+                          onBlur={(e) =>
+                            updateExistingContent(
+                              index,
+                              "quantity",
+                              Math.min(parseInt(item.reserved), parseInt(e.target.value))
+                            )
+                          }
                           className={styles.input}
                           style={{
                             margin: 0,
@@ -1859,6 +1867,11 @@ const AddBox = ({
                             width: "100%",
                           }}
                         />
+                        {item.reserved && item.reserved > 0 && 
+                        <div style={{position:"absolute", top: "0", right:"20px", height:"100%", display:"flex", alignItems:"center"}}>
+                          <IoWarningSharp size={20} color="#dc6f57ff"/>
+                        </div>
+                        }
                       </td>
                       <td className={styles.tableReg}>
                         <input
