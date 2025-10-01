@@ -133,9 +133,6 @@ export default function Reservation({ params }) {
     let cartList = [];
 
     for (const item of reservation.items) {
-      console.log("Looking for itemId:", item.itemId);
-console.log("Available inventory IDs:", Object.keys(contentDict));
-console.log("Match found:", !!contentDict[item.itemId]);
       if(contentDict[item.itemId]){
         cartList.push({
         ...contentDict[item.itemId],
@@ -258,7 +255,7 @@ console.log("Match found:", !!contentDict[item.itemId]);
   };
 
   const getInventory = async () => {
-    const response = await fetch("/api/inventory/item", {
+    const response = await fetch("/api/inventory/all", {
       method: "GET",
     });
 
