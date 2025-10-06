@@ -495,7 +495,7 @@ export default function GroupedView({
               {selectedColor &&
                 colorDict[selectedColor]?.items.map((item, index) => {
                   if (
-                    (sizeDict[item.sizeId]?.size || item.size) === selectedSize
+                    (sizeDict[item.sizeId]?.size || item.size) === selectedSize && item.quantity > 0
                   ) {
                     return (
                       <div
