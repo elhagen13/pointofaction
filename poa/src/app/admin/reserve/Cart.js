@@ -25,10 +25,8 @@ export default function Cart({
   const [orderTitle, setOrderTitle] = useState("");
   const [soin, setSoIn] = useState("");
 
-  const [selectionType, setSelectionType] = useState("manual");
-
   const [boxOptions, setBoxOptions] = useState({});
-  const [optionsIndex, setOptionsIndex] = useState(null);
+  const [optionsIndex, setOptionsIndex] = useState(0);
 
   const [currentStatus, setCurrentStatus] = useState([])
 
@@ -36,12 +34,10 @@ export default function Cart({
 
   const [manualSelections, setManualSelections] = useState({})
 
-  const [bestIndexes, setBestIndexes] = useState([])
+  const [recommendedIndexes, setRecommendedIndexes] = useState({})
 
-  // New state to track quantity calculations for each cart item
   const [quantityCalculations, setQuantityCalculations] = useState({});
 
-  // Track the order of box selections for each cart item
   const [selectionOrder, setSelectionOrder] = useState({});
 
   const handleOverlayClick = (e) => {
@@ -143,6 +139,7 @@ export default function Cart({
 
     return result;
   };
+
   const calculateSelectedQuantity = (cartItemIndex) => {
     const cartItem = cart[cartItemIndex];
     if (!cartItem) return 0;
@@ -168,14 +165,17 @@ export default function Cart({
   useEffect(() => {
     let arr = [];
     for (let i = 0; i < cart.length; i++) {
-      if (selectionType === "manual") {
-        arr.push(calculateSelectedQuantity(i));
-      } else {
-        arr.push(0);
+      const quantity = calculateSelectedQuantity(i)
+      arr.push(quantity);
+      console.log(quantity, "CART", cart[i])
+      if(i === optionsIndex && quantity >= cart[i].quantity){
+        console.log(quantity)
+        setOptionsIndex(optionsIndex + 1)
       }
+
     }
     setCurrentStatus(arr);
-  }, [cart, manualSelections, boxOptions, selectionType]);
+  }, [cart, manualSelections, boxOptions]);
 
 
   useEffect(() => {
@@ -246,13 +246,13 @@ export default function Cart({
         ...prev,
         [cartItemIndex]: data
       }));
-      console.log(data);
-      return;
+
+      return data;
 
 
     } catch (finalizeError) {
       console.error("Error finalizing reservation:", finalizeError);
-      alert("Items were reserved but failed to create final reservation");
+      return null;
     }
 
   }
@@ -264,30 +264,27 @@ export default function Cart({
     function calculateScore(combination) {
       const { indexes, sum, boxCount } = combination;
 
-      // Calculate how much we're taking from each box
-      const takeAmounts = indexes.map(i => Math.min(arr[i], target));
-      const totalTaking = takeAmounts.reduce((sum, amt) => sum + amt, 0);
+      if (sum < target) return -Infinity
+      // Calculate how much we're ACTUALLY taking from each box sequentially
+      let remaining = target;
+      const takeAmounts = indexes.map(i => {
+        const take = Math.min(arr[i], remaining);
+        remaining -= take;
+        return take;
+      });
 
       // Count how many boxes we're completely emptying
       const completelyEmptiedBoxes = takeAmounts.filter((take, idx) =>
         take === arr[indexes[idx]]
       ).length;
 
-      // Prioritization scoring:
-      // 1. Exact match gets huge bonus
+      // Rest of your scoring logic...
       const exactMatchBonus = (sum === target) ? 1000 : 0;
-
-      // 2. Prefer combinations that empty more boxes completely
       const emptyBoxBonus = completelyEmptiedBoxes * 100;
-
-      // 3. Prefer fewer total boxes used
       const fewBoxesBonus = -boxCount * 10;
-
-      // 4. Minimize waste (overfill penalty)
       const wastePenalty = sum > target ? -(sum - target) * 5 : 0;
-
-      // 5. If no exact match possible, prefer getting closer to target
       const proximityBonus = exactMatchBonus === 0 ? -Math.abs(sum - target) : 0;
+
 
       return exactMatchBonus + emptyBoxBonus + fewBoxesBonus + wastePenalty + proximityBonus;
     }
@@ -349,22 +346,37 @@ export default function Cart({
     };
   }
 
-
-  const onItemClick = async (cartItem, index) => {
-    setOptionsIndex(index)
-    await getMatching(cartItem.style, cartItem.color, cartItem.brand, cartItem.size, index, cartItem.quantity)
-  }
-
+  // Fetch all box options on cart load and calculate recommendations
   useEffect(() => {
-    if (!boxOptions || !boxOptions[optionsIndex]) return
+    const fetchAllMatches = async () => {
+      const newRecommendations = {};
 
-    const numArr = boxOptions ? boxOptions[optionsIndex]?.map(item => item.quantity - (item.reserved || 0)) : []
-    const bestCombination = findBestCombination(numArr, cart[optionsIndex].quantity)
+      for (let index = 0; index < cart.length; index++) {
+        const cartItem = cart[index];
+        const data = await getMatching(
+          cartItem.style,
+          cartItem.color,
+          cartItem.brand,
+          cartItem.size,
+          index,
+          cartItem.quantity
+        );
 
-    setBestIndexes(bestCombination.indexes)
-    return;
+        // Calculate recommendations immediately after fetching
+        if (data && data.length > 0) {
+          const numArr = data.map(item => item.quantity - (item.reserved || 0));
+          const bestCombination = findBestCombination(numArr, cartItem.quantity);
+          newRecommendations[index] = bestCombination.indexes;
+        }
+      }
 
-  }, [boxOptions])
+      setRecommendedIndexes(newRecommendations);
+    };
+
+    if (cart.length > 0) {
+      fetchAllMatches();
+    }
+  }, [cart]);
 
   const reserveCart = async (e) => {
     e.preventDefault();
@@ -375,74 +387,45 @@ export default function Cart({
 
     try {
       // Process all cart items first
-      if (selectionType === "auto") {
-        for (const item of cart) {
-          try {
-            const reservation = await uploadReserveAuto(item);
-            if (reservation.ok) {
-              const data = await reservation.json();
-              reservationResults.push({
-                item: item,
-                success: true,
-                data: data,
-              });
-            } else {
-              const errorData = await reservation.json();
-              failedReservations.push({
-                item: item,
-                error: errorData.error || `HTTP ${reservation.status}`,
-              });
-            }
-          } catch (itemError) {
-            console.error("Error processing item:", item, itemError);
-            failedReservations.push({
-              item: item,
-              error: itemError.message,
-            });
-          }
-        }
-      }
-      else if (selectionType === "manual") {
-        for (const [cartItemIndex, boxList] of Object.entries(boxOptions)) {
-          for (const box of boxList) {
-            const selectionKey = `${cartItemIndex}-${box._id}`;
 
-            // Only process selected boxes
-            if (manualSelections[selectionKey]) {
-              const quantityFromBox = getQuantityFromBox(box, parseInt(cartItemIndex));
+      for (const [cartItemIndex, boxList] of Object.entries(boxOptions)) {
+        for (const box of boxList) {
+          const selectionKey = `${cartItemIndex}-${box._id}`;
 
-              if (quantityFromBox > 0) {
-                try {
-                  const reservation = await uploadReserveManual(box._id, quantityFromBox);
-                  if (reservation.ok) {
-                    const data = await reservation.json();
-                    reservationResults.push({
-                      item: box,
-                      success: true,
-                      data: data,
-                    });
-                  } else {
-                    const errorData = await reservation.json();
-                    failedReservations.push({
-                      item: box,
-                      error: errorData.error || `HTTP ${reservation.status}`,
-                    });
-                  }
-                } catch (itemError) {
-                  console.error("Error processing box:", box, itemError);
+          // Only process selected boxes
+          if (manualSelections[selectionKey]) {
+            const quantityFromBox = getQuantityFromBox(box, parseInt(cartItemIndex));
+
+            if (quantityFromBox > 0) {
+              try {
+                const reservation = await uploadReserveManual(box._id, quantityFromBox);
+                if (reservation.ok) {
+                  const data = await reservation.json();
+                  reservationResults.push({
+                    item: box,
+                    success: true,
+                    data: data,
+                  });
+                } else {
+                  const errorData = await reservation.json();
                   failedReservations.push({
                     item: box,
-                    error: itemError.message,
+                    error: errorData.error || `HTTP ${reservation.status}`,
                   });
                 }
+              } catch (itemError) {
+                console.error("Error processing box:", box, itemError);
+                failedReservations.push({
+                  item: box,
+                  error: itemError.message,
+                });
               }
             }
           }
         }
       }
-      else {
-        throw Error("Invalid selection type")
-      }
+
+
 
 
       // Check if there were any failures
@@ -512,7 +495,7 @@ export default function Cart({
         formData.append('reservation', data.data.sequentialId);
         formData.append('orderTitle', orderTitle);
         formData.append('soIn', soin);
-        formData.append('reservationQuantity', Object.values(cart).reduce((a, b) => a + b.quantity, 0 ))
+        formData.append('reservationQuantity', Object.values(cart).reduce((a, b) => a + b.quantity, 0))
 
         console.log()
         // Send form data to API
@@ -618,10 +601,12 @@ export default function Cart({
   const handleBoxSelection = (item, cartItemIndex) => {
     const selectionKey = `${cartItemIndex}-${item._id}`;
     const wasSelected = manualSelections[selectionKey];
+    console.log("ITEM", item, "CARTINDEX", cartItemIndex)
 
     setManualSelections(prev => {
       const newSelections = { ...prev };
       const currentOrder = selectionOrder[cartItemIndex] || [];
+      console.log(newSelections)
 
       if (wasSelected) {
         // Deselecting
@@ -667,13 +652,44 @@ export default function Cart({
   };
 
 
-
-  // Updated helper function to get the quantity that would be taken from a specific box
   const getQuantityFromBox = (box, cartItemIndex) => {
     const calculation = quantityCalculations[cartItemIndex];
     if (!calculation || !calculation.distribution) return 0;
 
     return calculation.distribution[box._id] || 0;
+  };
+
+
+  const selectRecommended = () => {
+    const newSelections = {};
+    const newSelectionOrder = {};
+    const newQuantityCalculations = {};
+
+    cart.forEach((_, cartIndex) => {
+      if (boxOptions[cartIndex] && recommendedIndexes[cartIndex]) {
+        const orderedBoxIds = [];
+
+        recommendedIndexes[cartIndex].forEach((boxIndex) => {
+          const box = boxOptions[cartIndex][boxIndex];
+          if (box) {
+            const selectionKey = `${cartIndex}-${box._id}`;
+            newSelections[selectionKey] = true;
+            orderedBoxIds.push(box._id);
+          }
+        });
+
+        newSelectionOrder[cartIndex] = orderedBoxIds;
+
+        // Calculate quantities for this cart item
+        const calculation = calculateQuantityDistribution(cartIndex, orderedBoxIds, true);
+        newQuantityCalculations[cartIndex] = calculation;
+      }
+    });
+
+    // Update all state at once
+    setManualSelections(newSelections);
+    setSelectionOrder(newSelectionOrder);
+    setQuantityCalculations(newQuantityCalculations);
   };
 
   return (
@@ -682,7 +698,7 @@ export default function Cart({
         {Object.entries(groupedCart).length > 0 ?
           <>
             {Object.entries(groupedCart).map(([groupKey, item], index) => (
-              <div key={index} className={styles.cartRow} onClick={() => console.log(item)}>
+              <div key={index} className={styles.cartRow}>
                 <div className={styles.imageContainer} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <img src={item.image} className={styles.rowImage}></img>
                 </div>
@@ -744,68 +760,56 @@ export default function Cart({
                 />
               </div>
             ))}
-            <div style={{
-              width: "100%",
-              display: "flex",
-              justifyContent: "end",
-              alignItems: "center",
-              gap: "10px",
-              margin: "10px 0"
-            }}>
+            <div className={styles.autoSelectContainer}>
+              <button className={styles.autoSelect} onClick={selectRecommended} disabled={Object.entries(recommendedIndexes).length < 1}>Select Recommended</button>
+            </div>
 
-              <input type="radio" id="auto" value="auto" checked={selectionType === "auto"} onClick={() => setSelectionType("auto")} />
-              <label for="auto">Auto Selection</label><br />
+            <div>
+              {
+                cart.map((cartItem, index) => (
+                  <>
+                    <div key={index} className={styles.manualSelection} onClick={() => setOptionsIndex(index)}>
+                      <div className={styles.imageContainer} style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                        <img src={cartItem.image} className={styles.rowImage}></img>
+                      </div>
+                      {cartItem.brand} {cartItem.style} {cartItem.description} {cartItem.size}
+                      <div style={{ marginLeft: "auto", fontSize: "32px", marginRight: "10px", color: (currentStatus[index] || 0) >= cartItem.quantity ? "green" : "black" }}>{currentStatus[index] || 0} / {cartItem.quantity}</div>
+                    </div>
+                    <div className={`${styles.boxGrid} ${optionsIndex === index && boxOptions[index] ? styles.visible : styles.notVisible}`}>
+                      {
+                        boxOptions[index] && boxOptions[index].map((box, i) => {
+                          const quantityFromThisBox = getQuantityFromBox(box, index);
+                          const availableQuantity = box.quantity - (box.reserved || 0);
+                          const selectionKey = `${index}-${box._id}`;
+                          const isRecommended = recommendedIndexes[index]?.includes(i);
 
-              <input type="radio" id="manual" value="manual" checked={selectionType === "manual"} onClick={() => { setSelectionType("manual"); console.log(cart) }} />
-              <label for="manual">Manual Selection</label><br />
+                          return (
+                            <div key={i} onClick={() => handleBoxSelection(box, index)}
+                              className={manualSelections[selectionKey] ? styles.selected : isRecommended ? styles.recommended : ""}
+                              style={{ position: "relative", display: "flex", flexDirection: "column", gap: "10px" }}>
+                              <h3>#{box.boxSequentialId}</h3>
+                              <div>Available: <span style={{ textDecoration: manualSelections[selectionKey] ? "line-through" : "" }}>{availableQuantity}
+                              </span>
+                                {manualSelections[selectionKey] ? `  ${parseInt(availableQuantity) - parseInt(quantityFromThisBox)}` : ""}
+
+                              </div>
+                              {manualSelections[selectionKey] && (
+                                <div style={{ color: "green", fontWeight: "bold" }}>
+                                  Taking: {quantityFromThisBox}
+                                </div>
+                              )}
+                              <IoIosCheckmarkCircle style={{ position: "absolute", right: "5px", bottom: "5px", display: manualSelections[selectionKey] ? "" : "none", color: "green" }} size={20} />
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  </>
+                ))
+              }
 
             </div>
-            {
-              selectionType == "manual" &&
-              <div>
-                {
-                  cart.map((cartItem, index) => (
-                    <>
-                      <div key={index} className={styles.manualSelection} onClick={() => onItemClick(cartItem, index)}>
-                        <div className={styles.imageContainer} style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                          <img src={cartItem.image} className={styles.rowImage}></img>
-                        </div>
-                        {cartItem.brand} {cartItem.style} {cartItem.description} {cartItem.size}
-                        <div style={{ marginLeft: "auto", fontSize: "32px", marginRight: "10px", color: (currentStatus[index] || 0) >= cartItem.quantity ? "green" : "black" }}>{currentStatus[index] || 0} / {cartItem.quantity}</div>
-                      </div>
-                      <div className={`${styles.boxGrid} ${optionsIndex === index && boxOptions[index] ? styles.visible : styles.notVisible}`}>
-                        {
-                          boxOptions[index] && boxOptions[index].map((box, i) => {
-                            const quantityFromThisBox = getQuantityFromBox(box, index);
-                            const availableQuantity = box.quantity - (box.reserved || 0);
-                            const selectionKey = `${index}-${box._id}`;
 
-                            return (
-                              <div key={i} onClick={() => handleBoxSelection(box, index)} className={manualSelections[selectionKey] ? styles.selected : ""} style={{ position: "relative", display: "flex", flexDirection: "column", gap: "10px" }}>
-                                <h3>#{box.boxSequentialId}</h3>
-                                <div>Available: <span style={{ textDecoration: manualSelections[selectionKey] ? "line-through" : "" }}>{availableQuantity}
-                                </span>
-                                  {manualSelections[selectionKey] ? `  ${parseInt(availableQuantity) - parseInt(quantityFromThisBox)}` : ""}
-
-                                </div>
-                                {manualSelections[selectionKey] && (
-                                  <div style={{ color: "green", fontWeight: "bold" }}>
-                                    Taking: {quantityFromThisBox}
-                                  </div>
-                                )}
-                                <IoIosCheckmarkCircle style={{ position: "absolute", right: "5px", bottom: "5px", display: manualSelections[selectionKey] ? "" : "none", color: "green" }} size={20} />
-                                <span className={styles.recommended} style={{ display: bestIndexes.includes(i) ? "" : "none" }} />
-                              </div>
-                            );
-                          })
-                        }
-                      </div>
-                    </>
-                  ))
-                }
-
-              </div>
-            }
             <div
               style={{
                 width: "100%",
@@ -847,7 +851,7 @@ export default function Cart({
                 className={styles.shoppingButton}
                 style={{ height: "fit-content" }}
                 onClick={(e) => reserveCart(e)}
-                disabled={selectionType == "manual" && !cart.every((item, index) => item.quantity <= currentStatus[index])}
+                disabled={!cart.every((item, index) => item.quantity <= currentStatus[index])}
               >
                 {submitting ? (
                   "Submitting..."

@@ -7,6 +7,8 @@ import { GrPowerReset } from "react-icons/gr";
 import AddBox from "@/app/components/admin/AddBox";
 import { BeatLoader } from "react-spinners";
 import { useRouter } from "next/navigation";
+import { IoAdd } from "react-icons/io5";
+import AddToRes from "./AddToRes.js"
 
 export default function Reservation({ params }) {
   const { id } = React.use(params);
@@ -14,6 +16,7 @@ export default function Reservation({ params }) {
   const [reservation, setReservation] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [items, setItems] = useState(null);
+  const [addedItems, setAddedItems] = useState([])
   const [options, setOptions] = useState({});
   const [newBox, setNewBox] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
@@ -29,18 +32,20 @@ export default function Reservation({ params }) {
   const [newBoxes, setNewBoxes] = useState([]);
   const [addBoxVisible, setAddBoxVisible] = useState(false);
 
+  const [add, setAdd] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
+
+  const [existingKeys, setExistingKeys] = useState([])
 
   useEffect(() => {
     getReservation();
-    getInventory();
     getItemOptions();
     getBoxes();
   }, []);
 
   const refresh = () => {
     getReservation();
-    getInventory();
   };
 
   const appendToBox = (itemData) => {
@@ -115,9 +120,6 @@ export default function Reservation({ params }) {
   };
 
 
-  useEffect(() => {
-    console.log(reservation);
-  }, [reservation]);
 
   const contentDict = useMemo(() => {
     const dict = {};
@@ -241,8 +243,24 @@ export default function Reservation({ params }) {
   ]);
 
   useEffect(() => {
-    console.log(items);
-  }, [items]);
+    const arr1 = items?.map((item) => `${item.brand}-${item.style}-${item.color}`);
+    const arr2 = addedItems?.map((item) => `${item.brand}-${item.style}-${item.color}`)
+    if(!arr1 || !arr2) return
+    setExistingKeys(
+      arr1.concat(arr2)
+    )
+  }, [items, addedItems]);
+
+  
+  const removeFromAdded = (itemToRemove, index) => {
+    setAddedItems(addedItems.filter((i) => i === index))
+
+    const key = `${itemToRemove.brand}-${itemToRemove.style}-${itemToRemove.color}`
+    
+    setExistingKeys(existingKeys.filter((k) => k === key))
+
+  }
+
 
   const getReservation = async () => {
     const response = await fetch(`/api/catalog/reservation/${id}`, {
@@ -254,14 +272,29 @@ export default function Reservation({ params }) {
     setReservation(result.data[0]);
   };
 
+  useEffect(() => {
+    getInventory();
+  }, [reservation])
+
   const getInventory = async () => {
-    const response = await fetch("/api/inventory/all", {
-      method: "GET",
+    console.log("reservation", reservation)
+    if(!reservation) return
+
+    const result = await fetch("/api/catalog", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        itemIds: reservation.items.map((item) => item.itemId),
+      }),
     });
 
-    const result = await response.json();
 
-    setInventory(result.data);
+    if (result.ok) {
+      const body = await result.json();
+      setInventory(body.data);
+    }
   };
 
   const validate = (e, value, index) => {
@@ -277,20 +310,18 @@ export default function Reservation({ params }) {
   };
 
   useEffect(() => {
-    console.log("brandDIct", brandDict);
     if (
       !items ||
       items.length <= 0 ||
       !brandDict ||
       !sizeDict ||
       !descriptionDict
+    
     )
       return;
-    console.log(items);
     let displacedItems = [];
     for (const item of items) {
-      console.log(item);
-      Object.entries(item.sizes).forEach(([key, val], index) => {
+       item.sizes && Object.entries(item.sizes).forEach(([key, val], index) => {
         if (val.pulled > val.newQuantity) {
           const newItem = {
             image: item.image,
@@ -377,9 +408,6 @@ export default function Reservation({ params }) {
     );
   };
 
-  useEffect(() => {
-    console.log("displaced", displaced);
-  }, [displaced]);
 
   const getBoxes = async () => {
     const response = await fetch("/api/inventory/box", {
@@ -522,7 +550,7 @@ export default function Reservation({ params }) {
         for (const [key, val] of Object.entries(item.sizes)) {
           console.log(val);
           if (val.newQuantity > val.inOrder) {
-            await addToReservation( // Add await here
+            await addToReservation( 
               style,
               color,
               brand,
@@ -530,7 +558,7 @@ export default function Reservation({ params }) {
               parseInt(val.newQuantity) - val.inOrder
             );
           } else if (val.newQuantity < val.inOrder) {
-            await removeFromReservation( // Add await here
+            await removeFromReservation( 
               style,
               color,
               brand,
@@ -539,6 +567,21 @@ export default function Reservation({ params }) {
             );
           }
         }
+      }
+
+      // Process added items
+      for (const item of addedItems){
+          const { style, color, brand } = item;
+          for (const [key, val] of Object.entries(item.sizes)) {
+            await addToReservation( 
+              style,
+              color,
+              brand,
+              key,
+              parseInt(val.newQuantity)
+            );
+          }
+
       }
   
       // Now all operations are complete, safe to navigate
@@ -681,7 +724,7 @@ export default function Reservation({ params }) {
                 <div style={{ padding: "5px" }}>Available</div>
                 <div style={{ padding: "5px" }}>New Quantity</div>
               </div>
-              {Object.entries(item.sizes).map(([sizeKey, val], sizeIndex) => (
+              {item.sizes && Object.entries(item.sizes).map(([sizeKey, val], sizeIndex) => (
                 <div
                   key={sizeKey}
                   className={styles.column}
@@ -722,6 +765,64 @@ export default function Reservation({ params }) {
               title="Remove entire group"
             />
           </div>
+        </>
+      ))}
+      {addedItems?.map((item, index) => (
+        <>
+         {item && <div key={index} className={styles.cartRow}>
+            <div className={styles.imageContainer}>
+              <img src={item.image} className={styles.rowImage} ></img>
+            </div>
+            <div style={{ fontWeight: "bold" }}>
+              <div>
+                {brandDict[item.brand]?.brand || item.brand || ""} {item.style}{" "}
+                {descriptionDict[item.description]?.description ||
+                  item.description ||
+                  ""}
+              </div>
+              <div style={{ color: "gray" }}>{item.color}</div>
+            </div>
+            <div className={styles.sizeBreakdown}>
+              <div
+                className={styles.column}
+                style={{ textAlign: "right", fontWeight: "bold" }}
+              >
+                <div style={{ padding: "5px" }}>Size</div>
+                <div style={{ padding: "5px" }}>Original Quantity</div>
+                <div style={{ padding: "5px" }}>Pulled</div>
+                <div style={{ padding: "5px" }}>Available</div>
+                <div style={{ padding: "5px" }}>New Quantity</div>
+              </div>
+              {item.sizes && Object.entries(item.sizes).map(([sizeKey, val], sizeIndex) => (
+                <div
+                  key={sizeKey}
+                  className={styles.column}
+                  style={{ borderRadius: "5px", overflow: "hidden" }}
+                >
+                  <div style={{ backgroundColor: "#a1b1cc", padding: "5px" }}>
+                    {sizeKey.toUpperCase()}{" "}
+                  </div>
+                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
+                    {val.inOrder}
+                  </div>
+                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
+                    {val.pulled}
+                  </div>
+                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
+                    {val.quantity - val.reserved || 0}
+                  </div>
+                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
+                    {val.newQuantity}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <FaTrash
+              style={{ color: "red", margin: "20px", cursor: "pointer" }}
+              onClick={() => removeFromAdded(item, index)}
+              title="Remove entire group"
+            />
+          </div>}
         </>
       ))}
       {displaced.length > 0 && saveVersion > 1 && (
@@ -806,6 +907,8 @@ export default function Reservation({ params }) {
           </div>
         </>
       )}
+      <div className={styles.addToRes} onClick={() => setAdd(!add)}>+</div>
+      {add && <AddToRes existingKeys={existingKeys} addedItems={addedItems} setAddedItems={setAddedItems}/>}
       {saveVersion > 1 ? (
         <div style={{ width: "100%", display: "flex" }}>
           <button

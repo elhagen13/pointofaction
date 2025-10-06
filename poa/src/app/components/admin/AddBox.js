@@ -32,7 +32,6 @@ export default function AddItem({
   setSavedInfo = null,
   appendToBox = null,
 }) {
-  console.log("hello");
   const [page, setPage] = useState("box");
   const [box, setBox] = useState({});
 
@@ -105,72 +104,79 @@ const QrPopup = ({ box, onClose }) => {
     };
   }, [handleKeyDown]);
 
-  const downloadBoxPDF = async () => {
-    try {
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "in",
-        format: [4, 6],
-      });
-
-      // Constants
-      const pageWidth = 4;
-      const pageHeight = 6;
-      const qrSize = 2;
-      const bottomMargin = 0.5;
-      const textStartY = 1.6;
-      const lineHeight = 0.2;
-
-      // Title
-      pdf.setFontSize(24);
-      pdf.setFont(undefined, "bold");
-      pdf.text(`Box ${box.boxId}`, 2, 1, { align: "center" });
-
-      const maxQrY = pageHeight - qrSize - bottomMargin;
-
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, "normal");
-      let description = box.description;
-      let currentQrY = 2.2;
-
-      const textLines = pdf.splitTextToSize(description, 3.5);
-      const textHeight = textLines.length * lineHeight;
-      const idealQrY = textStartY + textHeight + 0.3;
-
-      // If QR would go past bottom, truncate text
-      if (idealQrY + qrSize > pageHeight - bottomMargin) {
-        const availableHeight = maxQrY - textStartY - 0.3;
-        const maxLines = Math.floor(availableHeight / lineHeight);
-
-        // Truncate text to fit
-        let truncatedText = description;
-        let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
-
-        while (truncatedLines.length > maxLines && truncatedText.length > 0) {
-          truncatedText =
-            truncatedText.substring(0, truncatedText.length - 4) + "...";
-          truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+   const downloadBoxPDF = async () => {
+      try {
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "in",
+          format: [4, 6],
+          putOnlyUsedFonts: true,
+          compress: true,
+        });
+  
+        // Constants
+        const pageWidth = 4;
+        const pageHeight = 6;
+        const qrSize = 2;
+        const bottomMargin = 0.5;
+        const textStartY = 1.6;
+        const lineHeight = 0.2;
+        const topMargin = 0.3;
+  
+        // Box Location in top right corner
+        pdf.setFontSize(20);
+        pdf.setFont(undefined, "bold");
+        const locationWidth = pdf.getTextWidth(box.location);
+        pdf.text(box.location, pageWidth - locationWidth - 0.2, topMargin);
+  
+        // Title
+        pdf.setFontSize(24);
+        pdf.setFont(undefined, "bold");
+        pdf.text(`Box ${box?.boxId}`, 2, 1, { align: "center" });
+  
+        const maxQrY = pageHeight - qrSize - bottomMargin;
+        pdf.setFontSize(12);
+        pdf.setFont(undefined, "normal");
+  
+        let description = box.description;
+        let currentQrY = 2.2;
+        const textLines = pdf.splitTextToSize(description, 3.5);
+        const textHeight = textLines.length * lineHeight;
+        const idealQrY = textStartY + textHeight + 0.3;
+  
+        // If QR would go past bottom, truncate text
+        if (idealQrY + qrSize > pageHeight - bottomMargin) {
+          const availableHeight = maxQrY - textStartY - 0.3;
+          const maxLines = Math.floor(availableHeight / lineHeight);
+  
+          // Truncate text to fit
+          let truncatedText = description;
+          let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+  
+          while (truncatedLines.length > maxLines && truncatedText.length > 0) {
+            truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
+            truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+          }
+  
+          description = truncatedText;
+          currentQrY = maxQrY;
+        } else {
+          currentQrY = idealQrY;
         }
-
-        description = truncatedText;
-        currentQrY = maxQrY;
-      } else {
-        currentQrY = idealQrY;
+  
+        pdf.text(description, 2, textStartY, {
+          align: "center",
+          maxWidth: 3.5,
+        });
+  
+        const qrX = (pageWidth - qrSize) / 2;
+        pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
+  
+        pdf.save(`box-${box.boxId}.pdf`);
+      } catch (error) {
+        console.error("Error generating PDF:", error);
       }
-
-      pdf.text(description, 2, textStartY, {
-        align: "center",
-        maxWidth: 3.5,
-      });
-
-      const qrX = (pageWidth - qrSize) / 2;
-      pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
-
-      pdf.save(`box-${box.boxId}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-    }
-  };
+    };
 
   return (
     <div

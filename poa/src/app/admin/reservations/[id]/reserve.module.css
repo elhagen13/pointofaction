@@ -1,7 +1,7 @@
 .productGrid {
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 0.3333fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 0.3333fr));
   gap: 30px;
 }
 
@@ -16,7 +16,7 @@
 .productImage {
   width: 100%;
   object-fit: cover;
-  height: 300px;
+  height: 100px;
 }
 
 .productCardDescription {
@@ -368,6 +368,27 @@
   
   .dropdownItem.selected:hover {
     background-color: #bbdefb;
+  }
+
+  .addToRes{
+    width: 100%;
+    height: 20px;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    border-radius: 15px;
+    transition: background-color 0.2s ease-in-out;
+    border: 2px solid rgb(196, 196, 196);
+    color: rgb(168, 166, 166);
+    font-size: 2rem;
+  }
+
+  .addToRes:hover{
+     background-color: rgb(240, 240, 240);
+     cursor: pointer;
+
   }
   
 

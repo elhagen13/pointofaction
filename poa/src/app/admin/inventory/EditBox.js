@@ -167,8 +167,8 @@ const AddBox = ({
   }, []);
 
   useEffect(() => {
-  contentsRef.current = contents;
-}, [contents]);
+    contentsRef.current = contents;
+  }, [contents]);
 
   const checkCurrent = useCallback(() => {
     // Check if user has entered any meaningful data for the current item
@@ -468,6 +468,7 @@ const AddBox = ({
         putOnlyUsedFonts: true,
         compress: true,
       });
+
       // Constants
       const pageWidth = 4;
       const pageHeight = 6;
@@ -475,41 +476,57 @@ const AddBox = ({
       const bottomMargin = 0.5;
       const textStartY = 1.6;
       const lineHeight = 0.2;
+      const topMargin = 0.3;
+
+      // Box Location in top right corner
+      pdf.setFontSize(20);
+      pdf.setFont(undefined, "bold");
+      const locationWidth = pdf.getTextWidth(boxLocation);
+      pdf.text(boxLocation, pageWidth - locationWidth - 0.2, topMargin);
+
       // Title
       pdf.setFontSize(24);
       pdf.setFont(undefined, "bold");
       pdf.text(`Box ${box?.boxId}`, 2, 1, { align: "center" });
+
       const maxQrY = pageHeight - qrSize - bottomMargin;
       pdf.setFontSize(12);
       pdf.setFont(undefined, "normal");
+
       let description = boxDescription;
       let currentQrY = 2.2;
       const textLines = pdf.splitTextToSize(description, 3.5);
       const textHeight = textLines.length * lineHeight;
       const idealQrY = textStartY + textHeight + 0.3;
+
       // If QR would go past bottom, truncate text
       if (idealQrY + qrSize > pageHeight - bottomMargin) {
         const availableHeight = maxQrY - textStartY - 0.3;
         const maxLines = Math.floor(availableHeight / lineHeight);
+
         // Truncate text to fit
         let truncatedText = description;
         let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+
         while (truncatedLines.length > maxLines && truncatedText.length > 0) {
-          truncatedText =
-            truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
           truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
         }
+
         description = truncatedText;
         currentQrY = maxQrY;
       } else {
         currentQrY = idealQrY;
       }
+
       pdf.text(description, 2, textStartY, {
         align: "center",
         maxWidth: 3.5,
       });
+
       const qrX = (pageWidth - qrSize) / 2;
       pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
+
       pdf.save(`box-${box.boxId}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -741,60 +758,60 @@ const AddBox = ({
   };
 
   const handleSubmitBox = async (e) => {
-  if (e) e.preventDefault();
-  if (isSubmitting) {
-    return;
-  }
-  
-  // Use the ref for the current contents throughout the function
-  const currentContents = contentsRef.current;
-  
-  if (
-    !boxDescription ||
-    !boxLocation ||
-    !imageUrl ||
-    currentContents.length < 1 ||
-    (visibility.includes("sale") && !(boxDiscount && minimumPrice))
-  ) {
-    alert("Please fill in all fields and upload an image");
-    return;
-  }
-  
-  for (const item of currentContents) {
-    if (
-      (!item.description && !item.descriptionId) ||
-      !item.style ||
-      (!item.size && !item.sizeId) ||
-      (!item.brand && !item.brandId) ||
-      !item.color ||
-      !item.quantity ||
-      !item.price
-    ) {
-      alert("One of the items in the box is missing a field");
+    if (e) e.preventDefault();
+    if (isSubmitting) {
       return;
     }
-  }
-  
-  if (!checkCurrent()) {
-    return;
-  }
 
-  setIsSubmitting(true);
-  try {
-    // Pass the current contents to uploadBox
-    const success = await uploadBox(currentContents);
-    if (success) {
-      setUnsavedChanges(false);
-      setPopup("success");
+    // Use the ref for the current contents throughout the function
+    const currentContents = contentsRef.current;
+
+    if (
+      !boxDescription ||
+      !boxLocation ||
+      !imageUrl ||
+      currentContents.length < 1 ||
+      (visibility.includes("sale") && !(boxDiscount && minimumPrice))
+    ) {
+      alert("Please fill in all fields and upload an image");
+      return;
     }
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    alert("Error submitting form: " + error.message);
-  } finally {
-    setIsSubmitting(false);
-    refresh();
-  }
-};
+
+    for (const item of currentContents) {
+      if (
+        (!item.description && !item.descriptionId) ||
+        !item.style ||
+        (!item.size && !item.sizeId) ||
+        (!item.brand && !item.brandId) ||
+        !item.color ||
+        !item.quantity ||
+        !item.price
+      ) {
+        alert("One of the items in the box is missing a field");
+        return;
+      }
+    }
+
+    if (!checkCurrent()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Pass the current contents to uploadBox
+      const success = await uploadBox(currentContents);
+      if (success) {
+        setUnsavedChanges(false);
+        setPopup("success");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Error submitting form: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+      refresh();
+    }
+  };
 
   const positionDropdown = (dropdownElement, triggerElement) => {
     if (!dropdownElement || !triggerElement) return;
@@ -1840,7 +1857,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg} style={{position:"relative"}}>
+                      <td className={styles.tableReg} style={{ position: "relative" }}>
                         <input
                           type="text"
                           pattern="[0-9]*"
@@ -1853,7 +1870,7 @@ const AddBox = ({
                               parseInt(e.target.value) || ""
                             )
                           }
-                          
+
                           className={styles.input}
                           style={{
                             margin: 0,
@@ -1861,11 +1878,12 @@ const AddBox = ({
                             width: "100%",
                           }}
                         />
-                        {item.reserved && item.reserved > 0 && 
-                        <div style={{position:"absolute", top: "0", right:"20px", height:"100%", display:"flex", alignItems:"center"}}>
-                          <IoWarningSharp size={20} color="#dc6f57ff"/>
-                        </div>
+                        {item.reserved > 0 &&
+                          <div style={{ position: "absolute", top: "0", right: "20px", height: "100%", display: "flex", alignItems: "center" }}>
+                            <IoWarningSharp size={20} color="#dc6f57ff" />
+                          </div>
                         }
+
                       </td>
                       <td className={styles.tableReg}>
                         <input

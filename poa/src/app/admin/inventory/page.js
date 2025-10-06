@@ -378,9 +378,6 @@ function Inventory() {
             .join(" ")
             .toLowerCase();
 
-          console.log("ITEMTEXT:", itemText);
-          console.log("searchWORDS:", searchWords);
-
           // Check if ALL search words are found in the combined text
           return searchWords.every((word) => itemText.includes(word));
         });

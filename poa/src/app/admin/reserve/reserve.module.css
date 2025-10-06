@@ -329,13 +329,30 @@
 }
 
 .recommended{
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: rgb(56, 143, 190);
-  width: 10px;
-  height: 10px;
-  border-radius: 10px;
+  box-shadow: 0 0 3px 3px rgba(56, 143, 190, 0.734) !important;
+}
+
+.autoSelectContainer{
+  width: 100%;
+  display: flex;
+  justify-content: end;
+}
+
+.autoSelect{
+  padding: 5px;
+  font-weight: bold;
+  background: white;
+  border: 2px solid white;
+  border-radius: 0px;
+  box-shadow: none;
+  transition: all 0.2s ease-in-out
+}
+
+.autoSelect:hover{  
+  border-radius: 5px;
+  box-shadow: 0 0 3px 3px rgba(56, 143, 190, 0.734);
+  color: rgba(56, 143, 190);
+  cursor: pointer;
 }
 
 @media (max-width: 769px) {
