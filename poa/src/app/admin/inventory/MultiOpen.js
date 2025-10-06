@@ -102,7 +102,9 @@ export default function MultiOpen({
         >
           
           {items.map((item, index) => {
-            item.quantity > 0 && (item.boxId ? boxTotals[item.boxId] > 0 : true) && <div
+            return(
+              item.quantity > 0 && (item.boxId ? boxTotals[item.boxId] > 0 : true) &&
+            <div
               key={item.id || index} // Use item.id if available, otherwise index
               onClick={() => {
                 onClose();
@@ -138,7 +140,7 @@ export default function MultiOpen({
                 Box Total: {item.boxId ? (boxTotals[item.boxId] ?? "Loading...") : "N/A"}
               </h4>
             </div>
-          })}
+          )})}
         </div>
       </div>
     </div>
