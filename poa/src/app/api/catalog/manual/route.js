@@ -89,7 +89,7 @@ export async function PATCH(request, res) {
       color: updatedItem.color,
       size: updatedItem.sizeId || updatedItem.size,
       location: updatedItem.location,
-      boxId: updatedItem.boxSequentialId || updatedItem._id,
+      boxId: updatedItem.boxSequentialId || updatedItem.boxId,
       quantityReservedFromThisItem: quantityToReserve
     });
 

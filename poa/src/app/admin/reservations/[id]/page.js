@@ -38,6 +38,8 @@ export default function Reservation({ params }) {
 
   const [existingKeys, setExistingKeys] = useState([])
 
+  const [idDict, setIdDict] = useState({})
+
   useEffect(() => {
     getReservation();
     getItemOptions();
@@ -133,17 +135,27 @@ export default function Reservation({ params }) {
     if (!inventory || !reservation || Object.entries(contentDict).length <= 0)
       return;
     let cartList = [];
+    console.log("RESERVATION ITEMS: ", reservation.items, reservation)
+
+    let itemDict = {}
 
     for (const item of reservation.items) {
-      if(contentDict[item.itemId]){
+      const key = `${item.style}-${brandDict[item.brandId]?.brand || item.brand ||
+         "N/A"}-${item.color}-${sizeDict[item.sizeId]?.size || item.size || "N/A"}`
+
+      if (contentDict[item.itemId]) {
         cartList.push({
-        ...contentDict[item.itemId],
-        inOrder: item.quantReserved || 0,
-        pulledAlready: item.pulled || 0,
-      })
-    }
-    
-      else{
+          ...contentDict[item.itemId],
+          inOrder: item.quantReserved || 0,
+          pulledAlready: item.pulled || 0,
+        })
+
+
+        if (!itemDict[key]) itemDict[key] = [item]
+        else itemDict[key].push(item)
+      }
+
+      else {
         cartList.push({
           image: item.image,
           brand: item.brand,
@@ -155,12 +167,15 @@ export default function Reservation({ params }) {
           pulledAlready: item.pulled || 0,
         })
       }
-      
+
+
+
     }
-    console.log("Cart List", cartList);
+    setIdDict(itemDict)
+
 
     let cartDict = {};
-  
+
 
     for (const item of cartList) {
       let brand =
@@ -245,18 +260,18 @@ export default function Reservation({ params }) {
   useEffect(() => {
     const arr1 = items?.map((item) => `${item.brand}-${item.style}-${item.color}`);
     const arr2 = addedItems?.map((item) => `${item.brand}-${item.style}-${item.color}`)
-    if(!arr1 || !arr2) return
+    if (!arr1 || !arr2) return
     setExistingKeys(
       arr1.concat(arr2)
     )
   }, [items, addedItems]);
 
-  
+
   const removeFromAdded = (itemToRemove, index) => {
     setAddedItems(addedItems.filter((i) => i === index))
 
     const key = `${itemToRemove.brand}-${itemToRemove.style}-${itemToRemove.color}`
-    
+
     setExistingKeys(existingKeys.filter((k) => k === key))
 
   }
@@ -278,7 +293,7 @@ export default function Reservation({ params }) {
 
   const getInventory = async () => {
     console.log("reservation", reservation)
-    if(!reservation) return
+    if (!reservation) return
 
     const result = await fetch("/api/catalog", {
       method: "POST",
@@ -316,12 +331,12 @@ export default function Reservation({ params }) {
       !brandDict ||
       !sizeDict ||
       !descriptionDict
-    
+
     )
       return;
     let displacedItems = [];
     for (const item of items) {
-       item.sizes && Object.entries(item.sizes).forEach(([key, val], index) => {
+      item.sizes && Object.entries(item.sizes).forEach(([key, val], index) => {
         if (val.pulled > val.newQuantity) {
           const newItem = {
             image: item.image,
@@ -427,21 +442,11 @@ export default function Reservation({ params }) {
 
   const saveToBox = () => {
     if (!displacedPlacement[selectedBox._id]) {
-      console.log("new box id");
-      console.log(
-        "matching",
-        displaced.filter((d) => d.selected)
-      );
       setDisplacedPlacement({
         ...displacedPlacement,
         [selectedBox._id]: displaced.filter((d) => d.selected),
       });
     } else {
-      console.log("old box id");
-      console.log(
-        "matching",
-        displaced.filter((d) => d.selected)
-      );
       setDisplacedPlacement({
         ...displacedPlacement,
         [selectedBox._id]: displacedPlacement[selectedBox._id].concat(
@@ -456,7 +461,9 @@ export default function Reservation({ params }) {
       setDisplaced(displaced.filter((d) => !d.selected));
       setSelectedBox(null);
     }
+
   };
+
 
   const reset = () => {
     refresh();
@@ -474,9 +481,9 @@ export default function Reservation({ params }) {
       description: item.description,
       ...(item.visibilty &&
         item.visibility.includes("sale") && {
-          discount: item.boxDiscount,
-          minPrice: item.minimumPrice,
-        }),
+        discount: item.boxDiscount,
+        minPrice: item.minimumPrice,
+      }),
     };
 
     // Create the box first
@@ -505,7 +512,7 @@ export default function Reservation({ params }) {
     e.preventDefault();
     console.log("Displaced Placement", displacedPlacement);
     console.log("New Boxes", newBoxes);
-  
+
     try {
       // Process displaced placement items
       for (const [key, val] of Object.entries(displacedPlacement)) {
@@ -513,9 +520,21 @@ export default function Reservation({ params }) {
         if (key.includes("Box-")) {
           boxId = await uploadBox(newBoxes.find((box) => box.boxId == key));
         }
-  
+
         // Wait for all items in this box to be processed
         for (const item of val) {
+          if(key.includes("original")){
+              const itemKey = `${item.style}-${brandDict[item.brandId]?.brand || item.brand ||  "N/A"}-${item.color}-${sizeDict[item.sizeId]?.size || item.size || "N/A"}`
+              console.log(itemKey)
+              const originalItems = idDict[itemKey]
+              console.log(originalItems)
+              console.log("BOXES", boxes)
+              boxId = boxes.find((box) => {
+                console.log(box.boxId, box._id, originalItems[0].boxId)
+                if(box.boxId == originalItems[0].boxId || box._id == originalItems[0].boxId) return true})
+          }
+          console.log("BOXID", boxId)
+
           const itemData = {
             box_id: boxId,
             image: item.image,
@@ -537,20 +556,20 @@ export default function Reservation({ params }) {
             ...(item.sizeId && { sizeId: String(item.sizeId) }),
             ...(item.size && { sizeId: String(item.size) }),
           };
-          await addToBox(itemData); // Add await here
+         await addToBox(itemData); // Add await here
         }
       }
-  
+
       // Process reservation updates
       for (const item of items) {
         console.log(item);
         const { style, color, brand } = item;
-        
+
         // Process all size updates for this item
         for (const [key, val] of Object.entries(item.sizes)) {
           console.log(val);
           if (val.newQuantity > val.inOrder) {
-            await addToReservation( 
+            await addToReservation(
               style,
               color,
               brand,
@@ -558,7 +577,7 @@ export default function Reservation({ params }) {
               parseInt(val.newQuantity) - val.inOrder
             );
           } else if (val.newQuantity < val.inOrder) {
-            await removeFromReservation( 
+            await removeFromReservation(
               style,
               color,
               brand,
@@ -570,22 +589,22 @@ export default function Reservation({ params }) {
       }
 
       // Process added items
-      for (const item of addedItems){
-          const { style, color, brand } = item;
-          for (const [key, val] of Object.entries(item.sizes)) {
-            await addToReservation( 
-              style,
-              color,
-              brand,
-              key,
-              parseInt(val.newQuantity)
-            );
-          }
+      for (const item of addedItems) {
+        const { style, color, brand } = item;
+        for (const [key, val] of Object.entries(item.sizes)) {
+          await addToReservation(
+            style,
+            color,
+            brand,
+            key,
+            parseInt(val.newQuantity)
+          );
+        }
 
       }
-  
+
       // Now all operations are complete, safe to navigate
-      router.push(`/admin/reservations?id=${id}`);
+      //router.push(`/admin/reservations?id=${id}`);
     } catch (error) {
       console.error("Error during submission:", error);
       // Handle the error appropriately
@@ -593,9 +612,9 @@ export default function Reservation({ params }) {
       setSubmitting(false); // Move this to finally block
     }
   };
-  
+
   const addToBox = async (itemToAdd) => {
-    try {
+    /*try {
       const addToInventory = await fetch(`/api/inventory/item`, {
         method: "POST",
         headers: {
@@ -603,20 +622,20 @@ export default function Reservation({ params }) {
         },
         body: JSON.stringify(itemToAdd),
       });
-      
+
       if (!addToInventory.ok) {
         throw new Error(`HTTP error! status: ${addToInventory.status}`);
       }
-      
+
       return await addToInventory.json();
     } catch (error) {
       console.error("Error adding item to box:", error);
       throw new Error("Could not add item to Box");
-    }
+    }*/
   };
-  
+
   const addToReservation = async (style, color, brand, size, increasedQuant) => {
-    try {
+    /*try {
       const response = await fetch("/api/catalog", {
         method: "PATCH",
         headers: {
@@ -630,13 +649,13 @@ export default function Reservation({ params }) {
           quantityToReserve: increasedQuant,
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const result = await response.json();
-  
+
       const editReservation = await fetch(`/api/catalog/reservation/${id}`, {
         method: "PATCH",
         headers: {
@@ -647,20 +666,20 @@ export default function Reservation({ params }) {
           type: "add",
         }),
       });
-  
+
       if (!editReservation.ok) {
         throw new Error(`HTTP error! status: ${editReservation.status}`);
       }
-  
+
       return await editReservation.json();
     } catch (error) {
       console.error("Error adding to reservation:", error);
       throw new Error("Could not add item to reservation");
-    }
+    }*/
   };
-  
+
   const removeFromReservation = async (style, color, brand, size, decreasedQuant) => {
-    try {
+    /*try {
       const editReservation = await fetch(`/api/catalog/reservation/${id}`, {
         method: "DELETE",
         headers: {
@@ -674,16 +693,16 @@ export default function Reservation({ params }) {
           quantityToRemove: decreasedQuant,
         }),
       });
-  
+
       if (!editReservation.ok) {
         throw new Error(`HTTP error! status: ${editReservation.status}`);
       }
-  
+
       return await editReservation.json();
     } catch (error) {
       console.error("Error removing from reservation:", error);
       throw new Error("Could not remove item from reservation");
-    }
+    }*/
   };
 
   return (
@@ -769,7 +788,7 @@ export default function Reservation({ params }) {
       ))}
       {addedItems?.map((item, index) => (
         <>
-         {item && <div key={index} className={styles.cartRow}>
+          {item && <div key={index} className={styles.cartRow}>
             <div className={styles.imageContainer}>
               <img src={item.image} className={styles.rowImage} ></img>
             </div>
@@ -836,7 +855,7 @@ export default function Reservation({ params }) {
                   style={{
                     backgroundColor: item.selected ? "rgb(193, 193, 193)" : "",
                   }}
-                  onClick={() => changeSelected(index)}
+                  onClick={() => { changeSelected(index); console.log(item) }}
                 >
                   <div className={styles.itemDetails}>
                     <div
@@ -876,6 +895,22 @@ export default function Reservation({ params }) {
                 >
                   New Box
                 </div>
+                <div
+                  onClick={() => {
+                     selectedBox?._id == `original`
+                      ? setSelectedBox(null)
+                      : setSelectedBox({ _id: `original` });
+                  }}
+                  style={{
+                    backgroundColor:
+                      selectedBox?._id == `original`
+                        ? "rgb(193, 193, 193)"
+                        : "",
+                  }}
+                >
+                  Return to Original Boxes
+                </div>
+
                 {filteredBoxes.map((box) => (
                   <div
                     onClick={() => {
@@ -908,7 +943,7 @@ export default function Reservation({ params }) {
         </>
       )}
       <div className={styles.addToRes} onClick={() => setAdd(!add)}>+</div>
-      {add && <AddToRes existingKeys={existingKeys} addedItems={addedItems} setAddedItems={setAddedItems}/>}
+      {add && <AddToRes existingKeys={existingKeys} addedItems={addedItems} setAddedItems={setAddedItems} />}
       {saveVersion > 1 ? (
         <div style={{ width: "100%", display: "flex" }}>
           <button
@@ -916,7 +951,7 @@ export default function Reservation({ params }) {
             onClick={(e) => handleSubmit(e)}
             disabled={displaced.length > 0 || submitting}
           >
-            {submitting ? <BeatLoader size={10}/> : "Save"}
+            {submitting ? <BeatLoader size={10} /> : "Save"}
           </button>
         </div>
       ) : (
