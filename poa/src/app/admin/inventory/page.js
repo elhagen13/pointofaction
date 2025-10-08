@@ -517,7 +517,6 @@ function Inventory() {
     keyDict,
   ]);
 
-  // Filter boxes based on page selection and search
   const filteredBoxes = useMemo(() => {
     let boxItems;
     switch (page) {
@@ -537,16 +536,29 @@ function Inventory() {
         boxItems = boxes;
     }
 
+    // Filter out boxes with 0 quantity BEFORE search logic
+    boxItems = boxItems.filter((box) => {
+      const totalQuantity = (contentDict[box._id.toString()] || []).reduce(
+        (acc, item) => acc + item.quantity,
+        0
+      );
+      return totalQuantity > 0;
+    });
+
     // Apply search filter to boxes
     if (searchValue.trim() === "") {
       return boxItems;
     }
-
     const searchTerm = searchValue.toLowerCase().trim();
 
     return boxItems.filter((box) => {
-      const contents = [...(new Set((contentDict[box._id.toString()] || []).map((content) => brandDict[content.brandId]?.brand || content.brand || "N/A")))]      
+      const contents = [...(new Set((contentDict[box._id.toString()] || []).map((content) => brandDict[content.brandId]?.brand || content.brand || "N/A")))]
       const brandString = contents.reduce((a, b) => a + " " + b, "")
+      const totalQuantity = (
+        contentDict[box._id.toString()] || []
+      ).reduce((acc, item) => acc + item.quantity, 0);
+
+      if (totalQuantity == 0) return false
 
       if (selectedSearchOption !== "all") {
         switch (selectedSearchOption) {
@@ -560,9 +572,6 @@ function Inventory() {
             return box.description?.toLowerCase().includes(searchTerm);
           case "quantity":
             // For boxes, search in the total quantity of contents
-            const totalQuantity = (
-              contentDict[box._id.toString()] || []
-            ).reduce((acc, item) => acc + item.quantity, 0);
             return totalQuantity.toString().includes(searchTerm);
           case "box":
             // For boxes, search by the box's own boxId
@@ -583,11 +592,6 @@ function Inventory() {
 
       if (searchWords.length === 0) return true;
 
-      // Calculate total quantity for this box
-      const totalQuantity = (contentDict[box._id.toString()] || []).reduce(
-        (acc, item) => acc + item.quantity,
-        0
-      );
 
       // Combine all searchable text for this box
       const boxText = [

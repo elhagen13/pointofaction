@@ -497,6 +497,7 @@ export default function Cart({
         formData.append('orderTitle', orderTitle);
         formData.append('soIn', soin);
         formData.append('reservationQuantity', Object.values(cart).reduce((a, b) => a + b.quantity, 0))
+        formData.append('link', `www.pointofaction.com/admin/reservations?id=${data.data._id}`)
 
         console.log()
         // Send form data to API
