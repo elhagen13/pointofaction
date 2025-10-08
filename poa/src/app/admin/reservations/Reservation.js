@@ -270,13 +270,13 @@ const Order = ({ reservation }) => {
       let resList = []
       for(const item of reservationItems){
         resList.push([
-          brandDict[item.brandId].brand || item.brand || "No brand", 
+          brandDict[item.brandId]?.brand || item.brand || "No brand", 
           item.style || "No style", 
           item.color || "No color",
-          sizeDict[item.sizeId].size|| item.size || "No brand",
+          sizeDict[item.sizeId]?.size|| item.size || "No brand",
           item.quantity || "0 - Item pulled",
-          boxDict[item.boxId].boxId || "N/A",
-          boxDict[item.boxId].location || "N/A",
+          boxDict[item.boxId]?.boxId || "N/A - Box Removed",
+          boxDict[item.boxId]?.location || "N/A - Box Removed",
 
 
         ])
