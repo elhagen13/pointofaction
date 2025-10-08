@@ -224,7 +224,14 @@ const AddBox = ({
         if (popup === "success") {
           onClose();
         } else {
-          handleSubmitBox();
+          if (document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
+          }
+          
+          // Give time for blur handlers to update state
+          setTimeout(() => {
+            handleSubmitBox();
+          }, 50);
         }
       }
 

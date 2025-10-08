@@ -150,7 +150,7 @@ export default function GroupedView({
 
   const addToBox = () => {
     console.log(descriptionDict)
-    if(!colorDict[selectedColor]) return;
+    if (!colorDict[selectedColor]) return;
     const item = colorDict[selectedColor]?.items[0]
     console.log(item)
     const contents = [
@@ -158,7 +158,7 @@ export default function GroupedView({
         imageUrl: item.image || "",
         descriptionId: item.descriptionId || null,
         description: item.description || null,
-        style: item.style || "", 
+        style: item.style || "",
         brandId: item.brandId || null,
         brand: item.brand || null,
         sizeId: item.sizeId || null,
@@ -169,7 +169,7 @@ export default function GroupedView({
     ]
     console.log(contents)
     setSavedInfo({
-      addItem: {...savedInfo.addItem},
+      addItem: { ...savedInfo.addItem },
       addBox: {
         contents: contents
       }
@@ -247,39 +247,43 @@ export default function GroupedView({
               />
             </div>
             <div className={styles.availableColors}>
-              {filteredColors.map(([key, val]) => (
-                <div
-                  style={{
-                    boxShadow: "0 0 3px gray",
-                    backgroundColor:
-                      selectedColor === key ? "#a2bdac" : "rgb(219, 213, 213)",
-                    maxWidth: "150px",
-                    height: "100%",
-                    wordBreak: "break-word",
-                  }}
-                  onClick={() => {
-                    setSelectedColor(key);
-                    setSelectedSize(null);
-                  }}
-                >
-                  <div style={{ backgroundColor: "white", position: "relative" }}>
-                    <img
-                      src={val.items[0].image}
+              {filteredColors.map(([key, val]) => {
+                if (val.totalQuant > 0) {
+                  return (
+                    <div
                       style={{
-                        width: "75px",
-                        height: "75px",
-                        objectFit: "contain",
-                        borderRadius: "5px",
+                        boxShadow: "0 0 3px gray",
+                        backgroundColor:
+                          selectedColor === key ? "#a2bdac" : "rgb(219, 213, 213)",
+                        maxWidth: "150px",
+                        height: "100%",
+                        wordBreak: "break-word",
                       }}
-                    ></img>
-                    {val.items.some(item => keyDict[getKey([item])]?.quantity > item.quantity) && <div className={styles.partialOverlay} />}
-                  </div>
-                  <div style={{ fontWeight: "bold", marginTop: "10px" }}>
-                    {key}
-                  </div>
-                  <div style={{ marginBottom: "10px" }}>{val.totalQuant}</div>
-                </div>
-              ))}
+                      onClick={() => {
+                        setSelectedColor(key);
+                        setSelectedSize(null);
+                      }}
+                    >
+                      <div style={{ backgroundColor: "white", position: "relative" }}>
+                        <img
+                          src={val.items[0].image}
+                          style={{
+                            width: "75px",
+                            height: "75px",
+                            objectFit: "contain",
+                            borderRadius: "5px",
+                          }}
+                        ></img>
+                        {val.items.some(item => keyDict[getKey([item])]?.quantity > item.quantity) && <div className={styles.partialOverlay} />}
+                      </div>
+                      <div style={{ fontWeight: "bold", marginTop: "10px" }}>
+                        {key}
+                      </div>
+                      <div style={{ marginBottom: "10px" }}>{val.totalQuant}</div>
+                    </div>
+                  )
+                }
+              })}
             </div>
             <div className={styles.availableSizes}>
               <div style={{ borderRadius: "10px" }}>
@@ -602,7 +606,7 @@ export default function GroupedView({
                   alignItems: "center"
                 }}
                 onClick={addToBox}
-                >
+              >
                 <IoAddSharp size={50} style={{ color: "#9f9e9eff" }} />
               </div>
 

@@ -4,16 +4,10 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   FaUpload,
   FaTimes,
-  FaRegTrashAlt,
   FaLink,
   FaDownload,
-  FaRegCopy,
-  FaBookmark,
-  FaPlus,
 } from "react-icons/fa";
 import {
-  IoIosAddCircle,
-  IoIosCheckmarkCircle,
   IoIosRemoveCircle,
 } from "react-icons/io";
 import jsPDF from "jspdf";

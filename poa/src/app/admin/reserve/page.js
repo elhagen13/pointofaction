@@ -185,7 +185,7 @@ function Inventory() {
               // Check both direct description and descriptionId reference
               const descriptionText =
                 item.descriptionId &&
-                descriptionDict[item.descriptionId.toString()]
+                  descriptionDict[item.descriptionId.toString()]
                   ? descriptionDict[item.descriptionId.toString()].description
                   : item.description || "";
               return descriptionText.toLowerCase().includes(searchTerm);
@@ -277,7 +277,7 @@ function Inventory() {
 
     // Listen for custom cart update events
     window.addEventListener('cartUpdated', handleStorageChange);
-    
+
     return () => {
       window.removeEventListener('cartUpdated', handleStorageChange);
     };
@@ -295,7 +295,7 @@ function Inventory() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <div style={{display: "flex", justifyContent:"end", marginBottom:"15px"}}>
+      <div style={{ display: "flex", justifyContent: "end", marginBottom: "15px" }}>
         <Link className={styles.button} href="/admin/reservations">View Reservations</Link>
       </div>
       <div
@@ -352,10 +352,10 @@ function Inventory() {
               minWidth: "25px",
               minHeight: "25px",
               borderRadius: "100px",
-              display:"flex",
-              justifyContent:"center",
-              alignItems:"center",
-              fontWeight:"bold"
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontWeight: "bold"
             }}
           >
             {cartCount}
@@ -372,50 +372,56 @@ function Inventory() {
       <div className={styles.productGrid}>
         {filteredInventory.map((grouping, index) => {
           const representative = grouping[0];
-          return (
-            <div
-              key={index}
-              className={styles.productCard}
-              onClick={() => setSelectedItem(grouping)}
-            >
-              <div style={{ width: "100%", backgroundColor: "white" }}>
-                <img
-                  style={{ objectFit: "contain" }}
-                  src={representative.image}
-                  className={styles.productImage}
-                ></img>
-              </div>
-              <div className={styles.productCardDescription}>
-                <div>Style #: {representative.style}</div>
-                <div>
-                  Brand:{" "}
-                  {representative.brand ||
-                    brandDict[representative.brandId]?.brand ||
-                    "N/A"}
-                </div>
-                <div>Color: {representative.color}</div>
-                <div>
-                  Description:{" "}
-                  {representative.description ||
-                    descriptionDict[representative.descriptionId]?.description}
-                </div>
-              </div>
+          const quantity = grouping.reduce((a, b) => a + b.quantity, 0)
+          if (quantity > 0) {
+
+
+            return (
               <div
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "end",
-                  padding: "20px",
-                  paddingTop: "0",
-                }}
+                key={index}
+                className={styles.productCard}
+                onClick={() => setSelectedItem(grouping)}
               >
-                <div className={styles.shoppingButton}>
-                  <FiShoppingBag />
-                  Add
+                <div style={{ width: "100%", backgroundColor: "white" }}>
+                  <img
+                    style={{ objectFit: "contain" }}
+                    src={representative.image}
+                    className={styles.productImage}
+                  ></img>
+                </div>
+                <div className={styles.productCardDescription}>
+                  <div>Style #: {representative.style}</div>
+                  <div>
+                    Brand:{" "}
+                    {representative.brand ||
+                      brandDict[representative.brandId]?.brand ||
+                      "N/A"}
+                  </div>
+                  <div>Color: {representative.color}</div>
+                  <div>
+                    Description:{" "}
+                    {representative.description ||
+                      descriptionDict[representative.descriptionId]?.description}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "end",
+                    padding: "20px",
+                    paddingTop: "0",
+                  }}
+                >
+                  <div className={styles.shoppingButton}>
+                    <FiShoppingBag />
+                    Add
+                  </div>
                 </div>
               </div>
-            </div>
-          );
+            );
+          }
+          return
         })}
       </div>
       {selectedItem && (

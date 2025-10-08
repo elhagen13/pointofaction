@@ -510,8 +510,6 @@ export default function Reservation({ params }) {
   const handleSubmit = async (e) => {
     setSubmitting(true);
     e.preventDefault();
-    console.log("Displaced Placement", displacedPlacement);
-    console.log("New Boxes", newBoxes);
 
     try {
       // Process displaced placement items
@@ -525,15 +523,10 @@ export default function Reservation({ params }) {
         for (const item of val) {
           if(key.includes("original")){
               const itemKey = `${item.style}-${brandDict[item.brandId]?.brand || item.brand ||  "N/A"}-${item.color}-${sizeDict[item.sizeId]?.size || item.size || "N/A"}`
-              console.log(itemKey)
               const originalItems = idDict[itemKey]
-              console.log(originalItems)
-              console.log("BOXES", boxes)
               boxId = boxes.find((box) => {
-                console.log(box.boxId, box._id, originalItems[0].boxId)
-                if(box.boxId == originalItems[0].boxId || box._id == originalItems[0].boxId) return true})
+                if(box.boxId == originalItems[0].boxId || box._id == originalItems[0].boxId) return true})._id|| boxId
           }
-          console.log("BOXID", boxId)
 
           const itemData = {
             box_id: boxId,
@@ -556,7 +549,8 @@ export default function Reservation({ params }) {
             ...(item.sizeId && { sizeId: String(item.sizeId) }),
             ...(item.size && { sizeId: String(item.size) }),
           };
-         await addToBox(itemData); // Add await here
+          console.log(itemData)
+         await addToBox(itemData); 
         }
       }
 
@@ -604,7 +598,7 @@ export default function Reservation({ params }) {
       }
 
       // Now all operations are complete, safe to navigate
-      //router.push(`/admin/reservations?id=${id}`);
+      router.push(`/admin/reservations?id=${id}`);
     } catch (error) {
       console.error("Error during submission:", error);
       // Handle the error appropriately
@@ -614,7 +608,7 @@ export default function Reservation({ params }) {
   };
 
   const addToBox = async (itemToAdd) => {
-    /*try {
+    try {
       const addToInventory = await fetch(`/api/inventory/item`, {
         method: "POST",
         headers: {
@@ -631,11 +625,11 @@ export default function Reservation({ params }) {
     } catch (error) {
       console.error("Error adding item to box:", error);
       throw new Error("Could not add item to Box");
-    }*/
+    }
   };
 
   const addToReservation = async (style, color, brand, size, increasedQuant) => {
-    /*try {
+    try {
       const response = await fetch("/api/catalog", {
         method: "PATCH",
         headers: {
@@ -675,11 +669,11 @@ export default function Reservation({ params }) {
     } catch (error) {
       console.error("Error adding to reservation:", error);
       throw new Error("Could not add item to reservation");
-    }*/
+    }
   };
 
   const removeFromReservation = async (style, color, brand, size, decreasedQuant) => {
-    /*try {
+    try {
       const editReservation = await fetch(`/api/catalog/reservation/${id}`, {
         method: "DELETE",
         headers: {
@@ -702,7 +696,7 @@ export default function Reservation({ params }) {
     } catch (error) {
       console.error("Error removing from reservation:", error);
       throw new Error("Could not remove item from reservation");
-    }*/
+    }
   };
 
   return (

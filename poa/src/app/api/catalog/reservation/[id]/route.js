@@ -174,13 +174,15 @@ export async function DELETE(request, { params }) {
     let sizeId = null;
 
     if (brand) {
-      const brandDoc = await brands.findOne({ brand: brand });
+      const brandDoc = await brands.findOne({
+        brand: { $regex: `^${brand}$`, $options: "i" }
+      });
       brandId = brandDoc?._id;
     }
 
     if (size) {
       const sizeDoc = await sizes.findOne({
-        size: { $regex: size, $options: "i" },
+        size: { $regex: `^${size}$`, $options: "i" }
       });
       sizeId = sizeDoc?._id;
     }
@@ -188,8 +190,9 @@ export async function DELETE(request, { params }) {
     const reservation = await collection.findOne({ _id: new ObjectId(id) });
 
     const ids = reservation.items.map((item) => new ObjectId(item.itemId));
-    console.log(brandId, sizeId);
+    console.log(brandId, sizeId, style, color);
     console.log(ids);
+    console.log(String(brandId), String(sizeId))
 
     //find which objects in the reservation list have matching (style, color, brand, and size) && then
     //cycle through and remove however many needed to be removed
@@ -202,6 +205,8 @@ export async function DELETE(request, { params }) {
         ...(sizeId && { sizeId: String(sizeId) }),
       })
       .toArray();
+
+    console.log(matchingObjects)
 
     const reservationItemDict = {};
     for (const item of reservation.items) {
@@ -222,7 +227,6 @@ export async function DELETE(request, { params }) {
       const bPulled = reservationItemDict[bId].pulled || 0;
       const aReserved = a.reserved || 0;
       const bReserved = b.reserved || 0;
-      console.log("dkfjskfjdsl", "A:", a, aPulled, "B", b, bPulled);
       // Primary sort: fewer pulled items first
       if (aPulled !== bPulled) {
         return aPulled - bPulled;
@@ -240,6 +244,7 @@ export async function DELETE(request, { params }) {
     const updatesForReservation = [];
     const updatesForInventory = [];
     console.log("Quantity:", quantity);
+    console.log(matchingObjects)
 
     // Process each matching object and reduce quantities
     // Now prioritizing items with fewer pulled items

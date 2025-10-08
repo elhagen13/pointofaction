@@ -1,14 +1,15 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
-import { FaRegCopy, FaEye, FaArrowDown, FaArrowUp, FaRegBell, FaRegBellSlash } from "react-icons/fa";
-import { IoSearch, IoChevronDown, IoChevronUp, IoEllipsisHorizontal, IoAlert, IoArrowDown, IoArrowUp } from "react-icons/io5";
-import { BiSelectMultiple, BiSolidSelectMultiple } from "react-icons/bi";
+import { FaRegCopy } from "react-icons/fa";
+import { IoSearch, IoChevronDown, IoAlert, IoArrowDown, IoArrowUp } from "react-icons/io5";
+import { BiSelectMultiple, } from "react-icons/bi";
 import {
   MdPublic,
   MdOutlinePublicOff,
   MdLayers,
   MdViewColumn,
+  MdEdit,
 } from "react-icons/md";
 import { HiCash } from "react-icons/hi";
 
@@ -24,6 +25,7 @@ import Popup from "@/app/components/popups/Popup";
 import { useUser } from "@clerk/nextjs";
 
 import SetAlert from "./components/SetAlert";
+import MultiEdit from "./components/MultiEdit";
 
 function Inventory() {
   /*"all inventory", "boxes", "public", "sale"*/
@@ -84,7 +86,10 @@ function Inventory() {
   const [numPages, setNumPages] = useState(0);
   const [showAll, setShowAll] = useState(false);
 
-  const [multiEdit, setMultiEdit] = useState(false)
+  const [multiEdit, setMultiEdit] = useState(false);
+  const [multiEditView, setMultiEditView] = useState(false)
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [selectedItems, setSelectedItems] = useState(new Set());
 
   const [columns, setColumns] = useState({
     lineItems: [
@@ -211,6 +216,15 @@ function Inventory() {
         }
         dict[boxIdStr].push(item);
       }
+    });
+    return dict;
+  }, [inventory]);
+
+  const itemDict = useMemo(() => {
+    const dict = {};
+    inventory.forEach((item) => {
+      dict[item._id] = item
+
     });
     return dict;
   }, [inventory]);
@@ -531,6 +545,10 @@ function Inventory() {
     const searchTerm = searchValue.toLowerCase().trim();
 
     return boxItems.filter((box) => {
+      const contents = [...(new Set(contentDict[box._id].map((content) => brandDict[content.brandId]?.brand || content.brand || "N/A")))]
+      const brandString = contents.reduce((a, b) => a + " " + b, "")
+      console.log(brandString)
+
       if (selectedSearchOption !== "all") {
         switch (selectedSearchOption) {
           case "style code":
@@ -581,6 +599,7 @@ function Inventory() {
         totalQuantity.toString() || "",
         box.boxId || "",
         box.location || "",
+        brandString || "",
       ]
         .join(" ")
         .toLowerCase();
@@ -1039,6 +1058,48 @@ function Inventory() {
     setAddBoxOpen(true)
   }
 
+  const handleMouseDown = (e, item) => {
+    if (!multiEdit) return;
+    e.preventDefault();
+    setIsMouseDown(true);
+
+    const newSelected = new Set(selectedItems);
+    const itemIds = item.map(i => i._id);
+
+    // Toggle: if any selected, deselect all; otherwise select all
+    const anySelected = itemIds.some(id => newSelected.has(id));
+    itemIds.forEach(id => {
+      if (anySelected) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+    });
+
+    setSelectedItems(newSelected);
+  };
+
+  const handleMouseEnter = (item) => {
+    if (isMouseDown && multiEdit) {
+      const newSelected = new Set(selectedItems);
+      const itemIds = item.map(i => i._id);
+
+
+      const anySelected = itemIds.some(id => newSelected.has(id));
+      itemIds.forEach(id => {
+        if (anySelected) {
+          newSelected.delete(id);
+        } else {
+          newSelected.add(id);
+        }
+      });
+      setSelectedItems(newSelected);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsMouseDown(false);
+  };
 
 
   return (
@@ -1208,15 +1269,30 @@ function Inventory() {
         )}
         {filter !== "grouped" && (
           <div style={{ width: "100%", position: "relative", display: "flex", justifyContent: "end", gap: "10px" }}>
-            {filter === "line items" && <button style={{
-              marginBottom: "10px",
-              backgroundColor: "white",
-            }}
-              className={styles.pageButton}
-              onClick={() => setMultiEdit(!multiEdit)}
-            >
-              <BiSelectMultiple style={{ marginRight: "5px" }} /> Edit Mode {multiEdit ? "Off" : "On"}
-            </button>}
+            {filter === "line items" &&
+              <>
+                {
+                  selectedItems.size > 0 &&
+                  <button style={{
+                    marginBottom: "10px",
+                    backgroundColor: "white",
+                  }}
+                    className={styles.pageButton}
+                    onClick={() => setMultiEditView(!multiEditView)}
+                  >
+                    <BiSelectMultiple style={{ marginRight: "5px" }} /> Multi Edit
+                  </button>
+                }
+                <button style={{
+                  marginBottom: "10px",
+                  backgroundColor: "white",
+                }}
+                  className={styles.pageButton}
+                  onClick={() => setMultiEdit(!multiEdit)}
+                >
+                  <MdEdit style={{ marginRight: "5px" }} /> Edit Mode {multiEdit ? "Off" : "On"}
+                </button>
+              </>}
             <button
               style={{
                 marginBottom: "10px",
@@ -1250,8 +1326,8 @@ function Inventory() {
                 >
                   <div className={styles.groupImageContainer}>
                     <img
-                      
-                      src={group.find(item => item.color.toLowerCase().includes(searchValue.toLowerCase()))?.image || group[0].image }
+
+                      src={group.find(item => item.color.toLowerCase().includes(searchValue.toLowerCase()))?.image || group[0].image}
                       style={{ objectFit: "contain" }}
                     />
                     {
@@ -1370,39 +1446,65 @@ function Inventory() {
                   }
                 </tr>
               </thead>
-              <tbody>
+              <tbody onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}>
                 {filteredInventory.map((item, index) => {
+                  console.log(item)
+
                   const quantity = item.reduce((acc, cur) => acc + cur.quantity, 0);
                   const uniqueKey = getKey(item);
+                  const oneSelected = multiEdit && item.some((i) => selectedItems.has(i._id));
 
                   return (
                     <tr
                       key={uniqueKey}
                       style={{
-                        backgroundColor: (keyDict[getKey(item)] && quantity === 0) ? "#e2aeaaff"
+                        backgroundColor: oneSelected ? "#b4c9edff" : (keyDict[getKey(item)] && quantity === 0) ? "#e2aeaaff"
                           : (parseInt(keyDict[getKey(item)]?.quantity) > quantity) ?
                             "#f1d7a9ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
                         overflow: "scroll",
                       }}
+                      onMouseDown={(e) => handleMouseDown(e, item)}
+                      onMouseEnter={() => handleMouseEnter(item)}
                       onClick={() => {
-                        getLocation(item, true);
-                        if (quantity === 0) {
-                          zeroInventory(item);
-                          return;
+                        if (!multiEdit) {
+
+                          getLocation(item, true);
+                          if (quantity === 0) {
+                            zeroInventory(item);
+                            return;
+                          }
+                          if (
+                            item.length === 1 &&
+                            boxDict[item[0].boxId?.toString()]
+                          ) {
+                            setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
+                          } else if (item.length === 1) {
+                            setEditItemOpen(item[0]);
+                          } else setMultiOpen(item);
                         }
-                        if (
-                          item.length === 1 &&
-                          boxDict[item[0].boxId?.toString()]
-                        ) {
-                          setEditBoxOpen(boxDict[item[0].boxId?.toString()]);
-                        } else if (item.length === 1) {
-                          setEditItemOpen(item[0]);
-                        } else setMultiOpen(item);
                       }}
                     >
                       {
                         multiEdit &&
-                        <td className={styles.tableSm} onClick={(e) => { e.stopPropagation() }}><input type="checkbox" /></td>
+                        <td className={styles.tableSm} onClick={(e) => { e.stopPropagation() }}>
+                          <input
+                            type="checkbox"
+                            checked={item.some(i => selectedItems.has(i._id))}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              const newSelected = new Set(selectedItems);
+                              item.forEach(i => {
+                                if (e.target.checked) {
+                                  newSelected.add(i._id);
+                                } else {
+                                  newSelected.delete(i._id);
+                                }
+                              });
+                              setSelectedItems(newSelected);
+                            }}
+                          />
+                        </td>
                       }
                       {getVisibleColumns("lineItems").map((column) => {
                         const columnName = Object.keys(column)[0];
@@ -1756,6 +1858,15 @@ function Inventory() {
           setAddBoxOpen={setAddBoxOpen}
         />
       )}
+      {multiEditView &&
+        <MultiEdit onClose={() => setMultiEditView(false)}
+          ids={selectedItems}
+          itemDict={itemDict}
+          descriptionDict={descriptionDict}
+          sizeDict={sizeDict}
+          brandDict={brandDict}
+          options={options}
+        />}
     </div>
   );
 }

@@ -444,6 +444,7 @@ export default function Cart({
 
       // Only proceed if all items were successfully reserved
       console.log("All items successfully reserved:", reservationResults);
+  
 
       let items = [];
       for (const res of reservationResults) {
@@ -529,44 +530,6 @@ export default function Cart({
     }
   };
 
-
-  const uploadReserveAuto = async (item) => {
-    // Validate required fields
-    if (
-      !item.style ||
-      !item.color ||
-      (!item.brand && !item.size) ||
-      !item.quantity
-    ) {
-      throw new Error("Missing required item fields");
-    }
-
-    if (item.quantity <= 0) {
-      throw new Error("Invalid quantity");
-    }
-
-    try {
-      const result = await fetch("/api/catalog", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          style: item.style,
-          color: item.color,
-          brand: item.brand,
-          size: item.size,
-          quantityToReserve: item.quantity,
-        }),
-      });
-
-      return result;
-    } catch (fetchError) {
-      console.error("Fetch error:", fetchError);
-      alert("Insufficient inventory: please reload")
-      throw new Error(`Network error: ${fetchError.message}`);
-    }
-  };
 
   const uploadReserveManual = async (id, quantityToReserve) => {
     // Validate required fields
