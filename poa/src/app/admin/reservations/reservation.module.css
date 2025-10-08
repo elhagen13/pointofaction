@@ -69,6 +69,7 @@
   border: 2px solid white;
   border-radius: 0px;
   transition: all 0.2s ease-in-out;
+  color: black;
 }
 
 .edit button:hover {

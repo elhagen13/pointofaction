@@ -545,9 +545,8 @@ function Inventory() {
     const searchTerm = searchValue.toLowerCase().trim();
 
     return boxItems.filter((box) => {
-      const contents = [...(new Set(contentDict[box._id].map((content) => brandDict[content.brandId]?.brand || content.brand || "N/A")))]
+      const contents = [...(new Set((contentDict[box._id.toString()] || []).map((content) => brandDict[content.brandId]?.brand || content.brand || "N/A")))]      
       const brandString = contents.reduce((a, b) => a + " " + b, "")
-      console.log(brandString)
 
       if (selectedSearchOption !== "all") {
         switch (selectedSearchOption) {
@@ -1866,6 +1865,7 @@ function Inventory() {
           sizeDict={sizeDict}
           brandDict={brandDict}
           options={options}
+          refresh={refresh}
         />}
     </div>
   );
