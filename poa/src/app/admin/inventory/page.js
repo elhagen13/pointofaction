@@ -494,9 +494,8 @@ function Inventory() {
               if (!aHasAlert && bHasAlert && ((keyDict[getKey(b.group)]?.quantity || 0) > bQty)) return 1;
 
               if (aHasAlert && bHasAlert) {
-                const aDiff = (keyDict[getKey(a.group)]?.quantity || 0) - aQty;
-                const bDiff = (keyDict[getKey(b.group)]?.quantity || 0) - bQty;
-                return bDiff - aDiff;
+                
+                return aQty - bQty;
               }
 
               return aQty - bQty;
@@ -885,13 +884,11 @@ function Inventory() {
         },
       });
 
-      const contentData = await contentResponse.json(); // Fix: Use contentResponse instead of boxResponse
+      const contentData = await contentResponse.json(); 
       let contents = [];
 
-      // Fix: Use === for comparison and convert both to string for safety
       contentData.data.forEach((item) => {
         if (item.boxId?.toString() === box._id.toString()) {
-          // Fix: Use original box._id and strict equality
           contents.push(item);
         }
       });
