@@ -35,9 +35,31 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
 
 
     useEffect(() => {
-        setItems([...ids].map(id => itemDict[id]))
+        setItems([...ids].map(id => {
+            const item = itemDict[id]
+
+            return({
+                ...item,
+                inReservation: item.reserved && item.reserved > 0,
+                selected: (item.reserved && item.reserved > 0) ? false : true
+            })
+            
+        }
+        ))
 
     }, [ids, itemDict])
+
+    const toggleSelection = (index) => {
+        setItems(items.map((item, i) => {
+            if(i === index && !item.inReservation){
+                return {
+                    ...item,
+                    selected: !item.selected
+                }
+            }
+            return item
+        }))
+    }
 
 
     const handleFileUploadOption = () => {
@@ -98,32 +120,32 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
     };
 
     const handleUrlOption = () => {
-    setShowImageDropdown(false);
-    setShowUrlInput(true);
-  };
+        setShowImageDropdown(false);
+        setShowUrlInput(true);
+    };
 
-  const handleUrlSubmit = (e) => {
-    e.preventDefault();
-    if (!imageUrlInput.trim()) {
-      setUploadError("Please enter a valid URL");
-      return;
-    }
-    // Basic URL validation
-    try {
-      new URL(imageUrlInput);
-    } catch (e) {
-      setUploadError("Please enter a valid URL");
-      return;
-    }
-      setCurrentItem({
-        ...currentItem,
-        image: imageUrlInput
-      })
-    setImageUrlInput("");
-    setShowUrlInput(false);
-    setShowImageDropdown(false); // Hide options after URL submission
-    setUploadError("");
-  };
+    const handleUrlSubmit = (e) => {
+        e.preventDefault();
+        if (!imageUrlInput.trim()) {
+            setUploadError("Please enter a valid URL");
+            return;
+        }
+        // Basic URL validation
+        try {
+            new URL(imageUrlInput);
+        } catch (e) {
+            setUploadError("Please enter a valid URL");
+            return;
+        }
+        setCurrentItem({
+            ...currentItem,
+            image: imageUrlInput
+        })
+        setImageUrlInput("");
+        setShowUrlInput(false);
+        setShowImageDropdown(false); // Hide options after URL submission
+        setUploadError("");
+    };
 
 
     const handleDropdownStateChange = useCallback((isOpen) => {
@@ -202,6 +224,14 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
         },
     };
 
+    const onSave = async() => {
+        items.forEach((item) => {
+            if(!item.inReservation && item.selected){
+                
+            }
+        })
+    }
+
 
     return (
 
@@ -214,8 +244,8 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
             setUnsavedChanges={setUnsavedChanges}
         >
             <h1>Edit {ids.size} items</h1>
-            <table className={styles.inventoryTable}
-                style={{ borderCollapse: "collapse", borderRadius: "10px" }}>
+            <table className={styles.inventoryTable} 
+                style={{ borderCollapse: "collapse", borderRadius: "10px"}}>
                 <thead>
                     <tr style={{ backgroundColor: "#ebebeb" }}>
                         <th style={{ padding: "10px" }} className={styles.tableSm}>
@@ -235,9 +265,12 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                         items.map((item, index) => (
                             <tr style={{
                                 width: "100%",
-                                backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                                backgroundColor: item.inReservation ? "#edb6b6ff": item.selected ? "#cfdcf4ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
                                 cursor: "pointer",
-                            }}>
+                            }}
+                                onClick={() => toggleSelection(index)}
+                            
+                            >
                                 <td
                                     className={styles.tableSm}
                                     style={{ position: "relative" }}
@@ -403,8 +436,13 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                             />
                         </td>
                         <td style={{ padding: "10px 10px 10px 0" }}>
-                            <input className={styles.input} 
-                                
+                            <input className={styles.input}
+                                value={currentItem.style}
+                                onChange={(e) => setCurrentItem({
+                                    ...currentItem,
+                                    style: e.target.value
+                                })}
+
                             />
                         </td>
                         <td style={{ padding: "10px 10px 10px 0" }}>
@@ -437,15 +475,61 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
 
                             />
                         </td>
-                        <td style={{ padding: "10px 10px 10px 0" }}><input className={styles.input} /></td>
-                        <td style={{ padding: "10px 10px 10px 0" }}><input className={styles.input} /></td>
-                        <td><input className={styles.input} /></td>
+                        <td style={{ padding: "10px 10px 10px 0" }}>
+                            <input className={styles.input}
+                                value={currentItem.color}
+                                onChange={(e) => setCurrentItem({
+                                    ...currentItem,
+                                    color: e.target.value
+                                })}
+                            />
+                        </td>
+                        <td style={{ padding: "10px 10px 10px 0" }}>
+                            <input className={styles.input}
+                                type="text"
+                                pattern="[0-9]*"
+                                inputMode="numeric"
+                                value={currentItem.quantity}
+                                onChange={(e) => setCurrentItem({
+                                    ...currentItem,
+                                    quantity: parseInt(e.target.value) || ""
+                                })}
+                            />
+                        </td>
+                        <td>
+                            <input className={styles.input}
+                                type="text"
+                                pattern="^\d*\.?\d*$"
+                                inputMode="decimal"
+                                value={currentItem.price}
+                                onChange={(e) => setCurrentItem({
+                                    ...currentItem,
+                                    price: e.target.value
+                                })}
+                                onBlur={(e) => {
+                                    const numValue = parseFloat(e.target.value);
+                                    const finalValue = isNaN(numValue)
+                                        ? 0
+                                        : numValue.toFixed(2);
+                                    setCurrentItem({
+                                        ...currentItem,
+                                        price: finalValue
+                                    })
+                                }}
+                            />
+                        </td>
 
 
                     </tr>
 
                 </tbody>
             </table>
+            <button className={styles.pageButton} style={{
+                marginLeft:"auto",
+                backgroundColor: "white",
+            }}>
+                Save
+            </button>
 
         </Overlay>
     )

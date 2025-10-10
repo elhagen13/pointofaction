@@ -1,17 +1,13 @@
 import { MongoClient, ObjectId } from "mongodb";
-
 const MONGODB_URI = process.env.MONGO_URI;
 const DATABASE_NAME = "test";
 const COLLECTION_NAME = "inventory";
-
 let cachedClient = null;
 let cachedDb = null;
-
 async function connectToDatabase() {
   if (cachedClient && cachedDb) {
     return { client: cachedClient, db: cachedDb };
   }
-  
   try {
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
@@ -24,17 +20,14 @@ async function connectToDatabase() {
     throw error;
   }
 }
-
 export async function PATCH(request, res) {
   try {
     const { db } = await connectToDatabase();
     const inventory = db.collection(COLLECTION_NAME);
     const boxes = db.collection("boxes");
-
     // Parse request body - using boxId instead of inventoryId to match frontend
     const { inventoryId, quantityToReserve } = await request.json();
     console.log(inventoryId, quantityToReserve)
-
     // Validation
     if (!inventoryId || !quantityToReserve) {
       return new Response(
@@ -42,43 +35,34 @@ export async function PATCH(request, res) {
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
-
     if (quantityToReserve <= 0) {
       return new Response(
         JSON.stringify({ error: "quantityToReserve must be greater than 0" }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
-
     }
-    console.log
-
     // Update the box to reserve the quantity
     const updatedItem = await inventory.findOneAndUpdate(
       { _id: new ObjectId(inventoryId) },
       { $inc: { reserved: quantityToReserve } },
       { returnDocument: 'after' }
     );
-
-
     if (!updatedItem) {
       return new Response(
         JSON.stringify({ error: "Failed to update box reservation" }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
-
-
-    // Find the box first to get its details
-    const box = await boxes.findOne({ _id: new ObjectId(updatedItem.boxId) });
-    
-    if (!box) {
-      return new Response(
-        JSON.stringify({ error: "Box not found" }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      );
+    // Only try to find the box if boxId exists
+    let box = null;
+    if (updatedItem.boxId) {
+      try {
+        box = await boxes.findOne({ _id: new ObjectId(updatedItem.boxId) });
+      } catch (error) {
+        console.warn("Error fetching box:", error);
+        // Continue without box data
+      }
     }
-    
-
     // Build reservation details
     const reservationDetails = [];
     reservationDetails.push({
@@ -89,10 +73,9 @@ export async function PATCH(request, res) {
       color: updatedItem.color,
       size: updatedItem.sizeId || updatedItem.size,
       location: updatedItem.location,
-      boxId: updatedItem.boxSequentialId || updatedItem.boxId,
+      boxId: updatedItem.boxSequentialId || updatedItem.boxId || null,
       quantityReservedFromThisItem: quantityToReserve
     });
-
     const result = {
       success: true,
       totalQuantityReserved: quantityToReserve,
@@ -107,12 +90,10 @@ export async function PATCH(request, res) {
         available: updatedItem.quantity - updatedItem.reserved
       }]
     };
-
     return new Response(
       JSON.stringify(result),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
     console.error("PATCH error:", error);
     return new Response(

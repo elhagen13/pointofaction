@@ -339,7 +339,10 @@ function Inventory() {
             </div>
           )}
         </div>
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative" }} onClick={() => {
+              setCartOpen(true);
+              updateCartCount();
+            }}>
           <div
             style={{
               position: "absolute",
@@ -361,10 +364,7 @@ function Inventory() {
             {cartCount}
           </div>
           <IoCart
-            onClick={() => {
-              setCartOpen(true);
-              updateCartCount();
-            }}
+            
             style={{ fontSize: "40px", color: "#2563EB", cursor: "pointer" }}
           />
         </div>

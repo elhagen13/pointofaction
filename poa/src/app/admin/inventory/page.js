@@ -483,8 +483,9 @@ function Inventory() {
                 const bDiff = (keyDict[getKey(b)]?.quantity || 0) - bQty;
                 return bDiff - aDiff;
               }
+   
 
-              return bQty - aQty;
+              return aQty - bQty;
             }
 
             return sortOrder ? aQty - bQty : bQty - aQty;
@@ -1291,7 +1292,7 @@ function Inventory() {
                   backgroundColor: "white",
                 }}
                   className={styles.pageButton}
-                  onClick={() => setMultiEdit(!multiEdit)}
+                  onClick={() => { setMultiEdit(!multiEdit); setSelectedItems(new Set()) }}
                 >
                   <MdEdit style={{ marginRight: "5px" }} /> Edit Mode {multiEdit ? "Off" : "On"}
                 </button>
@@ -1617,8 +1618,11 @@ function Inventory() {
                       })}
                       {
                         multiEdit &&
-                        <td className={styles.tableSm} onClick={(e) => { e.stopPropagation(); console.log(getKey(item)) }}>
-
+                        <td className={styles.tableSm}
+                          onClick={(e) => { e.stopPropagation(); }}
+                          onMouseDown={(e) => { e.stopPropagation(); }}
+                          onMouseEnter={(e) => { e.stopPropagation(); }}
+                        >
                           <SetAlert keyDict={keyDict} getKey={getKey} item={item} refresh={refresh} />
                         </td>
                       }

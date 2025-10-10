@@ -36,8 +36,7 @@ export async function PATCH(request, { params }) {
     const boxes = db.collection("boxes")
     const { id, itemId } = await params;
 
-    const { newAmount, history } = await request.json();
-    console.log(history)
+    const { newAmount, history, patchType } = await request.json();
 
     // Validate ObjectId format
     if (!ObjectId.isValid(id)) {
@@ -54,24 +53,26 @@ export async function PATCH(request, { params }) {
       },
       {
         $inc: {
-          "items.$.pulled": newAmount
+          "items.$.pulled": newAmount,
+          ...(patchType == "change" && { "items.$.quantReserved": newAmount })
         }
       }
     )
 
     //remove or add the new amount from the inventory item
     // if quantity <= 0, archive it
-    const result = await inventory.updateOne(
+    await inventory.updateOne(
       {
         _id: new ObjectId(itemId),
       },
       {
         $inc: {
           quantity: newAmount * -1,
-          reserved: newAmount * -1
+          reserved: patchType == "change" ? 0 : newAmount * -1
         }
       }
     );
+
 
     // Then conditionally archive if quantity is now 0
     await inventory.updateOne(
@@ -82,6 +83,17 @@ export async function PATCH(request, { params }) {
       {
         $set: {
           archived: true
+        }
+      }
+    );
+     await inventory.updateOne(
+      {
+        _id: new ObjectId(itemId),
+        quantity: {$gt: 0}
+      },
+      {
+        $set: {
+          archived: false
         }
       }
     );

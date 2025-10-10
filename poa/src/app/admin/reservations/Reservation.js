@@ -7,9 +7,12 @@ import ProgressBar from "./ProgressBar";
 import { FiDownload, FiEdit } from "react-icons/fi";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { IoWarning } from "react-icons/io5";
+import { IoReturnUpForwardOutline, IoWarning } from "react-icons/io5";
 import jsPDF from "jspdf";
 import { autoTable } from 'jspdf-autotable'
+import { RiArrowGoBackLine } from "react-icons/ri";
+import { FaArrowRight, FaSave } from "react-icons/fa";
+import { MdRemoveCircle } from "react-icons/md";
 
 
 
@@ -41,7 +44,10 @@ const Order = ({ reservation }) => {
   const [orderTitle, setOrderTitle] = useState(reservation.orderTitle || "");
   const [soIn, setSoIn] = useState(reservation.soIn || "");
   const [submitting, setSubmitting] = useState(false)
-  console.log(reservation)
+
+  const [returnIndex, setReturnIndex] = useState(null);
+  const [returnQuant, setReturnQuant] = useState(null);
+  const [saveClicked, setSaveClicked] = useState(false)
 
   useEffect(() => {
     checkCompleteness();
@@ -268,12 +274,12 @@ const Order = ({ reservation }) => {
       pdf.text(`Reservation ${reservation.sequentialId}`, 15, 15)
 
       let resList = []
-      for(const item of reservationItems){
+      for (const item of reservationItems) {
         resList.push([
-          brandDict[item.brandId]?.brand || item.brand || "No brand", 
-          item.style || "No style", 
+          brandDict[item.brandId]?.brand || item.brand || "No brand",
+          item.style || "No style",
           item.color || "No color",
-          sizeDict[item.sizeId]?.size|| item.size || "No brand",
+          sizeDict[item.sizeId]?.size || item.size || "No brand",
           item.quantity || "0 - Item pulled",
           boxDict[item.boxId]?.boxId || "N/A - Box Removed",
           boxDict[item.boxId]?.location || "N/A - Box Removed",
@@ -283,16 +289,89 @@ const Order = ({ reservation }) => {
       }
 
       autoTable(pdf, {
-        head: [["Brand", "Color", "Style", "Size", "Quantity", "Box #", "Location"]], 
+        head: [["Brand", "Color", "Style", "Size", "Quantity", "Box #", "Location"]],
         body: resList,
         startY: 20
       })
 
-    
+
       pdf.save(`table.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
     }
+  }
+
+  const handleQuantityChange = async (type, quantity) => {
+    if(submitting) return
+    if (!quantity || quantity <= 0) {
+      alert("Please enter a valid return quantity");
+      return;
+    }
+
+    const item = reservationItems[returnIndex];
+    const itemId = item._id;
+    const currentPulled = reservationDict[itemId].pulled;
+    const currentReserved = reservationDict[itemId].quantReserved;
+
+    if (quantity > currentPulled) {
+      alert("Cannot return more than what was pulled");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      let newPulled = currentPulled - quantity;
+      let newReserved = currentReserved;
+
+      if (type === "change") {
+        // Adjust both pulled and reserved
+        newReserved = currentReserved - quantity;
+      }
+
+      // Update the reservation in the database
+      const result = await fetch(
+        `/api/catalog/reservation/${reservation._id}/${itemId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            newAmount: newPulled - currentPulled, // This will be negative, indicating a reduction
+            patchType: type === "change" ? "change": "keep",
+            isReturn: true,
+          }),
+        }
+      );
+
+      if (result.ok) {
+
+        // Update local state
+        setReservationDict((prevDict) => ({
+          ...prevDict,
+          [itemId]: {
+            ...prevDict[itemId],
+            pulled: newPulled,
+            quantReserved: newReserved,
+          },
+        }));
+
+        // Reset return states
+        setReturnIndex(null);
+        setReturnQuant(null);
+        setSaveClicked(false);
+        
+        alert(`Successfully returned ${quantity} item(s)`);
+      } else {
+        alert("Failed to process return");
+      }
+    } catch (error) {
+      console.error("Error processing return:", error);
+      alert("Error processing return");
+    }
+
+    setSubmitting(false);
   }
 
   return (
@@ -386,6 +465,7 @@ const Order = ({ reservation }) => {
                   <th>Box #</th>
                   <th>Location</th>
                   <th>Last Edited</th>
+                  <th>RTN</th>
                 </tr>
               </thead>
               <tbody>
@@ -436,6 +516,35 @@ const Order = ({ reservation }) => {
                       {item.location || boxDict[item.boxId]?.location || "N/A"}
                     </td>
                     <td>{new Date(item.updatedAt).toLocaleString()}</td>
+                    <td onClick={() => {if(index !== returnIndex && boxDict[item.boxId]?.boxId){setReturnIndex(index) ; setSaveClicked(false); setReturnQuant(null)}}}>{
+                      returnIndex == index ? 
+                      <div className={styles.dropdownButton}
+                        style={{width: "fit-content", gap:"10px", position:"relative"}}> 
+                        <input 
+                          type="number"
+                          defaultValue={reservationDict[item._id].pulled}
+                          max={reservationDict[item._id].pulled}
+                          value={returnQuant}
+                          onChange={(e) => {
+                            setReturnQuant(e.target.value)
+                          }}
+                          onBlur={() => setReturnQuant(Math.min(returnQuant, reservationDict[item._id].pulled))}
+                        style={{width:"50px", border:"none", backgroundColor:"rgba(255, 255, 255, 0)", 
+                        padding:"5px", fontSize:"1em"}}
+                      />
+                      <FaSave onClick={() => setSaveClicked(!saveClicked)}/> <MdRemoveCircle onClick={() => setReturnIndex(null)}/>
+                                            </div>
+                        :
+                        <RiArrowGoBackLine style={{ marginLeft: "10px", color:  boxDict[item.boxId]?.boxId ? "black" : "gray"}} />
+                    }
+                    {saveClicked &&  returnIndex == index && 
+                      <div className={styles.dropdownRTN} style={{width:"170px", fontSize:"0.8em"}}>
+                        <div onClick={() => handleQuantityChange("change", returnQuant)} style={{backgroundColor:"#e6f3e9ff", color: "black"}}>Change reservation quantity</div>
+                        <div onClick={() => handleQuantityChange("keep", returnQuant)} style={{backgroundColor:"#fdfde4ff", color: "black"}}>Keep reservation quantity</div>
+
+                      </div>}
+                    </td>
+
                   </tr>
                 ))}
                 {deletedItems.map((item, index) => (

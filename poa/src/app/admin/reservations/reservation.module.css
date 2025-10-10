@@ -105,6 +105,31 @@
 
 }
 
+.dropdownRTN{
+    width: fit-content;
+    background-color: white;
+    border-radius: 10px;
+    margin-top: 5px;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    font-weight: bold;
+    color: gray;
+    cursor: pointer;
+}
+
+.dropdownRTN div{
+  width:100%;
+  padding: 5px 10px
+}
+
+.dropdownRTN div:hover{
+  background-color: rgb(235, 235, 235);
+  cursor: pointer;
+}
+
 .dropdownButton{
     display: flex;
     flex-direction: row;

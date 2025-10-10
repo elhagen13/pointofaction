@@ -379,6 +379,7 @@ export default function Cart({
   }, [cart]);
 
   const reserveCart = async (e) => {
+    if(submitting) return
     e.preventDefault();
     setSubmitting(true);
 
