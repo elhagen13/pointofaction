@@ -530,6 +530,7 @@ function Inventory() {
     showAll,
     keyDict,
   ]);
+  console.log("..")
 
   const filteredBoxes = useMemo(() => {
     let boxItems;
