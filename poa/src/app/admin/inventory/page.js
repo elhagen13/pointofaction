@@ -1469,14 +1469,12 @@ function Inventory() {
                         backgroundColor: oneSelected ? "#b4c9edff" : (keyDict[getKey(item)] && quantity === 0) ? "#e2aeaaff"
                           : (parseInt(keyDict[getKey(item)]?.quantity) > quantity) ?
                             "#f1d7a9ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-                        overflow: "scroll",
+                        overflow: "scroll"
                       }}
                       onMouseDown={(e) => handleMouseDown(e, item)}
                       onMouseEnter={() => handleMouseEnter(item)}
                       onClick={() => {
                         if (!multiEdit) {
-                          console.log(item, quantity)
-                          /**
                           getLocation(item, true);
                           if (quantity === 0) {
                             zeroInventory(item);
@@ -1490,7 +1488,7 @@ function Inventory() {
                           } else if (item.length === 1) {
                             setEditItemOpen(item[0]);
                           } else setMultiOpen(item);
-                            */
+                          
                         }
                       }}
                     >
