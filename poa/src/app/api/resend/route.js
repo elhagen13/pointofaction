@@ -324,6 +324,7 @@ async function handleProductPurchase(formData, recipients) {
   const orderTitle = formData.get("orderTitle");
   const soIn = formData.get("soIn");
   const reservationQuantity = formData.get("reservationQuantity");
+  const link = formData.get("link")
 
 
 
@@ -347,8 +348,7 @@ async function handleProductPurchase(formData, recipients) {
       <p><strong>Order Title:</strong> ${orderTitle || "N/A"}</a></p>
       <p><strong>SO#/IN#:</strong> ${soIn || "N/A"}</a></p>
       <p><strong>Total Reservation Quantity:</strong> ${reservationQuantity || "N/A"}</a></p>
-
-
+      <p><strong>Reservation Link:</strong> ${link || "N/A"}</a></p>
 
     </div>
       

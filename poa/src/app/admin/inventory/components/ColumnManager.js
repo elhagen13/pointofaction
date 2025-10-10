@@ -8,7 +8,7 @@ function ColumnManager({
   onClose, 
   columns, 
   setColumns, 
-  viewType = 'lineItems' // 'lineItems' or 'boxes'
+  viewType = 'lineItems', // 'lineItems' or 'boxes'
 }) {
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);

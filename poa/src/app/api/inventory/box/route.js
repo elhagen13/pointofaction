@@ -63,7 +63,7 @@ export async function GET(request) {
     
     // Exeute query
     const boxes = await collection
-    .find({})
+    .find({archived: { $in: [null, false]}})
     .sort({ createdAt: -1 })
     .toArray();
     return Response.json({

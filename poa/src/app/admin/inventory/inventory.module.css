@@ -71,6 +71,10 @@
   cursor: not-allowed;
 }
 
+.tableRow:hover{
+  background-color: rgb(219, 233, 246) !important;
+}
+
 .history {
   background-color: rgb(239, 238, 238);
   padding: 0;

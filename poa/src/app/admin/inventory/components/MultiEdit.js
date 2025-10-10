@@ -6,6 +6,7 @@ import { FaUpload, FaLink } from "react-icons/fa";
 import Dropdown from "../Dropdown";
 
 export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, brandDict, sizeDict, options, refresh }) {
+    const DEFAULT_IMAGE = "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp"
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [popup, setPopup] = useState(null);
     const [items, setItems] = useState([]);
@@ -14,7 +15,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
     const [sizeSearch, setSizeSearch] = useState("")
     const [currentItem, setCurrentItem] = useState({
         image:
-            "https://companystores.s3.us-east-1.amazonaws.com/sale-items/no-image-available-picture-coming-600nw-2057829641.jpg.webp",
+            "",
         description: "",
         style: "",
         brand: "",
@@ -224,10 +225,17 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
         },
     };
 
+    const anyChanges = () => {
+        return !currentItem.brand || !currentItem.color || !currentItem.description || !currentItem.image || !currentItem.price 
+            || !currentItem.size || !currentItem.style
+        
+    }
+
     const onSave = async() => {
+        console.log(currentItem, anyChanges())
         items.forEach((item) => {
             if(!item.inReservation && item.selected){
-                
+                console.log(item)
             }
         })
     }
@@ -266,7 +274,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                             <tr style={{
                                 width: "100%",
                                 backgroundColor: item.inReservation ? "#edb6b6ff": item.selected ? "#cfdcf4ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-                                cursor: "pointer",
+                                cursor: item.inReservation ? "not-allowed" : "pointer",
                             }}
                                 onClick={() => toggleSelection(index)}
                             
@@ -297,8 +305,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                     }
                     <tr>
                         <td style={{ padding: "10px", width: "100px" }} className={styles.tableSm}
-                        ><img src={currentItem.image ||
-                            "https://www.shutterstock.com/image-vector/no-image-available-picture-coming-600nw-2057829641.jpg "}
+                        ><img src={currentItem.image || DEFAULT_IMAGE}
                             style={{ width: "50px", position: "relative" }}
                             onClick={() => setShowImageDropdown(!showImageDropdown)}
                             />
@@ -527,7 +534,9 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
             <button className={styles.pageButton} style={{
                 marginLeft:"auto",
                 backgroundColor: "white",
-            }}>
+            }}
+            onClick={onSave}
+            >
                 Save
             </button>
 

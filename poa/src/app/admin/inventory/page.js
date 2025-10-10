@@ -32,6 +32,7 @@ function Inventory() {
   const [page, setPage] = useState("all inventory");
   const pageOptions = ["all inventory", "public", "sale"];
   const [filter, setFilter] = useState("line items");
+
   /*options: description, style, brand, color size, quantity*/
   const [sortBy, setSortBy] = useState("");
   const [sortOrder, setSortOrder] = useState(false);
@@ -131,11 +132,21 @@ function Inventory() {
   }, [inventory]);
 
   useEffect(() => {
+    console.log("SORT ORDER", sortOrder)
+  }, [sortOrder])
+
+  useEffect(() => {
     getInventory();
     getItemOptions();
     getKeys();
     if (localStorage.getItem("columns"))
       setColumns(JSON.parse(localStorage.getItem("columns")));
+    if (localStorage.getItem("sortBy"))
+      console.log(typeof(localStorage.getItem("sortBy")))
+      setSortBy(localStorage.getItem("sortBy"));
+    if (localStorage.getItem("sortOrder"))
+      console.log("LOCAL STORAGE", localStorage.getItem("sortOrder"))
+      setSortOrder(JSON.parse(localStorage.getItem("sortOrder")));
   }, []);
 
   const refresh = async () => {
@@ -1402,7 +1413,6 @@ function Inventory() {
                           ...(isSortable && { cursor: "pointer" }),
                         }}
                         onClick={() => {
-                          console.log(sortOrder)
                           if (isSortable) {
                             const sortValue = columnName
                               .toLowerCase()
@@ -1411,11 +1421,14 @@ function Inventory() {
                             setSortBy(
                               sortValue === "brand" ? "brand" : sortValue
                             );
-
+                            localStorage.setItem("sortBy", sortValue === "brand" ? "brand" : sortValue)
 
                             setSortOrder(sortValue !== "quantity" ? !sortOrder
                               : sortOrder === "alerts" ? true : !sortOrder ? "alerts" : false
                             );
+                            localStorage.setItem("sortOrder", JSON.stringify(sortValue !== "quantity" ? !sortOrder
+                              : sortOrder === "alerts" ? true : !sortOrder ? "alerts" : false))
+
 
                           }
                         }}
@@ -1465,6 +1478,7 @@ function Inventory() {
                   return (
                     <tr
                       key={uniqueKey}
+                      className={styles.tableRow}
                       style={{
                         backgroundColor: oneSelected ? "#b4c9edff" : (keyDict[getKey(item)] && quantity === 0) ? "#e2aeaaff"
                           : (parseInt(keyDict[getKey(item)]?.quantity) > quantity) ?
@@ -1488,7 +1502,7 @@ function Inventory() {
                           } else if (item.length === 1) {
                             setEditItemOpen(item[0]);
                           } else setMultiOpen(item);
-                          
+
                         }
                       }}
                     >
@@ -1664,6 +1678,8 @@ function Inventory() {
               {filteredBoxes.map((box, index) => (
                 <tr
                   key={index}
+                  className={styles.tableRow}
+
                   style={{
                     width: "100%",
                     backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",

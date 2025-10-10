@@ -249,18 +249,11 @@ export async function DELETE(request, { params }) {
         );
       }
   
-      // Delete the document
-      const result = await collection.deleteOne({ _id: new ObjectId(id) });
+      // Archive the box
+      await collection.findOneAndUpdate({ _id: new ObjectId(id) }, {
+        $set: {archived: true}
+      });
   
-      if (result.deletedCount === 0) {
-        return Response.json(
-          {
-            success: false,
-            error: 'Failed to delete company'
-          },
-          { status: 500 }
-        );
-      }
   
       return Response.json({
         success: true,
