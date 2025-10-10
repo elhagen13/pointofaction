@@ -406,10 +406,13 @@ function Inventory() {
     );
 
     return groupedItems
+      .map(group => ({
+        group,
+        quantity: group.reduce((sum, item) => sum + item.quantity, 0)
+      }))
       .sort((a, b) => {
-        const getTextForSort = (group, field) => {
-          const item = group[0];
-          const quantity = group.reduce((a, b) => a + b.quantity, 0)
+        const getTextForSort = (wrappedGroup, field) => {
+          const item = wrappedGroup.group[0];
           switch (field) {
             case "description":
               return item.descriptionId &&
@@ -429,13 +432,14 @@ function Inventory() {
                 ? sizeDict[item.sizeId.toString()].size
                 : item.size || "";
             case "quantity":
-              return quantity || 0;
+              return wrappedGroup.quantity;  // ← Use pre-calculated value
             case "box":
               return boxDict[item.boxId]?.boxId || 0;
             default:
               return "";
           }
         };
+
 
         switch (sortBy) {
           case "description":
@@ -472,24 +476,22 @@ function Inventory() {
             const aQty = getTextForSort(a, "quantity");
             const bQty = getTextForSort(b, "quantity");
             if (sortOrder === "alerts") {
-              const aHasAlert = keyDict[getKey(a)]?.quantity !== undefined;
-              const bHasAlert = keyDict[getKey(b)]?.quantity !== undefined;
+              const aHasAlert = keyDict[getKey(a.group)]?.quantity !== undefined;
+              const bHasAlert = keyDict[getKey(b.group)]?.quantity !== undefined;
 
-              if (aHasAlert && !bHasAlert) return -1;
-              if (!aHasAlert && bHasAlert) return 1;
+              if (aHasAlert && ((keyDict[getKey(a.group)]?.quantity || 0) > aQty) && !bHasAlert) return -1;
+              if (!aHasAlert && bHasAlert && ((keyDict[getKey(b.group)]?.quantity || 0) > bQty)) return 1;
 
               if (aHasAlert && bHasAlert) {
-                const aDiff = (keyDict[getKey(a)]?.quantity || 0) - aQty;
-                const bDiff = (keyDict[getKey(b)]?.quantity || 0) - bQty;
+                const aDiff = (keyDict[getKey(a.group)]?.quantity || 0) - aQty;
+                const bDiff = (keyDict[getKey(b.group)]?.quantity || 0) - bQty;
                 return bDiff - aDiff;
               }
-   
 
               return aQty - bQty;
             }
 
             return sortOrder ? aQty - bQty : bQty - aQty;
-
           case "box":
             const aBox = getTextForSort(a, "box");
             const bBox = getTextForSort(b, "box");
@@ -498,6 +500,7 @@ function Inventory() {
             return 0;
         }
       })
+      .map(wrapped => wrapped.group)
       .slice(
         showAll ? 0 : paginate * numItemsPage,
         showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage
@@ -1354,7 +1357,8 @@ function Inventory() {
                     className={styles.groupedViewButton}
                   >
                     <MdLayers />
-                    {group.length} variants found
+                    {console.log(group)}
+                    {group.reduce((a, b) => a + (b.quantity > 0 ? 1 : 0), 0)} variants found
                   </button>
                 </div>
               ))}
@@ -1453,7 +1457,6 @@ function Inventory() {
               <tbody onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}>
                 {filteredInventory.map((item, index) => {
-                  console.log(item)
 
                   const quantity = item.reduce((acc, cur) => acc + cur.quantity, 0);
                   const uniqueKey = getKey(item);
@@ -1472,7 +1475,8 @@ function Inventory() {
                       onMouseEnter={() => handleMouseEnter(item)}
                       onClick={() => {
                         if (!multiEdit) {
-
+                          console.log(item, quantity)
+                          /**
                           getLocation(item, true);
                           if (quantity === 0) {
                             zeroInventory(item);
@@ -1486,6 +1490,7 @@ function Inventory() {
                           } else if (item.length === 1) {
                             setEditItemOpen(item[0]);
                           } else setMultiOpen(item);
+                            */
                         }
                       }}
                     >
