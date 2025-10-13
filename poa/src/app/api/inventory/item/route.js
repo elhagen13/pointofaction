@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 
 // MongoDB connection string - replace with your actual connection string
 const MONGODB_URI = process.env.MONGO_URI;
@@ -229,6 +229,90 @@ export async function POST(request) {
         success: false,
         error: "Failed to create sale item",
         details: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const { db } = await connectToDatabase();
+    const collection = db.collection(COLLECTION_NAME);
+    
+    // Parse request body
+    const {
+      ids,
+      image,
+      description,
+      descriptionId,
+      style,
+      brand,
+      brandId,
+      size,
+      sizeId,
+      color,
+      quantity,
+      price
+    } = await request.json();
+    console.log(ids, image, description, descriptionId,
+      style,
+      brand,
+      brandId,
+      size,
+      sizeId,
+      color,
+      quantity,
+      price)
+
+    // Validate ids
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return Response.json(
+        { success: false, error: "Invalid or missing ids array" },
+        { status: 400 }
+      );
+    }
+
+    const mongoIds = ids.map(id => new ObjectId(id));
+    console.log(mongoIds);
+
+    const response = await collection.updateMany(
+      {
+        _id: { $in: mongoIds }
+      },
+      {
+        $set: {
+          ...(image && { image: image }),
+          ...(description && { description: description }),
+          ...(descriptionId && { descriptionId: descriptionId }),
+          ...(style && { style: style }),
+          ...(brand && { brand: brand }),
+          ...(brandId && { brandId: brandId }),
+          ...(size && { size: size }),
+          ...(sizeId && { sizeId: sizeId }),
+          ...(color && { color: color }),
+          ...(quantity !== undefined && { quantity: parseInt(quantity) }),
+          ...(price !== undefined && { price: price })
+        }
+      }
+    );
+
+    console.log(response);
+
+    return Response.json({
+      success: true,
+      message: "Items updated successfully",
+      matchedCount: response.matchedCount,
+      modifiedCount: response.modifiedCount
+    });
+
+  } catch (error) {
+    console.error("ERROR:", error);
+    return Response.json(
+      { 
+        success: false, 
+        error: "Failed to update items",
+        details: error.message 
       },
       { status: 500 }
     );

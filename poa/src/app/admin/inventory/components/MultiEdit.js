@@ -34,17 +34,19 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
     const [showUrlInput, setShowUrlInput] = useState(false)
     const [imageUrlInput, setImageUrlInput] = useState("")
 
+    const [submitting, setSubmitting] = useState(false)
+
 
     useEffect(() => {
         setItems([...ids].map(id => {
             const item = itemDict[id]
 
-            return({
+            return ({
                 ...item,
                 inReservation: item.reserved && item.reserved > 0,
                 selected: (item.reserved && item.reserved > 0) ? false : true
             })
-            
+
         }
         ))
 
@@ -52,7 +54,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
 
     const toggleSelection = (index) => {
         setItems(items.map((item, i) => {
-            if(i === index && !item.inReservation){
+            if (i === index && !item.inReservation) {
                 return {
                     ...item,
                     selected: !item.selected
@@ -144,7 +146,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
         })
         setImageUrlInput("");
         setShowUrlInput(false);
-        setShowImageDropdown(false); // Hide options after URL submission
+        setShowImageDropdown(false);
         setUploadError("");
     };
 
@@ -226,20 +228,76 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
     };
 
     const anyChanges = () => {
-        return !currentItem.brand || !currentItem.color || !currentItem.description || !currentItem.image || !currentItem.price 
-            || !currentItem.size || !currentItem.style
-        
+
+        return currentItem.brand || currentItem.color || currentItem.description || currentItem.image || currentItem.price
+            || currentItem.size || currentItem.style
+
     }
 
-    const onSave = async() => {
-        console.log(currentItem, anyChanges())
-        items.forEach((item) => {
-            if(!item.inReservation && item.selected){
-                console.log(item)
+    const onSave = async () => {
+        if (!anyChanges() || submitting) return;
+        setSubmitting(true);
+
+        try {
+            const ids = items.filter((item) => !item.inReservation && item.selected).map((item) => item._id);
+
+            if (ids.length === 0) {
+                alert("No items selected to update");
+                setSubmitting(false);
+                return;
             }
-        })
-    }
 
+            const itemBody = {
+                ids: ids,
+                ...(currentItem.image && { image: currentItem.image }),
+                ...((currentItem.descriptionId || currentItem.description) && currentItem.descriptionId
+                    ? { descriptionId: currentItem.descriptionId }
+                    : { description: currentItem.description }),
+                ...(currentItem.style && { style: currentItem.style }),
+                ...((currentItem.brandId || currentItem.brand) && currentItem.brandId
+                    ? { brandId: currentItem.brandId }
+                    : { brand: currentItem.brand }),
+                ...((currentItem.sizeId || currentItem.size) && currentItem.sizeId
+                    ? { sizeId: currentItem.sizeId }
+                    : { size: currentItem.size }),
+                ...(currentItem.color && { color: currentItem.color }),
+                ...(currentItem.quantity && { quantity: currentItem.quantity }),
+                ...(currentItem.price && { price: currentItem.price }),
+            };
+
+            console.log(itemBody);
+
+            const response = await fetch(`/api/inventory/item`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(itemBody),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                console.error("Error updating items:", data.error);
+                alert(`Failed to update items: ${data.error || "Unknown error"}`);
+                setSubmitting(false);
+                return;
+            }
+
+            console.log("Update successful:", data);
+    
+            setUnsavedChanges?.(false);
+            setPopup("success")
+            refresh?.(); // If you have a refresh function to reload data
+            onClose();
+
+        } catch (error) {
+            console.error("Network error:", error);
+            alert("Network error: " + error.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     return (
 
@@ -252,8 +310,8 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
             setUnsavedChanges={setUnsavedChanges}
         >
             <h1>Edit {ids.size} items</h1>
-            <table className={styles.inventoryTable} 
-                style={{ borderCollapse: "collapse", borderRadius: "10px"}}>
+            <table className={styles.inventoryTable}
+                style={{ borderCollapse: "collapse", borderRadius: "10px" }}>
                 <thead>
                     <tr style={{ backgroundColor: "#ebebeb" }}>
                         <th style={{ padding: "10px" }} className={styles.tableSm}>
@@ -273,11 +331,11 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                         items.map((item, index) => (
                             <tr style={{
                                 width: "100%",
-                                backgroundColor: item.inReservation ? "#edb6b6ff": item.selected ? "#cfdcf4ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                                backgroundColor: item.inReservation ? "#edb6b6ff" : item.selected ? "#cfdcf4ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
                                 cursor: item.inReservation ? "not-allowed" : "pointer",
                             }}
                                 onClick={() => toggleSelection(index)}
-                            
+
                             >
                                 <td
                                     className={styles.tableSm}
@@ -532,10 +590,10 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                 </tbody>
             </table>
             <button className={styles.pageButton} style={{
-                marginLeft:"auto",
+                marginLeft: "auto",
                 backgroundColor: "white",
             }}
-            onClick={onSave}
+                onClick={onSave}
             >
                 Save
             </button>

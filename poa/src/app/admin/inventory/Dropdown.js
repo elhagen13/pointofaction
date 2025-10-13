@@ -44,16 +44,16 @@ export default function Dropdown({
 
   const updateValue = (newValue, newId = null) => {
     setUnsavedChanges?.(true);
-    
+
     if (index !== undefined && index !== null && contents && setContents) {
-      setContents(prevContents => 
-        prevContents.map((item, i) => 
-          i === index 
-            ? { 
-                ...item, 
-                [config_type]: newValue,
-                [`${config_type}Id`]: newId 
-              }
+      setContents(prevContents =>
+        prevContents.map((item, i) =>
+          i === index
+            ? {
+              ...item,
+              [config_type]: newValue,
+              [`${config_type}Id`]: newId
+            }
             : item
         )
       );
@@ -107,11 +107,14 @@ export default function Dropdown({
       }
 
       let match = configDict[searchState.toLowerCase()];
-      
+
       if (match) {
         updateValue(match[config_type], match._id);
       } else {
-        updateValue(searchState, null);
+        const currentVal = getCurrentValue();
+        if (searchState !== currentVal) {
+          updateValue(searchState, null);
+        }
       }
     }
     setExiting(false);
@@ -120,10 +123,10 @@ export default function Dropdown({
   const addOptDb = async (selectedOption, newItem) => {
     if (submitting || !newItem) return;
     setSubmitting(true);
-    
+
     try {
       const response = await addOption(selectedOption, newItem);
-      
+
       if (response) {
         updateValue(response[config_type], response._id);
         setIsOpen(false);
@@ -139,7 +142,7 @@ export default function Dropdown({
     try {
       const itemData = {};
       let url = "";
-      
+
       switch (selectedOption) {
         case "description":
           itemData.description = newItem;
@@ -157,7 +160,7 @@ export default function Dropdown({
           console.error("Unknown option type:", selectedOption);
           return null;
       }
-      
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -165,19 +168,19 @@ export default function Dropdown({
         },
         body: JSON.stringify(itemData),
       });
-      
+
       const data = await response.json();
-      
+
       if (!data.success) {
         console.error("Error creating item:", data.error);
         console.error("Details:", data.details);
         alert("Error creating item: " + (data.error || "Unknown error"));
         return null;
       }
-      
+
       console.log("Item created successfully:", data.data);
       console.log("Message:", data.message);
-      
+
       refresh?.();
       return data.data;
     } catch (error) {
@@ -192,11 +195,11 @@ export default function Dropdown({
     e.stopPropagation(); // Stop event from bubbling up
     const filteredOptions = configs[config_type]?.filteredOptions || [];
     const selectedOption = filteredOptions[optionIndex];
-    
+
     if (!selectedOption) return;
-    
+
     updateValue(selectedOption[config_type], selectedOption._id);
-    
+
     // Clear the search state to match the selected value
     configs[config_type]?.setSearchState?.(selectedOption[config_type]);
     setIsOpen(false);
@@ -239,7 +242,7 @@ export default function Dropdown({
         setIsOpen(false);
         setHighlightedIndex(-1);
         // Revert to original value
-        const originalValue = index !== undefined && index !== null 
+        const originalValue = index !== undefined && index !== null
           ? contents[index]?.[config_type] || ""
           : currentItem?.[config_type] || "";
         configs[config_type]?.setSearchState?.(originalValue);
@@ -254,10 +257,10 @@ export default function Dropdown({
   const dictValue = configDict[currentIdValue]?.[config_type];
 
   return (
-    <div ref={dropdownRef} style={{ position: "relative", width:"100%"}}>
+    <div ref={dropdownRef} style={{ position: "relative", width: "100%" }}>
       <input
         disabled={disabledInput}
-        style={{width:"100%"}}
+        style={{ width: "100%" }}
         className={styles.input}
         onFocus={() => setIsOpen(true)}
         onClick={(e) => onExit(e, "click")}
@@ -287,7 +290,7 @@ export default function Dropdown({
               {opt[config_type]}
             </div>
           ))}
-          
+
           {/* Add to inventory option */}
           <div
             className={styles.dropdownItem}
@@ -307,7 +310,7 @@ export default function Dropdown({
               Add to inventory? <FaBookmark />
             </div>
           </div>
-          
+
           {/* Add only to item option */}
           <div
             className={styles.dropdownItem}
