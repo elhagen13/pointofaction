@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER, // your gmail address
     pass: process.env.EMAIL_PASS  // your app password
   }
-  
+
   // For other SMTP providers, use:
   // host: process.env.SMTP_HOST,
   // port: process.env.SMTP_PORT,
@@ -52,28 +52,28 @@ async function connectToDatabase() {
 }
 
 
-export async function GET(request){
+export async function GET(request) {
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
-    
+
     // Exeute query
     const permissions = await collection
-    .find({})
-    .toArray();
+      .find({})
+      .toArray();
 
     return Response.json({
       success: true,
       data: permissions,
     });
-    
+
   } catch (error) {
     console.error('GET error:', error);
     return Response.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to fetch eamil permissions',
-        details: error.message 
+        details: error.message
       },
       { status: 500 }
     );
@@ -84,7 +84,7 @@ export async function PATCH(request, { params }) {
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
-    const {type, recipients} = await request.json();
+    const { type, recipients } = await request.json();
     console.log(type, recipients)
     collection.findOneAndUpdate({
       type: type,
@@ -93,15 +93,15 @@ export async function PATCH(request, { params }) {
         recipients: recipients
       }
     })
-    
+
     return Response.json({
       success: true,
       message: 'Box updated successfully'
     });
-    
+
   } catch (error) {
     console.error('PATCH error:', error);
-    
+
     return Response.json(
       {
         success: false,
@@ -128,8 +128,8 @@ export async function POST(request) {
 
     const newForm = formType.split("-").map(word => [...word][0].toUpperCase() + [...word].slice(1).join("")).join(" ");
     console.log(newForm)
-    const data = await collection.findOne({type: newForm})
-   
+    const data = await collection.findOne({ type: newForm })
+
     let emailData;
     switch (formType) {
       case "product-request":
@@ -328,8 +328,8 @@ async function handleProductPurchase(formData, recipients) {
 
 
 
- 
-  
+
+
   return {
     from: process.env.EMAIL_USER,
     to: recipients,
@@ -348,8 +348,9 @@ async function handleProductPurchase(formData, recipients) {
       <p><strong>Order Title:</strong> ${orderTitle || "N/A"}</a></p>
       <p><strong>SO#/IN#:</strong> ${soIn || "N/A"}</a></p>
       <p><strong>Total Reservation Quantity:</strong> ${reservationQuantity || "N/A"}</a></p>
-      <p><strong>Reservation Link:</strong> ${link || "N/A"}</a></p>
-
+      <p><strong>Reservation Link:</strong> 
+        ${link ? `<a href="${link}" target="_blank">${link}</a>` : "N/A"}
+      </p>
     </div>
       
   </div>
