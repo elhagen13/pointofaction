@@ -280,16 +280,18 @@ const Order = ({ reservation }) => {
           item.style || "No style",
           item.color || "No color",
           sizeDict[item.sizeId]?.size || item.size || "No brand",
-          item.quantity || "0 - Item pulled",
+          reservationDict[item._id].quantReserved,
+          reservationDict[item._id].pulled,
           boxDict[item.boxId]?.boxId || "N/A - Box Removed",
           boxDict[item.boxId]?.location || "N/A - Box Removed",
 
 
         ])
       }
+      
 
       autoTable(pdf, {
-        head: [["Brand", "Color", "Style", "Size", "Quantity", "Box #", "Location"]],
+        head: [["Brand", "Color", "Style", "Size", "Quantity", "Pulled", "Box #", "Location"]],
         body: resList,
         startY: 20
       })
