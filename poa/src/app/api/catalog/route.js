@@ -65,12 +65,23 @@ export async function GET(request) {
     const matchQuery = {
       style,
       color,
-      ...(brandId && { brandId: String(brandId) }),
-      ...(sizeId && { sizeId: String(sizeId) }),
+      ...(brandId || brand ? {
+        $or: [
+          ...(brandId ? [{ brandId: String(brandId) }] : []),
+          ...(brand ? [{ brand: brand }] : []),
+        ]
+      } : {}),
+      ...(sizeId || size ? {
+        $or: [
+          ...(sizeId ? [{ sizeId: String(sizeId) }] : []),
+          ...(size ? [{ size: size }] : []),
+        ]
+      } : {}),
       $expr: {
         $gt: ["$quantity", "$reserved"]
       }
     };
+
 
     // Use aggregation pipeline to join with boxes collection
     const pipeline = [
