@@ -93,8 +93,6 @@ function Inventory() {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
 
-  const searchParams = useSearchParams();  
-
   const [columns, setColumns] = useState({
     lineItems: [
       { Image: true },
