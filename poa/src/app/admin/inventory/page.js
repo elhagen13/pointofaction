@@ -26,6 +26,7 @@ import { useUser } from "@clerk/nextjs";
 
 import SetAlert from "./components/SetAlert";
 import MultiEdit from "./components/MultiEdit";
+import { useSearchParams } from "next/navigation";
 
 function Inventory() {
   /*"all inventory", "boxes", "public", "sale"*/
@@ -92,6 +93,8 @@ function Inventory() {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
 
+  const searchParams = useSearchParams();  
+
   const [columns, setColumns] = useState({
     lineItems: [
       { Image: true },
@@ -147,6 +150,7 @@ function Inventory() {
     if (localStorage.getItem("sortOrder"))
       console.log("LOCAL STORAGE", localStorage.getItem("sortOrder"))
       setSortOrder(JSON.parse(localStorage.getItem("sortOrder")));
+    
   }, []);
 
   const refresh = async () => {
@@ -1301,6 +1305,8 @@ function Inventory() {
                 <button style={{
                   marginBottom: "10px",
                   backgroundColor: "white",
+                  color: "#515151ff"
+
                 }}
                   className={styles.pageButton}
                   onClick={() => { setMultiEdit(!multiEdit); setSelectedItems(new Set()) }}
@@ -1312,6 +1318,7 @@ function Inventory() {
               style={{
                 marginBottom: "10px",
                 backgroundColor: "white",
+                color: "#515151ff"
               }}
               className={styles.pageButton}
               onClick={() => setColumnManagerOpen(!columnManagerOpen)}
@@ -1807,6 +1814,37 @@ function Inventory() {
             </tbody>
           </table>
         )}
+        { filter === "line items" &&
+        <div style={{width:"100%", display: "flex", gap:"10px", justifyContent:"center", padding:"10px"}}>
+          {paginate > 0 && !showAll && 
+              <div
+              
+                className={styles.paginate}
+                onClick={() => setPaginate(paginate - 1)}
+              >
+                {paginate}
+              </div>
+          }
+          {
+            !showAll && 
+              <div
+                className={styles.paginate}
+                style={{ backgroundColor: "rgb(140, 140, 140)" }}
+              >
+                {paginate + 1}
+              </div>
+          }
+          {
+              paginate < numPages - 1 && !showAll && 
+              <div
+                className={styles.paginate}
+                onClick={() => setPaginate(paginate + 1)}
+              >
+                {paginate + 2}
+              </div>
+          }
+        </div>
+        }
       </div>
 
       {addItemOpen && (
