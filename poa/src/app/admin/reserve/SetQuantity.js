@@ -19,24 +19,34 @@ export default function SetQuantity({
       return parseInt(size.slice(0, -2));
     }
     switch (size) {
-      case "2XS":
-        return 0;
-      case "XS":
+      case "YXS":
+        return 0
+      case "YS":
         return 1;
-      case "S":
+      case "YM":
         return 2;
-      case "M":
+      case "YL":
         return 3;
-      case "L":
+      case "YXL":
         return 4;
-      case "XL":
+      case "2XS":
         return 5;
-      case "2XL":
+      case "XS":
         return 6;
-      case "3XL":
+      case "S":
         return 7;
-      case "4XL":
+      case "M":
         return 8;
+      case "L":
+        return 9;
+      case "XL":
+        return 10;
+      case "2XL":
+        return 11;
+      case "3XL":
+        return 12;
+      case "4XL":
+        return 13;
     }
   };
 
@@ -228,41 +238,45 @@ export default function SetQuantity({
               flexGrow: 1,
               border: "2px solid #dbdbdb",
               borderRadius: "20px",
+              maxWidth: "80vw",
+              overflow:"scroll"
             }}
             className={styles.box}
           >
             <div
               className={styles.row}
               style={{
-                gridTemplateColumns: `repeat(${sizes.length}, calc(100% / ${sizes.length}))`,
+                gridTemplateColumns: `repeat(${sizes.length}, 150px`,
               }}
             >
               {sizes.map((size, index) => (
-                <div key={index} style={{ padding: "0 10px" }}>
+                <div key={index} style={{ padding: "0 10px", minWidth:"10rem" }}>
                   {size[0]}
                 </div>
               ))}
+              
             </div>
             <div
               className={styles.row}
               style={{
-                gridTemplateColumns: `repeat(${sizes.length}, calc(100% / ${sizes.length}))`,
+                gridTemplateColumns: `repeat(${sizes.length}, 150px`,
               }}
             >
               {sizes.map((reserved, index) => (
-                <div key={index} style={{ padding: "0 10px", color:"#ababab" }}>
+                <div key={index} style={{ padding: "0 10px", color:"#ababab", minWidth:"10rem" }}>
                     {reserved[1].reserved}
                 </div>
               ))}
+             
             </div>
             <div
               className={styles.row}
               style={{
-                gridTemplateColumns: `repeat(${sizes.length}, calc(100% / ${sizes.length}))`,
+                gridTemplateColumns: `repeat(${sizes.length}, 150px`,
               }}
             >
               {sizes.map((available, index) => (
-                <div key={index} style={{ padding: "0 10px" }}>
+                <div key={index} style={{ padding: "0 10px", minWidth:"10rem" }}>
                   {available[1].available}
                 </div>
               ))}
@@ -270,11 +284,12 @@ export default function SetQuantity({
             <div
               className={styles.row}
               style={{
-                gridTemplateColumns: `repeat(${sizes.length}, calc(100% / ${sizes.length}))`,
+                gridTemplateColumns: `repeat(${sizes.length}, 150px`,
+                width: "100%"
               }}
             >
               {sizes.map((available, index) => (
-                <div key={index} style={{ padding: "0 10px" }}>
+                <div key={index} style={{ padding: "0 10px"}}>
                   <input
                     type="number"
                     min={0}
@@ -288,9 +303,12 @@ export default function SetQuantity({
                             return quant
                         })
                     )}
+                    style={{width:"100%"}}
+
                   ></input>
                 </div>
               ))}
+
             </div>
           </div>
         </div>
