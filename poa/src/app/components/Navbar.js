@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import styles from "./navbar.module.css";
 import { GoChevronDown, GoChevronUp } from "react-icons/go";
+import { usePathname } from "next/navigation"; 
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +12,10 @@ const Navbar = () => {
   const faqRef = useRef(null);
   const [faqPosition, setFAQPosition] = useState({ top: 0, left: 0, width: 0 });
   const [isMobile, setIsMobile] = useState(false);
+
+  const pathname = usePathname(); 
+  const inStore = pathname.includes("/store"); 
+
 
   useEffect(() => {
     // This code only runs on client after hydration
@@ -186,14 +192,14 @@ const Navbar = () => {
               </div>
             )}
           </ul>
-          <Link
+          {!inStore && <Link
             href="https://dpipcoincdbapointofaction.shops.shopvox.com"
             className={styles.shopVoxStore}
             style={{ display: "flex", gap: "10px", alignItems: "center" }}
           >
             <button className={styles.styledButton}>Online Store</button>
             <img src="/shopping_cart.png" className={styles.shoppingCart} alt="Shopping Cart" />
-          </Link>
+          </Link>}
         </div>
       </div>
       {!isMobile && (

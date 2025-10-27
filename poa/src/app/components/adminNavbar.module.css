@@ -1,0 +1,44 @@
+.navbar{
+    width: 100vw;
+    display: flex;
+    justify-content: start;
+    padding: 20px 20px 0 20px;
+    
+}
+
+.linkContainer{
+    display: flex;
+    gap: 20px;
+    border-radius: 10px;
+    border: 1px solid rgb(222, 211, 211);
+    padding: 5px 20px;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+}
+
+.link{
+    padding: 5px;
+    border-radius: 4px;
+    background-color: white;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+.link:hover{
+    background-color: rgb(236, 236, 236);
+}
+
+.activeLink{
+    background-color: rgb(84, 132, 84);
+    color: white;
+}
+
+.activeLink:hover{
+    background-color: rgb(60, 96, 60);
+    color: white;
+}
+
+@media(max-width: 768px){
+    .navbar{
+        padding: 10px;
+    }
+}

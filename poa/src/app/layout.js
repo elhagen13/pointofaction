@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono, Montserrat, Inter, Lato, Roboto } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import AdminNavbar from "./components/AdminNavbar";
 import Footer from "./components/Footer"
 import {
   ClerkProvider,
@@ -59,6 +60,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${roboto.className}`} style={{backgroundColor: "white"}}>
         <Navbar/>
+        <AdminNavbar/>
         <div style={{minHeight: "calc(100vh - 100px)"}}>
           {children}
         </div>

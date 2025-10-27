@@ -295,9 +295,6 @@ function Inventory() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "end", marginBottom: "15px" }}>
-        <Link className={styles.button} href="/admin/reservations">View Reservations</Link>
-      </div>
       <div
         style={{
           display: "flex",

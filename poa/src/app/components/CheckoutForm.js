@@ -7,116 +7,28 @@ import {
   AddressElement,
   Elements,
 } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import {
   CheckCircle,
   AlertCircle,
   CreditCard,
-  ArrowLeft,
   Car,
-  Plus,
-  Minus,
   UserRound,
 } from "lucide-react";
 import styles from "./checkoutForm.module.css";
+import { BeatLoader } from "react-spinners";
 
-const CheckoutForm = ({ product, clientSecret, onBack }) => {
+// Initialize Stripe outside component
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
+const CheckoutForm = ({total, handleSuccess, customerInfo, setCustomer}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [shipping, setShipping] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    email: '',
-    phone: ''
-  });
-
-  const handleQuantityChange = async (change) => {
-    const newQuantity = Math.max(1, quantity + change);
-    setQuantity(newQuantity);
-    
-    // Update payment intent with new amount
-    try {
-      const response = await fetch('/api/update-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          paymentIntentId: clientSecret.split('_secret_')[0], // Extract PI ID
-          amount: Math.round(product.price * newQuantity * 100), // Amount in cents
-          quantity: newQuantity
-        })
-      });
-      
-      if (!response.ok) {
-        // Handle error - maybe reset quantity
-        setQuantity(quantity);
-      }
-    } catch (error) {
-      console.error('Failed to update payment intent:', error);
-      // Reset quantity on error
-      setQuantity(quantity);
-    }
-  };
-
-  const totalPrice = (product.price * quantity).toFixed(2);
-
-  const sendOrderEmail = async (paymentIntent, shippingAddress = null) => {
-    try {
-        console.log(shippingAddress)
-
-        const formData = new FormData();
-        formData.append('formType', 'product-purchase');
-        formData.append('name', customerInfo.name);
-        formData.append('email', customerInfo.email);
-        formData.append('phone', customerInfo.phone);
-        formData.append('product', product.name);
-        formData.append('price', product.price);
-        formData.append('quantity', quantity);
-        formData.append('total', totalPrice);
-        formData.append('shipping', shipping);
-        if(shippingAddress) formData.append('shippingAddress', `${shippingAddress.line1}, ${shippingAddress.city}, ${shippingAddress.state}, ${shippingAddress.postal_code}`);
-        formData.append('orderDate', new Date().toISOString());
-
-      const orderData = {
-        customer: {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          phone: customerInfo.phone
-        },
-        product: {
-          name: product.name,
-          price: product.price,
-          quantity: quantity,
-          total: totalPrice
-        },
-        shipping: shipping,
-        shippingAddress: shippingAddress,
-        paymentIntentId: paymentIntent.id,
-        orderDate: new Date().toISOString()
-      };
-
-      await fetch('/api/resend', {
-        method: 'POST',
-        body: formData,
-      });
-
-      // Send to your backend API endpoint
-      /*await fetch('/api/send-order-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData)
-      });*/
-    } catch (error) {
-      console.error('Failed to send order email:', error);
-      // Don't block the success flow if email fails
-    }
-  };
+  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -169,10 +81,10 @@ const CheckoutForm = ({ product, clientSecret, onBack }) => {
       if (error) {
         setErrorMessage(error.message);
         setPaymentStatus("error");
-      } else if (paymentIntent.status === "succeeded") {
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
         // Send order email to company rep
-        await sendOrderEmail(paymentIntent, shippingAddress);
         setPaymentStatus("success");
+        handleSuccess()
       }
     } catch (err) {
       setErrorMessage("An unexpected error occurred.");
@@ -188,69 +100,17 @@ const CheckoutForm = ({ product, clientSecret, onBack }) => {
         <CheckCircle className={styles.successIcon} />
         <h2 className={styles.successTitle}>Payment Successful!</h2>
         <p className={styles.successText}>
-          Thank you for your purchase of {quantity} x {product.name}
+          Thank you for your purchase!
         </p>
-        <button onClick={onBack} className={styles.backButton}>
-          Continue Shopping
-        </button>
+        
       </div>
     );
   }
 
   return (
-    <div className={styles.checkoutContainer}>
-      <div className={styles.header}>
-        <button onClick={onBack} className={styles.backButtonHeader}>
-          <ArrowLeft className={styles.backIcon} />
-          Back to Products
-        </button>
-        <h2 className={styles.title}>Checkout</h2>
-      </div>
+    <div>
 
       <div className={styles.content}>
-        {/* Product Summary */}
-        <div className={styles.productSummary}>
-          <img
-            src={product.imageLink}
-            alt={product.name}
-            className={styles.productImage}
-          />
-          <div className={styles.productInfo}>
-            <h3 className={styles.productName}>{product.name}</h3>
-            <p className={styles.productDescription}>{product.description}</p>
-            
-            {/* Quantity Controls */}
-            <div className={styles.quantityContainer}>
-              <span className={styles.quantityLabel}>Quantity:</span>
-              <div className={styles.quantityControls}>
-                <button
-                  type="button"
-                  onClick={() => handleQuantityChange(-1)}
-                  disabled={quantity <= 1}
-                  className={`${styles.quantityButton} ${quantity <= 1 ? styles.disabled : ''}`}
-                >
-                  <Minus size={16} />
-                </button>
-                <span className={styles.quantityDisplay}>{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => handleQuantityChange(1)}
-                  disabled={quantity >= product.stock}
-                  className={styles.quantityButton}
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.priceContainer}>
-              <div className={styles.priceBreakdown}>
-                <span className={styles.unitPrice}>${product.price} each</span>
-                <span className={styles.totalPrice}>${totalPrice} USD</span>
-              </div>
-            </div>
-          </div>
-        </div>
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Customer Information */}
           <div className={styles.paymentSection}>
@@ -265,7 +125,7 @@ const CheckoutForm = ({ product, clientSecret, onBack }) => {
                   type="text"
                   required
                   value={customerInfo.name}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, name: e.target.value }))}
                   className={styles.input}
                   placeholder="Enter your full name"
                 />
@@ -276,7 +136,7 @@ const CheckoutForm = ({ product, clientSecret, onBack }) => {
                   type="email"
                   required
                   value={customerInfo.email}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, email: e.target.value }))}
                   className={styles.input}
                   placeholder="Enter your email address"
                 />
@@ -286,7 +146,7 @@ const CheckoutForm = ({ product, clientSecret, onBack }) => {
                 <input
                   type="tel"
                   value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, phone: e.target.value }))}
                   className={styles.input}
                   placeholder="Enter your phone number"
                 />
@@ -311,29 +171,31 @@ const CheckoutForm = ({ product, clientSecret, onBack }) => {
               />
               <span className={`${styles.slider} ${styles.round}`}></span>
             </label>
-            { shipping && <>
-            <div className={styles.paymentHeader}>
-              <Car className={styles.cardIcon} />
-              <h3 className={styles.paymentTitle}>Shipping Information</h3>
-            </div>
+            {shipping && (
+              <>
+                <div className={styles.paymentHeader}>
+                  <Car className={styles.cardIcon} />
+                  <h3 className={styles.paymentTitle}>Shipping Information</h3>
+                </div>
 
-            <div className={styles.paymentElement}>
-              <AddressElement
-                options={{
-                  mode: "shipping",
-                  style: {
-                    base: {
-                      fontSize: "16px",
-                      color: "#424770",
-                      "::placeholder": {
-                        color: "#aab7c4",
+                <div className={styles.paymentElement}>
+                  <AddressElement
+                    options={{
+                      mode: "shipping",
+                      style: {
+                        base: {
+                          fontSize: "16px",
+                          color: "#424770",
+                          "::placeholder": {
+                            color: "#aab7c4",
+                          },
+                        },
                       },
-                    },
-                  },
-                }}
-              />
-            </div>
-            </>}
+                    }}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           {/* Payment Form */}
@@ -384,7 +246,7 @@ const CheckoutForm = ({ product, clientSecret, onBack }) => {
                 Processing...
               </>
             ) : (
-              `Pay $${totalPrice}`
+              `Pay $${total}`
             )}
           </button>
         </form>
@@ -394,7 +256,15 @@ const CheckoutForm = ({ product, clientSecret, onBack }) => {
 };
 
 // Wrapper component that provides Stripe Elements context
-const CheckoutWrapper = ({ product, clientSecret, onBack, stripePromise }) => {
+const CheckoutWrapper = ({ total, clientSecret, handleSuccess, customerInfo, setCustomer}) => {
+
+  // Don't render if clientSecret is missing
+  if (!clientSecret) {
+    return <div><BeatLoader/></div>;
+  }
+
+  
+
   const options = {
     clientSecret,
     appearance: {
@@ -414,9 +284,7 @@ const CheckoutWrapper = ({ product, clientSecret, onBack, stripePromise }) => {
   return (
     <Elements stripe={stripePromise} options={options}>
       <CheckoutForm
-        product={product}
-        clientSecret={clientSecret}
-        onBack={onBack}
+        total={total} handleSuccess={handleSuccess} customerInfo={customerInfo} setCustomer={setCustomer}
       />
     </Elements>
   );

@@ -1,0 +1,164 @@
+
+.checkout{
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.paymentCard{
+    background-color: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+}
+
+.cart{
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.row{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    padding: 0.5rem;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    color: rgb(199, 199, 199);
+    border: 1px solid rgb(232, 232, 232);
+    border-radius: 5px;
+}
+
+
+.clickable:hover{
+    cursor: pointer;
+}
+
+.imageContainer{
+    width: 3rem;
+    height: 3rem;
+    background-color: rgb(248, 248, 248);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    overflow: hidden
+}
+
+.image{
+    height: 100%;
+    object-fit: contain;
+}
+
+.price{
+    flex-grow: 1;
+    color: black;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: end;
+    gap: 5px;
+
+}
+
+.carat{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(160, 160, 160);
+    border-radius: 30px;
+    background-color: white;
+    transition: all 0.2s ease-in-out
+}
+
+.carat:hover{
+    background-color: rgb(242, 242, 242);
+}
+
+.opened{
+    transform: rotate(180deg)
+}
+
+.subRow{
+    transform: translateY(-2px);
+    border-top: none;
+    overflow: hidden;
+    transition: 0.2s ease-in-out;
+    border: 1px solid rgb(232, 232, 232);
+    border-radius: 5px;
+    border-top: none;
+
+    
+}
+
+.subRowClosed{
+    max-height: 0px;
+    border-bottom-color: white;
+
+
+}
+
+.subRowOpen{
+    max-height: 500px;
+    overflow: scroll;
+
+ 
+}
+
+.subRowItem{
+    margin: 10px;
+}
+
+.rowItem{
+    display: flex;
+    gap: 10p
+}
+
+.description{
+    max-width: 50%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* Success State */
+  .successContainer {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: 2rem auto;
+  }
+  
+  .successIcon {
+    width: 4rem;
+    height: 4rem;
+    color: #10b981;
+    margin: 0 auto 1rem;
+  }
+  
+  .successTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1rem 0;
+  }
+  
+  .successText {
+    color: #6b7280;
+    margin: 0 0 2rem 0;
+    line-height: 1.5;
+  }
+  

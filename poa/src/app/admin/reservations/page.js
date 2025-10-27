@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Reservation from "./Reservation";
 import Link from "next/link";
 
-// Create a separate component that uses useSearchParams
 function ReservationsContent() {
   const [reservations, setReservations] = useState([]);
   const [reservation, setReservation] = useState(null);
@@ -123,7 +122,6 @@ function ReservationsContent() {
     <div className={styles.page}>
       <div style={{display:"flex", justifyContent:"space-between"}}>
         <h1>Order Requests</h1>
-        <Link href="/admin/reserve" className={styles.button}>Place Reservation</Link>
         </div>
       <div className={styles.paginationType}>
         <div
@@ -164,7 +162,7 @@ function ReservationsContent() {
           <tbody>
             {filteredReservations.map((reservation, index) => (
               <tr
-                key={reservation._id} // Add key prop
+                key={reservation._id} 
                 style={{
                   backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
                 }}
@@ -174,7 +172,7 @@ function ReservationsContent() {
                   {reservation.sequentialId.toString().padStart(5, "0")}
                 </td>
                 <td>{reservation.orderTitle}</td>
-                <td>{reservation.customer}</td>
+                <td>{typeof reservation.customer == "object" ? reservation.customer.name : reservation.customer}</td>
                 <td>
                   <div
                     className={styles.dropdownButton}

@@ -234,6 +234,7 @@ export default function Cart({
 
       });
 
+
       if (!matching.ok) {
         const errorData = await matching.json();
         throw new Error(errorData.error || `HTTP ${matching.status}`);
@@ -241,6 +242,7 @@ export default function Cart({
 
       const data = await matching.json()
 
+      console.log("DATA", data)
 
       setBoxOptions(prev => ({
         ...prev,
@@ -656,6 +658,8 @@ export default function Cart({
     setSelectionOrder(newSelectionOrder);
     setQuantityCalculations(newQuantityCalculations);
   };
+
+  console.log(boxOptions)
 
   return (
     <div className={styles.overlayBackground} onClick={handleOverlayClick}>

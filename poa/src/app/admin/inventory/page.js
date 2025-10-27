@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
-import { FaRegCopy } from "react-icons/fa";
+import { FaList, FaRegCopy } from "react-icons/fa";
 import { IoSearch, IoChevronDown, IoAlert, IoArrowDown, IoArrowUp } from "react-icons/io5";
 import { BiSelectMultiple, } from "react-icons/bi";
 import {
@@ -143,12 +143,12 @@ function Inventory() {
     if (localStorage.getItem("columns"))
       setColumns(JSON.parse(localStorage.getItem("columns")));
     if (localStorage.getItem("sortBy"))
-      console.log(typeof(localStorage.getItem("sortBy")))
-      setSortBy(localStorage.getItem("sortBy"));
+      console.log(typeof (localStorage.getItem("sortBy")))
+    setSortBy(localStorage.getItem("sortBy"));
     if (localStorage.getItem("sortOrder"))
       console.log("LOCAL STORAGE", localStorage.getItem("sortOrder"))
-      setSortOrder(JSON.parse(localStorage.getItem("sortOrder")));
-    
+    setSortOrder(JSON.parse(localStorage.getItem("sortOrder")));
+
   }, []);
 
   const refresh = async () => {
@@ -496,7 +496,7 @@ function Inventory() {
               if (!aHasAlert && bHasAlert && ((keyDict[getKey(b.group)]?.quantity || 0) > bQty)) return 1;
 
               if (aHasAlert && bHasAlert) {
-                
+
                 return aQty - bQty;
               }
 
@@ -886,7 +886,7 @@ function Inventory() {
         },
       });
 
-      const contentData = await contentResponse.json(); 
+      const contentData = await contentResponse.json();
       let contents = [];
 
       contentData.data.forEach((item) => {
@@ -1133,42 +1133,108 @@ function Inventory() {
           Add Box
         </button>
       </div>
-      <div className={styles.filters}>
-        <div className={styles.searchContainer} ref={dropdownRef}>
-          <IoSearch className={styles.search} />
-          <input
-            className={styles.searchInput}
-            value={searchValue}
-            onChange={(e) => {
-              setPaginate(0);
-              setSearchValue(e.target.value);
-            }}
-            placeholder={`Search ${selectedSearchOption === "all" ? "everything" : selectedSearchOption}...`}
-          />
-          <div
-            className={styles.searchOption}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            {selectedSearchOption}
-            <IoChevronDown
-              className={`${styles.chevron} ${isDropdownOpen ? styles.open : ""}`}
+      <div style={{ overflowX: "scroll" }}>
+        <div className={styles.tableFilterer}>
+          <div className={styles.searchContainer} ref={dropdownRef}>
+            <IoSearch className={styles.search} />
+            <input
+              className={styles.searchInput}
+              value={searchValue}
+              onChange={(e) => {
+                setPaginate(0);
+                setSearchValue(e.target.value);
+              }}
+              placeholder={`Search ${selectedSearchOption === "all" ? "everything" : selectedSearchOption}...`}
             />
+            <div
+              className={styles.searchOption}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              {selectedSearchOption}
+              <IoChevronDown
+                className={`${styles.chevron} ${isDropdownOpen ? styles.open : ""}`}
+              />
+            </div>
+
+            {isDropdownOpen && (
+              <div className={`${styles.dropdown} ${styles.searchDropdown}`}>
+                {searchOptions.map((option, index) => (
+                  <div
+                    key={index}
+                    className={`${styles.dropdownItem} ${selectedSearchOption === option ? styles.selected : ""}`}
+                    onClick={() => handleOptionSelect(option)}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {isDropdownOpen && (
-            <div className={`${styles.dropdown} ${styles.searchDropdown}`}>
-              {searchOptions.map((option, index) => (
-                <div
-                  key={index}
-                  className={`${styles.dropdownItem} ${selectedSearchOption === option ? styles.selected : ""}`}
-                  onClick={() => handleOptionSelect(option)}
-                >
-                  {option}
-                </div>
-              ))}
+          {filter !== "grouped" && (
+            <div style={{ display: "flex", gap: "10px" }}>
+              {filter === "line items" &&
+                <>
+                  <button style={{
+                    marginBottom: "10px",
+                    backgroundColor: "white",
+                    color: "#515151ff"
+
+                  }}
+                    className={styles.pageButton}
+                    onClick={() => setShowAll(!showAll)}
+                  >
+                    <FaList style={{ marginRight: "5px" }} /> Pagination: {showAll? "Off" : "On"}
+                  </button>
+                  {
+                    selectedItems.size > 0 &&
+                    <button style={{
+                      marginBottom: "10px",
+                      backgroundColor: "white",
+                    }}
+                      className={styles.pageButton}
+                      onClick={() => setMultiEditView(!multiEditView)}
+                    >
+                      <BiSelectMultiple style={{ marginRight: "5px" }} /> Multi Edit
+                    </button>
+                  }
+                  <button style={{
+                    marginBottom: "10px",
+                    backgroundColor: "white",
+                    color: "#515151ff"
+
+                  }}
+                    className={styles.pageButton}
+                    onClick={() => { setMultiEdit(!multiEdit); setSelectedItems(new Set()) }}
+                  >
+                    <MdEdit style={{ marginRight: "5px" }} /> Edit Mode {multiEdit ? "Off" : "On"}
+                  </button>
+                </>}
+              <button
+                style={{
+                  marginBottom: "10px",
+                  backgroundColor: "white",
+                  color: "#515151ff"
+                }}
+                className={styles.pageButton}
+                onClick={() => setColumnManagerOpen(!columnManagerOpen)}
+              >
+                <MdViewColumn style={{ marginRight: "5px" }} />
+                {columnManagerOpen ? "Close Column Manager" : "Manage Columns"}
+              </button>
+              {columnManagerOpen && (
+                <ColumnManager
+                  isOpen={columnManagerOpen}
+                  onClose={() => setColumnManagerOpen(false)}
+                  columns={columns}
+                  setColumns={setColumns}
+                  viewType={filter === "boxes" ? "boxes" : "lineItems"}
+                />
+              )}
             </div>
           )}
         </div>
+        <div className={styles.filters}>
         <div className={styles.pageSelection}>
           <div
             style={{
@@ -1248,93 +1314,6 @@ function Inventory() {
           </div>
         </div>
       </div>
-      <div style={{ overflowX: "scroll" }}>
-        {filter === "line items" && (
-          <div className={styles.pages}>
-            {paginate > 0 && !showAll && (
-              <div
-                className={styles.paginate}
-                onClick={() => setPaginate(paginate - 1)}
-              >
-                {paginate}
-              </div>
-            )}
-            {!showAll && (
-              <div
-                className={styles.paginate}
-                style={{ backgroundColor: "rgb(140, 140, 140)" }}
-              >
-                {paginate + 1}
-              </div>
-            )}
-            {paginate < numPages - 1 && !showAll && (
-              <div
-                className={styles.paginate}
-                onClick={() => setPaginate(paginate + 1)}
-              >
-                {paginate + 2}
-              </div>
-            )}
-            <div
-              style={{ marginLeft: "auto" }}
-              className={styles.paginate}
-              onClick={() => setShowAll(!showAll)}
-            >
-              {showAll ? "Show Pages" : "Show All"}
-            </div>
-          </div>
-        )}
-        {filter !== "grouped" && (
-          <div style={{ width: "100%", position: "relative", display: "flex", justifyContent: "end", gap: "10px" }}>
-            {filter === "line items" &&
-              <>
-                {
-                  selectedItems.size > 0 &&
-                  <button style={{
-                    marginBottom: "10px",
-                    backgroundColor: "white",
-                  }}
-                    className={styles.pageButton}
-                    onClick={() => setMultiEditView(!multiEditView)}
-                  >
-                    <BiSelectMultiple style={{ marginRight: "5px" }} /> Multi Edit
-                  </button>
-                }
-                <button style={{
-                  marginBottom: "10px",
-                  backgroundColor: "white",
-                  color: "#515151ff"
-
-                }}
-                  className={styles.pageButton}
-                  onClick={() => { setMultiEdit(!multiEdit); setSelectedItems(new Set()) }}
-                >
-                  <MdEdit style={{ marginRight: "5px" }} /> Edit Mode {multiEdit ? "Off" : "On"}
-                </button>
-              </>}
-            <button
-              style={{
-                marginBottom: "10px",
-                backgroundColor: "white",
-                color: "#515151ff"
-              }}
-              className={styles.pageButton}
-              onClick={() => setColumnManagerOpen(!columnManagerOpen)}
-            >
-              <MdViewColumn style={{ marginRight: "5px" }} />
-              {columnManagerOpen ? "Close Column Manager" : "Manage Columns"}
-            </button>
-            {columnManagerOpen && (
-              <ColumnManager
-                isOpen={columnManagerOpen}
-                onClose={() => setColumnManagerOpen(false)}
-                columns={columns}
-                setColumns={setColumns}
-                viewType={filter === "boxes" ? "boxes" : "lineItems"}
-              />
-            )}
-          </div>
-        )}
 
         {filter === "grouped" && (
           <>
@@ -1812,38 +1791,40 @@ function Inventory() {
             </tbody>
           </table>
         )}
-        { filter === "line items" &&
-        <div style={{width:"100%", display: "flex", gap:"10px", justifyContent:"center", padding:"10px"}}>
-          {paginate > 0 && !showAll && 
+        {filter === "line items" &&
+          <div style={{ width: "100%", display: "flex", gap: "10px", justifyContent: "center", padding: "10px" }}>
+            {paginate > 0 && !showAll &&
               <div
-              
+
                 className={styles.paginate}
                 onClick={() => setPaginate(paginate - 1)}
               >
                 {paginate}
               </div>
-          }
-          {
-            !showAll && 
+            }
+            {
+              !showAll &&
               <div
                 className={styles.paginate}
                 style={{ backgroundColor: "rgb(140, 140, 140)" }}
               >
                 {paginate + 1}
               </div>
-          }
-          {
-              paginate < numPages - 1 && !showAll && 
+            }
+            {
+              paginate < numPages - 1 && !showAll &&
               <div
                 className={styles.paginate}
                 onClick={() => setPaginate(paginate + 1)}
               >
                 {paginate + 2}
               </div>
-          }
-        </div>
+            }
+          </div>
         }
       </div>
+      
+      
 
       {addItemOpen && (
         <AddItem

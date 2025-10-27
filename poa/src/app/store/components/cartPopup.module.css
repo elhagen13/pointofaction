@@ -1,0 +1,159 @@
+.overlayContainer {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.185);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 50;
+}
+
+
+
+.overlay {
+    position: fixed;
+    height: calc(100% - 100px);
+    right: 0;
+    top: 100px;
+    background-color: rgb(255, 255, 255);
+    z-index: 51;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 0 5px gray;
+    border-radius: 30px 0 0 30px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+
+}
+
+.visible {
+    width: 500px;
+}
+
+.invisible {
+    width: 0px;
+}
+
+.cartContainer {
+    margin: 40px;
+    flex: 1;
+    padding-bottom: 20px;
+}
+
+.cartRow {
+    width: 100%;
+    padding: 10px 0;
+    border-bottom: 2px solid rgb(240, 240, 240);
+    display: flex;
+}
+
+.thumbnailContainer {
+    width: 2rem;
+    height: 2rem;
+    overflow: hidden;
+    box-shadow: 0 0 2px gray;
+    border-radius: 5px;
+}
+
+.thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+    font-weight: bold;
+    color: #ada9a9
+}
+
+.prices {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: end;
+    min-width: 20%;
+    font-weight: bold;
+    text-align: left;
+}
+
+.checkoutContainer {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+    z-index: 100;
+    padding: 20px;
+    box-shadow: 0 0 20px 20px white;
+    display: flex;
+    justify-content: end;
+
+}
+
+
+.purchase {
+    padding: 5px 10px;
+    background-color: white;
+    border: 2px solid #2c4cb4ff;
+    color: #2c4cb4ff;
+    font-weight: bold;
+    border-radius: 10px;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    z-index: 101;
+
+
+}
+
+.purchase:hover {
+    transform: scale(1.1);
+    background-color: #2c4cb4ff;
+    color: white;
+    border: 3px double white
+}
+
+.purchase:disabled {
+    border: 2px solid gray;
+    color: gray;
+    cursor: not-allowed;
+}
+
+.purchase:disabled:hover {
+    transform: none;
+    background-color: white;
+    color: gray;
+    border: 2px solid gray;
+}
+
+.trash{
+    color: gray;
+    cursor: pointer;
+    transition: color 0.2s ease-in-out
+}
+
+.trash:hover{
+    color: rgb(155, 47, 47);
+}
+
+@media(max-width: 996px){
+    .overlay{
+        top: 140px;
+    }
+}
+
+@media(max-width: 886px){
+    .overlay{
+        top: 180px;
+    }
+}
+
+@media(max-width: 760){
+    .overlay{
+        top: 100px;
+    }
+}

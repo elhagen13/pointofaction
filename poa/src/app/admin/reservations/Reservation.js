@@ -403,7 +403,7 @@ const Order = ({ reservation }) => {
                 {reservation.sequentialId?.toString().padStart(5, "0")}
               </td>
               <td><input className={styles.dropdownButton} value={orderTitle} onChange={(e) => setOrderTitle(e.target.value)} /></td>
-              <td>{reservation.customer}</td>
+              <td>{typeof reservation.customer === 'object' ? reservation.customer.name: reservation.customer}</td>
               <td>
                 <div
                   className={styles.dropdownButton}
