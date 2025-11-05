@@ -1,4 +1,3 @@
-// middleware.ts
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 const isProtectedRoute = createRouteMatcher([
@@ -8,8 +7,20 @@ const isProtectedRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
   
-  if (isProtectedRoute(req) && !userId) {
-    // Use the auth object's redirectToSignIn method directly
+  // Protect all POST, PATCH, DELETE requests to /api routes
+  const isMutationMethod = ['POST', 'PATCH', 'DELETE'].includes(req.method);
+  const isApiRoute = req.nextUrl.pathname.startsWith('/api');
+  
+  if ((isProtectedRoute(req) || (isApiRoute && isMutationMethod)) && !userId) {
+    // For API routes, return 401 instead of redirecting
+    if (isApiRoute) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // For regular pages, redirect to sign in
     return (await auth()).redirectToSignIn({
       returnBackUrl: req.url
     });

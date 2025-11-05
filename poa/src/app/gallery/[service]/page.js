@@ -24,7 +24,7 @@ export default function TargetPage({ params }) {
      
   }, [])
 
-  const filteredImages = images.filter(image => image.type === serviceRefined)
+  const filteredImages = images?.filter(image => image.type === serviceRefined)
 
   return (
     <div className={styles.galleryPage}>
@@ -40,7 +40,7 @@ export default function TargetPage({ params }) {
       <h1 className={styles.title}>{serviceRefined.split(/(?=[A-Z])/).join(" ")} Gallery</h1>
       <GalleryCarousel images={filteredImages}/>
       <div className={styles.photoGrid}>
-        {filteredImages.map((image, index) => (
+        {filteredImages?.map((image, index) => (
           <div key={index}>
           <div className={styles.gridImageParent}>
             <img src={image.imageLink} className={styles.gridImage}/>

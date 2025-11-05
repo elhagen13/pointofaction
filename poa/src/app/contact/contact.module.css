@@ -75,6 +75,8 @@
 .allEmployees{
     padding: 30px 60px;
 }
+
+
 @media(max-width: 768px){
 
     .allEmployees{

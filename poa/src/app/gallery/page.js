@@ -23,6 +23,8 @@ export default function Home() {
 
   function shuffleArray(array) {
     // Create a shallow copy to avoid modifying the original array
+    if(!array) return []
+    
     const shuffledArray = [...array]; 
   
     for (let i = shuffledArray.length - 1; i > 0; i--) {

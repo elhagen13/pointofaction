@@ -126,7 +126,7 @@ export default function CompanyInventory() {
                 <td>
                   {item.productDetails.reduce(
                     (a, b) => (a !== b.location ? "Multi" : b.location),
-                    item.productDetails[0].location
+                    item.productDetails[0]?.location || 0
                   )}
                 </td>
               </tr>

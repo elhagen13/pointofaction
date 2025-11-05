@@ -28,7 +28,7 @@ export default function Carousel({images}) {
 
             </div>
             <div className={styles.carousel}>
-                {images.map((image, index) => (
+                {images?.map((image, index) => (
                     <div
                         key={index}
                         className={`${styles.imageContainer} ${position(index)}`}

@@ -10,18 +10,25 @@ import {
   IoMdAdd,
 } from "react-icons/io";
 
-export default function EditItem({ item, onClose, inventory, setPopupOuter, refresh }) {
-  console.log(item)
+export default function EditItem({
+  item,
+  onClose,
+  inventory,
+  setPopupOuter,
+  refresh,
+}) {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [popup, setPopup] = useState(null);
   const [image, setImage] = useState(
-    item.image || "https://www.shutterstock.com/image-vector/no-image-available-picture-coming-600nw-2057829641.jpg"
+    item.image ||
+      "https://www.shutterstock.com/image-vector/no-image-available-picture-coming-600nw-2057829641.jpg"
   );
   const [imageUploading, setImageUploading] = useState(false);
   const [showUrl, setShowUrl] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [companies, setCompanies] = useState("");
-  const [companyDict, setCompanyDict] = useState({});
+  const [confirmDeletion, setConfirmDeletion] = useState(false);
+  const [deletionProgress, setDeletionProgress] = useState(0);
 
   const [currentItem, setCurrentItem] = useState({
     company: item.company[0].company || "",
@@ -29,18 +36,20 @@ export default function EditItem({ item, onClose, inventory, setPopupOuter, refr
     type: item.type || "",
     material: item.material || "",
     color: item.color || "",
-    instances: item.productDetails?.map((instance) => [instance.orderId, instance.quantity, instance.location]) || 
-    ["", 0, ""]
+    instances: item.productDetails?.map((instance) => [
+      instance.orderId,
+      instance.quantity,
+      instance.location,
+    ]) || ["", 0, ""],
   });
 
   const [submitting, setSubmitting] = useState(false);
 
   const handleKeyDown = useCallback(
     (event) => {
-
       if (event.key === "Escape") {
         event.preventDefault();
-        if ((popup === "successSm" || !unsavedChanges)) {
+        if (popup === "successSm" || !unsavedChanges) {
           onClose();
         } else if (unsavedChanges) {
           setPopup("unsaved");
@@ -48,11 +57,7 @@ export default function EditItem({ item, onClose, inventory, setPopupOuter, refr
         }
       }
     },
-    [
-      popup,
-      onClose,
-      unsavedChanges,
-    ]
+    [popup, onClose, unsavedChanges]
   );
 
   useEffect(() => {
@@ -61,6 +66,38 @@ export default function EditItem({ item, onClose, inventory, setPopupOuter, refr
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyDown]);
+
+  useEffect(() => {
+    let interval;
+    let timeout;
+
+    if (confirmDeletion) {
+      // Reset progress
+      setDeletionProgress(0);
+
+      // Animate progress bar over 5 seconds
+      interval = setInterval(() => {
+        setDeletionProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            setConfirmDeletion(false)
+            return 100;
+          }
+          return prev + 0.5; 
+        });
+      }, 10);
+
+      // Reset after 5 seconds
+      timeout = setTimeout(() => {
+        setDeletionProgress(0);
+      }, 5000);
+    }
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [confirmDeletion]);
 
   const handleFileSelect = (e) => {
     setUnsavedChanges(true);
@@ -112,7 +149,6 @@ export default function EditItem({ item, onClose, inventory, setPopupOuter, refr
       (item) => (companies[item.company[0].company] = item.company[0])
     );
     setCompanies(Object.keys(companies));
-    setCompanyDict(companies);
   }, [inventory]);
 
   const handleSubmit = async () => {
@@ -206,6 +242,24 @@ export default function EditItem({ item, onClose, inventory, setPopupOuter, refr
     const result = await response.json();
 
     return result;
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDeletion) {
+      setConfirmDeletion(true);
+      return;
+    }
+
+    const response = await fetch(`/api/companyInventory/${item._id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+
+    const result = await response.json();
+    console.log(result)
+    
   };
 
   return (
@@ -380,6 +434,16 @@ export default function EditItem({ item, onClose, inventory, setPopupOuter, refr
             </div>
           </div>
           <div className={styles.submitButton}>
+            <button
+              className={styles.slideButton}
+              onClick={handleDelete}
+              style={{
+                "--progress": `${deletionProgress}%`,
+              }}
+              data-text={confirmDeletion ? "Confirm Deletion?" : "Delete"}
+            >
+              {confirmDeletion ? "Confirm Deletion?" : "Delete"}
+            </button>
             <button
               className={styles.button}
               onClick={handleSubmit}

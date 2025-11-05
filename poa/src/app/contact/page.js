@@ -96,6 +96,10 @@ export default function Contact() {
               </div>
             ))
           }
+           <div className={styles.employeeContainer} style={{padding: 0}}>
+                  <img src="/employees/staff.jpg" className={styles.image}/>
+                
+            </div>
 
         </div>
       </div>

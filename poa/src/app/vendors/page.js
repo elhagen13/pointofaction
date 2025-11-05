@@ -34,13 +34,13 @@ export default function Vendors(){
 
     
     useEffect(() => {
-        setOverall(vendors2.filter((vendor) => vendor.category.includes("overall")))
-        setTops(vendors2.filter((vendor) => vendor.category.includes("tops")))
-        setOuterwear(vendors2.filter((vendor) => vendor.category.includes("outerwear")))
-        setActivewear(vendors2.filter((vendor)=> vendor.category.includes("activewear")))
-        setHeadwear(vendors2.filter((vendor) => vendor.category.includes("headwear")))
-        setWorkwear(vendors2.filter((vendor) => vendor.category.includes("workwear"))),
-        setDrinkwear(vendors2.filter((vendor) => vendor.category.includes("drinkware")))
+        setOverall(vendors2?.filter((vendor) => vendor.category.includes("overall")))
+        setTops(vendors2?.filter((vendor) => vendor.category.includes("tops")))
+        setOuterwear(vendors2?.filter((vendor) => vendor.category.includes("outerwear")))
+        setActivewear(vendors2?.filter((vendor)=> vendor.category.includes("activewear")))
+        setHeadwear(vendors2?.filter((vendor) => vendor.category.includes("headwear")))
+        setWorkwear(vendors2?.filter((vendor) => vendor.category.includes("workwear"))),
+        setDrinkwear(vendors2?.filter((vendor) => vendor.category.includes("drinkware")))
 
         /*setOverall(categories.overall.map(vendor => vendors[vendor]));
         setTops(categories.tops.map(vendor => vendors[vendor]));
@@ -88,7 +88,7 @@ export default function Vendors(){
         </div>
         <div className={styles.vendorList}>
         {
-            overall.map((vendor, index) => (
+            overall?.map((vendor, index) => (
                 <>
                 {
                     !vendor.blocked ? 
@@ -116,7 +116,7 @@ export default function Vendors(){
         </div>
         <div className={styles.vendorList}>
             {
-                [...headwear].reverse().map((vendor, index) => (
+                headwear && [...headwear].reverse().map((vendor, index) => (
                     <>
                     {
                         !vendor.blocked ? 
@@ -143,7 +143,7 @@ export default function Vendors(){
         </div>
         <div className={styles.vendorList}>
             {
-                tops.map((vendor, index) => (
+                tops && tops.map((vendor, index) => (
                     <>
                         {
                             !vendor.blocked ? 
@@ -170,7 +170,7 @@ export default function Vendors(){
         </div>
         <div className={styles.vendorList}>
             {
-                outerwear.map((vendor, index) => (
+                outerwear && outerwear.map((vendor, index) => (
                 <>
                     {
                         !vendor.blocked ? 
@@ -197,7 +197,7 @@ export default function Vendors(){
         </div>
         <div className={styles.vendorList}>
             {
-                activewear.map((vendor, index) => (
+                activewear && activewear.map((vendor, index) => (
                     <>
                     {
                         !vendor.blocked ? 
@@ -224,7 +224,7 @@ export default function Vendors(){
         </div>
         <div className={styles.vendorList}>
             {
-                workwear.map((vendor, index) => (
+                workwear && workwear.map((vendor, index) => (
                     <>
                     {
                         !vendor.blocked ? 
@@ -251,7 +251,7 @@ export default function Vendors(){
         </div>
         <div className={styles.vendorList}>
             {
-                drinkware.map((vendor, index) => (
+                drinkware && drinkware.map((vendor, index) => (
                     <>
                         {
                             !vendor.blocked ? 
