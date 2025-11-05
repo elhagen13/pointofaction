@@ -7,15 +7,15 @@ export default function Dropdown({
   placeholder = "Search...",
   onChange,
 }) {
-  console.log("TESTING TESTING", currentItem, options, placeholder, onChange)
   const [isOpen, setIsOpen] = useState(false);
   const [searchState, setSearchState] = useState(currentItem?.company || "");
   const [selectedValue, setSelectedValue] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const dropdownRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   // Normalize options to always be strings
-  const normalizedOptions = options
+  const normalizedOptions = Array.isArray(options)
     ? options.map((opt) => {
         if (typeof opt === "string") {
           return opt;
@@ -29,11 +29,37 @@ export default function Dropdown({
     opt.toLowerCase().includes(searchState.toLowerCase())
   );
 
+  // Handle typing - debounce the onChange call
+  useEffect(() => {
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to call onChange after user stops typing
+    typingTimeoutRef.current = setTimeout(() => {
+      if (searchState && !isOpen) {
+        // User has typed something and closed the dropdown
+        onChange?.(searchState);
+      }
+    }, 500);
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [searchState, isOpen]);
+
   // Handle click outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
+        // Commit the typed value when clicking outside
+        if (searchState && searchState !== selectedValue) {
+          onChange?.(searchState);
+        }
       }
     }
 
@@ -44,7 +70,7 @@ export default function Dropdown({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen, selectedValue]);
+  }, [isOpen, searchState, selectedValue]);
 
   const selectOption = (e, optionIndex) => {
     e.preventDefault();
@@ -53,20 +79,31 @@ export default function Dropdown({
     const selectedOption = filteredOptions[optionIndex];
     if (!selectedOption) return;
 
-    setSelectedValue(selectedOption);
-    setSearchState(selectedOption);
-    onChange?.(selectedOption);
+    const newValue = String(selectedOption);
+    setSelectedValue(newValue);
+    setSearchState(newValue);
     setIsOpen(false);
     setHighlightedIndex(-1);
+    
+    // Immediately call onChange when option is selected
+    onChange?.(newValue);
   };
 
   const handleKeyDown = (e) => {
-    console.log(1)
+    // Handle Tab key
+    if (e.key === "Tab") {
+      setIsOpen(false);
+      if (searchState && searchState !== selectedValue) {
+        onChange?.(searchState);
+      }
+      // Don't prevent default - let Tab do its normal navigation
+      return;
+    }
+
     if (!isOpen && e.key !== "Enter") {
       setIsOpen(true);
       return;
     }
-    console.log(2)
 
     switch (e.key) {
       case "ArrowDown":
@@ -91,6 +128,10 @@ export default function Dropdown({
           highlightedIndex < filteredOptions.length
         ) {
           selectOption(e, highlightedIndex);
+        } else {
+          // User pressed Enter without selecting - commit typed value
+          setIsOpen(false);
+          onChange?.(searchState);
         }
         break;
       case "Escape":
@@ -105,20 +146,13 @@ export default function Dropdown({
     }
   };
 
-  useEffect(() => {
-    console.log(filteredOptions)
-  }, [filteredOptions])
-
   return (
     <div ref={dropdownRef} style={{ position: "relative", width: "100%" }}>
       <input
         placeholder={placeholder}
         onFocus={() => setIsOpen(true)}
         onClick={() => setIsOpen(true)}
-        onChange={(e) => {
-          setSearchState(e.target.value);
-          onChange?.(e.target.value);
-        }}
+        onChange={(e) => setSearchState(e.target.value)}
         onKeyDown={handleKeyDown}
         value={searchState}
         className={styles.input}
@@ -145,7 +179,7 @@ export default function Dropdown({
             ) : (
               <div
                 style={{
-                  ...styles.dropdownItem,
+                  padding: '8px 12px',
                   color: "#999",
                   fontStyle: "italic",
                 }}
