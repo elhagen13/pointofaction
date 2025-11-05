@@ -172,22 +172,20 @@ export default function AddItem({
     }
   };
   const removeInstance = (index) => {
-    let instances = currentItem.instances;
-    instances = instances.filter((_, i) => i !== index);
-    setCurrentItem({
-      ...currentItem,
-      instances: instances,
-    });
-  };
+  const instances = currentItem.instances.filter((_, i) => i !== index);
+  setCurrentItem({
+    ...currentItem,
+    instances: instances,
+  });
+};
 
-  const addInstance = () => {
-    let instances = currentItem.instances;
-    instances.push(["", 0, ""]);
-    setCurrentItem({
-      ...currentItem,
-      instances: instances,
-    });
-  };
+const addInstance = () => {
+  const instances = [...currentItem.instances, ["", 0, ""]];
+  setCurrentItem({
+    ...currentItem,
+    instances: instances,
+  });
+};
 
   const postInventory = async () => {
     const formData = {
