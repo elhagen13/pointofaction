@@ -26,6 +26,12 @@ export default function Popup({ closePopup, closeOverlay = null, popupType }) {
       backgroundColor: "#159939",
       color: "#aecfb7"
     },
+    successSm: {
+      title: "Successfully updated",
+      subtext: [""],
+      backgroundColor: "#159939",
+      color: "#aecfb7"
+    },
     itemNotAdded: {
       title: "Need to add item",
       subtext: ["To add: press the checkmark to the right", "To continue without saving: click exit or press esc again"],

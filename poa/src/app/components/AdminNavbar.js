@@ -15,7 +15,9 @@ export default function AdminNavbar() {
 
   // Determine current page from pathname
   const getCurPage = () => {
+    if (pathname.includes("/companyInventory")) return "companyInventory"
     if (pathname.includes("/inventory")) return "inventory"
+    if (pathname.includes("/companyInventory")) return "companyInventory"
     if (pathname.includes("/reserve") && !pathname.includes("/reservations")) return "reserve"
     if (pathname.includes("/reservations")) return "reservations"
     return "home"
@@ -37,6 +39,12 @@ export default function AdminNavbar() {
           className={`${styles.link} ${curPage === "inventory" ? styles.activeLink : ""}`}
         >
           Inventory
+        </Link>
+        <Link 
+          href="/admin/companyInventory"
+          className={`${styles.link} ${curPage === "companyInventory" ? styles.activeLink : ""}`}
+        >
+          Overstock
         </Link>
         <Link 
           href="/admin/reservations"

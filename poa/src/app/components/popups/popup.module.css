@@ -5,7 +5,7 @@
     bottom: 1rem;
     transform: translateX(50%);
     border-radius: 10px;
-    overflow: hidden; /* This clips the timed bar to the border radius */
+    overflow: hidden; 
     z-index: 99999999
   }
   

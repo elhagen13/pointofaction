@@ -208,6 +208,11 @@
     border-color: #538561;
     box-shadow: 0 0 0 3px rgba(83, 133, 97, 0.1);
   }
+
+  .inputError{
+    border: 2px solid #c25151 !important;
+    box-shadow: 0 0 0 3px rgba(133, 83, 83, 0.1);
+  }
   
   /* Upload section styles */
   .uploadSection {

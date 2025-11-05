@@ -1,23 +1,107 @@
-.pageSelection, .addSelection {
+/* ========================================
+   LAYOUT & STRUCTURE
+   ======================================== */
+
+.inventoryBackground {
+  width: 100%;
+  padding: 20px;
   display: flex;
-  flex-direction: row;
-  justify-content: end;
-  gap: 10px;
+  flex-direction: column;
+  gap: 20px;
+  color: black;
 }
 
-.pageSelection,.addSelection div {
-  padding: 4px 15px;
-  border-radius: 15px;
-  cursor: pointer;
-  color: white;
-  font-weight: bold;
+.overlayBackground {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  overflow-y: auto;
 }
 
-.addSelection{
-  position: absolute;
-  right: 20px;;
-  top: -2rem;
+.addItem {
+  position: relative;
+  background-color: white;
+  padding: 30px;
+  border-radius: 20px;
+  width: 95%;
 }
+
+/* ========================================
+   FORMS & INPUTS
+   ======================================== */
+
+.form {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formInput {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.formInput label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+  min-height: 44px;
+  box-sizing: border-box;
+  background-color: white;
+  color: black;
+  appearance: none;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #538561;
+  box-shadow: 0 0 0 3px rgba(83, 133, 97, 0.1);
+}
+
+.inputError{
+  border: 2px solid #c25151 !important;
+  box-shadow: 0 0 0 3px rgba(133, 83, 83, 0.1);
+}
+
+.input[type="checkbox"] {
+  transform: scale(2);
+  padding: 10px;
+}
+
+.imageAndLocation {
+  display: flex;
+  gap: 20px;
+}
+
+.horizontal {
+  display: flex;
+  gap: 20px;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
 
 .button {
   background-color: #538561;
@@ -50,14 +134,17 @@
   cursor: not-allowed;
 }
 
-.discreetButton, .addToReservationButton {
+.discreetButton,
+.addToReservationButton {
   background-color: white;
   transition: all 0.2s ease-out;
   width: fit-content;
   padding: 5px;
   border: 2px solid white;
 }
-.discreetButton, .addToReservationButton:hover {
+
+.discreetButton:hover,
+.addToReservationButton:hover {
   border-radius: 10px;
   border-color: #bedaf5;
   color: #5c6e7f;
@@ -65,160 +152,60 @@
   background-color: rgb(250, 250, 250);
 }
 
-.addToReservationButton{
+.addToReservationButton {
   border: 2px solid rgb(208, 208, 208);
   border-radius: 5px;
   font-size: 13px;
   font-weight: bold;
 }
 
-.addToReservationButton:disabled{
+.addToReservationButton:disabled {
   cursor: not-allowed;
 }
 
-.tableRow:hover{
-  background-color: rgb(219, 233, 246) !important;
-}
-
-.history {
-  background-color: rgb(239, 238, 238);
-  padding: 0;
-  max-height: 0px;
-  overflow: hidden;
-  transition: max-height 0.5s ease-in-out;
-  border-radius: 10px;
-}
-
-.historyRow {
-  margin-top: 10px;
+.groupedViewButton {
   display: flex;
-  flex-direction: row;
-  gap: 10px;
   align-items: center;
-  cursor: pointer;
-  transition: background-color 0.1s ease-in-out;
-  border-radius: 40px 10px 10px 40px;
-}
-
-.historyRow:hover {
-  background-color: rgb(209, 207, 207);
-}
-
-.historyRow[data-selected="true"] {
-  background-color: rgb(209, 207, 207);
-  border-radius: 40px 15px 15px 40px;
-}
-
-.profile {
-  width: 2rem;
-  height: 2rem;
-  background-color: orange;
-  border-radius: 40px;
-  display: flex;
   justify-content: center;
-  align-items: center;
-  color: rgb(153, 58, 58);
+  gap: 5px;
+  font-size: 12px;
   font-weight: bold;
+  border: none;
+  background-color: #2563eb;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 10px;
+  transition: 0.1s ease-in;
+  cursor: pointer;
 }
 
-.historyEntriesContainer {
-  max-height: 0px;
-  overflow: hidden;
-  transition: max-height 0.5s ease-in-out;
+.groupedViewButton:hover {
+  background-color: #1c54ce;
+  transform: scale(1.01);
 }
 
-.historyEntries {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px;
-  padding-left: calc(2rem + 10px);
-}
-
-.historyEntry {
-  border-bottom: 1.5px solid rgb(200, 199, 199);
-  cursor: default;
-}
-.visible {
-  max-height: 500px;
-  overflow-y: scroll;
-}
-
-/*Add Item Styles*/
-.overlayBackground {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 1000;
+.pageButton {
+  border: 1px solid #ccc;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 20px;
-  overflow-y: auto;
-}
-.addItem {
-  position: relative;
-  background-color: white;
-  padding: 30px;
-  border-radius: 20px;
-  width: 95%;
+  align-items: center;
 }
 
-.form {
-  margin-top: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.pageButton:disabled {
+  background-color: white !important;
+  color: gray !important;
+  cursor: not-allowed;
 }
 
-.imageAndLocation {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-}
+/* ========================================
+   FILE UPLOAD
+   ======================================== */
 
-.formInput {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  position: relative;
-  z-index: 1;
-}
-
-.formInput label {
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
-}
-
-.input {
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 2px solid #e1e5e9;
-  font-size: 16px; /* Prevents zoom on iOS */
-  transition: border-color 0.2s ease;
-  min-height: 44px;
-  box-sizing: border-box;
-  background-color: white;
-  color: black;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-
-.input:focus {
-  outline: none;
-  border-color: #538561;
-  box-shadow: 0 0 0 3px rgba(83, 133, 97, 0.1);
-}
-
-/* Upload section styles */
 .uploadSection {
   display: flex;
   flex-direction: column;
@@ -228,6 +215,7 @@
 .fileInput {
   display: none;
 }
+
 .fileLabel {
   display: inline-flex;
   align-items: center;
@@ -253,395 +241,14 @@
   transform: scale(0.98);
 }
 
-.fileInfo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.uploadButton {
-  padding: 10px 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  min-height: 44px;
-  transition: background-color 0.2s ease;
-}
-
-.uploadButton:hover {
-  background-color: #0056b3;
-}
-
-.uploadButton:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.uploadButton:active {
-  transform: scale(0.98);
-}
-
-.paginate {
-  min-width: 2rem;
-  height: 2rem;
-  background-color: rgb(235, 235, 235);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  font-weight: bold;
-  transition: all 0.2s ease-in-out;
-  min-width: 2rem;
-  padding: 5px;
-  user-select: none;
-  cursor: pointer;
-  width: fit-content
-}
-
-.paginate:hover {
-  box-shadow: 0 0 2px 3px rgb(191, 224, 203);
-  background-color: rgb(14, 83, 14) !important;
-  color: white;
-}
-
-.pages {
-  margin-bottom: 10px;
-  padding-top: 3px;
+.uploadOptions {
   display: flex;
   gap: 10px;
-  width: 100%;
-  justify-content: center;
-  user-select: none;
 }
 
-.pageButton {
-  border: 1px solid #ccc;
-  padding: 8px 16px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s ease-in-out;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.pageButton:disabled {
-  background-color: white !important;
-  color: gray !important;
-  cursor: not-allowed;
-}
-
-.filteredGroupImageGrid {
-  padding: 3px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 0.25fr));
-  gap: 30px;
-}
-
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  cursor: pointer;
-}
-
-.groupImageContainer {
-  width: 100%;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 0 2px 2px rgb(203, 203, 203);
-  position: relative;
-  
-}
-
-.groupImageContainer img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  aspect-ratio: 1 / 1;
-}
-
-.partialOverlay{
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  clip-path: polygon(100% 0%, 0% 100%, 100% 100%);
-  background-color: rgba(216, 173, 43, 0.192); /* Yellow overlay with transparency */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  pointer-events: none;
-}
-
-.groupedViewButton {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: bold;
-  border: none;
-  background-color: #2563eb;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 10px;
-  transition: 0.1s ease-in;
-  cursor: pointer;
-}
-
-.groupedViewButton:hover {
-  background-color: #1c54ce;
-  transform: scale(1.01);
-}
-
-.scrollableContainer{
-  overflow-x: scroll;
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  padding: 4px;
-  transition: max-height 0.3s ease-in-out;
-}
-
-.scrollableContainer div{
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-weight: bold;
-}
-
-.availableColors{
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  overflow-x: scroll;
-  padding:3px;
-}
-
-.availableColors div{
-  display: flex;
-  flex-direction: column;
-  border-radius: 4px;
-  align-items: center;
-  height: 100%;
-  padding: 5px;
-  transition: all 0.5 ease-in-out
-
-
-}
-
-.availableColors div img{
-  border-radius: 4px 4px 0 0;
-}
-
-
-
-.matchingInventory {
-  display: flex;
-  flex-grow: 1;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 75%;
-  overflow: hidden;
-  padding: 2px;
-  transition: all 0.2s ease-in-out;
-  transform-origin: center center;
-}
-
-.matchingInventory.loading {
-  opacity: 0;
-  filter: blur(2px);
-  max-width: 100%;
-  padding: 20px 0;
-}
-
-.loaderOverlay{
-  transition: display 0.5s ease-out;
-  display: none;
-}
-
-
-
-.loaderOverlay.visible{
-  display: block;
-}
-
-.availableSizes{
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
-  padding: 2px
-}
-
-.availableSizes div{
-  overflow: hidden;
-}
-
-.groupedDescription{
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; 
-  -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
-}
-
-.addToReservation{
-  width: fit-content;
-  border: 3px double rgb(226, 225, 225);
-  border-radius: 5px;
-  padding: 5px;
-  transition: all 0.2s ease-in-out;
-  overflow: hidden;
-  display: flex;
-  gap: 40px;
-}
-
-.reservationQuant{
-  width: 5rem;
-  font-weight: bold;
-  font-size: 1rem;
-  padding: 5px;
-  border-radius: 8px;
-  border: 2px solid #e1e5e9;
-  transition: border-color 0.2s ease;
-  box-sizing: border-box;
-  background-color: white;
-  color: black;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-
-.reservationQuant:focus {
-  outline: none;
-  border-color: #538561;
-  box-shadow: 0 0 0 3px rgba(83, 133, 97, 0.1);
-}
-
-.reservation{
-  width: 100%;
-  font-weight: bold;
-  padding: 5px;
-  border-bottom: 1px solid rgb(232, 231, 231);
-  transition: background-color 0.3s ease-in-out;
-  cursor: pointer;
-  position: relative;
-
-}
-
-.reservation:hover{
-  background-color:  rgb(212, 212, 212);
-
-}
-
-.reservationOptions{
-  max-height: 100px;
-  overflow-y: scroll;
-  width: fit-content;
-  min-width: 5rem;
-}
-
-.reservationPreview{
-  position: fixed;
-  background-color: white;
-  box-shadow: 0 0 2px rgb(135, 135, 135);
-  border-radius: 10px;
-  padding: 10px;
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  font-weight: normal;
-
-
-}
-.sizeTable{
-  height: 100%;
-  display: inline-block;
-  border-left: 1px solid white;
-  border-right: 1px solid white;
-
-}
-
-.sizeTable div{
-  height: 50%;
-  padding: 10px;
-
-}
-
-.heightTransitionMin {
-  max-height: 0px;
-  padding: 0 5px;
-  border: none;
-  color: white;
-}
-
-.heightTransitionMax {
-  max-height: 2000px;
-
-}
-/*table styles*/
-.tableReg {
-  width: 10%;
-  height: 60px;
-  padding: 5px;
-  vertical-align: middle;
-}
-
-.tableSm img {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-  box-shadow: 0 0 2px gray;
-}
-
-.tableReg tr {
-  height: 60px;
-}
-
-.tableMed {
-  width: 15%;
-}
-
-.tableTiny {
-  max-width: 20px !important;
-}
-
-.tableLg {
-  width: calc(30% + 80px);
-  height: 60px;
-}
-
-.trash {
-  margin: 0 auto;
-}
-
-.tableReg,
-.tableMed,
-.tableSm,
-.tableLg,
-.tableTiny {
-  padding: 5px 10px;
-}
-
-.row th {
-  font-weight: normal;
-}
+/* ========================================
+   IMAGE HANDLING
+   ======================================== */
 
 .imagePreview {
   position: relative;
@@ -684,59 +291,16 @@
   transform: scale(0.9);
 }
 
-.urlInputContainer {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
+/* ========================================
+   TABLES
+   ======================================== */
 
-.urlSubmitButton {
-  padding: 5px 10px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.urlCancelButton {
-  padding: 5px;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.uploadOptions {
-  display: flex;
-  gap: 10px;
-}
-
-.urlButton {
-  padding: 5px 10px;
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.error {
-  color: #dc3545;
-  font-size: 14px;
-  margin-top: 5px;
-  padding: 8px 12px;
-  background-color: #f8d7da;
-  border-radius: 4px;
-  border: 1px solid #f5c6cb;
-}
-
-.add {
-  color: gray;
-}
-.add:hover {
-  color: green;
+.inventoryTable,
+.boxTable {
+  width: 100%;
+  white-space: nowrap;
+  border-collapse: collapse;
+  text-align: left;
 }
 
 .boxTable {
@@ -752,66 +316,98 @@
   min-width: 100px;
 }
 
-.searchContainer {
-  position: relative;
-  width: 40%;
-  height: 2rem;
-  margin-left: 1px;
-}
-.search {
-
-  font-size: 1rem;
-  color: gray;
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translate(10px, -50%);
-}
-
-.searchInput {
-  width: 100%;
-  height: 100%;
-  font-size: 1rem;
+.tableSm,
+.tableReg,
+.tableMed,
+.tableLg,
+.tableTiny {
   padding: 5px 10px;
-  padding-left: 32px;
-  padding-right: 100px;
-  background-color: white;
-  outline: none;
+  vertical-align: middle;
+}
+
+.tableSm img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
   box-shadow: 0 0 2px gray;
-  border-radius: 30px;
-  border: none;
 }
 
-.searchOption {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translate(0, -50%);
-  background-color: #f8f9fa;
-  padding: 6px 12px;
-  border-radius: 15px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #666;
+.tableReg {
+  width: 10%;
+  height: 60px;
+}
+
+.tableMed {
+  width: 15%;
+}
+
+.tableLg {
+  width: calc(30% + 80px);
+  height: 60px;
+}
+
+.tableTiny {
+  max-width: 20px !important;
+  min-width: 20px !important;
+}
+
+.tableRow:hover {
+  background-color: rgb(219, 233, 246) !important;
+}
+
+.row th {
+  font-weight: normal;
+}
+
+.trash {
+  margin: 0 auto;
+}
+
+.add {
+  color: gray;
+}
+
+.add:hover {
+  color: green;
+}
+
+.total {
+  width: 100%;
   display: flex;
-  align-items: center;
-  gap: 5px;
-  user-select: none;
-  transition: background-color 0.2s ease;
+  justify-content: end;
+  margin-top: 10px;
+  font-weight: bold;
 }
 
-.searchOption:hover {
-  background-color: #e9ecef;
+.priceResult {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: bold;
+  color: rgb(183, 51, 51);
 }
 
-.chevron {
-  font-size: 0.8rem;
-  transition: transform 0.2s ease;
+.tableFilterer {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
 }
 
-.chevron.open {
-  transform: rotate(180deg);
+/* Desktop/Mobile Table Toggle */
+.desktopTable {
+  display: table;
 }
+
+.mobileTable {
+  display: none;
+}
+
+/* ========================================
+   DROPDOWNS
+   ======================================== */
 
 .dropdown {
   position: fixed;
@@ -874,56 +470,525 @@
   background-color: #bbdefb;
 }
 
+.dropdownSearchContainer {
+  padding: 8px;
+  border-bottom: 1px solid #ccc;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
+}
+
+/* ========================================
+   SEARCH
+   ======================================== */
+
+.searchContainer {
+  position: relative;
+  width: 40%;
+  height: 2rem;
+  margin-left: 1px;
+}
+
+.search {
+  font-size: 1rem;
+  color: gray;
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.searchInput {
+  width: 100%;
+  height: 100%;
+  font-size: 1rem;
+  padding: 5px 100px 5px 32px;
+  background-color: white;
+  outline: none;
+  box-shadow: 0 0 2px gray;
+  border-radius: 30px;
+  border: none;
+}
+
+.searchOption {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #f8f9fa;
+  padding: 6px 12px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.searchOption:hover {
+  background-color: #e9ecef;
+}
+
+.chevron {
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
 .filters {
   display: flex;
-  flex-direction: row;
   justify-content: end;
   align-items: center;
   margin-bottom: 10px;
+}
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+
+.pageSelection,
+.addSelection {
+  display: flex;
+  gap: 10px;
+}
+
+.pageSelection {
+  justify-content: end;
+}
+
+.pageSelection div,
+.addSelection div {
+  padding: 4px 15px;
+  border-radius: 15px;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+}
+
+.addSelection {
+  position: absolute;
+  right: 20px;
+  top: -2rem;
+}
+
+.pages {
+  margin-bottom: 10px;
+  padding-top: 3px;
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+  user-select: none;
+}
+
+.paginate {
+  min-width: 2rem;
+  height: 2rem;
+  background-color: rgb(235, 235, 235);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+  padding: 5px;
+  user-select: none;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.paginate:hover {
+  box-shadow: 0 0 2px 3px rgb(191, 224, 203);
+  background-color: rgb(14, 83, 14) !important;
+  color: white;
+}
+
+/* ========================================
+   HISTORY
+   ======================================== */
+
+.history {
+  background-color: rgb(239, 238, 238);
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-in-out;
+  border-radius: 10px;
+}
+
+.history.visible {
+  max-height: 500px;
+  overflow-y: scroll;
+}
+
+.historyRow {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.1s ease-in-out;
+  border-radius: 40px 10px 10px 40px;
+}
+
+.historyRow:hover {
+  background-color: rgb(209, 207, 207);
+}
+
+.historyRow[data-selected="true"] {
+  background-color: rgb(209, 207, 207);
+  border-radius: 40px 15px 15px 40px;
+}
+
+.profile {
+  width: 2rem;
+  height: 2rem;
+  background-color: orange;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgb(153, 58, 58);
+  font-weight: bold;
+}
+
+.historyEntriesContainer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-in-out;
+}
+
+.historyEntriesContainer.visible {
+  max-height: 500px;
+  overflow-y: scroll;
+}
+
+.historyEntries {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  padding-left: calc(2rem + 10px);
+}
+
+.historyEntry {
+  border-bottom: 1.5px solid rgb(200, 199, 199);
+  cursor: default;
+}
+
+/* ========================================
+   GROUPS & GRIDS
+   ======================================== */
+
+.filteredGroupImageGrid {
+  padding: 3px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 0.25fr));
+  gap: 30px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.groupImageContainer {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 2px 2px rgb(203, 203, 203);
+  position: relative;
+}
+
+.groupImageContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+}
+
+.partialOverlay {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(100% 0%, 0% 100%, 100% 100%);
+  background-color: rgba(216, 173, 43, 0.192);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.groupedDescription {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
+
+/* ========================================
+   SCROLLABLE CONTAINERS
+   ======================================== */
+
+.scrollableContainer {
+  overflow-x: scroll;
+  display: flex;
+  gap: 20px;
+  padding: 4px;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.scrollableContainer div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: bold;
+}
+
+.availableColors {
+  display: flex;
+  gap: 10px;
+  overflow-x: scroll;
+  padding: 3px;
+}
+
+.availableColors div {
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+  align-items: center;
+  height: 100%;
+  padding: 5px;
+  transition: all 0.5s ease-in-out;
+}
+
+.availableColors div img {
+  border-radius: 4px 4px 0 0;
+}
+
+.availableSizes {
+  display: flex;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.availableSizes div {
+  overflow: hidden;
+}
+
+.sizeTable {
+  height: 100%;
+  display: inline-block;
+  border-left: 1px solid white;
+  border-right: 1px solid white;
+}
+
+.sizeTable div {
+  height: 50%;
+  padding: 10px;
+}
+
+/* ========================================
+   INVENTORY & RESERVATIONS
+   ======================================== */
+
+.matchingInventory {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 75%;
+  overflow: hidden;
+  padding: 2px;
+  transition: all 0.2s ease-in-out;
+  transform-origin: center center;
+}
+
+.matchingInventory.loading {
+  opacity: 0;
+  filter: blur(2px);
+  max-width: 100%;
+  padding: 20px 0;
+}
+
+.loaderOverlay {
+  transition: display 0.5s ease-out;
+  display: none;
+}
+
+.loaderOverlay.visible {
+  display: block;
+}
+
+.addToReservation {
+  width: fit-content;
+  border: 3px double rgb(226, 225, 225);
+  border-radius: 5px;
+  padding: 5px;
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+  display: flex;
+  gap: 40px;
+}
+
+.reservationQuant {
+  width: 5rem;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 5px;
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  background-color: white;
+  color: black;
+  appearance: none;
+}
+
+.reservationQuant:focus {
+  outline: none;
+  border-color: #538561;
+  box-shadow: 0 0 0 3px rgba(83, 133, 97, 0.1);
+}
+
+.reservation {
+  width: 100%;
+  font-weight: bold;
+  padding: 5px;
+  border-bottom: 1px solid rgb(232, 231, 231);
+  transition: background-color 0.3s ease-in-out;
+  cursor: pointer;
+  position: relative;
+}
+
+.reservation:hover {
+  background-color: rgb(212, 212, 212);
+}
+
+.reservationOptions {
+  max-height: 100px;
+  overflow-y: scroll;
+  width: fit-content;
+  min-width: 5rem;
+}
+
+.reservationPreview {
+  position: fixed;
+  background-color: white;
+  box-shadow: 0 0 2px rgb(135, 135, 135);
+  border-radius: 10px;
+  padding: 10px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  font-weight: normal;
 }
 
 .reservedBar {
   width: 100%;
   height: 20px;
   background-color: blue;
-  position: relative; 
+  position: relative;
 }
 
-.reserved{
+.reserved {
   position: absolute;
-  left: 0;
-  top: 0;
+  inset: 0 auto 0 0;
   width: 10%;
   height: 100%;
   background-color: green;
-  z-index: 10000000
+  z-index: 10000000;
 }
 
-.input[type="checkbox"]{
-  -ms-transform: scale(2); /* IE */
-  -moz-transform: scale(2); /* FF */
-  -webkit-transform: scale(2); /* Safari and Chrome */
-  -o-transform: scale(2); /* Opera */
-  transform: scale(2);
-  padding: 10px;
+/* ========================================
+   TRANSITIONS & ANIMATIONS
+   ======================================== */
+
+.heightTransitionMin {
+  max-height: 0;
+  padding: 0 5px;
+  border: none;
+  color: white;
 }
 
-.tableFilterer{
+.heightTransitionMax {
+  max-height: 2000px;
+}
+
+.visible {
+  max-height: 500px;
+  overflow-y: scroll;
+}
+
+/* ========================================
+   UTILITY & ERRORS
+   ======================================== */
+
+.error {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 5px;
+  padding: 8px 12px;
+  background-color: #f8d7da;
+  border-radius: 4px;
+  border: 1px solid #f5c6cb;
+}
+
+.urlInputContainer {
   display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
+  gap: 5px;
+  align-items: center;
 }
 
+.urlSubmitButton {
+  padding: 5px 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
+.urlCancelButton {
+  padding: 5px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
+/* ========================================
+   MOBILE RESPONSIVENESS
+   ======================================== */
 
 @media (max-width: 768px) {
-  .imageAndLocation {
+  .inventoryBackground {
+    padding: 10px;
+  }
+
+  .overlayBackground {
+    padding: 5px;
+  }
+
+  .imageAndLocation,
+  .horizontal {
     flex-direction: column;
   }
 
   .filters {
-    display: flex;
     flex-direction: column;
     gap: 10px;
     width: 100%;
@@ -937,75 +1002,39 @@
   .searchDropdown {
     right: 30px;
   }
-}
-
-/* Desktop table - show by default */
-.desktopTable {
-  display: table;
-}
-
-/* Mobile table - hide by default */
-.mobileTable {
-  display: none;
-}
-
-.inventoryTable {
-  width: 100%;
-  white-space: nowrap;
-  border-collapse: collapse;
-  text-align: left;
-  overflow-x: scroll;
-}
-
-.tableTiny {
-  min-width: 20px !important;
-}
-
-.inventoryBackground {
-  width: 100%;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  color: black;
-}
-
-/* Mobile styles */
-@media (max-width: 768px) {
-  .inventoryBackground {
-    padding: 10px;
-  }
-  .overlayBackground {
-    padding: 5px;
-  }
 
   .pageSelection {
     width: 100%;
     flex-direction: column;
-    justify-content: start;
+    justify-content: flex-start;
     padding: 0;
     margin: 0;
   }
 
-  .pageSelection div{
+  .pageSelection div {
     margin-top: 10px;
     padding: 0;
     width: 100%;
-    align-items: start;
+    align-items: flex-start;
   }
 
-  .addSelection{
+  .addSelection {
     position: relative;
     top: 0;
     left: 0;
-    justify-content: start;
+    justify-content: flex-start;
   }
-  /* Hide desktop table on mobile */
+
+  .tableFilterer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Hide desktop table, show mobile table */
   .desktopTable {
     display: none !important;
   }
 
-  /* Show mobile table on mobile */
   .mobileTable {
     display: block;
     width: 100%;
@@ -1059,7 +1088,6 @@
     min-height: 40px;
   }
 
-  /* Image styling for mobile */
   .mobileValue img {
     max-width: 100px;
     max-height: 100px;
@@ -1068,18 +1096,11 @@
     border: 1px solid #e2e8f0;
   }
 
-  /* URL input container for mobile */
   .mobileValue > div {
     width: 100%;
   }
-
-  .tableFilterer{
-    flex-direction: column;
-    gap: 10px;
-  }
 }
 
-/* Smaller mobile devices */
 @media (max-width: 480px) {
   .mobileField {
     flex-direction: column;
@@ -1097,7 +1118,6 @@
     width: 100%;
   }
 
-  /* Stack upload options vertically on very small screens */
   .mobileValue .uploadOptions {
     flex-direction: column;
     align-items: stretch;

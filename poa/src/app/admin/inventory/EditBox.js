@@ -157,6 +157,8 @@ const AddBox = ({
 
   const contentsRef = useRef(contents);
 
+  const [submitAttempted, setSubmitAttempted] = useState(false)
+
 
   const handleDropdownStateChange = useCallback((isOpen) => {
     setOpenDropdownCount(prev => {
@@ -439,32 +441,6 @@ const AddBox = ({
     });
   }, [options?.combos, searchValue, descriptionDict, sizeDict, brandDict]);
 
-  const getDescription = (item) => {
-    let des = "";
-    if (item.descriptionId && descriptionDict[item.descriptionId.toString()])
-      des = descriptionDict[item.descriptionId.toString()].description;
-    else if (item.description) des = item.description;
-    else return "N/A";
-    return des.length > 50 ? des.slice(0, 50) + "..." : des;
-  };
-
-  const getBrand = (item) => {
-    let brand = "";
-    if (item.brandId && brandDict[item.brandId.toString()])
-      brand = brandDict[item.brandId.toString()].brand;
-    else if (item.brand) brand = item.brand;
-    else return "N/A";
-    return brand;
-  };
-
-  const getSize = (item) => {
-    let size = "";
-    if (item.sizeId && sizeDict[item.sizeId.toString()])
-      size = sizeDict[item.sizeId.toString()].size;
-    else if (item.size) size = item.size;
-    else return "N/A";
-    return size;
-  };
 
   const downloadBoxPDF = async () => {
     try {
@@ -769,6 +745,8 @@ const AddBox = ({
     if (isSubmitting) {
       return;
     }
+
+    setSubmitAttempted(true)
 
     // Use the ref for the current contents throughout the function
     const currentContents = contentsRef.current;
@@ -1243,6 +1221,8 @@ const AddBox = ({
         "• " +
         (item.size || sizeDict[item.sizeId].size) +
         " " +
+        (item.brand || brandDict[item.brandId].brand) +
+        " " + 
         item.color +
         " " +
         (item.description || descriptionDict[item.descriptionId].description) +
@@ -1443,9 +1423,9 @@ const AddBox = ({
     },
   };
 
-  useEffect(() => {
-    console.log(contents)
-  }, [contents])
+  const getPrice = () => {
+    return contents.reduce((a, b) => a + b.quantity * b.price, 0)
+  }
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
@@ -1485,12 +1465,11 @@ const AddBox = ({
               </button>
             </div>
             <textarea
-              className={styles.input}
+              className={`${styles.input} ${submitAttempted && !boxDescription && styles.inputError}`}
               style={{ resize: "vertical", minHeight: "90px" }}
               value={boxDescription}
               onChange={(e) => setBoxDescription(e.target.value)}
               onBlur={(e) => setBoxDescriptionWithTracking(e.target.value)}
-              required
             />
           </div>
           <div className={styles.imageAndLocation}>
@@ -1504,7 +1483,8 @@ const AddBox = ({
                   className={styles.fileInput}
                   id="file-upload"
                 />
-                <label htmlFor="file-upload" className={styles.fileLabel}>
+                <label htmlFor="file-upload" className={`${styles.fileLabel} ${submitAttempted && !imageUrl && styles.inputError}`}
+>
                   <FaUpload /> Choose Image File
                 </label>
               </div>
@@ -1512,11 +1492,10 @@ const AddBox = ({
             <div className={styles.formInput}>
               <label>Box Location</label>
               <input
-                className={styles.input}
+                className={`${styles.input} ${submitAttempted && !boxLocation && styles.inputError}`}
                 value={boxLocation}
                 onChange={(e) => setBoxLocation(e.target.value)}
                 onBlur={(e) => setBoxLocationWithTracking(e.target.value)}
-                required
               />
             </div>
           </div>
@@ -1808,7 +1787,8 @@ const AddBox = ({
                               e.target.value
                             )
                           }
-                          className={styles.input}
+                          className={`${styles.input} ${submitAttempted && !item.style && styles.inputError}`}
+
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1856,7 +1836,8 @@ const AddBox = ({
                               e.target.value
                             )
                           }
-                          className={styles.input}
+                          className={`${styles.input} ${submitAttempted && !item.color && styles.inputError}`}
+
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1878,7 +1859,8 @@ const AddBox = ({
                             )
                           }
 
-                          className={styles.input}
+                          className={`${styles.input} ${submitAttempted && item.quantity == "" && styles.inputError}`}
+
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1912,7 +1894,8 @@ const AddBox = ({
                               : numValue.toFixed(2);
                             updateExistingContent(index, "price", finalValue);
                           }}
-                          className={styles.input}
+                          className={`${styles.input} ${submitAttempted && item.price < 0 && styles.inputError}`}
+
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -2084,6 +2067,7 @@ const AddBox = ({
                   ))}
                 </tbody>
               </table>
+              <div className={styles.total}>Box Total: ${getPrice()}</div>
             </div>
             <div
               style={{
@@ -2693,8 +2677,8 @@ const AddBox = ({
           </div>
           <div>
             <label style={{ fontWeight: "bold" }}>Visibility</label>
-            <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-              <div>
+            <div style={{ display: "flex", flexDirection: "row", gap: "20px", alignItems:"center" }}>
+              <div style={{display:"flex", alignItems:"center"}}>
                 <input
                   type="radio"
                   id="radio1"
@@ -2708,7 +2692,7 @@ const AddBox = ({
                 </label>
                 <br />
               </div>
-              <div>
+              <div style={{display:"flex", alignItems:"center"}}>
                 <input
                   type="checkbox"
                   id="checkbox1"
@@ -2736,7 +2720,7 @@ const AddBox = ({
                 <br />
               </div>
 
-              <div>
+              <div style={{display:"flex", alignItems:"center"}}>
                 <input
                   type="checkbox"
                   id="checkbox2"
@@ -2768,6 +2752,7 @@ const AddBox = ({
             <div className={styles.horizontal} style={{ zIndex: 0 }}>
               <div className={styles.formInput}>
                 <label>Discount</label>
+                <div style={{position:"relative", width: "100%"}}>
                 <input
                   className={styles.input}
                   onChange={(e) => {
@@ -2777,6 +2762,8 @@ const AddBox = ({
                   value={`${boxDiscount}%`}
                   required
                 />
+                 <div className={styles.priceResult}>- ${getPrice() * boxDiscount * 0.01}</div>
+                </div>
               </div>
               <div className={styles.formInput}>
                 <label>Minimum Purchase</label>

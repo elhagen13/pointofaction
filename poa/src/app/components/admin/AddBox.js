@@ -1,5 +1,5 @@
 "use client";
-import styles from "./inventory.module.css";
+import styles from "@/app/admin/inventory/inventory.module.css";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   FaUpload,
@@ -22,7 +22,7 @@ import { useUser } from "@clerk/nextjs";
 import AddOption from "@/app/components/admin/addOptions/AddOption";
 import EditPresets from "@/app/components/admin/editPresets/EditPresets";
 import Overlay from "@/app/components/popups/Overlay";
-import Dropdown from "../../admin/inventory/Dropdown";
+import Dropdown from "@/app/admin/inventory/Dropdown";
 
 export default function AddItem({
   onClose,
@@ -280,6 +280,8 @@ const AddBox = ({
   const dropdownRef = useRef(null);
   const [searchValue, setSearchValue] = useState("");
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+
+  const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const checkCurrent = useCallback(() => {
     // Check if user has entered any meaningful data for the current item
@@ -785,6 +787,8 @@ const AddBox = ({
     if (isSubmitting) {
       return;
     }
+
+    setSubmitAttempted(true)
     if (
       !boxDescription ||
       !imageUrl ||
@@ -1011,6 +1015,9 @@ const AddBox = ({
         (item.size || sizeDict[item.sizeId].size) +
         " " +
         item.color +
+        " " + 
+        (item.brand || brandDict[item.brandId].brand) +
+
         " " +
         (item.description || descriptionDict[item.descriptionId].description) +
         " (" +
@@ -1080,7 +1087,7 @@ const AddBox = ({
               </button>
             </div>
             <textarea
-              className={styles.input}
+              className={`${styles.input} ${submitAttempted && !boxDescription && styles.inputError}`}
               style={{ resize: "vertical", minHeight: "90px" }}
               value={boxDescription}
               onChange={(e) => {
@@ -1101,7 +1108,7 @@ const AddBox = ({
                   className={styles.fileInput}
                   id="file-upload"
                 />
-                <label htmlFor="file-upload" className={styles.fileLabel}>
+                <label htmlFor="file-upload" className={`${styles.fileLabel} ${submitAttempted && !imageUrl && styles.inputError}`}>
                   <FaUpload /> Choose Image File
                 </label>
               </div>
@@ -1109,7 +1116,7 @@ const AddBox = ({
             <div className={styles.formInput}>
               <label>Box Location</label>
               <input
-                className={styles.input}
+                className={`${styles.input} ${submitAttempted && !boxLocation && styles.inputError}`}
                 value={boxLocation}
                 onChange={(e) => {
                   setUnsavedChanges(true);
@@ -1409,7 +1416,7 @@ const AddBox = ({
                               e.target.value
                             )
                           }
-                          className={styles.input}
+                          className={`${styles.input} ${submitAttempted && !item.style && styles.inputError}`}
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1456,7 +1463,7 @@ const AddBox = ({
                               e.target.value
                             )
                           }
-                          className={styles.input}
+                          className={`${styles.input} ${submitAttempted && !item.color && styles.inputError}`}
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1478,7 +1485,7 @@ const AddBox = ({
                               parseInt(e.target.value) || ""
                             )
                           }
-                          className={styles.input}
+                          className={`${styles.input} ${submitAttempted && !item.quantity && styles.inputError}`}
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1508,7 +1515,7 @@ const AddBox = ({
                               isNaN(numValue) ? 0 : numValue.toFixed(2)
                             );
                           }}
-                          className={styles.input}
+                          className={`${styles.input} ${submitAttempted && item.price < 0 && styles.inputError}`}
                           style={{
                             margin: 0,
                             minHeight: "auto",
