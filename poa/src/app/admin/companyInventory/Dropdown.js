@@ -7,6 +7,7 @@ export default function Dropdown({
   placeholder = "Search...",
   onChange,
 }) {
+  console.log("TESTING TESTING", currentItem, options, placeholder, onChange)
   const [isOpen, setIsOpen] = useState(false);
   const [searchState, setSearchState] = useState(currentItem?.company || "");
   const [selectedValue, setSelectedValue] = useState("");
@@ -60,10 +61,12 @@ export default function Dropdown({
   };
 
   const handleKeyDown = (e) => {
+    console.log(1)
     if (!isOpen && e.key !== "Enter") {
       setIsOpen(true);
       return;
     }
+    console.log(2)
 
     switch (e.key) {
       case "ArrowDown":
@@ -124,8 +127,8 @@ export default function Dropdown({
       {isOpen && (
         <div style={{ position: "relative" }}>
           <div className={styles.dropdown}>
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((opt, i) => (
+            {filteredOptions?.length > 0 ? (
+              filteredOptions?.map((opt, i) => (
                 <div
                   className={styles.dropdownItem}
                   key={i}
