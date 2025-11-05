@@ -1,7 +1,12 @@
-import {useState, useEffect, useRef} from 'react'
-import styles from "./companyInventory.module.css"
+import { useState, useEffect, useRef } from "react";
+import styles from "./companyInventory.module.css";
 
-export default function Dropdown({ currentItem = null, options = [], placeholder = "Search...", onChange }) {
+export default function Dropdown({
+  currentItem = null,
+  options = [],
+  placeholder = "Search...",
+  onChange,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchState, setSearchState] = useState(currentItem?.company || "");
   const [selectedValue, setSelectedValue] = useState("");
@@ -9,12 +14,14 @@ export default function Dropdown({ currentItem = null, options = [], placeholder
   const dropdownRef = useRef(null);
 
   // Normalize options to always be strings
-  const normalizedOptions = options ? options.map((opt) => {
-    if (typeof opt === "string") {
-      return opt;
-    }
-    return opt?.value || opt?.company || String(opt);
-  }) : []
+  const normalizedOptions = options
+    ? options.map((opt) => {
+        if (typeof opt === "string") {
+          return opt;
+        }
+        return opt?.value || opt?.company || String(opt);
+      })
+    : [];
 
   // Filter options based on search
   const filteredOptions = normalizedOptions.filter((opt) =>
@@ -41,7 +48,7 @@ export default function Dropdown({ currentItem = null, options = [], placeholder
   const selectOption = (e, optionIndex) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const selectedOption = filteredOptions[optionIndex];
     if (!selectedOption) return;
 
@@ -76,7 +83,10 @@ export default function Dropdown({ currentItem = null, options = [], placeholder
       case "Enter":
         e.preventDefault();
         e.stopPropagation();
-        if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+        if (
+          highlightedIndex >= 0 &&
+          highlightedIndex < filteredOptions.length
+        ) {
           selectOption(e, highlightedIndex);
         }
         break;
@@ -92,43 +102,55 @@ export default function Dropdown({ currentItem = null, options = [], placeholder
     }
   };
 
+  useEffect(() => {
+    console.log(filteredOptions)
+  }, [filteredOptions])
+
   return (
     <div ref={dropdownRef} style={{ position: "relative", width: "100%" }}>
       <input
         placeholder={placeholder}
         onFocus={() => setIsOpen(true)}
         onClick={() => setIsOpen(true)}
-        onChange={(e) => {setSearchState(e.target.value);onChange?.(e.target.value);}}
+        onChange={(e) => {
+          setSearchState(e.target.value);
+          onChange?.(e.target.value);
+        }}
         onKeyDown={handleKeyDown}
         value={searchState}
         className={styles.input}
-        style={{position: "relative"}}
+        style={{ position: "relative" }}
       />
       {isOpen && (
-        <div style={{position: "relative"}}>
-        <div className={styles.dropdown}>
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((opt, i) => (
+        <div style={{ position: "relative" }}>
+          <div className={styles.dropdown}>
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt, i) => (
+                <div
+                  className={styles.dropdownItem}
+                  key={i}
+                  style={{
+                    backgroundColor:
+                      i === highlightedIndex ? "#e0e0e0" : "transparent",
+                  }}
+                  onMouseDown={(e) => selectOption(e, i)}
+                  onMouseEnter={() => setHighlightedIndex(i)}
+                >
+                  {opt}
+                </div>
+              ))
+            ) : (
               <div
-                className={styles.dropdownItem}
-                key={i}
                 style={{
-                  ...(i === highlightedIndex ? styles.highlighted : {}),
+                  ...styles.dropdownItem,
+                  color: "#999",
+                  fontStyle: "italic",
                 }}
-                onMouseDown={(e) => selectOption(e, i)}
-                onMouseEnter={() => setHighlightedIndex(i)}
               >
-                {opt}
+                No matches found
               </div>
-            ))
-          ) : (
-            <div
-              style={{ ...styles.dropdownItem, color: "#999", fontStyle: "italic" }}
-            >
-              No matches found
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         </div>
       )}
     </div>
