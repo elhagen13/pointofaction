@@ -24,7 +24,7 @@ export default function AddItem({
   const [imageUploading, setImageUploading] = useState(false);
   const [showUrl, setShowUrl] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
-  const [companies, setCompanies] = useState("");
+  const [companies, setCompanies] = useState([]);
   const [companyDict, setCompanyDict] = useState({});
 
   const [companySearch, setCompanySearch] = useState("");
