@@ -96,7 +96,7 @@ export default function MultiOpen({
           {items[0]?.brand || brandDict[items[0]?.brandId]?.brand}{" "}
           {items[0]?.size || sizeDict[items[0]?.sizeId]?.size} {items[0]?.style}
         </h2>
-        <h3 style={{ color: "gray" }}>{items.length} results found</h3>
+        <h3 style={{ color: "gray" }}>{items.reduce((a, b) =>  a + (b.quantity > 0 && !b.archived ? 1 : 0) , 0)} results found</h3>
         <div
           style={{display:"flex", flexDirection:"column", gap:"20px"}}
         >

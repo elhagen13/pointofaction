@@ -2,7 +2,7 @@ import { MongoClient } from 'mongodb';
 
 // MongoDB connection string - replace with your actual connection string
 const MONGODB_URI = process.env.MONGO_URI;
-const DATABASE_NAME = 'test';
+const DATABASE_NAME = process.env.DATABASE_NAME;
 const COLLECTION_NAME = 'descriptions';
 
 let cachedClient = null;
