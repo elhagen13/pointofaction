@@ -11,8 +11,8 @@
   "dependencies": {
     "@clerk/nextjs": "^6.20.1",
     "@mailchimp/mailchimp_marketing": "^3.0.80",
-    "@stripe/react-stripe-js": "^3.7.0",
-    "@stripe/stripe-js": "^7.4.0",
+    "@stripe/react-stripe-js": "^3.10.0",
+    "@stripe/stripe-js": "^7.9.0",
     "aws-sdk": "^2.1692.0",
     "heic-convert": "^2.1.0",
     "jspdf": "^3.0.3",

@@ -290,7 +290,7 @@ function Inventory() {
 
     const result = await response.json();
 
-    setInventory(result.data);
+    setInventory(result.data.filter((item) => !item.archived));
   };
 
   return (

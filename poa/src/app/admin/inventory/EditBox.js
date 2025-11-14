@@ -338,7 +338,7 @@ const AddBox = ({
 
       setVisibility([...visibility, ...newItems]);
 
-      setContents(matchingItems);
+      setContents(matchingItems.filter((item) => item.quantity > 0));
       setOriginalContents(matchingItems);
 
       // Store original box data for comparison

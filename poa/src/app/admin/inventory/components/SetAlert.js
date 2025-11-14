@@ -73,6 +73,7 @@ export default function SetAlert({ keyDict, getKey, item, refresh }) {
       setInventoryQuant(keyDict[getKey(item)]?.quantity || "");
     } finally {
       setSubmitting(false);
+      setVisible(false)
       refresh();
     }
   }

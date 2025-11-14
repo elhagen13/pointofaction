@@ -1,0 +1,143 @@
+.carouselContainer {
+  width: 100%;
+  height: 30rem;
+  padding: 20px;
+  position: relative;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+
+.navBtn {
+  padding: 0.5rem 1rem;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.navBtn:hover {
+  background: #555;
+}
+
+.imageContainer {
+  position: relative;
+  height: calc(100% - 60px);
+  overflow: hidden;
+  
+}
+
+.galleryItem {
+  position: absolute;
+  object-fit: contain;
+  height: 100%;
+  transition: all 0.2s ease-in-out;
+  border-radius: 20px;
+  box-shadow: 0 0 2px gray;
+}
+
+
+.center {
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  z-index: 100;
+}
+
+.left {
+  transform: translateX(-100%) scale(0.7);
+}
+
+.left1 {
+  left: 40%;
+  transform: translateX(-100%) scale(0.85);
+  z-index: 90;
+}
+
+.left2 {
+  left: 30%;
+  transform: translateX(-100%) scale(0.75);
+  z-index: 80;
+}
+
+.left3 {
+  left: 24%;
+  transform: translateX(-100%) scale(0.6);
+  z-index: 72;
+}
+.left4 {
+  left: 20%;
+  transform: translateX(-100%) scale(0.5);
+  z-index: 71;
+}
+.left5 {
+  left: 17%;
+  transform: translateX(-100%) scale(0.4);
+  z-index: 70;
+}
+
+.right {
+  transform: translateX(0) scale(0.7);
+}
+
+.right1 {
+  left: 60%;
+  transform: translateX(0) scale(0.85);
+  z-index: 90;
+}
+
+.right2 {
+  left: 70%;
+  transform: translateX(0) scale(0.75);
+  z-index: 80;
+}
+
+.right3 {
+  left: 76%;
+  transform: translateX(0) scale(0.6);
+  z-index: 72;
+}
+.right4 {
+  left: 80%;
+  transform: translateX(0) scale(0.5);
+  z-index: 71;
+}
+.right5 {
+  left: 83%;
+  transform: translateX(0) scale(0.4);
+  z-index: 70;
+}
+
+.hidden {
+  position: absolute;
+  z-index: 0;
+  transform: translateX(0) scale(0.4);
+  left: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mouseRight, .mouseLeft{
+  position: absolute;
+  z-index: 99999;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  cursor: pointer
+}
+
+.mouseLeft{
+  left: 0;
+  background-image: linear-gradient(to right, rgb(255, 255, 255), rgba(255, 255, 255, 0) 50%);
+}
+
+.mouseRight{
+  right: 0;
+  background-image: linear-gradient(to left, rgb(255, 255, 255), rgba(255, 255, 255, 0) 50%);;
+}
+

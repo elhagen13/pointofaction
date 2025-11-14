@@ -376,13 +376,13 @@ export default function EditItem({
                 style={{ backgroundColor: "rgb(167, 167, 167)", height: "2px" }}
               ></span>
             </div>
-            <div className={styles.sm}>
+            <div className={`${styles.sm} ${styles.mobile}`}>
               <label>Order Id</label>
             </div>
-            <div className={styles.sm}>
+            <div className={`${styles.sm} ${styles.mobile}`}>
               <label>Quantity</label>
             </div>
-            <div className={styles.sm}>
+            <div className={`${styles.sm} ${styles.mobile}`}>
               <label>Location</label>
             </div>
             {currentItem.instances?.map(([a, b, c], index) => {

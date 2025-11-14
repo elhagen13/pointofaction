@@ -63,6 +63,7 @@ export async function GET(request) {
     }
 
     const matchQuery = {
+      archived: false,
       style,
       color,
       ...(brandId || brand ? {
@@ -85,7 +86,7 @@ export async function GET(request) {
 
     // Use aggregation pipeline to join with boxes collection
     const pipeline = [
-      { $match: matchQuery },
+      { $match: matchQuery, },
       {
         $addFields: {
           boxObjectId: { $toObjectId: "$boxId" }
@@ -314,8 +315,9 @@ export async function POST(request) {
 
     const { itemIds } = await request.json();
     var objectIds = itemIds.map(id => new ObjectId(id))
-
+    console.log(objectIds)
     const items = await collection.find({ "_id": { $in: objectIds } }).toArray();
+    console.log(items)
 
     if (items.length === 0) {
       return Response.json(

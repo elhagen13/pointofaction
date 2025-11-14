@@ -129,12 +129,10 @@
   box-sizing: border-box;
 }
 
-
 .slideButton:not([style*="--progress"]):hover::before {
   width: 100%;
   transition: width 0.3s ease;
 }
-
 
 .buttonAbsolute {
   position: absolute;
@@ -369,4 +367,23 @@
     right: 0;
     top: -0.5rem;
   }
+
+  .grid {
+    display: block;
+  }
+
+
+  .innerGrid div.sm {
+    grid-column: span 6;
+  }
+  .innerGrid div.md {
+    grid-column: span 6;
+  }
+  .innerGrid div.lg {
+    grid-column: span 6;
+  }
+
+  .innerGrid div.mobile {
+  grid-column: span 2;
+}
 }

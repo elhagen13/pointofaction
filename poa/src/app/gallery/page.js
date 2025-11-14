@@ -1,5 +1,6 @@
 'use client'
 import GalleryCarousel from "../components/galleryCarousel";
+import Carousel from "../components/carousels/Carousel"
 import styles from "./gallery.module.css"
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -83,14 +84,13 @@ export default function Home() {
             </Link>
           ))}
         </div>
-        <GalleryCarousel images={images}/>
+        <Carousel images={images}/>
         <div className={styles.photoGrid}>
           {images.map((image, index) => (
             <div key={index}>
               <div className={styles.gridImageParent}>
                 <img src={image.imageLink} className={styles.gridImage}/>
               </div>
-            {image.company}
             </div>
           ))}
 

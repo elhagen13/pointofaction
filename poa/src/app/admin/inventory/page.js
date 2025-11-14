@@ -125,6 +125,7 @@ function Inventory() {
     });
 
     const result = await response.json();
+    console.log(result.data)
     setBoxes(result.data);
   };
 
@@ -203,6 +204,7 @@ function Inventory() {
   }
 
   const keyDict = useMemo(() => {
+    console.log("changing")
     const dict = {};
     keys.forEach((item) => {
       dict[item.key?.toString()] = item
@@ -314,12 +316,25 @@ function Inventory() {
 
       if (!dict[key]) {
         dict[key] = [item];
-      } else {
+      } else{
         dict[key].push(item);
       }
     }
 
     let groupedItems = Object.values(dict);
+
+    //now filter our archived - if its marked as tracked it will have returned
+    //this is okay to show but only if it is out of stock
+    //if the length of the group is 1 and it is archived or total is 0 it is ok to show
+    let modifiedArr = []
+    for(const arr of groupedItems){
+      modifiedArr.push(arr.filter((item) => {
+        if(arr.length < 1) return true
+        else return !item.archived
+      }))
+    }
+
+    console.log("GROUPED ITEMS: ", groupedItems)
 
     // Now filter the groups based on search criteria
     if (searchValue.trim() !== "") {
@@ -1452,7 +1467,7 @@ function Inventory() {
                 onMouseLeave={handleMouseUp}>
                 {filteredInventory.map((item, index) => {
 
-                  const quantity = item.reduce((acc, cur) => acc + cur.quantity, 0);
+                  const quantity = item.reduce((acc, cur) => acc + (!cur.archived ? cur.quantity: 0), 0);
                   const uniqueKey = getKey(item);
                   const oneSelected = multiEdit && item.some((i) => selectedItems.has(i._id));
 

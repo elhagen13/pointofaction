@@ -1,6 +1,7 @@
 'use client'
 import { use } from 'react'; 
 import GalleryCarousel from '../../components/galleryCarousel'
+import Carousel from '../../components/carousels/Carousel'
 import styles from "../gallery.module.css"
 import Link from 'next/link';
 import {useState, useEffect} from 'react'
@@ -38,7 +39,7 @@ export default function TargetPage({ params }) {
         </div>
       </div>
       <h1 className={styles.title}>{serviceRefined.split(/(?=[A-Z])/).join(" ")} Gallery</h1>
-      <GalleryCarousel images={filteredImages}/>
+      <Carousel images={filteredImages}/>
       <div className={styles.photoGrid}>
         {filteredImages?.map((image, index) => (
           <div key={index}>
