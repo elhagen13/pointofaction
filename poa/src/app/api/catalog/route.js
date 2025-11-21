@@ -33,18 +33,22 @@ export async function GET(request) {
 
     // Parse query parameters from URL
     const url = new URL(request.url);
-    const style = url.searchParams.get('style');
-    const color = url.searchParams.get('color');
-    const brand = url.searchParams.get('brand');
-    const size = url.searchParams.get('size');
+    const style = url.searchParams.get("style");
+    const color = url.searchParams.get("color");
+    const brand = url.searchParams.get("brand");
+    const size = url.searchParams.get("size");
+    const reserved = url.searchParams.get("ignore");
 
-    console.log(style, color, brand, size)
+    console.log(style, color, brand, size);
 
     // Validation - require at least style and color, plus either brand or size
     if (!style || !color || (!brand && !size)) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: style, color, and either brand or size" }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error:
+            "Missing required fields: style, color, and either brand or size",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -53,12 +57,16 @@ export async function GET(request) {
     let sizeId = null;
 
     if (brand) {
-      const brandDoc = await brands.findOne({ brand: { $regex: `^${brand}$`, $options: 'i' } });
+      const brandDoc = await brands.findOne({
+        brand: { $regex: `^${brand}$`, $options: "i" },
+      });
       brandId = brandDoc?._id;
     }
 
     if (size) {
-      const sizeDoc = await sizes.findOne({ size: { $regex: `^${size}$`, $options: 'i' } });
+      const sizeDoc = await sizes.findOne({
+        size: { $regex: `^${size}$`, $options: "i" },
+      });
       sizeId = sizeDoc?._id;
     }
 
@@ -66,70 +74,77 @@ export async function GET(request) {
       archived: false,
       style,
       color,
-      ...(brandId || brand ? {
-        $or: [
-          ...(brandId ? [{ brandId: String(brandId) }] : []),
-          ...(brand ? [{ brand: brand }] : []),
-        ]
-      } : {}),
-      ...(sizeId || size ? {
-        $or: [
-          ...(sizeId ? [{ sizeId: String(sizeId) }] : []),
-          ...(size ? [{ size: size }] : []),
-        ]
-      } : {}),
-      $expr: {
-        $gt: ["$quantity", "$reserved"]
-      }
+      ...(brandId || brand
+        ? {
+            $or: [
+              ...(brandId ? [{ brandId: String(brandId) }] : []),
+              ...(brand ? [{ brand: brand }] : []),
+            ],
+          }
+        : {}),
+      ...(sizeId || size
+        ? {
+            $or: [
+              ...(sizeId ? [{ sizeId: String(sizeId) }] : []),
+              ...(size ? [{ size: size }] : []),
+            ],
+          }
+        : {}),
+      ...(!reserved
+        ? {
+            $expr: {
+              $gt: ["$quantity", "$reserved"],
+            },
+          }
+        : {}),
     };
-
 
     // Use aggregation pipeline to join with boxes collection
     const pipeline = [
-      { $match: matchQuery, },
+      { $match: matchQuery },
       {
         $addFields: {
-          boxObjectId: { $toObjectId: "$boxId" }
-        }
+          boxObjectId: { $toObjectId: "$boxId" },
+        },
       },
       {
         $lookup: {
           from: "boxes",
           localField: "boxObjectId",
           foreignField: "_id",
-          as: "boxInfo"
-        }
+          as: "boxInfo",
+        },
       },
       {
         $addFields: {
           boxSequentialId: {
-            $arrayElemAt: ["$boxInfo.boxId", 0]
-          }
-        }
+            $arrayElemAt: ["$boxInfo.boxId", 0],
+          },
+        },
       },
       {
         $project: {
           boxInfo: 0, // Remove the boxInfo array from the final result
-          boxObjectId: 0 // Remove the temporary boxObjectId field
-        }
-      }
+          boxObjectId: 0, // Remove the temporary boxObjectId field
+        },
+      },
     ];
 
     const matches = await inventory.aggregate(pipeline).toArray();
+    console.log(matches);
 
-    return new Response(
-      JSON.stringify(matches),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
-
+    return new Response(JSON.stringify(matches), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("GET error:", error);
     return new Response(
       JSON.stringify({
         error: "Internal server error",
-        details: error.message
+        details: error.message,
       }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
@@ -143,20 +158,21 @@ export async function PATCH(request, res) {
     const sizes = db.collection("sizes");
 
     // Parse request body
-    const { style, color, brand, size, quantityToReserve } = await request.json();
+    const { style, color, brand, size, quantityToReserve } =
+      await request.json();
 
     // Validation
     if (!style || !color || (!brand && !size) || !quantityToReserve) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
     if (quantityToReserve <= 0) {
       return new Response(
         JSON.stringify({ error: "quantityToReserve must be greater than 0" }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -165,12 +181,16 @@ export async function PATCH(request, res) {
     let sizeId = null;
 
     if (brand) {
-      const brandDoc = await brands.findOne({ brand: { $regex: `^${brand}$`, $options: 'i' } });
+      const brandDoc = await brands.findOne({
+        brand: { $regex: `^${brand}$`, $options: "i" },
+      });
       brandId = brandDoc?._id;
     }
 
     if (size) {
-      const sizeDoc = await sizes.findOne({ size: { $regex: `^${size}$`, $options: 'i' } });
+      const sizeDoc = await sizes.findOne({
+        size: { $regex: `^${size}$`, $options: "i" },
+      });
       sizeId = sizeDoc?._id;
     }
 
@@ -178,28 +198,30 @@ export async function PATCH(request, res) {
       style,
       color,
       ...(brandId && { brandId: String(brandId) }),
-      ...(sizeId && { sizeId: String(sizeId) })
+      ...(sizeId && { sizeId: String(sizeId) }),
     };
-
 
     console.log("Final query being sent:", JSON.stringify(query));
 
     // Find matching items and sort by reserved quantity (most to least)
-    const matches = await inventory.aggregate([
-      { $match: query },
-      {
-        $addFields: {
-          availableQuantity: {
-            $subtract: [{ $ifNull: ["$quantity", 0] },
-            { $ifNull: ["$reserved", 0] }]
-          }
-        }
-      },
-      { $sort: { availableQuantity: 1, _id: 1 } }
-    ]).toArray();
+    const matches = await inventory
+      .aggregate([
+        { $match: query },
+        {
+          $addFields: {
+            availableQuantity: {
+              $subtract: [
+                { $ifNull: ["$quantity", 0] },
+                { $ifNull: ["$reserved", 0] },
+              ],
+            },
+          },
+        },
+        { $sort: { availableQuantity: 1, _id: 1 } },
+      ])
+      .toArray();
 
-    console.log("MATCHES-", matches)
-
+    console.log("MATCHES-", matches);
 
     const totalAvailable = matches.reduce((total, item) => {
       const reserved = item.reserved || 0;
@@ -208,7 +230,9 @@ export async function PATCH(request, res) {
     }, 0);
 
     if (totalAvailable < quantityToReserve) {
-      throw new Error(`Insufficient inventory. Requested: ${quantityToReserve}, Available: ${totalAvailable}`);
+      throw new Error(
+        `Insufficient inventory. Requested: ${quantityToReserve}, Available: ${totalAvailable}`
+      );
     }
 
     let remainingToReserve = quantityToReserve;
@@ -217,7 +241,7 @@ export async function PATCH(request, res) {
 
     // Process items in order (most reserved first)
     for (const item of matches) {
-      console.log(item)
+      console.log(item);
       if (remainingToReserve <= 0) break;
 
       const currentReserved = item.reserved || 0;
@@ -226,7 +250,10 @@ export async function PATCH(request, res) {
       if (availableInThisItem === 0) continue;
 
       // Determine how much to reserve from this item
-      const toReserveFromThisItem = Math.min(remainingToReserve, availableInThisItem);
+      const toReserveFromThisItem = Math.min(
+        remainingToReserve,
+        availableInThisItem
+      );
       const newReservedTotal = currentReserved + toReserveFromThisItem;
 
       // Update the item
@@ -235,17 +262,15 @@ export async function PATCH(request, res) {
         {
           $set: {
             reserved: newReservedTotal,
-            updatedAt: new Date()
-          }
+            updatedAt: new Date(),
+          },
         },
         { returnDocument: "after" }
       );
 
       let box = null;
       if (item.boxId) {
-        box = await boxes.findOne(
-          { _id: new ObjectId(item.boxId) }
-        )
+        box = await boxes.findOne({ _id: new ObjectId(item.boxId) });
       }
 
       updatedItems.push(updatedItem);
@@ -261,12 +286,12 @@ export async function PATCH(request, res) {
         ...(item.location && { location: item.location }),
         ...(box && {
           boxId: box.boxId,
-          location: box.location
+          location: box.location,
         }),
         previousReserved: currentReserved,
         newReserved: newReservedTotal,
         quantityReservedFromThisItem: toReserveFromThisItem,
-        availableAfterReservation: item.quantity - newReservedTotal
+        availableAfterReservation: item.quantity - newReservedTotal,
       });
 
       remainingToReserve -= toReserveFromThisItem;
@@ -277,36 +302,31 @@ export async function PATCH(request, res) {
       totalQuantityReserved: quantityToReserve,
       itemsUpdated: updatedItems.length,
       reservationDetails,
-      updatedItems: updatedItems.map(item => ({
+      updatedItems: updatedItems.map((item) => ({
         _id: item._id,
         style: item.style,
         color: item.color,
         quantity: item.quantity,
         reserved: item.reserved,
-        available: item.quantity - (item.reserved || 0)
-      }))
+        available: item.quantity - (item.reserved || 0),
+      })),
     };
 
-    return new Response(
-      JSON.stringify(result),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
-
-
-
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("PATCH error:", error);
     return new Response(
       JSON.stringify({
         error: "Internal server error",
-        details: error.message
+        details: error.message,
       }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
-
-
 
 export async function POST(request) {
   try {
@@ -314,16 +334,16 @@ export async function POST(request) {
     const collection = db.collection(COLLECTION_NAME);
 
     const { itemIds } = await request.json();
-    var objectIds = itemIds.map(id => new ObjectId(id))
-    console.log(objectIds)
-    const items = await collection.find({ "_id": { $in: objectIds } }).toArray();
-    console.log(items)
+    var objectIds = itemIds.map((id) => new ObjectId(id));
+    console.log(objectIds);
+    const items = await collection.find({ _id: { $in: objectIds } }).toArray();
+    console.log(items);
 
     if (items.length === 0) {
       return Response.json(
         {
           success: false,
-          error: 'No items found with this ID'
+          error: "No items found with this ID",
         },
         { status: 404 }
       );
@@ -331,20 +351,17 @@ export async function POST(request) {
 
     return Response.json({
       success: true,
-      data: items
+      data: items,
     });
-
   } catch (error) {
-    console.error('GET error:', error);
+    console.error("GET error:", error);
     return Response.json(
       {
         success: false,
-        error: 'Failed to fetch items',
-        details: error.message
+        error: "Failed to fetch items",
+        details: error.message,
       },
       { status: 500 }
     );
   }
 }
-
-

@@ -10,6 +10,8 @@ export default function SetQuantity({
     descriptionDict,
     addedItems,
     setAddedItems,
+    onSubmit,
+    submitting
 }) {
     console.log(addedItems)
     const [sizes, setSizes] = useState([]);
@@ -52,36 +54,67 @@ export default function SetQuantity({
         e.stopPropagation();
     };
 
-    const onSubmit = () => {       
-        const sizeDict = {};
+    const handleSubmit = async () => {
+        // Build items to submit from orderQuant
+        const itemsToSubmit = [];
+        
         sizes.forEach((size, index) => {
-            if (orderQuant[index] !== 0) {
-                sizeDict[size[0]] = {
-                    inOrder: orderQuant[index],
-                    pulled: 0,
-                    newQuantity: orderQuant[index],
-                    quantity: size[1].available + size[1].reserved, // simplified
-                    reserved: size[1].reserved
-                };
+            const quantity = parseInt(orderQuant[index]) || 0;
+            if (quantity > 0) {
+                const item = sizeToItemMap[size[0]];
+                if (item) {
+                    itemsToSubmit.push({
+                        itemId: item._id,
+                        quantReserved: quantity
+                    });
+                }
             }
         });
-  
-        setAddedItems(prevItems => [
-            ...prevItems,
-            {
-                brand: items[0].brand || brandDict[items[0].brandId]?.brand || "N/A",
-                color: items[0].color,
-                description: items[0].description || descriptionDict[items[0].descriptionId]?.description || "N/A",
-                image: items[0].image,
-                price: items[0].price,
-                style: items[0].style,
-                sizes: { ...sizeDict }
+
+        if (itemsToSubmit.length === 0) {
+            alert("Please select at least one item with quantity > 0");
+            return;
+        }
+
+        console.log("Submitting items:", itemsToSubmit);
+
+        // Call the onSubmit function passed from parent
+        if (onSubmit) {
+            const success = await onSubmit(itemsToSubmit);
+            if (success) {
+                onClose();
             }
-        ]);
+        } else {
+            // Fallback to old behavior if onSubmit not provided
+            const sizeDict = {};
+            sizes.forEach((size, index) => {
+                if (orderQuant[index] !== 0) {
+                    sizeDict[size[0]] = {
+                        inOrder: orderQuant[index],
+                        pulled: 0,
+                        newQuantity: orderQuant[index],
+                        quantity: size[1].available + size[1].reserved,
+                        reserved: size[1].reserved
+                    };
+                }
+            });
+      
+            setAddedItems(prevItems => [
+                ...prevItems,
+                {
+                    brand: items[0].brand || brandDict[items[0].brandId]?.brand || "N/A",
+                    color: items[0].color,
+                    description: items[0].description || descriptionDict[items[0].descriptionId]?.description || "N/A",
+                    image: items[0].image,
+                    price: items[0].price,
+                    style: items[0].style,
+                    sizes: { ...sizeDict }
+                }
+            ]);
 
-        onClose();
+            onClose();
+        }
     };
-
 
     // Updated useEffect with safe parsing
     useEffect(() => {
@@ -106,8 +139,6 @@ export default function SetQuantity({
             }
         }
 
-
-
         const arr = [];
         for (const [key, val] of Object.entries(tempDict)) {
             arr.push([key, val]);
@@ -122,7 +153,6 @@ export default function SetQuantity({
         let orderQuantArr = arr.map(([size]) => {
             return 0;
         });
-
 
         setOrderQuant(orderQuantArr);
         setSizes(arr);
@@ -178,7 +208,6 @@ export default function SetQuantity({
                         <div>Reserved</div>
                         <div>Available</div>
                         <div>Order</div>
-
                     </div>
                     <div
                         style={{
@@ -235,7 +264,7 @@ export default function SetQuantity({
                                     <input
                                         type="number"
                                         min={0}
-                                        max={sizes[index][1]}
+                                        max={sizes[index][1].available}
                                         value={orderQuant[index]}
                                         className={styles.input}
                                         onBlur={validateInput}
@@ -252,8 +281,15 @@ export default function SetQuantity({
                     </div>
                 </div>
                 <div style={{ width: "100%", display: "flex", justifyContent: "end", padding: "20px", paddingTop: "0" }}>
-                    <div className={styles.shoppingButton} onClick={onSubmit} >
-                        Add
+                    <div 
+                        className={styles.shoppingButton} 
+                        onClick={handleSubmit}
+                        style={{
+                            opacity: submitting ? 0.5 : 1,
+                            cursor: submitting ? "not-allowed" : "pointer"
+                        }}
+                    >
+                        {submitting ? "Adding..." : "Add"}
                     </div>
                 </div>
             </div>

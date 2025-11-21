@@ -28,7 +28,6 @@ async function connectToDatabase() {
   }
 }
 
-// GET items by itemId
 export async function GET(request, { params }) {
   try {
     const { db } = await connectToDatabase();
@@ -46,17 +45,237 @@ export async function GET(request, { params }) {
       );
     }
 
-    const items = await collection.find({ _id: new ObjectId(id) }).toArray();
-
-    if (items.length === 0) {
-      return Response.json(
+    const items = await collection
+      .aggregate([
         {
-          success: false,
-          error: "No items found with this ID",
+          $match: { _id: new ObjectId(id) },
         },
-        { status: 404 }
-      );
-    }
+        {
+          $addFields: {
+            items: {
+              $map: {
+                input: "$items",
+                as: "item",
+                in: {
+                  $mergeObjects: [
+                    "$$item",
+                    {
+                      itemIdObj: { $toObjectId: "$$item.itemId" },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "inventory",
+            localField: "items.itemIdObj",
+            foreignField: "_id",
+            as: "itemDetails",
+          },
+        },
+        {
+          $addFields: {
+            itemDetails: {
+              $map: {
+                input: "$itemDetails",
+                as: "detail",
+                in: {
+                  $mergeObjects: [
+                    "$$detail",
+                    {
+                      boxIdObj: {
+                        $cond: {
+                          if: { $ne: ["$$detail.boxId", null] },
+                          then: { $toObjectId: "$$detail.boxId" },
+                          else: null,
+                        },
+                      },
+                      brandIdObj: {
+                        $cond: {
+                          if: { $ne: ["$$detail.brandId", null] },
+                          then: { $toObjectId: "$$detail.brandId" },
+                          else: null,
+                        },
+                      },
+                      sizeIdObj: {
+                        $cond: {
+                          if: { $ne: ["$$detail.sizeId", null] },
+                          then: { $toObjectId: "$$detail.sizeId" },
+                          else: null,
+                        },
+                      },
+                      descriptionIdObj: {
+                        $cond: {
+                          if: { $ne: ["$$detail.descriptionId", null] },
+                          then: { $toObjectId: "$$detail.descriptionId" },
+                          else: null,
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "boxes",
+            localField: "itemDetails.boxIdObj",
+            foreignField: "_id",
+            as: "boxDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "brands",
+            localField: "itemDetails.brandIdObj",
+            foreignField: "_id",
+            as: "brandDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "sizes",
+            localField: "itemDetails.sizeIdObj",
+            foreignField: "_id",
+            as: "sizeDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "descriptions",
+            localField: "itemDetails.descriptionIdObj",
+            foreignField: "_id",
+            as: "descriptionDetails",
+          },
+        },
+        {
+          $addFields: {
+            items: {
+              $map: {
+                input: "$items",
+                as: "item",
+                in: {
+                  $mergeObjects: [
+                    "$$item",
+                    {
+                      currentItemData: {
+                        $let: {
+                          vars: {
+                            matchedDetail: {
+                              $arrayElemAt: [
+                                {
+                                  $filter: {
+                                    input: "$itemDetails",
+                                    cond: {
+                                      $eq: ["$$this._id", "$$item.itemIdObj"],
+                                    },
+                                  },
+                                },
+                                0,
+                              ],
+                            },
+                          },
+                          in: {
+                            $mergeObjects: [
+                              "$$matchedDetail",
+                              { boxData: {
+                                $arrayElemAt: [
+                                    {
+                                      $filter: {
+                                        input: "$boxDetails",
+                                        cond: {
+                                          $eq: [
+                                            "$$this._id",
+                                            "$$matchedDetail.boxIdObj",
+                                          ],
+                                        },
+                                      },
+                                    },
+                                    0,
+                                  ],
+                              },
+                                brandData: {
+                                  $arrayElemAt: [
+                                    {
+                                      $filter: {
+                                        input: "$brandDetails",
+                                        cond: {
+                                          $eq: [
+                                            "$$this._id",
+                                            "$$matchedDetail.brandIdObj",
+                                          ],
+                                        },
+                                      },
+                                    },
+                                    0,
+                                  ],
+                                },
+                                sizeData: {
+                                  $arrayElemAt: [
+                                    {
+                                      $filter: {
+                                        input: "$sizeDetails",
+                                        cond: {
+                                          $eq: [
+                                            "$$this._id",
+                                            "$$matchedDetail.sizeIdObj",
+                                          ],
+                                        },
+                                      },
+                                    },
+                                    0,
+                                  ],
+                                },
+                                descriptionData: {
+                                  $arrayElemAt: [
+                                    {
+                                      $filter: {
+                                        input: "$descriptionDetails",
+                                        cond: {
+                                          $eq: [
+                                            "$$this._id",
+                                            "$$matchedDetail.descriptionIdObj",
+                                          ],
+                                        },
+                                      },
+                                    },
+                                    0,
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            boxDetails: 0,
+            itemDetails: 0,
+            brandDetails: 0,
+            sizeDetails: 0,
+            descriptionDetails: 0,
+            boxIdObj: 0, // Clean up temporary field
+            "items.itemIdObj": 0,
+            "items.currentItemData.boxIdObj": 0,
+            "items.currentItemData.brandIdObj": 0,
+            "items.currentItemData.sizeIdObj": 0,
+            "items.currentItemData.descriptionIdObj": 0,
+          },
+        },
+      ])
+      .toArray();
 
     return Response.json({
       success: true,
@@ -80,7 +299,8 @@ export async function PATCH(request, { params }) {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
     const { id } = await params;
-    const { reservationDetails, status, soIn, orderTitle } = await request.json();
+    const { reservationDetails, status, soIn, orderTitle } =
+      await request.json();
 
     // Validate ObjectId format
     if (!ObjectId.isValid(id)) {
@@ -175,14 +395,14 @@ export async function DELETE(request, { params }) {
 
     if (brand) {
       const brandDoc = await brands.findOne({
-        brand: { $regex: `^${brand}$`, $options: "i" }
+        brand: { $regex: `^${brand}$`, $options: "i" },
       });
       brandId = brandDoc?._id;
     }
 
     if (size) {
       const sizeDoc = await sizes.findOne({
-        size: { $regex: `^${size}$`, $options: "i" }
+        size: { $regex: `^${size}$`, $options: "i" },
       });
       sizeId = sizeDoc?._id;
     }
@@ -192,7 +412,7 @@ export async function DELETE(request, { params }) {
     const ids = reservation.items.map((item) => new ObjectId(item.itemId));
     console.log(brandId, sizeId, style, color);
     console.log(ids);
-    console.log(String(brandId), String(sizeId))
+    console.log(String(brandId), String(sizeId));
 
     //find which objects in the reservation list have matching (style, color, brand, and size) && then
     //cycle through and remove however many needed to be removed
@@ -206,7 +426,7 @@ export async function DELETE(request, { params }) {
       })
       .toArray();
 
-    console.log(matchingObjects)
+    console.log(matchingObjects);
 
     const reservationItemDict = {};
     for (const item of reservation.items) {
@@ -244,7 +464,7 @@ export async function DELETE(request, { params }) {
     const updatesForReservation = [];
     const updatesForInventory = [];
     console.log("Quantity:", quantity);
-    console.log(matchingObjects)
+    console.log(matchingObjects);
 
     // Process each matching object and reduce quantities
     // Now prioritizing items with fewer pulled items

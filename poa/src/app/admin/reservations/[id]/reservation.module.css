@@ -1,0 +1,254 @@
+.page{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+}
+
+.grid{
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.cardWrapper{
+    position: relative;
+}
+
+.card{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: start;
+    position: relative;
+    box-shadow: 0 0 3px rgb(199, 199, 199);
+    height: 10rem;
+    overflow: visible;
+    border-radius: 20px;
+    padding: 10px;
+    font-weight: bold;
+    gap: 20px;
+    background-color: white;
+}
+
+.imageContainer{
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    background-color: rgb(239, 239, 239);
+    display: flex;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.image{
+    height: 100%;
+    object-fit: contain;
+}
+
+.buttonContainer{
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background-color: white;
+    border-radius: 0 20px 0 10px;
+}
+
+.button{
+    min-width: 50px;
+    width: 100%;
+    background-color: rgb(216, 214, 214);
+    border: 2px solid rgb(216, 214, 214);
+    padding: 3px 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.pulled, .remaining{
+    background-color: white;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.pulled{
+    border: 2px solid rgb(191, 54, 54);
+    color: rgb(191, 54, 54);
+}
+
+.remaining{
+    border: 2px solid rgb(12, 99, 25);
+    color: rgb(12, 99, 25);
+}
+
+.selected, .remaining:hover{
+    background-color: rgb(12, 99, 25);
+    color: white;
+}
+
+.selectedPulled, .pulled:hover{
+    background-color: rgb(191, 54, 54);
+    color: white;
+}
+
+
+.editCardContainer{
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 15rem;
+    background-color: rgb(240, 240, 240);
+    z-index: 100;
+    margin-top: 10px;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideDown 0.3s ease-out;
+    font-weight: bold;
+}
+
+.editCard{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input{
+    border: none;
+    font-size: 1rem;
+    padding: 5px 10px;
+    border-radius: 5px;
+    box-shadow: inset 0px 0px 4px rgb(89, 158, 188);
+    width: 5rem;
+}
+
+.loading{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.options{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    overflow-x: scroll;
+    gap: 10px;
+    padding: 2px;
+}
+
+.boxCards{
+    background-color: white;
+    padding: 10px 20px;
+    width: 12rem;
+    min-width: 12rem;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-radius: 10px;
+    box-shadow: 0 0 2px rgb(151, 149, 149);
+}
+
+.apart{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.saveButton{
+    width: fit-content;
+    padding: 3px 10px;
+    font-size: 1rem;
+    background-color: rgba(200, 219, 204, 0.764);;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.saveButton:disabled{
+    background-color: rgba(156, 156, 156, 0.37);;
+    color: rgb(99, 97, 97);
+    border: 2px solid rgb(99, 97, 97);
+    cursor: not-allowed;
+
+}
+
+.table{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.row{
+    padding: 5px;
+    border-bottom: 2px solid rgb(189, 189, 189);
+    transition: background-color 0.2s ease-in-out;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+
+.returnButton{
+    padding: 5px;
+    border: 1.5px solid rgba(0, 0, 0, 0);
+    display: flex;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.returnButton:hover{
+    border-color: black;
+    border-radius: 10px;
+}
+
+.addToRes{
+    font-weight: bold;
+    border: 2.5px solid #1c54ce;
+    padding: 2px 5px;
+    color: #1c54ce;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out
+}
+
+.addToRes:hover{
+    background-color: #1c54ce;
+    color: white;
+}
+
+
+@keyframes slideDown {
+    from {
+        height: 0px;
+        overflow: hidden;
+        transform: translateY(-10px);
+    }
+    to {
+        height: 15rem;
+        transform: translateY(0);
+    }
+}
+
+@media(max-width: 769px){
+    .page{
+        grid-template-columns: 1fr;
+    }
+    
+    .editCard{
+        /* On mobile, make it span wider if needed */
+        left: -10px;
+        width: calc(100% + 20px);
+    }
+}

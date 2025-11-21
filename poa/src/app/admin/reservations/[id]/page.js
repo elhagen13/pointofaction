@@ -1,975 +1,466 @@
 "use client";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
-import styles from "./reserve.module.css";
-import { FaTrash } from "react-icons/fa";
-import { GrPowerReset } from "react-icons/gr";
-import AddBox from "@/app/components/admin/AddBox";
+import styles from "./reservation.module.css";
 import { BeatLoader } from "react-spinners";
-import { useRouter } from "next/navigation";
-import { IoAdd } from "react-icons/io5";
-import AddToRes from "./AddToRes.js"
+import { RiArrowGoBackLine } from "react-icons/ri";
+import AddToRes from "./AddToRes";
 
 export default function Reservation({ params }) {
   const { id } = React.use(params);
-  const router = useRouter();
-  const [reservation, setReservation] = useState(null);
-  const [inventory, setInventory] = useState([]);
-  const [items, setItems] = useState(null);
-  const [addedItems, setAddedItems] = useState([])
-  const [options, setOptions] = useState({});
-  const [newBox, setNewBox] = useState(null);
-  const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
-  const [boxes, setBoxes] = useState([]);
-  const [displaced, setDisplaced] = useState([]);
-  const [selectedBox, setSelectedBox] = useState(null);
-
-  const [displacedPlacement, setDisplacedPlacement] = useState({});
-
-  const [saveVersion, setSaveVersion] = useState(1);
-  const [newBoxVersion, setNewBoxVersion] = useState(0);
-
-  const [newBoxes, setNewBoxes] = useState([]);
-  const [addBoxVisible, setAddBoxVisible] = useState(false);
-
+  const [reservation, setReservation] = useState({});
+  const [editReservation, setEditReservation] = useState(null);
+  const [returnReservation, setReturnReservation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [options, setOptions] = useState([]);
+  const [quantityAvailable, setQuantityAvailable] = useState(0);
+  const [idSet, setIdSet] = useState({});
+  const [quantityMap, setQuantityMap] = useState({});
+  const [allocatedRemaining, setAllocatedRemaining] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [groupedItems, setGroupedItems] = useState([]);
+  const [returnQuantities, setReturnQuantities] = useState({});
+  const [submittingReturn, setSubmittingReturn] = useState(false);
   const [add, setAdd] = useState(false);
-
-  const [submitting, setSubmitting] = useState(false);
-
-  const [existingKeys, setExistingKeys] = useState([])
-
-  const [idDict, setIdDict] = useState({})
-
-  useEffect(() => {
-    getReservation();
-    getItemOptions();
-    getBoxes();
-  }, []);
-
-  const refresh = () => {
-    getReservation();
-  };
-
-  const appendToBox = (itemData) => {
-    setNewBoxes([
-      ...newBoxes,
-      {
-        ...itemData,
-        boxId: selectedBox._id,
-      },
-    ]);
-    setAddBoxVisible(false);
-    setDisplaced(displaced.filter((d) => !d.selected));
-    setSelectedBox(null);
-  };
-
-  useEffect(() => {
-    console.log(newBoxes);
-  }, [newBoxes]);
-
-  const sizeDict = useMemo(() => {
-    const dict = {};
-    if (!options.sizes) return {};
-    options.sizes.forEach((item) => {
-      dict[item._id.toString()] = item;
-      dict[item.size.toLowerCase()] = item;
-    });
-    return dict;
-  }, [options]);
-
-  const descriptionDict = useMemo(() => {
-    if (!options.descriptions) return {};
-    const dict = {};
-    options.descriptions.forEach((item) => {
-      dict[item._id.toString()] = item;
-      dict[item.description.toLowerCase()] = item;
-    });
-    return dict;
-  }, [options]);
-
-  const brandDict = useMemo(() => {
-    if (!options.brands) return {};
-    const dict = {};
-    options.brands.forEach((item) => {
-      dict[item._id.toString()] = item;
-      dict[item.brand.toLowerCase()] = item;
-    });
-    return dict;
-  }, [options]);
-
-  const getItemOptions = async () => {
-    let response = await fetch("/api/details/brands", {
-      method: "GET",
-    });
-    let resultBrands = await response.json();
-
-    response = await fetch("/api/details/sizes", {
-      method: "GET",
-    });
-    let resultSizes = await response.json();
-
-    response = await fetch("/api/details/descriptions", {
-      method: "GET",
-    });
-    let resultDescriptions = await response.json();
-
-    setOptions({
-      ...options,
-      brands: resultBrands.data,
-      sizes: resultSizes.data,
-      descriptions: resultDescriptions.data,
-    });
-  };
-
-
-
-  const contentDict = useMemo(() => {
-    const dict = {};
-    inventory.forEach((item) => {
-      dict[item._id.toString()] = item;
-    });
-    return dict;
-  }, [inventory]);
-
-  useEffect(() => {
-    if (!inventory || !reservation || Object.entries(contentDict).length <= 0)
-      return;
-    let cartList = [];
-    console.log("RESERVATION ITEMS: ", reservation.items, reservation)
-
-    let itemDict = {}
-
-    for (const item of reservation.items) {
-      const key = `${item.style}-${brandDict[item.brandId]?.brand || item.brand ||
-         "N/A"}-${item.color}-${sizeDict[item.sizeId]?.size || item.size || "N/A"}`
-
-      if (contentDict[item.itemId]) {
-        cartList.push({
-          ...contentDict[item.itemId],
-          inOrder: item.quantReserved || 0,
-          pulledAlready: item.pulled || 0,
-        })
-
-
-        if (!itemDict[key]) itemDict[key] = [item]
-        else itemDict[key].push(item)
-      }
-
-      else {
-        cartList.push({
-          image: item.image,
-          brand: item.brand,
-          style: item.style,
-          color: item.color,
-          description: item.description,
-          size: item.size,
-          inOrder: item.quantReserved || 0,
-          pulledAlready: item.pulled || 0,
-        })
-      }
-
-
-
-    }
-    setIdDict(itemDict)
-
-
-    let cartDict = {};
-
-
-    for (const item of cartList) {
-      let brand =
-        item.brand?.toLowerCase() ||
-        brandDict[item.brandId]?.brand.toLowerCase() ||
-        "N/A";
-      let style = item.style?.toLowerCase() || "N/A";
-      let color = item.color?.toLowerCase() || "N/A";
-      let key = `${style},${brand},${color}`;
-
-      let size =
-        item.size?.toLowerCase() ||
-        sizeDict[item.sizeId]?.size.toLowerCase() ||
-        "N/A";
-
-      if (!cartDict[key]) {
-        cartDict[key] = {
-          image: item.image,
-          color: item.color,
-          brand: item.brand || brandDict[item.brandId]?.brand || "N/A",
-          description:
-            item.description ||
-            descriptionDict[item.descriptionId]?.description ||
-            "N/A",
-          style: item.style,
-          price: item.price,
-          sizes: {
-            [size]: {
-              inOrder: item.inOrder,
-              pulled: item.pulledAlready,
-              newQuantity: item.inOrder,
-            },
-          },
-        };
-      } else if (!cartDict[key].sizes[size]) {
-        cartDict[key].sizes[size] = {
-          inOrder: item.inOrder,
-          pulled: item.pulledAlready,
-          newQuantity: item.inOrder,
-        };
-      } else {
-        cartDict[key].sizes[size].inOrder += item.inOrder;
-        cartDict[key].sizes[size].pulled += item.pulledAlready;
-        cartDict[key].sizes[size].newQuantity += item.inOrder;
-      }
-    }
-
-    for (const item of inventory) {
-      let brand =
-        item.brand?.toLowerCase() ||
-        brandDict[item.brandId]?.brand.toLowerCase() ||
-        "N/A";
-      let style = item.style?.toLowerCase() || "N/A";
-      let color = item.color?.toLowerCase() || "N/A";
-      let key = `${style},${brand},${color}`;
-
-      let size =
-        item.size?.toLowerCase() ||
-        sizeDict[item.sizeId]?.size.toLowerCase() ||
-        "N/A";
-      if (cartDict[key]?.sizes[size]) {
-        if (!cartDict[key].sizes[size].quantity)
-          cartDict[key].sizes[size].quantity = 0;
-        if (!cartDict[key].sizes[size].reserved)
-          cartDict[key].sizes[size].reserved = 0;
-
-        cartDict[key].sizes[size].quantity += item.quantity;
-        cartDict[key].sizes[size].reserved += item.reserved;
-      }
-    }
-    console.log("CARTDICT", cartDict)
-    setItems(Object.values(cartDict));
-  }, [
-    inventory,
-    reservation,
-    contentDict,
-    brandDict,
-    sizeDict,
-    descriptionDict,
-  ]);
-
-  useEffect(() => {
-    const arr1 = items?.map((item) => `${item.brand}-${item.style}-${item.color}`);
-    const arr2 = addedItems?.map((item) => `${item.brand}-${item.style}-${item.color}`)
-    if (!arr1 || !arr2) return
-    setExistingKeys(
-      arr1.concat(arr2)
-    )
-  }, [items, addedItems]);
-
-
-  const removeFromAdded = (itemToRemove, index) => {
-    setAddedItems(addedItems.filter((i) => i === index))
-
-    const key = `${itemToRemove.brand}-${itemToRemove.style}-${itemToRemove.color}`
-
-    setExistingKeys(existingKeys.filter((k) => k === key))
-
-  }
-
+  const [existingKeys, setExistingKeys] = useState([]);
+  const [addedItems, setAddedItems] = useState([]);
 
   const getReservation = async () => {
     const response = await fetch(`/api/catalog/reservation/${id}`, {
       method: "GET",
     });
-
     const result = await response.json();
-
+    console.log(result.data);
     setReservation(result.data[0]);
-  };
 
-  useEffect(() => {
-    getInventory();
-  }, [reservation])
+    // Build idSet for all items
+    const ids = {};
+    for (const item of result.data[0].items) {
+      ids[item.itemId] = item;
+    }
+    setIdSet(ids);
 
-  const getInventory = async () => {
-    console.log("reservation", reservation)
-    if (!reservation) return
+    // Group items by style, color, brand, and size
+    const groups = {};
+    result.data[0].items.forEach((item) => {
+      console.log(item);
+      const size =
+        item.size || item.currentItemData?.sizeData?.size || "Unknown Size";
+      const brand =
+        item.brand || item.currentItemData?.brandData?.brand || "Unknown Brand";
+      const description =
+        item.currentItemData?.descriptionData?.description ||
+        item.description ||
+        "Unknown Description";
+      console.log("DESCRIPTION", description);
 
-    const result = await fetch("/api/catalog", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        itemIds: reservation.items.map((item) => item.itemId),
-      }),
+      const style =
+        item.style || item.currentItemData?.style || "Unknown Style";
+      const color =
+        item.color || item.currentItemData?.color || "Unknown Color";
+
+      const key = `${style}-${color}-${brand}-${size}`;
+
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          style,
+          color,
+          brand,
+          size,
+          description,
+          items: [],
+          totalReserved: 0,
+          totalPulled: 0,
+          image: item.image || item.currentItemData?.image,
+        };
+      }
+
+      groups[key].items.push(item);
+      groups[key].totalReserved += item.quantReserved;
+      groups[key].totalPulled += item.pulled || 0;
     });
 
-
-    if (result.ok) {
-      const body = await result.json();
-      setInventory(body.data);
-    }
-  };
-
-  const validate = (e, value, index) => {
-    console.log(value);
-    let newValue = e.target.value;
-    if (isNaN(newValue)) {
-    } else if (newValue < value.pulled) {
-      setNewBox({
-        location: "",
-      });
-      console.log("Item displaced");
-    }
+    setGroupedItems(Object.values(groups));
   };
 
   useEffect(() => {
-    if (
-      !items ||
-      items.length <= 0 ||
-      !brandDict ||
-      !sizeDict ||
-      !descriptionDict
+    getReservation();
+  }, []);
 
-    )
+  const getMatching = async (style, color, brand, size) => {
+    setLoading(true);
+    try {
+      const matching = await fetch(
+        `/api/catalog?style=${style}&color=${color}&brand=${brand}&size=${size}&ignore=true`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!matching.ok) {
+        const errorData = await matching.json();
+        throw new Error(errorData.error || `HTTP ${matching.status}`);
+      }
+      const data = await matching.json();
+      console.log("Matching items:", data);
+
+      let map = {};
+      for (const opt of data) {
+        map[opt._id] = idSet[opt._id]
+          ? idSet[opt._id]?.quantReserved - (idSet[opt._id]?.pulled || 0)
+          : 0;
+      }
+      console.log("Initial MAP", map);
+
+      setQuantityMap(map);
+      setOptions(data);
+      setQuantityAvailable(
+        data.reduce(
+          (a, b) => a + (b.quantity - (!idSet[b._id] ? b.reserved || 0 : 0)),
+          0
+        )
+      );
+      setLoading(false);
       return;
-    let displacedItems = [];
-    for (const item of items) {
-      item.sizes && Object.entries(item.sizes).forEach(([key, val], index) => {
-        if (val.pulled > val.newQuantity) {
-          const newItem = {
-            image: item.image,
-            style: item.style,
-            price: item.price,
-            color: item.color,
-            quantity: val.pulled - val.newQuantity,
-            reserved: 0,
-          };
-          if (brandDict[item.brand.toLowerCase()])
-            newItem.brandId = brandDict[item.brand.toLowerCase()]._id;
-          else newItem.brand = item.brand;
+    } catch (finalizeError) {
+      console.error("Error finalizing reservation:", finalizeError);
+      return null;
+    }
+  };
 
-          if (descriptionDict[item.description.toLowerCase()])
-            newItem.descriptionId =
-              descriptionDict[item.description.toLowerCase()]._id;
-          else newItem.description = item.description;
+  const changeBoxes = (group, index) => {
+    console.log("GROUP", group);
+    setReturnReservation(null);
+    setEditReservation(index === editReservation ? null : index);
+    getMatching(group.style, group.color, group.brand, group.size);
+    setTotal(group.totalReserved - group.totalPulled);
+  };
 
-          if (sizeDict[key.toLowerCase()])
-            newItem.sizeId = sizeDict[key.toLowerCase()]._id;
-          else newItem.size = key.toUpperCase();
+  const returnToBox = (group, index) => {
+    setEditReservation(null);
+    setReturnReservation(index === returnReservation ? null : index);
+    const returned = {};
+    group.items.forEach((item) => (returned[item.itemId] = item.pulled || 0));
+    console.log("RETURNED", returned);
+    setReturnQuantities(returned);
+  };
 
-          displacedItems.push(newItem);
-        }
-      });
+  const getDescription = (group) => {
+    console.log(group);
+    return `${group.size} ${group.color} ${group.brand} ${group.description} ${group.style}`;
+  };
+
+  const getAvailableQuantity = (opt) => {
+    if (idSet[opt._id]) {
+      return (
+        opt.quantity -
+        opt.reserved +
+        idSet[opt._id].quantReserved -
+        (idSet[opt._id].pulled || 0)
+      );
+    }
+    return opt.quantity - (opt.reserved || 0);
+  };
+
+  const handleCardChange = (id, e) => {
+    let revisedQuantityMap = { ...quantityMap };
+    revisedQuantityMap[id] = parseInt(e.target.value);
+    setQuantityMap(revisedQuantityMap);
+  };
+
+  useEffect(() => {
+    console.log("Quantity map updated:", quantityMap);
+    const remaining =
+      total -
+      Object.values(quantityMap).reduce(
+        (a, b) => a + (isNaN(b) || !b ? 0 : parseInt(b)),
+        0
+      );
+    console.log("Remaining:", remaining);
+    setAllocatedRemaining(remaining);
+  }, [quantityMap, total]);
+
+  const handleSubmit = async () => {
+    if (editReservation === null) return;
+
+    const currentGroup = groupedItems[editReservation];
+    console.log("Current group:", currentGroup);
+    console.log("Quantity map:", quantityMap);
+
+    // Build the quantities object with only changed items
+    const quantities = quantityMap;
+
+    // For each item in the current group, update its quantity based on quantityMap
+    for (const item of currentGroup.items) {
+      const allocatedQty = parseInt(quantityMap[item.itemId]) || 0;
+      console.log(allocatedQty);
+      if (allocatedQty !== item.quantReserved) {
+        quantities[item.itemId] = allocatedQty;
+      }
     }
 
-    setDisplaced(displacedItems);
-  }, [items]);
+    console.log("Quantities to update:", quantities);
 
-  const setItemQuantities = (index) => {
-    setItems((prevItems) =>
-      prevItems.map((prevItem, i) => {
-        if (i === index) {
-          return {
-            ...prevItem,
-            sizes: Object.keys(prevItem.sizes).reduce((acc, size) => {
-              acc[size] = {
-                ...prevItem.sizes[size],
-                newQuantity: 0,
-              };
-              return acc;
-            }, {}),
-          };
-        }
-        return prevItem;
-      })
-    );
-  };
-
-  const changeInput = (e, index, sizeKey) => {
-    console.log(e.target.value, index, sizeKey);
-    setItems((prevItems) =>
-      prevItems.map((prevItem, i) => {
-        if (i === index) {
-          console.log(prevItem);
-          return {
-            ...prevItem,
-            sizes: {
-              ...prevItem.sizes,
-              [sizeKey]: {
-                ...prevItem.sizes[sizeKey],
-                newQuantity: e.target.value,
-              },
-            },
-          };
-        }
-        return prevItem;
-      })
-    );
-  };
-
-  const changeSelected = (index) => {
-    setDisplaced((prevDisplaced) =>
-      prevDisplaced.map((prevItem, i) => {
-        if (i === index) {
-          return {
-            ...prevItem,
-            selected: !prevItem.selected,
-          };
-        }
-        return prevItem;
-      })
-    );
-  };
-
-
-  const getBoxes = async () => {
-    const response = await fetch("/api/inventory/box", {
-      method: "GET",
-    });
-
-    const result = await response.json();
-    setBoxes(result.data);
-  };
-
-  const filteredBoxes = boxes.filter(
-    (b) =>
-      b.boxId.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
-      b.description?.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
-      b.location?.toLowerCase().includes(dropdownSearchTerm.toLowerCase())
-  );
-
-  const saveToBox = () => {
-    if (!displacedPlacement[selectedBox._id]) {
-      setDisplacedPlacement({
-        ...displacedPlacement,
-        [selectedBox._id]: displaced.filter((d) => d.selected),
-      });
-    } else {
-      setDisplacedPlacement({
-        ...displacedPlacement,
-        [selectedBox._id]: displacedPlacement[selectedBox._id].concat(
-          displaced.filter((d) => d.selected)
-        ),
-      });
+    if (Object.keys(quantities).length === 0) {
+      alert("No changes to save");
+      return;
     }
-
-    if (selectedBox._id.includes("Box-")) {
-      setAddBoxVisible(true);
-    } else {
-      setDisplaced(displaced.filter((d) => !d.selected));
-      setSelectedBox(null);
-    }
-
-  };
-
-
-  const reset = () => {
-    refresh();
-    setDisplaced([]);
-    setDisplacedPlacement({});
-    setSaveVersion(1);
-    setSelectedBox(null);
-  };
-
-  const uploadBox = async (item) => {
-    const boxData = {
-      history: item.history,
-      imageLink: item.imageLink,
-      location: item.location,
-      description: item.description,
-      ...(item.visibilty &&
-        item.visibility.includes("sale") && {
-        discount: item.boxDiscount,
-        minPrice: item.minimumPrice,
-      }),
-    };
-
-    // Create the box first
-    const boxResponse = await fetch("/api/inventory/box", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(boxData),
-    });
-
-    const data = await boxResponse.json();
-
-    if (!data.success) {
-      console.error("Error creating box:", data.error);
-      console.error("Details:", data.details);
-      throw new Error(data.error || "Unknown error creating box");
-    }
-    console.log("DATA: ", data);
-
-    return data.data._id;
-  };
-
-  const handleSubmit = async (e) => {
-    setSubmitting(true);
-    e.preventDefault();
 
     try {
-      // Process displaced placement items
-      for (const [key, val] of Object.entries(displacedPlacement)) {
-        let boxId = key;
-        if (key.includes("Box-")) {
-          boxId = await uploadBox(newBoxes.find((box) => box.boxId == key));
-        }
-
-        // Wait for all items in this box to be processed
-        for (const item of val) {
-          if(key.includes("original")){
-              const itemKey = `${item.style}-${brandDict[item.brandId]?.brand || item.brand ||  "N/A"}-${item.color}-${sizeDict[item.sizeId]?.size || item.size || "N/A"}`
-              const originalItems = idDict[itemKey]
-              boxId = boxes.find((box) => {
-                if(box.boxId == originalItems[0].boxId || box._id == originalItems[0].boxId) return true})._id|| boxId
-          }
-
-          const itemData = {
-            box_id: boxId,
-            image: item.image,
-            style: item.style,
-            color: item.color,
-            quantity: item.quantity,
-            price: item.price,
-            sale: false,
-            public: false,
-            reserved: 0,
-            ...(item.brandId && { brandId: String(item.brandId) }),
-            ...(item.brand && { brand: String(item.brand) }),
-            ...(item.descriptionId && {
-              descriptionId: String(item.descriptionId),
-            }),
-            ...(item.description && {
-              descriptionId: String(item.description),
-            }),
-            ...(item.sizeId && { sizeId: String(item.sizeId) }),
-            ...(item.size && { sizeId: String(item.size) }),
-          };
-          console.log(itemData)
-         await addToBox(itemData); 
-        }
-      }
-
-      // Process reservation updates
-      for (const item of items) {
-        console.log(item);
-        const { style, color, brand } = item;
-
-        // Process all size updates for this item
-        for (const [key, val] of Object.entries(item.sizes)) {
-          console.log(val);
-          if (val.newQuantity > val.inOrder) {
-            await addToReservation(
-              style,
-              color,
-              brand,
-              key,
-              parseInt(val.newQuantity) - val.inOrder
-            );
-          } else if (val.newQuantity < val.inOrder) {
-            await removeFromReservation(
-              style,
-              color,
-              brand,
-              key,
-              val.inOrder - parseInt(val.newQuantity)
-            );
-          }
-        }
-      }
-
-      // Process added items
-      for (const item of addedItems) {
-        const { style, color, brand } = item;
-        for (const [key, val] of Object.entries(item.sizes)) {
-          await addToReservation(
-            style,
-            color,
-            brand,
-            key,
-            parseInt(val.newQuantity)
-          );
-        }
-
-      }
-
-      // Now all operations are complete, safe to navigate
-      router.push(`/admin/reservations?id=${id}`);
-    } catch (error) {
-      console.error("Error during submission:", error);
-      // Handle the error appropriately
-    } finally {
-      setSubmitting(false); // Move this to finally block
-    }
-  };
-
-  const addToBox = async (itemToAdd) => {
-    try {
-      const addToInventory = await fetch(`/api/inventory/item`, {
-        method: "POST",
+      const response = await fetch(`/api/catalog/manual/${id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(itemToAdd),
+        body: JSON.stringify({ quantities }),
       });
 
-      if (!addToInventory.ok) {
-        throw new Error(`HTTP error! status: ${addToInventory.status}`);
+      if (!response.ok) {
+        throw new Error("Failed to update reservation");
       }
 
-      return await addToInventory.json();
+      const result = await response.json();
+      console.log("Update result:", result);
+
+      // Refresh the reservation
+      await getReservation();
+      setEditReservation(null);
+      alert("Reservation updated successfully!");
     } catch (error) {
-      console.error("Error adding item to box:", error);
-      throw new Error("Could not add item to Box");
+      console.error("Error updating reservation:", error);
+      alert("Failed to update reservation");
     }
   };
 
-  const addToReservation = async (style, color, brand, size, increasedQuant) => {
+  const validateNumericInput = () => {
+    let values = {};
+    Object.entries(returnQuantities).forEach(([key, quant], index) => {
+      console.log(key, quant, index);
+      values[key] = parseInt(quant) || 0;
+    });
+    setReturnQuantities(values);
+  };
+
+  const returnToBoxSubmit = async (itemId) => {
+    if (submittingReturn) return;
+    setSubmittingReturn(true);
     try {
-      const response = await fetch("/api/catalog", {
+      const response = await fetch(`/api/catalog/manual/${id}/return`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          style: style,
-          color: color,
-          brand: brand,
-          size: size,
-          quantityToReserve: increasedQuant,
+          itemId: itemId,
+          returnedQuantity: returnQuantities[itemId],
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error("Failed to update reservation");
       }
 
       const result = await response.json();
+      console.log("Update result:", result);
 
-      const editReservation = await fetch(`/api/catalog/reservation/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reservationDetails: result.reservationDetails,
-          type: "add",
-        }),
-      });
-
-      if (!editReservation.ok) {
-        throw new Error(`HTTP error! status: ${editReservation.status}`);
-      }
-
-      return await editReservation.json();
+      // Refresh the reservation
+      await getReservation();
+      setReturnReservation(null);
+      alert("Reservation updated successfully!");
     } catch (error) {
-      console.error("Error adding to reservation:", error);
-      throw new Error("Could not add item to reservation");
+      console.error("Error updating reservation:", error);
+      alert("Failed to update reservation");
     }
+    setSubmittingReturn(false);
   };
 
-  const removeFromReservation = async (style, color, brand, size, decreasedQuant) => {
-    try {
-      const editReservation = await fetch(`/api/catalog/reservation/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          style: style,
-          color: color,
-          brand: brand,
-          size: size,
-          quantityToRemove: decreasedQuant,
-        }),
-      });
+  useEffect(() => {
+    if (!groupedItems || groupedItems.length === 0) return;
 
-      if (!editReservation.ok) {
-        throw new Error(`HTTP error! status: ${editReservation.status}`);
+    // Flatten all items from grouped items
+    const arr1 = groupedItems.flatMap(
+      (group) =>
+        group.items?.map(
+          (item) => `${item.brand}-${item.style}-${item.color}`
+        ) || []
+    );
+
+    // Map added items
+    const arr2 =
+      addedItems?.map((item) => `${item.brand}-${item.style}-${item.color}`) ||
+      [];
+
+    setExistingKeys(arr1.concat(arr2));
+  }, [groupedItems, addedItems]);
+
+  const checkDisabled = () => {
+    if (allocatedRemaining != 0) return true;
+
+    for (const opt of options) {
+      if (getAvailableQuantity(opt) < quantityMap[opt._id]) {
+        return true;
       }
-
-      return await editReservation.json();
-    } catch (error) {
-      console.error("Error removing from reservation:", error);
-      throw new Error("Could not remove item from reservation");
     }
+
+    return false;
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <div
+    <div className={styles.page}>
+      <span
         style={{
-          width: "100%",
           display: "flex",
-          justifyContent: "end",
-          marginBottom: "20px",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <GrPowerReset size={25} onClick={reset} style={{ cursor: "pointer" }} />
-      </div>
-      {items?.map((item, index) => (
-        <>
-          <div key={index} className={styles.cartRow}>
-            <div className={styles.imageContainer}>
-              <img src={item.image} className={styles.rowImage} ></img>
-            </div>
-            <div style={{ fontWeight: "bold" }}>
-              <div>
-                {brandDict[item.brand]?.brand || item.brand || ""} {item.style}{" "}
-                {descriptionDict[item.description]?.description ||
-                  item.description ||
-                  ""}
-              </div>
-              <div style={{ color: "gray" }}>{item.color}</div>
-            </div>
-            <div className={styles.sizeBreakdown}>
-              <div
-                className={styles.column}
-                style={{ textAlign: "right", fontWeight: "bold" }}
-              >
-                <div style={{ padding: "5px" }}>Size</div>
-                <div style={{ padding: "5px" }}>Original Quantity</div>
-                <div style={{ padding: "5px" }}>Pulled</div>
-                <div style={{ padding: "5px" }}>Available</div>
-                <div style={{ padding: "5px" }}>New Quantity</div>
-              </div>
-              {item.sizes && Object.entries(item.sizes).map(([sizeKey, val], sizeIndex) => (
-                <div
-                  key={sizeKey}
-                  className={styles.column}
-                  style={{ borderRadius: "5px", overflow: "hidden" }}
-                >
-                  <div style={{ backgroundColor: "#a1b1cc", padding: "5px" }}>
-                    {sizeKey.toUpperCase()}{" "}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    {val.inOrder}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    {val.pulled}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    {val.quantity - val.reserved || 0}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    <input
-                      className={styles.input}
-                      style={{
-                        maxWidth: "60px",
-                        color:
-                          val.newQuantity < val.pulled ? "#c4867e" : "black",
-                      }}
-                      value={val.newQuantity}
-                      onChange={(e) => changeInput(e, index, sizeKey)}
-                      onBlur={(e) => validate(e, val, index)}
-                      disabled={saveVersion > 1}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <FaTrash
-              style={{ color: "red", margin: "20px", cursor: "pointer" }}
-              onClick={() => setItemQuantities(index)}
-              title="Remove entire group"
-            />
-          </div>
-        </>
-      ))}
-      {addedItems?.map((item, index) => (
-        <>
-          {item && <div key={index} className={styles.cartRow}>
-            <div className={styles.imageContainer}>
-              <img src={item.image} className={styles.rowImage} ></img>
-            </div>
-            <div style={{ fontWeight: "bold" }}>
-              <div>
-                {brandDict[item.brand]?.brand || item.brand || ""} {item.style}{" "}
-                {descriptionDict[item.description]?.description ||
-                  item.description ||
-                  ""}
-              </div>
-              <div style={{ color: "gray" }}>{item.color}</div>
-            </div>
-            <div className={styles.sizeBreakdown}>
-              <div
-                className={styles.column}
-                style={{ textAlign: "right", fontWeight: "bold" }}
-              >
-                <div style={{ padding: "5px" }}>Size</div>
-                <div style={{ padding: "5px" }}>Original Quantity</div>
-                <div style={{ padding: "5px" }}>Pulled</div>
-                <div style={{ padding: "5px" }}>Available</div>
-                <div style={{ padding: "5px" }}>New Quantity</div>
-              </div>
-              {item.sizes && Object.entries(item.sizes).map(([sizeKey, val], sizeIndex) => (
-                <div
-                  key={sizeKey}
-                  className={styles.column}
-                  style={{ borderRadius: "5px", overflow: "hidden" }}
-                >
-                  <div style={{ backgroundColor: "#a1b1cc", padding: "5px" }}>
-                    {sizeKey.toUpperCase()}{" "}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    {val.inOrder}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    {val.pulled}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    {val.quantity - val.reserved || 0}
-                  </div>
-                  <div style={{ backgroundColor: "#b8c7e0", padding: "5px" }}>
-                    {val.newQuantity}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <FaTrash
-              style={{ color: "red", margin: "20px", cursor: "pointer" }}
-              onClick={() => removeFromAdded(item, index)}
-              title="Remove entire group"
-            />
-          </div>}
-        </>
-      ))}
-      {displaced.length > 0 && saveVersion > 1 && (
-        <>
-          <h2 style={{ marginBottom: "10px" }}>Displaced</h2>
-          <div style={{ display: "flex", flexDirection: "row", gap: "40px" }}>
-            <div style={{ flexGrow: "1" }} className={styles.displacedItems}>
-              {displaced.map((item, index) => (
-                <div
-                  className={styles.displacedRow}
-                  style={{
-                    backgroundColor: item.selected ? "rgb(193, 193, 193)" : "",
-                  }}
-                  onClick={() => { changeSelected(index); console.log(item) }}
-                >
-                  <div className={styles.itemDetails}>
-                    <div
-                      className={styles.imageContainer}
-                      style={{ minWidth: "50px" }}
-                    >
-                      <img src={item.image} className={styles.rowImage} />
-                    </div>
-                    {item.style} {item.color}{" "}
-                    {sizeDict[item.sizeId]?.size || item.size || "No Size"}{" "}
-                    {brandDict[item.brandId]?.brand || item.brand || "No Brand"}{" "}
-                    {descriptionDict[item.descriptionId]?.description ||
-                      item.description ||
-                      "No Brand"}
-                  </div>
-                  <div>
-                    {item.quantity} {item.quantity > 1 ? "items" : "item"}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div style={{ width: "20%", display: "block" }}>
-              <h3 style={{ marginBottom: "10px" }}>Boxes</h3>
-              <div className={styles.boxContainer}>
-                <div
-                  onClick={() => {
-                    selectedBox?._id == `Box-${newBoxVersion}`
-                      ? setSelectedBox(null)
-                      : setSelectedBox({ _id: `Box-${newBoxVersion}` });
-                  }}
-                  style={{
-                    backgroundColor:
-                      selectedBox?._id == `Box-${newBoxVersion}`
-                        ? "rgb(193, 193, 193)"
-                        : "",
-                  }}
-                >
-                  New Box
-                </div>
-                <div
-                  onClick={() => {
-                     selectedBox?._id == `original`
-                      ? setSelectedBox(null)
-                      : setSelectedBox({ _id: `original` });
-                  }}
-                  style={{
-                    backgroundColor:
-                      selectedBox?._id == `original`
-                        ? "rgb(193, 193, 193)"
-                        : "",
-                  }}
-                >
-                  Return to Original Boxes
-                </div>
-
-                {filteredBoxes.map((box) => (
-                  <div
-                    onClick={() => {
-                      selectedBox?._id == box._id
-                        ? setSelectedBox(null)
-                        : setSelectedBox(box);
-                    }}
-                    style={{
-                      backgroundColor:
-                        selectedBox?._id == box._id ? "rgb(193, 193, 193)" : "",
-                    }}
-                  >
-                    {box.boxId}
-                  </div>
-                ))}
-              </div>
-              <div style={{ width: "100%", display: "flex" }}>
-                <button
-                  onClick={saveToBox}
-                  className={styles.saveBox}
-                  disabled={
-                    !selectedBox || !displaced.find((dis) => dis.selected)
-                  }
-                >
-                  Save to Box
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-      <div className={styles.addToRes} onClick={() => setAdd(!add)}>+</div>
-      {add && <AddToRes existingKeys={existingKeys} addedItems={addedItems} setAddedItems={setAddedItems} />}
-      {saveVersion > 1 ? (
-        <div style={{ width: "100%", display: "flex" }}>
-          <button
-            className={styles.save}
-            onClick={(e) => handleSubmit(e)}
-            disabled={displaced.length > 0 || submitting}
-          >
-            {submitting ? <BeatLoader size={10} /> : "Save"}
-          </button>
+        <h2>Reservation {reservation.sequentialId} </h2>
+        <div className={styles.addToRes} onClick={() => setAdd(!add)}>
+          Add Item
         </div>
-      ) : (
-        <div style={{ width: "100%", display: "flex" }}>
-          <button
-            className={styles.save}
-            onClick={() => setSaveVersion(saveVersion + 1)}
-          >
-            Confirm Changes
-          </button>
-        </div>
-      )}
-
-      {addBoxVisible && (
-        <AddBox
-          onClose={() => setAddBoxVisible(false)}
-          refresh={getReservation}
-          options={options}
-          savedInfo={{
-            addBox: { contents: displaced.filter((d) => d.selected) },
+      </span>
+      {add && (
+        <AddToRes
+          existingKeys={existingKeys}
+          addedItems={addedItems}
+          setAddedItems={setAddedItems}
+          reservationId={id}
+          onSuccess={() => {
+            getReservation();
+            setAdd(false);
           }}
-          appendToBox={appendToBox}
         />
       )}
+      <div className={styles.grid}>
+        {groupedItems.map((group, index) => (
+          <div key={group.key} className={styles.cardWrapper}>
+            <div className={styles.card}>
+              <div className={styles.imageContainer}>
+                <img src={group.image} className={styles.image} alt="item" />
+              </div>
+              {getDescription(group)}
+              <div className={styles.buttonContainer}>
+                <div className={styles.button}>
+                  {group.totalReserved} reserved
+                </div>
+                <div
+                  className={`${styles.button} ${styles.pulled} ${
+                    returnReservation === index && styles.selectedPulled
+                  }`}
+                  onClick={() => returnToBox(group, index)}
+                >
+                  {group.totalPulled} pulled
+                </div>
+                <div
+                  className={`${styles.button} ${styles.remaining} ${
+                    editReservation === index && styles.selected
+                  }`}
+                  onClick={() => changeBoxes(group, index)}
+                >
+                  {group.totalReserved - group.totalPulled} remaining
+                </div>
+              </div>
+            </div>
+
+            {editReservation === index && (
+              <div className={styles.editCardContainer}>
+                {loading ? (
+                  <div className={styles.loading}>
+                    <BeatLoader />
+                  </div>
+                ) : (
+                  <div className={styles.editCard}>
+                    <div className={styles.apart}>
+                      <span>
+                        Quantity (Max {quantityAvailable}):{" "}
+                        <input
+                          className={styles.input}
+                          type="number"
+                          min="0"
+                          max={quantityAvailable}
+                          value={total}
+                          onChange={(e) => setTotal(e.target.value)}
+                        />{" "}
+                      </span>
+                      {isNaN(allocatedRemaining) ? "~" : allocatedRemaining}{" "}
+                      remaining
+                    </div>
+                    <div className={styles.options}>
+                      {options.map((opt) => (
+                        <div key={opt._id} className={styles.boxCards}>
+                          <span>
+                            {opt.boxSequentialId
+                              ? `#${opt.boxSequentialId}`
+                              : "No Box"}
+                          </span>
+                          <span>Available: {getAvailableQuantity(opt)}</span>
+                          <div>
+                            Taking:{" "}
+                            <input
+                              className={styles.input}
+                              value={quantityMap[opt._id] || 0}
+                              type="number"
+                              min="0"
+                              max={getAvailableQuantity(opt)}
+                              onChange={(e) => handleCardChange(opt._id, e)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={checkDisabled()}
+                      className={`${styles.remaining} ${styles.saveButton}`}
+                    >
+                      save
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {returnReservation === index && (
+              <div className={styles.editCardContainer}>
+                <div className={styles.table}>
+                  {group.items
+                    .filter((item) => item.pulled && item.pulled > 0)
+                    .map((item, index) => (
+                      <div key={index} className={styles.row}>
+                        <span>
+                          Return{" "}
+                          <input
+                            className={styles.input}
+                            type="number"
+                            max={item.pulled || 0}
+                            value={returnQuantities[item.itemId]}
+                            onChange={(e) =>
+                              setReturnQuantities({
+                                ...returnQuantities,
+                                [item.itemId]: e.target.value,
+                              })
+                            }
+                            onBlur={validateNumericInput}
+                          />{" "}
+                          (max {item.pulled || 0}) to box{" "}
+                          {item.currentItemData?.boxData?.boxId}
+                        </span>
+                        <div
+                          className={styles.returnButton}
+                          onClick={() => returnToBoxSubmit(item.itemId)}
+                        >
+                          <RiArrowGoBackLine />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

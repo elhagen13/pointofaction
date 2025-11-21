@@ -64,7 +64,7 @@ const employees = [
     roleDescription:
       "Manages the  shipment and receipt of all products, materials, and supplies. Tracks, traces, and updates the status of incoming and outgoing shipments.",
     email: "Bobby@pointofaction.com",
-    number: "(805) 922-6253 x 10",
+    number: "(805) 922-6253 x 102",
     capabilities: [
       "Shipping",
       "Recieving",

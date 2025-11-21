@@ -83,7 +83,7 @@ export async function POST(request) {
     return Response.json(
         {
           success: true,
-          data: createdSaleItem,
+          data: itemDocument,
           message: "Sale Item created successfully",
         },
         { status: 201 }

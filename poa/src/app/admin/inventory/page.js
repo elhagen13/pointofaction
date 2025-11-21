@@ -29,6 +29,14 @@ import MultiEdit from "./components/MultiEdit";
 import { useSearchParams } from "next/navigation";
 
 function Inventory() {
+  const params = new URLSearchParams(window.location.search);
+  const brand = params.get('brand'); 
+  const style = params.get('style');
+  const color = params.get('color')
+  const size = params.get('size');
+  const box = params.get('box')
+
+
   /*"all inventory", "boxes", "public", "sale"*/
   const [page, setPage] = useState("all inventory");
   const pageOptions = ["all inventory", "public", "sale"];
@@ -48,6 +56,7 @@ function Inventory() {
   const [editBoxOpen, setEditBoxOpen] = useState(null);
 
   const [columnManagerOpen, setColumnManagerOpen] = useState(false);
+  const [groupedDict, setGroupedDict] = useState({})
 
   const [multiOpen, setMultiOpen] = useState(null);
   const [groupedView, setGroupedView] = useState(null);
@@ -281,6 +290,16 @@ function Inventory() {
     return dict;
   }, [boxes]);
 
+  useEffect(() => {
+    if(!box){
+      return
+    }
+    if(!boxDict[box]?.items) return
+    setEditBoxOpen(boxDict[box])
+
+  }, [boxDict])
+
+
   // Filter inventory based on page selection and search, then group
   const filteredInventory = useMemo(() => {
     let items;
@@ -333,8 +352,6 @@ function Inventory() {
         else return !item.archived
       }))
     }
-
-    console.log("GROUPED ITEMS: ", groupedItems)
 
     // Now filter the groups based on search criteria
     if (searchValue.trim() !== "") {
@@ -662,7 +679,7 @@ function Inventory() {
         dict[key].push(item);
       }
     }
-
+    setGroupedDict(dict)
     let groupedItems = Object.values(dict);
     // Now filter the groups based on search criteria
     if (searchValue.trim() !== "") {
@@ -844,6 +861,17 @@ function Inventory() {
     paginate,
     showAll,
   ]);
+
+  useEffect(() => {
+    if(!brand || !style){
+      return
+    }
+    const key = `${style.toLowerCase()}, ${brand.toLowerCase()}`
+    if(!groupedDict[key]) return
+
+    setGroupedView(groupedDict[key])
+
+  }, [groupedDict])
 
   const getInventory = async () => {
     const response = await fetch("/api/inventory/item", {
@@ -1897,7 +1925,7 @@ function Inventory() {
       )}
       {groupedView !== null && (
         <GroupedView
-          items={filteredGroups[groupedView]}
+          items={Array.isArray(groupedView) ? groupedView : filteredGroups[groupedView]}
           onClose={() => setGroupedView(null)}
           boxDict={boxDict}
           sizeDict={sizeDict}
@@ -1911,6 +1939,8 @@ function Inventory() {
           savedInfo={savedInfo}
           setSavedInfo={setSavedInfo}
           setAddBoxOpen={setAddBoxOpen}
+          color={color}
+          size={size}
         />
       )}
       {multiEditView &&

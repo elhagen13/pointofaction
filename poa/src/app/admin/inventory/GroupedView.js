@@ -19,7 +19,9 @@ export default function GroupedView({
   keyDict,
   savedInfo,
   setSavedInfo,
-  setAddBoxOpen
+  setAddBoxOpen,
+  color = null,
+  size = null,
 }) {
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -33,8 +35,9 @@ export default function GroupedView({
 
   const [sortedItems, setSortedItems] = useState([]);
   const [colorDict, setColorDict] = useState({});
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(color);
+  const [selectedSize, setSelectedSize] = useState(size || null);
+  console.log("FJSKFL", selectedSize)
 
   const [searchValue, setSearchValue] = useState("");
 
@@ -137,7 +140,8 @@ export default function GroupedView({
   }, [items]);
 
   useEffect(() => {
-    if (sortedItems.length > 0) setSelectedColor(sortedItems[0][0]);
+    if(color) return
+    else if (sortedItems.length > 0) setSelectedColor(sortedItems[0][0]);
   }, [sortedItems]);
 
   const filteredColors = useMemo(() => {
@@ -482,11 +486,12 @@ export default function GroupedView({
 
                 <div style={{ fontWeight: "bold" }}>
                   {
+                    colorDict[selectedColor] ?
                     (colorDict[selectedColor]?.items.filter(
                       (item) =>
                         (sizeDict[item.sizeId]?.size || item.size) ===
                         selectedSize
-                    )).length || "N/A"
+                    )).length : "N/A"
                   }{" "}
                   boxes with item
                 </div>
