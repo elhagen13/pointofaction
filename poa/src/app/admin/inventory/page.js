@@ -26,10 +26,11 @@ import { useUser } from "@clerk/nextjs";
 
 import SetAlert from "./components/SetAlert";
 import MultiEdit from "./components/MultiEdit";
-import { useSearchParams } from "next/navigation";
 
 function Inventory() {
-  const params = new URLSearchParams(window.location.search);
+  const params = typeof window !== 'undefined' 
+  ? new URLSearchParams(window.location.search)
+  : new URLSearchParams();
   const brand = params.get('brand'); 
   const style = params.get('style');
   const color = params.get('color')
