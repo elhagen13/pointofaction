@@ -98,8 +98,8 @@ export default function Carousel({images}) {
     const ratio = 1 - Math.min(Math.max(distanceFromEdge / zoneWidth, 0), 1);
 
     // Map ratio to delay: near edge -> minDelay (fast); far -> maxDelay (slow)
-    const minDelay = 200;   // fastest
-    const maxDelay = 1000;  // slowest
+    const minDelay = 200;  
+    const maxDelay = 400;  
     const delay = Math.round(maxDelay - ratio * (maxDelay - minDelay));
 
     setHoverDelay(delay);
