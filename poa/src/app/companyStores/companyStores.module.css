@@ -2,6 +2,37 @@
   width: 100%;
   padding: 50px;
   min-height: 90vh;
+  position: relative;
+}
+.alertBackground{
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  overflow-y: auto;
+
+}
+.alert{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  max-width: 25rem;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  border: 8px solid rgb(24, 127, 17); 
+  border-style: double 
+
 }
 
 .header{
@@ -109,6 +140,67 @@
   color: #c6c6c6;
   stroke-width: 4px;
   width: 45px;
+}
+
+
+.overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.overlayBody{
+  background-color: white;
+  min-width: 500px;
+  width: 40%;
+  padding: 20px 20px 30px 20px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+  .timer {
+    height: 5px;
+    position: absolute; 
+    bottom: 0;
+    left: 0;
+    width: 0;
+    transition: width 3s linear;
+    background-color: rgb(47, 99, 145);
+  }
+
+  .long{
+    width: 100%
+  }
+
+  .exit{
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    border: 2.5px solid white;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.1s ease-out
+}
+
+.exit:hover{
+    border-color:#e0483d;
+    border-radius: 10px;
+    color: #e0483d
+
 }
 
 @media(max-width: 768px){

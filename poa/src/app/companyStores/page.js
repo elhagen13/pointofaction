@@ -1,16 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState} from "react";
 import styles from "./companyStores.module.css"
-import { IoSearch } from "react-icons/io5";
+import { IoAlertCircle, IoAlertCircleOutline, IoSearch } from "react-icons/io5";
 import { IoWarningOutline } from "react-icons/io5";
 import Link from "next/link";
+import { IoMdExit } from "react-icons/io";
 
 export default function companyStores() {
     const [search, setSearch] = useState("")
     const [result, setResult] = useState([])
     const [stores, setCompanies] = useState([])
     const [publicCompanies, setPublicCompanies] = useState([])
+    const [visible, setVisible] = useState(true)
 
 
     const [isSmall, setIsSmall] = useState(false)
@@ -84,6 +86,7 @@ export default function companyStores() {
 
     return (
         <div className={styles.storeSearch} >
+            {visible && <Overlay setVisible={setVisible}/>}
             <div className={styles.header}>
                 Store Search
                 <div className={styles.searchContainer}>
@@ -149,4 +152,40 @@ export default function companyStores() {
             
         </div>
     );
+}
+
+function Overlay({setVisible}){
+    const [time, setTime] = useState(0)
+
+    useEffect(() => {
+        const timerId = setInterval(() => {
+        setTime((prev) => prev + 1);
+        }, 1000);
+        return () => clearInterval(timerId);
+    }, []);
+
+    useEffect(() => {
+        console.log(time)
+    }, [time])
+
+    return(
+        <div className={styles.overlay}>
+            <div className={styles.overlayBody}>
+                <div style={{display:"flex", justifyContent:"space-between"}}>
+                    <h2 style={{display: "flex", gap:"10px", alignItems:"center", padding:"10px 0"}}>
+                        <IoAlertCircle/> 
+                        Notice:
+                    </h2>
+                    {time > 3 && 
+                    <div className={styles.exit} onClick={() => setVisible(false)}>
+                        exit <IoMdExit size="1.5rem" />
+                    </div>}
+                    </div>
+                <br/>
+                <h3 style={{color:"#707070ff"}}>Orders placed through a webstore are automated and may be cheaper than those placed manually with a sales rep.</h3>
+                
+                <div className={`${styles.timer} ${time !== 0 ? styles.long : ""}`}/>
+            </div>
+        </div>
+    )
 }
