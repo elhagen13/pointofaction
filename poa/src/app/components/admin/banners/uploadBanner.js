@@ -1,14 +1,15 @@
 "use client";
 
 import { MdDragHandle } from "react-icons/md";
-import { FaEye, FaEyeSlash, FaUpload } from "react-icons/fa";
+import { FaEdit, FaEye, FaEyeSlash, FaUpload } from "react-icons/fa";
 import styles from "./uploadBanner.module.css";
 import { useState, useEffect, useRef } from "react";
 import { BeatLoader } from "react-spinners";
 import Banner from "@/app/components/Banner";
 
-export default function Banners({onClose}) {
+export default function Banners({ onClose }) {
   const [page, setPage] = useState("banners");
+  const [id, setId] = useState(null)
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -20,18 +21,18 @@ export default function Banners({onClose}) {
     e.stopPropagation();
   };
 
-
   return (
     <div className={styles.overlay} onClick={handleOverlayClick}>
       <div onClick={handleModalClick}>
-      {page == "banners" && <BannerList setPage={setPage} />}
-      {page == "add" && <AddBanner setPage={setPage} />}
+        {page == "banners" && <BannerList setPage={setPage} setId={setId}/>}
+        {page == "add" && <AddBanner setPage={setPage}/>}
+        {page == "edit" && <EditBanner id={id} setPage={setPage} />}
       </div>
     </div>
   );
 }
 
-const BannerList = ({ setPage }) => {
+const BannerList = ({ setPage, setId }) => {
   const [lists, setLists] = useState({
     active: [],
     inactive: [],
@@ -202,17 +203,20 @@ const BannerList = ({ setPage }) => {
                   <MdDragHandle />
                   <h3>{file.description}</h3>
                 </div>
-                {file == visibleFile ? (
-                  <FaEyeSlash
-                    style={{ cursor: "pointer" }}
-                    onClick={(e) => handleVisibilityClick(e, file)}
-                  />
-                ) : (
-                  <FaEye
-                    style={{ cursor: "pointer" }}
-                    onClick={(e) => handleVisibilityClick(e, file)}
-                  />
-                )}
+                 <div className={styles.rowElement}>
+                  <FaEdit style={{ cursor: "pointer" }} onClick={() => {setId(file._id); setPage("edit")}}/>
+                  {file == visibleFile ? (
+                    <FaEyeSlash
+                      style={{ cursor: "pointer" }}
+                      onClick={(e) => handleVisibilityClick(e, file)}
+                    />
+                  ) : (
+                    <FaEye
+                      style={{ cursor: "pointer" }}
+                      onClick={(e) => handleVisibilityClick(e, file)}
+                    />
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -244,25 +248,27 @@ const BannerList = ({ setPage }) => {
                   <MdDragHandle />
                   <h3>{file?.description || "N/A"}</h3>
                 </div>
-                {file == visibleFile ? (
-                  <FaEyeSlash
-                    style={{ cursor: "pointer" }}
-                    onClick={(e) => handleVisibilityClick(e, file)}
-                  />
-                ) : (
-                  <FaEye
-                    style={{ cursor: "pointer" }}
-                    onClick={(e) => handleVisibilityClick(e, file)}
-                  />
-                )}
+                <div className={styles.rowElement}>
+                  <FaEdit style={{ cursor: "pointer" }} onClick={() => {setId(file._id); setPage("edit")}}/>
+                  {file == visibleFile ? (
+                    <FaEyeSlash
+                      style={{ cursor: "pointer" }}
+                      onClick={(e) => handleVisibilityClick(e, file)}
+                    />
+                  ) : (
+                    <FaEye
+                      style={{ cursor: "pointer" }}
+                      onClick={(e) => handleVisibilityClick(e, file)}
+                    />
+                  )}
+                </div>
               </div>
             ))
           )}
         </div>
         <div>
           <h2>Preview</h2>
-          <Banner lists={lists}/>
-
+          <Banner lists={lists} />
         </div>
       </div>
       <button
@@ -431,6 +437,191 @@ const AddBanner = ({ setPage }) => {
       >
         {submitting ? <BeatLoader size={8} /> : "Submit"}
       </button>
+    </div>
+  );
+};
+
+const EditBanner = ({ id, setPage }) => {
+  const [desktopImage, setDesktopImage] = useState(null);
+  const [mobileImage, setMobileImage] = useState(null);
+  const [description, setDescription] = useState("");
+  const [imageUploading, setImageUploading] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false)
+
+  const getBannerInfo = async() => {
+    setLoading(true)
+    const response = await fetch(`/api/banners/${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+    const data = await response.json();
+
+    if(data.data?.desktopImage) setDesktopImage(data.data.desktopImage)
+    if(data.data?.mobileImage) setMobileImage(data.data.mobileImage)
+    if(data.data?.description) setDescription(data.data.description)
+  
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    getBannerInfo();
+  }, [])
+
+  const handleFileSelect = (e, type) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        alert("Please select an image file");
+        return;
+      }
+
+      handleUploadImage(file, type);
+    }
+  };
+
+  const handleUploadImage = async (file, type) => {
+    if (!file) {
+      return;
+    }
+    setImageUploading(type);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/banners/uploadImage", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await response.json();
+      if (result.success) {
+        if (type === "desktop") {
+          setDesktopImage(result.url);
+        } else if (type === "mobile") {
+          setMobileImage(result.url);
+        }
+      } else {
+        alert("Upload failed");
+      }
+    } catch (error) {
+      alert("Network error: " + error.message);
+    } finally {
+      setImageUploading(null);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    setSubmitting(true);
+    e.preventDefault();
+    try {
+      const bannerData = {
+        desktopImage: desktopImage,
+        mobileImage: mobileImage,
+        description: description,
+      };
+
+      const bannerResponse = await fetch(`/api/banners/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bannerData),
+      });
+      const data = await bannerResponse.json();
+    } catch {
+    } finally {
+      setSubmitting(false);
+      setPage("banners");
+    }
+  };
+
+  return (
+    <div className={styles.overlayIn}>
+      <div className={styles.header}>
+        <h1>Add Banner</h1>
+        <button className={styles.button} onClick={() => setPage("banners")}>
+          ← Return
+        </button>
+      </div>
+      {loading ? <BeatLoader style={{marginLeft:"auto", marginRight:"auto"}}/> :
+      <>
+      <div className={styles.grid}>
+        <div className={styles.photoUploads}>
+          <div className={styles.header}>
+            <h3>Desktop </h3>
+            <h5 style={{ color: "#838282ff" }}>1440 x 430</h5>
+          </div>
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileSelect(e, "desktop")}
+              className={styles.fileInput}
+              id="file-upload-desktop"
+              disabled={imageUploading !== null}
+            />
+            <label
+              htmlFor="file-upload-desktop"
+              className={`${styles.upload} ${imageUploading !== null && styles.disabled}`}
+            >
+              {imageUploading == "desktop" ? (
+                <BeatLoader size={"0.5rem"} style={{ height: "100%" }} />
+              ) : (
+                "Upload"
+              )}
+            </label>
+          </div>
+          {desktopImage && <img className={styles.image} src={desktopImage} />}
+        </div>
+        <div className={styles.photoUploads}>
+          <div className={styles.header}>
+            <h3>Mobile</h3>
+            <h5 style={{ color: "#838282ff" }}>393 x 523</h5>
+          </div>
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileSelect(e, "mobile")}
+              className={styles.fileInput}
+              id="file-upload-mobile"
+              disabled={imageUploading !== null}
+            />
+            <label
+              htmlFor="file-upload-mobile"
+              className={`${styles.upload} ${imageUploading !== null && styles.disabled}`}
+            >
+              {imageUploading == "mobile" ? (
+                <BeatLoader size={"0.5rem"} style={{ height: "100%" }} />
+              ) : (
+                "Upload"
+              )}
+            </label>
+          </div>
+          {mobileImage && <img className={styles.image} src={mobileImage} />}
+        </div>
+      </div>
+      <div style={{ gridColumn: "span 2" }}>
+        Description:
+        <input
+          className={styles.formElement}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+
+      <button
+        className={styles.button}
+        style={{ width: "fit-content", marginLeft: "auto" }}
+        onClick={(e) => handleSubmit(e)}
+        disabled={submitting || !desktopImage || !mobileImage || !description}
+      >
+        {submitting ? <BeatLoader size={8} /> : "Submit"}
+      </button>
+      </>}
     </div>
   );
 };
