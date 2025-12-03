@@ -176,16 +176,12 @@ function Admin() {
         </div>
 
         {!isMobile && (
-          <div style={{ flex: 2, minWidth: '300px' }}>
-            <Calendar refresh={refreshKey}/>
-          </div>
+           <Calendar refresh={refreshKey}/>
         )}
       </div>
 
       {isMobile && (
-        <div style={{ margin: '20px 0' }}>
           <Calendar refresh={refreshKey}/>
-        </div>
       )}
       <EditSale/>
       <Banners/>

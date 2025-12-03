@@ -10,6 +10,7 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 10px;
+    overflow-x: scroll;
 }
 
 .weekDay{
@@ -20,6 +21,7 @@
     padding: 0.5rem;
     display: flex;
     flex-direction: column;
+    min-width: 10rem;
 }
 
 .weekDay div:first-child{
