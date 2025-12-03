@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb';
-
+const DATABASE_NAME = process.env.DATABASE_NAME;
 const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri);
 
@@ -41,7 +41,7 @@ export async function GET(request) {
     }
 
     await client.connect();
-    const db = client.db('test');
+    const db = client.db(DATABASE_NAME);
     const collection = db.collection('hours');
 
     if (date) {
@@ -92,7 +92,7 @@ export async function POST(request) {
     }
 
     await client.connect();
-    const db = client.db('test');
+    const db = client.db(DATABASE_NAME);
     const collection = db.collection('hours');
 
     const results = {

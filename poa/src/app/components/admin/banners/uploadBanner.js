@@ -395,7 +395,7 @@ const AddBanner = ({ setPage }) => {
         <div className={styles.photoUploads}>
           <div className={styles.header}>
             <h3>Mobile</h3>
-            <h5 style={{ color: "#838282ff" }}>393 x 523</h5>
+            <h5 style={{ color: "#838282ff" }}>769 x 448</h5>
           </div>
           <div>
             <input
@@ -579,7 +579,7 @@ const EditBanner = ({ id, setPage }) => {
         <div className={styles.photoUploads}>
           <div className={styles.header}>
             <h3>Mobile</h3>
-            <h5 style={{ color: "#838282ff" }}>393 x 523</h5>
+            <h5 style={{ color: "#838282ff" }}>769 x 448</h5>
           </div>
           <div>
             <input

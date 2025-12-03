@@ -1,160 +1,102 @@
-'use client'
+"use client";
+import { Key } from "lucide-react";
 import { useState, useEffect } from "react";
+import styles from "./calendar.module.css"
 
-const Calendar = ({refresh = 0}) => {
-    const [weeklyHours, setWeeklyHours] = useState({});
-  const [loading, setLoading] = useState(true);
 
-  function convertTo12Hour(militaryTime) {
-    if (!militaryTime) return '';
-    const [hours, minutes] = militaryTime.split(':');
-    const hour24 = parseInt(hours, 10);
-    const min = parseInt(minutes, 10);
-    const period = hour24 >= 12 ? 'PM' : 'AM';
-    let hour12 = hour24 % 12;
-    if (hour12 === 0) hour12 = 12; 
-    const formattedMinutes = min < 10 ? `0${min}` : min;
-    return `${hour12}:${formattedMinutes} ${period}`;
+export default function Calendar({refresh = 0}) {
+  const [dates, setDates] = useState({});
+
+  const numToDay = {
+    0: "Monday",
+    1: "Tuesday",
+    2: "Wednesday",
+    3: "Thursday",
+    4: "Friday",
+    5: "Saturday",
+    6: "Sunday"
   }
 
-  function getRemainingWeekDates() {
+  const getWeekDates = () => {
     const today = new Date();
-    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
-    const weekDates = [];
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    
-    // Start from today and go to the end of the week
-    for (let i = currentDay; i < currentDay + 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + (i - currentDay));
-      weekDates.push({
-        dayName: dayNames[i % 7],
-        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
-        dayIndex: i % 7  // Fix: Use i % 7 instead of i
-      });
-    }
-    
-    return weekDates;
-  }
+    const days = [0, 1, 2, 3, 4, 5, 6];
 
+    const currentWeek = days.map(
+      (day) =>
+        new Date(today.getTime() + day * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0]
+    );
 
-  useEffect(() => {
-    async function getWeeklyHours() {
-      try {
-        setLoading(true);
-        const weekDates = getRemainingWeekDates();
-        const results = [];
-  
-        // Make requests sequentially instead of concurrently
-        for (const { dayName, date, dayIndex } of weekDates) {
-          // Sunday (0) and Saturday (6) are closed
-          if (dayIndex % 7 === 0 || dayIndex % 7 === 6) {
-            results.push({
-              dayName,
-              date,
-              status: 'CLOSED',
-              hours: null
-            });
-            continue;
-          }
-          
-          try {
-            const response = await fetch(`/api/hours?date=${date}`);
-            if (response.ok) {
-              const hours = await response.json();
-              results.push({
-                dayName,
-                date,
-                status: 'OPEN',
-                hours: hours
-              });
-            } else if (response.status === 404) {
-              results.push({
-                dayName,
-                date,
-                status: 'DEFAULT',
-                hours: {
-                  startTime: '10:00',
-                  endTime: '17:00',
-                  open: true
-                }
-              });
-            } else {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-          } catch (error) {
-            console.error(`Error fetching hours for ${dayName} (${date}):`, error);
-            results.push({
-              dayName,
-              date,
-              status: 'DEFAULT',
-              hours: {
-                startTime: '10:00',
-                endTime: '17:00',
-                open: true
-              }
-            });
-          }
-        }
-  
-        // Convert array to object with day names as keys
-        const hoursObject = {};
-        results.forEach(result => {
-          hoursObject[result.dayName] = result;
-        });
-        
-        setWeeklyHours(hoursObject);
-        console.log('Weekly hours:', hoursObject);
-      } catch (error) {
-        console.error('Error fetching weekly hours:', error);
-      } finally {
-        setLoading(false);
+    const dayDict = {};
+    for (const day of currentWeek) {
+      if (new Date(day).getDay() === 6 || new Date(day).getDay() === 0) {
+        dayDict[day] = { open: false };
+      } else {
+        dayDict[day] = {
+          startTime: "10:00",
+          endTime: "17:00",
+          open: true,
+        };
       }
     }
-  
-    getWeeklyHours();
+
+    setDates(dayDict);
+    return currentWeek;
+  };
+
+  const hoursToTime = (time) => {
+    const hour = time.split(":")[0]
+    const amPm = hour / 12 >= 1 ? "PM" : "AM"
+    const revisedHour = hour > 12 ? hour - 12 : hour == 0 ? 12 : hour
+
+
+    return `${revisedHour}:${time.split(":")[1]} ${amPm}`
+
+  }
+
+  useEffect(() => {
+    const run = async () => {
+      const week = getWeekDates();
+      await fetchDates(week);
+    };
+    run();
   }, [refresh]);
 
-  function renderDayHours(dayName) {
-    const dayData = weeklyHours[dayName];
-    
-    if (!dayData) return 'Loading...';
-    
-    switch (dayData.status) {
-      case 'CLOSED':
-        return 'CLOSED';
-      case 'OPEN':
-      case 'DEFAULT':
-        if (dayData.hours && dayData.hours.open) {
-          return `${convertTo12Hour(dayData.hours.startTime)} - ${convertTo12Hour(dayData.hours.endTime)}`;
-        } else {
-          return 'CLOSED';
-        }
-      default:
-        return 'Unknown';
-    }
-  }
-  return (
-    <div style={{padding: "20px", marginLeft: "0px", fontWeight: "bold"}}>
-        This Week's Hours:
-        {loading ? (
-          <div style={{marginTop: "10px"}}>Loading hours...</div>
-        ) : (
-          <div style={{marginTop: "10px", display: "grid", gridTemplateColumns: "repeat(7, 1fr", gap: "10px", overflowX:"scroll"}}>
-            {Object.keys(weeklyHours).map((day, index) => (
-              <div key={day} style={{padding: "8px", border: index !== 0 ?  "1px solid #ddd" : "1px solid red", borderRadius: "4px", minWidth: "100px"}}>
-                <div style={{fontWeight: "bold", fontSize: "14px"}}>{day}:</div>
-                <div style={{fontSize: "12px", marginTop: "2px", color: renderDayHours(day) == "CLOSED" ? "#973636" : "black"}}>
-                  {renderDayHours(day)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    
-  );
-};
+  const fetchDates = async (week) => {
+    const response = await fetch(`/api/hours/alt?dates=${week}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await response.json();
 
-export default Calendar;
+    setDates((prevDates) => {
+      const dateDict = { ...prevDates };
+      for (const modifiedDate of data.data) {
+        dateDict[modifiedDate.date] = modifiedDate;
+      }
+      return dateDict;
+    });
+  };
+
+
+
+  return (
+    <div className={styles.container}>
+      This Weeks Hours:
+    <div className={styles.calendarContainer}>
+        {
+            Object.entries(dates).map(([key, val], index) => 
+            <div className={styles.weekDay} style={{borderColor: index == 0 && "red"}}>
+                <div>{numToDay[new Date(key).getDay()]}</div>
+                <div>
+                  {val.open ? `${hoursToTime(val.startTime)}-${hoursToTime(val.endTime)}` : <span style={{color: "#652525ff"}}>CLOSED</span>}
+                </div>
+            </div>)
+        }
+    </div>
+    </div>
+  );
+}

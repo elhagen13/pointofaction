@@ -132,7 +132,7 @@ function Admin() {
                   onChange={() => setOpen(false)}
                   style={{ width: '18px', height: '18px' }}
                 />
-                <label htmlFor="close" style={{ cursor: 'pointer', userSelect: 'none' }}>Close</label>
+                <label htmlFor="close" style={{ cursor: 'pointer', userSelect: 'none' }}>Closed</label>
               </div>
             </div>
           </div>
