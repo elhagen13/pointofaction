@@ -194,6 +194,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  white-space: nowrap;
 }
 
 .pageButton:disabled {
@@ -626,6 +627,7 @@
 .history.visible {
   max-height: 500px;
   overflow-y: scroll;
+  overflow-x: scroll;
 }
 
 .historyRow {
@@ -636,6 +638,7 @@
   cursor: pointer;
   transition: background-color 0.1s ease-in-out;
   border-radius: 40px 10px 10px 40px;
+  white-space: nowrap;
 }
 
 .historyRow:hover {
@@ -648,8 +651,9 @@
 }
 
 .profile {
-  width: 2rem;
-  height: 2rem;
+  width: 2rem !important;
+  aspect-ratio:  1 / 1;
+  padding: 5px;
   background-color: orange;
   border-radius: 50%;
   display: flex;

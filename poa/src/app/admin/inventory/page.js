@@ -1216,7 +1216,7 @@ function Inventory() {
           </div>
 
           {filter !== "grouped" && (
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap:"wrap", rowGap:"0px" }}>
               {filter === "line items" &&
                 <>
                   <button style={{

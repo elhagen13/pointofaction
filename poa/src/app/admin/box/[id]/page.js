@@ -1,7 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { IoAddCircleOutline, IoRemoveCircleOutline } from "react-icons/io5";
+import { IoAddCircleOutline} from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
 import { FaUpload, FaTimes } from "react-icons/fa";
 import { CiCirclePlus, CiCircleMinus } from "react-icons/ci";
@@ -12,9 +12,7 @@ import { BeatLoader } from "react-spinners";
 export default function Box() {
   const { id } = useParams();
   const [items, setItems] = useState([]);
-  const [originalItems, setOriginalItems] = useState([]);
   const [boxId, setBoxId] = useState("");
-  const [edit, setEdit] = useState(false);
   const [add, setAdd] = useState(false);
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
@@ -87,7 +85,6 @@ export default function Box() {
     const result = await response.json();
 
     setItems(result.data.filter((item) => item.boxId == boxId));
-    setOriginalItems(result.data.filter((item) => item.boxId == boxId));
   };
 
   const getItemOptions = async () => {
@@ -208,9 +205,6 @@ export default function Box() {
         });
 
 
-       
-
-
       } catch {
         alert("Error encountered while updating quantities, please try again");
         return false;
@@ -246,7 +240,6 @@ export default function Box() {
     getItems();
     setChanges([]);
     setNegatives([]);
-    setEdit(false);
     setSubmitting(false)
   };
 

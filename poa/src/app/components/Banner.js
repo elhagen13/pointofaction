@@ -1,57 +1,88 @@
-'use client'
-import styles from './banner.module.css';
-import { useState, useRef, useEffect } from 'react';
-import BannerItem from './BannerItem';
-import Link from 'next/link';
+"use client";
+import styles from "./banner.module.css";
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 
 const bannerItems = [
-  {
-    image: "/banner1-min.jpeg",
-  },
-  {
-    image: "/banner2-min.jpeg",
-  },
-  {
-    image: "/banner3-min.jpeg",
-  }
-]
+  "/banner1-min.jpeg",
+  "/banner2-min.jpeg",
+  "/banner3-min.jpeg",
+];
 
 const bannerMobileItems = [
-  {
-    image: "/banner1mobile-min.jpeg"
-  },
-  {
-    image: "/banner2mobile-min.jpeg"
-  },
-  {
-    image: "/banner3mobile-min.jpeg"
-  },
-]
+  "/banner1mobile-min.jpeg",
+  "/banner2mobile-min.jpeg",
+  "/banner3mobile-min.jpeg",
+];
 
-const Banner = () => {
+const Banner = ({ lists = null }) => {
   const [curPage, setCurPage] = useState(0);
   const [startX, setStartX] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSmall, setIsSmall] = useState(false);
   const bannerRef = useRef(null);
 
-  
+  const [mobileBanners, setMobileBanners] = useState(bannerMobileItems);
+  const [desktopBanners, setDesktopBanners] = useState(bannerItems);
+
+  const fetchBanners = async () => {
+    const bannerResponse = await fetch(`/api/banners`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await bannerResponse.json();
+
+    const small = [];
+    const large = [];
+
+    const banners = data.data.sort(function (a, b) {
+      return a.index < b.index ? -1 : 1;
+    });
+
+    banners.forEach((file) => {
+      if (file.active) {
+        small.push(file.mobileImage);
+        large.push(file.desktopImage);
+      }
+    });
+
+    setMobileBanners(small);
+    setDesktopBanners(large);
+  };
+
+ useEffect(() => {
+  // If lists isn't passed, fall back to fetching from the API
+  if (!lists) {
+    fetchBanners();
+    return;
+  }
+
+  const small = lists.active.map((banner) => banner.mobileImage);
+  const large = lists.active.map((banner) => banner.desktopImage);
+
+  setMobileBanners(small);
+  setDesktopBanners(large);
+  setCurPage(0); 
+}, [lists]);
+
   useEffect(() => {
     const handleResize = () => setIsSmall(window.innerWidth < 769);
-    
+
     handleResize();
-    
+
     window.addEventListener("resize", handleResize);
-    
+
     return () => window.removeEventListener("resize", handleResize);
-}, []);
+  }, []);
 
   // Auto-advance banner
   useEffect(() => {
-    console.log(isSmall)
+    console.log(isSmall);
     const currentItems = isSmall ? bannerMobileItems : bannerItems;
     const interval = setInterval(() => {
-      setCurPage(prev => (prev === currentItems.length - 1 ? 0 : prev + 1));
+      setCurPage((prev) => (prev === currentItems.length - 1 ? 0 : prev + 1));
     }, 10000);
 
     return () => clearInterval(interval);
@@ -66,7 +97,7 @@ const Banner = () => {
   // Handle touch move
   const handleTouchMove = (e) => {
     if (!startX || !isDragging) return;
-    
+
     // Prevent default to avoid scrolling while swiping
     e.preventDefault();
   };
@@ -74,7 +105,7 @@ const Banner = () => {
   // Handle touch end
   const handleTouchEnd = (e) => {
     if (!startX || !isDragging) return;
-    
+
     const endX = e.changedTouches[0].clientX;
     const diff = startX - endX;
     const swipeThreshold = 50;
@@ -83,10 +114,10 @@ const Banner = () => {
     if (Math.abs(diff) > swipeThreshold) {
       if (diff > 0) {
         // Swipe left - next image
-        setCurPage(prev => (prev === currentItems.length - 1 ? 0 : prev + 1));
+        setCurPage((prev) => (prev === currentItems.length - 1 ? 0 : prev + 1));
       } else {
         // Swipe right - previous image
-        setCurPage(prev => (prev === 0 ? currentItems.length - 1 : prev - 1));
+        setCurPage((prev) => (prev === 0 ? currentItems.length - 1 : prev - 1));
       }
     }
 
@@ -107,7 +138,7 @@ const Banner = () => {
 
   const handleMouseUp = (e) => {
     if (!startX || !isDragging) return;
-    
+
     const endX = e.clientX;
     const diff = startX - endX;
     const swipeThreshold = 50;
@@ -115,9 +146,9 @@ const Banner = () => {
 
     if (Math.abs(diff) > swipeThreshold) {
       if (diff > 0) {
-        setCurPage(prev => (prev === currentItems.length - 1 ? 0 : prev + 1));
+        setCurPage((prev) => (prev === currentItems.length - 1 ? 0 : prev + 1));
       } else {
-        setCurPage(prev => (prev === 0 ? currentItems.length - 1 : prev - 1));
+        setCurPage((prev) => (prev === 0 ? currentItems.length - 1 : prev - 1));
       }
     }
 
@@ -142,19 +173,24 @@ const Banner = () => {
         }}
       >
         <div className={styles.portalBanner}>
-          <span className={styles.portalBannerText}>Planning to reorder often?</span>
+          <span className={styles.portalBannerText}>
+            Planning to reorder often?
+          </span>
           <div className={styles.portalBannerButtons}>
             <Link href="/requestPortal" className={styles.portalBannerButton}>
               Request Portal
             </Link>
-            <Link href="https://portal.shopvox.com/sign-in" className={styles.portalBannerButton}>
+            <Link
+              href="https://portal.shopvox.com/sign-in"
+              className={styles.portalBannerButton}
+            >
               Portal Login
             </Link>
           </div>
         </div>
         <div className={styles.bannerImageContainer}>
-          <img 
-            src={isSmall ? bannerMobileItems[curPage].image : bannerItems[curPage].image} 
+          <img
+            src={isSmall ? mobileBanners[curPage] : desktopBanners[curPage]}
             className={styles.bannerImage}
             alt={`Banner ${curPage + 1}`}
             draggable={false}
@@ -162,7 +198,7 @@ const Banner = () => {
         </div>
         <div className={styles.selectBanner}>
           <div className={styles.selectBannerButtons}>
-            {(isSmall ? bannerMobileItems : bannerItems).map((_, index) => (
+            {(isSmall ? mobileBanners : desktopBanners).map((_, index) => (
               <button
                 key={index}
                 className={`${styles.bannerButton} ${curPage === index ? styles.active : ""}`}

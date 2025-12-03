@@ -10,6 +10,7 @@ import AddReservation from "./addReservation"
 import EditSale from "./editSale.js"
 import EditEmails from "./editEmails"
 import Calendar from "../components/Calendar";
+import Banners from "./editBanner";
 
 function Admin() {
   const [startDate, setStartDate] = useState("");
@@ -187,6 +188,7 @@ function Admin() {
         </div>
       )}
       <EditSale/>
+      <Banners/>
       <EditEmails/>
       <AddCompanyStore />
       <AddGalleryItem/>
