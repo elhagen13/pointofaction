@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import styles from "./admin.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 import AddCompanyStore from "./addStore.js";
-import AddGalleryItem from "./addGalleryItem";
 import AddVendorItem from "./addVendor";
 import AddOverstock from "./addInventory"
 import AddReservation from "./addReservation"
@@ -11,6 +10,7 @@ import EditSale from "./editSale.js"
 import EditEmails from "./editEmails"
 import Calendar from "../components/Calendar";
 import Banners from "./editBanner";
+import AddGalleryItem from "./Gallery/AddGalleryItem"
 
 function Admin() {
   const [startDate, setStartDate] = useState("");

@@ -22,6 +22,7 @@ function AddImage({ onClose, onCompanyAdded }) {
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [page, setPage] = useState("product")
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -103,7 +104,7 @@ function AddImage({ onClose, onCompanyAdded }) {
     e.preventDefault();
 
     // Basic validation
-    if (!companyName || !image || !type) {
+    if (!companyName || !image || (page === "product" && !type)) {
       alert("Please fill in all fields and upload an image");
       return;
     }
@@ -140,7 +141,8 @@ function AddImage({ onClose, onCompanyAdded }) {
       const imageData = {
         company: companyName,
         imageLink: image,
-        type: type,
+        logo: page === "company",
+        type: type || null,
       };
 
       const response = await fetch("/api/galleryImages", {
@@ -188,8 +190,13 @@ function AddImage({ onClose, onCompanyAdded }) {
             />
           </div>
 
+          <div className={styles.galleryButtons}>
+            <div className={page == "product" ? styles.active : styles.inactive} onClick={() => setPage("product")}>Product</div>
+            <div className={page == "company" ? styles.active : styles.inactive} onClick={() => setPage("company")}>Company</div>
+          </div>
+
           <div className={styles.formInput}>
-            <label>Image</label>
+            <label>{page == "company" ? "Logo" : "Image"}</label>
 
             {/* File Upload Section */}
             <div className={styles.uploadSection}>
@@ -226,7 +233,7 @@ function AddImage({ onClose, onCompanyAdded }) {
             {uploadError && <div className={styles.error}>{uploadError}</div>}
           </div>
 
-          <div className={styles.formInput}>
+         {page == "product" && <div className={styles.formInput}>
             <label>Service Type</label>
             <select
               className={styles.input}
@@ -241,7 +248,7 @@ function AddImage({ onClose, onCompanyAdded }) {
                 </option>
               ))}
             </select>
-          </div>
+          </div>}
 
           <div>
             <button
@@ -268,6 +275,8 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
   const [uploadedImageUrl, setUploadedImageUrl] = useState(image.imageLink);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [page, setPage] = useState(image.logo ? "company" : "product")
+
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -390,7 +399,8 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
       const imageData = {
         company: companyName,
         imageLink: galleryImage,
-        type: type,
+        type: type || null,
+        logo: page == "company"
       };
 
       const response = await fetch(`/api/galleryImages/${image._id}`, {
@@ -457,8 +467,13 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
             />
           </div>
 
+          <div className={styles.galleryButtons}>
+            <div className={page == "product" ? styles.active : styles.inactive} onClick={() => setPage("product")}>Product</div>
+            <div className={page == "company" ? styles.active : styles.inactive} onClick={() => setPage("company")}>Company</div>
+          </div>
+
           <div className={styles.formInput}>
-            <label>Gallery Image</label>
+            <label>{page == "product" ? "Gallery Image" : "Logo"}</label>
 
             {/* Current Image */}
             {uploadedImageUrl && (
@@ -496,7 +511,7 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
             {uploadError && <div className={styles.error}>{uploadError}</div>}
           </div>
 
-          <div className={styles.formInput}>
+          {page == "product" && <div className={styles.formInput}>
             <label>Service Type</label>
             <select
               className={styles.input}
@@ -511,7 +526,7 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
                 </option>
               ))}
             </select>
-          </div>
+          </div>}
 
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <button
@@ -645,7 +660,7 @@ function AddGalleryItem() {
                 <div className={styles.company} key={index}>
                   <div className={styles.imageContainer}>
                     <img
-                      src={image.imageLink}
+                      src={image.image}
                       className={styles.companyImage}
                       alt={image.company}
                     />

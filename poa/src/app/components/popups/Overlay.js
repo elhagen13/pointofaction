@@ -6,16 +6,17 @@ export default function Overlay({
   children,
   isVisible,
   onClose,
-  popup,
-  setPopup,
-  unsavedChanges,
-  setUnsavedChanges
+  popup = null,
+  setPopup = () => {},
+  unsavedChanges = null,
+  setUnsavedChanges = () => {},
+  width = "100%"
 }) {
   if (!isVisible) return null;
   return (
     <>
       <div className={styles.overlayBackground}>
-        <div className={styles.overlay}>
+        <div className={styles.overlay} style={{width: width}}>
           <div className={styles.exitContainer}>
             <div className={styles.exit} onClick={() => {
               !unsavedChanges ? onClose() : setPopup("unsaved"); 

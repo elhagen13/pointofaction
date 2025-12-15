@@ -1,3 +1,4 @@
+'use client'
 import { useState, useEffect, useCallback } from "react";
 import Overlay from "@/app/components/popups/Overlay";
 import styles from "./companyInventory.module.css";

@@ -127,6 +127,17 @@
   pointer-events: none;
 }
 
+.mouseCenter {
+  position: absolute;
+  top: 0;
+  left: 35%;
+  width: 30%;
+  height: 100%;
+  z-index: 9999;
+  cursor: default;
+  background: transparent;
+}
+
 .mouseRight, .mouseLeft{
   position: absolute;
   z-index: 999;
@@ -146,3 +157,29 @@
   background-image: linear-gradient(to left, rgb(255, 255, 255), rgba(255, 255, 255, 0) 50%);;
 }
 
+@media(max-width: 768px){
+  .carouselContainer{
+    height: 15rem;
+    padding: 50px 0;
+  }
+   
+
+  .left3 {
+  left: 10%;
+  transform: translateX(-100%) scale(0.6);
+  z-index: 72;
+}
+.right3 {
+  right: 10%;
+  transform: translateX(-100%) scale(0.6);
+  z-index: 72;
+}
+
+.imageContainer{
+  width: 100%;
+}
+
+
+  
+
+}
