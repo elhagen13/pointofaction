@@ -258,8 +258,10 @@ export default function EditItem({
     })
 
     const result = await response.json();
-    console.log(result)
-    
+      console.log(result)
+    if(result.success){
+      onClose();
+    }
   };
 
   return (
@@ -369,11 +371,11 @@ export default function EditItem({
               style={{ fontWeight: "bold", color: "rgb(167, 167, 167)" }}
             >
               <span
-                style={{ backgroundColor: "rgb(167, 167, 167)", height: "2px" }}
+                style={{ backgroundColor: "rgba(223, 217, 217, 1)", height: "1px" }}
               ></span>
               Instances
               <span
-                style={{ backgroundColor: "rgb(167, 167, 167)", height: "2px" }}
+                style={{ backgroundColor: "rgba(223, 217, 217, 1)", height: "1px" }}
               ></span>
             </div>
             <div className={`${styles.sm} ${styles.mobile}`}>
