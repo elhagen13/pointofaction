@@ -1,7 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 
 const MONGODB_URI = process.env.MONGO_URI;
-const DATABASE_NAME = "test";
+const DATABASE_NAME = process.env.DATABASE_NAME;
 const COLLECTION_NAME = "companyItems";
 
 let cachedClient = null;
@@ -72,11 +72,10 @@ export async function PATCH(request, { params }) {
     const inventoryCollection = db.collection("companyInventory");
     
     const caseInsensitiveCollation = { locale: 'en', strength: 2 };
+    const { id } = await params;
+
     
-    // Get the item ID from route params
-    const itemId = params.id;
-    
-    if (!itemId) {
+    if (!id) {
       return Response.json(
         { 
           success: false, 
@@ -87,7 +86,7 @@ export async function PATCH(request, { params }) {
     }
     
     // Validate ObjectId
-    if (!ObjectId.isValid(itemId)) {
+    if (!ObjectId.isValid(id)) {
       return Response.json(
         { 
           success: false, 
@@ -101,7 +100,7 @@ export async function PATCH(request, { params }) {
     console.log(body);
     
     // Check if item exists
-    const existingItem = await collection.findOne({ _id: new ObjectId(itemId) });
+    const existingItem = await collection.findOne({ _id: new ObjectId(id) });
     if (!existingItem) {
       return Response.json(
         { 
@@ -141,7 +140,7 @@ export async function PATCH(request, { params }) {
     
     // Update the item
     const itemUpdateResult = await collection.updateOne(
-      { _id: new ObjectId(itemId) },
+      { _id: new ObjectId(id) },
       {
         $set: {
           companyId: companyId,
@@ -161,11 +160,11 @@ export async function PATCH(request, { params }) {
     
     // Handle instances: Delete old ones and insert new ones
     // First, delete all existing instances for this item
-    await inventoryCollection.deleteMany({ itemId: new ObjectId(itemId) });
+    await inventoryCollection.deleteMany({ itemId: new ObjectId(id) });
     
     // Then insert the new instances
     const instanceDocuments = body.instances.map(instance => ({
-      itemId: new ObjectId(itemId),
+      itemId: new ObjectId(id),
       orderId: instance.orderId,
       quantity: instance.quantity,
       location: instance.location,
@@ -179,7 +178,7 @@ export async function PATCH(request, { params }) {
       return Response.json({
         success: true,
         data: {
-          itemId: itemId,
+          itemId: id,
           inventoryIds: Object.values(inventoryResult.insertedIds),
           updatedCount: itemUpdateResult.modifiedCount,
           insertedInstanceCount: inventoryResult.insertedCount
@@ -209,6 +208,68 @@ export async function PATCH(request, { params }) {
         success: false, 
         error: 'Failed to update item',
         details: error.message 
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE company by ID
+export async function DELETE(request, { params }) {
+  try {
+    const { db } = await connectToDatabase();
+    const collection = db.collection(COLLECTION_NAME);
+    const { id } = await params;
+
+    // Validate ObjectId format
+    if (!ObjectId.isValid(id)) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Invalid ID format'
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check if company exists before deleting
+    const existingItem= await collection.findOne({ _id: new ObjectId(id) });
+    if (!existingItem) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Company not found'
+        },
+        { status: 404 }
+      );
+    }
+
+    // Delete the document
+    const result = await collection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Failed to delete'
+        },
+        { status: 500 }
+      );
+    }
+
+    return Response.json({
+      success: true,
+      message: 'Deleted successfully',
+      data: existingItem
+    });
+
+  } catch (error) {
+    console.error('DELETE error:', error);
+    return Response.json(
+      {
+        success: false,
+        error: 'Failed to delete',
+        details: error.message
       },
       { status: 500 }
     );
