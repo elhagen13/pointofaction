@@ -4,6 +4,13 @@
   padding: 10px;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-wrap: wrap
+}
+
+.productCardContainer h4{
+    color: rgb(157, 147, 147);
 }
 
 
@@ -140,7 +147,7 @@
     flex-direction: row;
     gap: 10px;
     height: fit-content;
-    border-top: 2px solid rgb(235, 235, 235);
+    border-top: 1px solid rgb(242, 233, 233);
     z-index: 50;
     left: 0;
     top: 0;

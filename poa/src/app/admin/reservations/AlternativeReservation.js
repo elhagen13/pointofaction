@@ -1,19 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
 import React from "react";
-import styles from "./reservation.module.css";
+import styles from "./alternativeReservation.module.css";
 import { BeatLoader } from "react-spinners";
 import { RiArrowGoBackLine } from "react-icons/ri";
-import AddToRes from "./AddToRes";
+import { useUser } from "@clerk/nextjs";
+import { TruckElectric } from "lucide-react";
 
-export default function Reservation({ params }) {
-  const { id } = React.use(params);
-  const [reservation, setReservation] = useState({});
+export default function AlternativeView({ res, refresh }) {
+  const [reservation, setReservation] = useState(res);
   const [editReservation, setEditReservation] = useState(null);
   const [returnReservation, setReturnReservation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [options, setOptions] = useState([]);
-  const [quantityAvailable, setQuantityAvailable] = useState(0);
   const [idSet, setIdSet] = useState({});
   const [quantityMap, setQuantityMap] = useState({});
   const [allocatedRemaining, setAllocatedRemaining] = useState(0);
@@ -21,35 +20,38 @@ export default function Reservation({ params }) {
   const [groupedItems, setGroupedItems] = useState([]);
   const [returnQuantities, setReturnQuantities] = useState({});
   const [submittingReturn, setSubmittingReturn] = useState(false);
-  const [add, setAdd] = useState(false);
-  const [existingKeys, setExistingKeys] = useState([]);
-  const [addedItems, setAddedItems] = useState([]);
+  const [submitting, setSubmitting] = useState(null);
+  const { user } = useUser();
 
-  const getReservation = async () => {
-    const response = await fetch(`/api/catalog/reservation/${id}`, {
-      method: "GET",
-    });
-    const result = await response.json();
-    console.log(result.data);
-    setReservation(result.data[0]);
+  useEffect(() => {
+    setReservation(res);
+  }, [res]);
 
-    // Build idSet for all items
+  useEffect(() => {
+    if(!reservation.items) return
     const ids = {};
-    for (const item of result.data[0].items) {
+    for (const item of reservation.items) {
       ids[item.itemId] = item;
     }
     setIdSet(ids);
 
     // Group items by style, color, brand, and size
     const groups = {};
-    result.data[0].items.forEach((item) => {
+    reservation.items.forEach((item) => {
       console.log(item);
       const size =
-        item.size || item.currentItemData?.sizeData?.size || "Unknown Size";
+        item.size ||
+        item.currentItemData?.sizeData?.size ||
+        item.currentItemData?.size ||
+        "Unknown Size";
       const brand =
-        item.brand || item.currentItemData?.brandData?.brand || "Unknown Brand";
+        item.brand ||
+        item.currentItemData?.brandData?.brand ||
+        item.currentItemData?.brand ||
+        "Unknown Brand";
       const description =
         item.currentItemData?.descriptionData?.description ||
+        item.currentItemData?.description ||
         item.description ||
         "Unknown Description";
       console.log("DESCRIPTION", description);
@@ -82,62 +84,29 @@ export default function Reservation({ params }) {
     });
 
     setGroupedItems(Object.values(groups));
-  };
-
-  useEffect(() => {
-    getReservation();
-  }, []);
-
-  const getMatching = async (style, color, brand, size) => {
-    setLoading(true);
-    try {
-      const matching = await fetch(
-        `/api/catalog?style=${style}&color=${color}&brand=${brand}&size=${size}&ignore=true`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!matching.ok) {
-        const errorData = await matching.json();
-        throw new Error(errorData.error || `HTTP ${matching.status}`);
-      }
-      const data = await matching.json();
-      console.log("Matching items:", data);
-
-      let map = {};
-      for (const opt of data) {
-        map[opt._id] = idSet[opt._id]
-          ? idSet[opt._id]?.quantReserved - (idSet[opt._id]?.pulled || 0)
-          : 0;
-      }
-      console.log("Initial MAP", map);
-
-      setQuantityMap(map);
-      setOptions(data);
-      setQuantityAvailable(
-        data.reduce(
-          (a, b) => a + (b.quantity - (!idSet[b._id] ? b.reserved || 0 : 0)),
-          0
-        )
-      );
-      setLoading(false);
-      return;
-    } catch (finalizeError) {
-      console.error("Error finalizing reservation:", finalizeError);
-      return null;
-    }
-  };
+  }, [reservation]);
 
   const changeBoxes = (group, index) => {
+    setLoading(true);
     console.log("GROUP", group);
     setReturnReservation(null);
     setEditReservation(index === editReservation ? null : index);
-    getMatching(group.style, group.color, group.brand, group.size);
     setTotal(group.totalReserved - group.totalPulled);
+    setOptions(group.items);
+    let map = {};
+    for (const opt of group.items) {
+      map[opt.itemId] = idSet[opt.itemId]
+        ? idSet[opt.itemId]?.quantReserved - (idSet[opt.itemId]?.pulled || 0)
+        : 0;
+    }
+
+    setQuantityMap(map);
+    setLoading(false);
   };
+
+  useEffect(() => {
+    console.log(quantityMap, options);
+  }, [quantityMap, options]);
 
   const returnToBox = (group, index) => {
     setEditReservation(null);
@@ -183,55 +152,41 @@ export default function Reservation({ params }) {
     setAllocatedRemaining(remaining);
   }, [quantityMap, total]);
 
-  const handleSubmit = async () => {
-    if (editReservation === null) return;
+  const handleSubmit = async (id, value, itemStr) => {
+    console.log(id, value, itemStr);
+    setSubmitting(id);
 
-    const currentGroup = groupedItems[editReservation];
-    console.log("Current group:", currentGroup);
-    console.log("Quantity map:", quantityMap);
+    let change = {
+      user: user.fullName,
+      editedOn: new Date(),
+      changes: [
+        `${value} ${itemStr} pulled for reservation ${reservation.sequentialId}`,
+      ],
+    };
 
-    // Build the quantities object with only changed items
-    const quantities = quantityMap;
-
-    // For each item in the current group, update its quantity based on quantityMap
-    for (const item of currentGroup.items) {
-      const allocatedQty = parseInt(quantityMap[item.itemId]) || 0;
-      console.log(allocatedQty);
-      if (allocatedQty !== item.quantReserved) {
-        quantities[item.itemId] = allocatedQty;
-      }
-    }
-
-    console.log("Quantities to update:", quantities);
-
-    if (Object.keys(quantities).length === 0) {
-      alert("No changes to save");
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/catalog/manual/${id}`, {
+    const result = await fetch(
+      `/api/catalog/reservation/${reservation._id}/${id}`,
+      {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ quantities }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update reservation");
+        body: JSON.stringify({
+          newAmount: value,
+          history: change,
+        }),
       }
+    );
 
-      const result = await response.json();
-      console.log("Update result:", result);
+    if (result.ok) {
+      const body = await result.json();
 
-      // Refresh the reservation
-      await getReservation();
+      setSubmitting(null);
       setEditReservation(null);
-      alert("Reservation updated successfully!");
-    } catch (error) {
-      console.error("Error updating reservation:", error);
-      alert("Failed to update reservation");
+      refresh();
+    } else {
+      console.error("Failed to update:", result.status);
+      setSubmitting(null);
     }
   };
 
@@ -248,16 +203,19 @@ export default function Reservation({ params }) {
     if (submittingReturn) return;
     setSubmittingReturn(true);
     try {
-      const response = await fetch(`/api/catalog/manual/${id}/return`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          itemId: itemId,
-          returnedQuantity: returnQuantities[itemId],
-        }),
-      });
+      const response = await fetch(
+        `/api/catalog/manual/${reservation._id}/return`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            itemId: itemId,
+            returnedQuantity: returnQuantities[itemId],
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update reservation");
@@ -266,10 +224,8 @@ export default function Reservation({ params }) {
       const result = await response.json();
       console.log("Update result:", result);
 
-      // Refresh the reservation
-      await getReservation();
+      refresh();
       setReturnReservation(null);
-      alert("Reservation updated successfully!");
     } catch (error) {
       console.error("Error updating reservation:", error);
       alert("Failed to update reservation");
@@ -277,64 +233,16 @@ export default function Reservation({ params }) {
     setSubmittingReturn(false);
   };
 
-  useEffect(() => {
-    if (!groupedItems || groupedItems.length === 0) return;
-
-    // Flatten all items from grouped items
-    const arr1 = groupedItems.flatMap(
-      (group) =>
-        group.items?.map(
-          (item) => `${item.brand}-${item.style}-${item.color}`
-        ) || []
-    );
-
-    // Map added items
-    const arr2 =
-      addedItems?.map((item) => `${item.brand}-${item.style}-${item.color}`) ||
-      [];
-
-    setExistingKeys(arr1.concat(arr2));
-  }, [groupedItems, addedItems]);
-
-  const checkDisabled = () => {
-    console.log("Checking disabled", allocatedRemaining)
-    if (allocatedRemaining < 0) return true;
-
-    for (const opt of options) {
-      if (getAvailableQuantity(opt) < quantityMap[opt._id]) {
-        return true;
-      }
-    }
-
+  const checkDisabled = (opt) => {
+    console.log("OPT", opt);
+    if (quantityMap[opt.itemId] > opt.quantReserved - (opt.pulled || 0))
+      return true;
+    if (quantityMap[opt.itemId] <= 0) return true;
     return false;
   };
 
   return (
     <div className={styles.page}>
-      <span
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <h2>Reservation {reservation.sequentialId} </h2>
-        <div className={styles.addToRes} onClick={() => setAdd(!add)}>
-          Add Item
-        </div>
-      </span>
-      {add && (
-        <AddToRes
-          existingKeys={existingKeys}
-          addedItems={addedItems}
-          setAddedItems={setAddedItems}
-          reservationId={id}
-          onSuccess={() => {
-            getReservation();
-            setAdd(false);
-          }}
-        />
-      )}
       <div className={styles.grid}>
         {groupedItems.map((group, index) => (
           <div key={group.key} className={styles.cardWrapper}>
@@ -374,51 +282,49 @@ export default function Reservation({ params }) {
                   </div>
                 ) : (
                   <div className={styles.editCard}>
-                    <div className={styles.apart}>
-                      <span>
-                        Quantity (Max {quantityAvailable}):{" "}
-                        <input
-                          className={styles.input}
-                          type="number"
-                          min="0"
-                          max={quantityAvailable}
-                          value={total}
-                          onChange={(e) => setTotal(e.target.value)}
-                        />{" "}
-                      </span>
-                      {isNaN(allocatedRemaining) ? "~" : allocatedRemaining}{" "}
-                      remaining
-                    </div>
                     <div className={styles.options}>
                       {options.map((opt) => (
                         <div key={opt._id} className={styles.boxCards}>
                           <span>
-                            {opt.boxSequentialId
-                              ? `#${opt.boxSequentialId}`
+                            {opt.currentItemData?.boxData?.boxId
+                              ? `#${opt.currentItemData.boxData.boxId}`
                               : "No Box"}
                           </span>
-                          <span>Available: {getAvailableQuantity(opt)}</span>
+                          <span>
+                            Pulled: {idSet[opt.itemId].pulled || 0}/
+                            {idSet[opt.itemId].quantReserved}
+                          </span>
                           <div>
                             Taking:{" "}
                             <input
                               className={styles.input}
-                              value={quantityMap[opt._id] || 0}
+                              value={quantityMap[opt.itemId] || 0}
                               type="number"
                               min="0"
                               max={getAvailableQuantity(opt)}
-                              onChange={(e) => handleCardChange(opt._id, e)}
+                              onChange={(e) => handleCardChange(opt.itemId, e)}
                             />
                           </div>
+                          <button
+                            onClick={() =>
+                              handleSubmit(
+                                opt.itemId,
+                                quantityMap[opt.itemId] || 0,
+                                group.key
+                              )
+                            }
+                            disabled={checkDisabled(opt)}
+                            className={`${styles.remaining} ${styles.saveButton}`}
+                          >
+                            {submitting == opt.itemId ? (
+                              <BeatLoader size={5} />
+                            ) : (
+                              "save"
+                            )}
+                          </button>
                         </div>
                       ))}
                     </div>
-                    <button
-                      onClick={handleSubmit}
-                      disabled={checkDisabled()}
-                      className={`${styles.remaining} ${styles.saveButton}`}
-                    >
-                      save
-                    </button>
                   </div>
                 )}
               </div>

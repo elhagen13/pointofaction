@@ -72,19 +72,38 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  margin-bottom:20px;
 }
 
-.button {
+.button, .submitButton{
   padding: 0.5em 1em;
   font-weight: bold;
-  background-color: white;
+  border-radius: 5px;
   border: 2px solid white;
   transition: all 0.2s ease-in-out;
-  border-radius: 0px;
+  margin: 1rem 0;
+  font-size: 10px;
   cursor: pointer;
+
 }
 
-.button:hover {
+.submitButton{
+  background-color: #4d966147;
+  margin-left: auto;
+}
+
+.submitButtonContainer{
+  width: 100%;
+  display: flex;
+}
+
+
+.button {
+  background-color: white;
+  border-radius: 0px;
+}
+
+.button:hover, .submitButton:hover {
   border: 2px solid rgb(30, 90, 53);
   border-radius: 10px;
   color: rgb(30, 90, 53);

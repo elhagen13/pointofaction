@@ -1,201 +1,98 @@
 "use client";
-import { useState, useEffect } from "react";
-import styles from "./admin.module.css";
-import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
-import AddCompanyStore from "./addStore.js";
-import AddVendorItem from "./addVendor";
-import AddOverstock from "./addInventory"
-import AddReservation from "./addReservation"
-import EditSale from "./editSale.js"
-import EditEmails from "./editEmails"
-import Calendar from "../components/Calendar";
-import Banners from "./editBanner";
-import AddGalleryItem from "./Gallery/AddGalleryItem"
+import { useState, useRef, useCallback, useEffect } from "react";
+import styles from "./adminHome.module.css";
+import EditHours from "./components/EditHours";
+import EditSale from "./components/EditSale";
+import EditEmails from "./components/EditEmails";
+import EditStores from "./components/EditStores"
+import EditGallery from "./components/EditGallery"
+import EditBanner from "@/app/components/admin/banners/uploadBanner";
+import EditVendors from "./components/EditVendors"
 
-function Admin() {
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [startTime, setStartTime] = useState("10:00");
-  const [endTime, setEndTime] = useState("17:00");
-  const [open, setOpen] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  
-  // Check if device is mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+export default function AdminHome() {
+  const [sliderPosition, setSliderPosition] = useState(null);
+  const filters = ["Change Hours", "Sale Status", "Email Recipients", "Company Stores", "Gallery Images", "Banners", "Vendors"];
+  const [activeFilter, setActiveFilter] = useState("Change Hours");
+  const [filterIndex, setFilterIndex] = useState(0);
+  const colors = ["#020344", "#08215c", "#0f3f74", "#155e8d", "#1b7ca5", "#229abd", "#28b8d5"];
+  const filterRefs = useRef({});
+
+  const components = {
+    "Change Hours": <EditHours/>,
+    "Sale Status": <EditSale/>,
+    "Email Recipients": <EditEmails/>,
+    "Company Stores": <EditStores/>,
+    "Gallery Images": <EditGallery/>,
+    "Banners": <EditBanner/>,
+    "Vendors": <EditVendors/>
+  }
+
+  const updateSliderPosition = useCallback((filterName) => {
+    const element = filterRefs.current[filterName];
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const containerRect = element.parentElement.getBoundingClientRect();
+
+      setSliderPosition({
+        width: rect.width,
+        height: rect.height,
+        left: rect.left - containerRect.left,
+        top: rect.top - containerRect.top,
+      });
+    }
   }, []);
 
+  const changePagination = useCallback(
+    (e) => {
+      const filterName = e.target.textContent;
+      setActiveFilter(filterName);
+      updateSliderPosition(filterName);
+    },
+    [updateSliderPosition]
+  );
 
+  // Update slider on mount and resize
+  useEffect(() => {
+    updateSliderPosition(activeFilter);
 
-  const handleSubmitHours = async () => {
-    // Validation
-    if (!startDate || !endDate) {
-      alert("Please select a date");
-      return;
-    }
-    if (startTime >= endTime) {
-      alert("Start time must be before end time");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/hours", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          startDate: startDate,
-          endDate: endDate,
-          startTime: startTime,
-          endTime: endTime,
-          open: open,
-          updatedAt: new Date().toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("Hours updated successfully:", result);
-      alert("Hours updated successfully!");
-      setRefreshKey(prev => prev + 1);
-    } catch (error) {
-      console.error("Error updating hours:", error);
-      alert("Failed to update hours. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    const handleResize = () => updateSliderPosition(activeFilter);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [activeFilter, updateSliderPosition]);
 
   return (
-    <div className={styles.admin}>
-      <div className={styles.title} style={{marginBottom: "20px"}}>Change Hours</div>
-      <div className={styles.schedule}>
-        <div className={styles.scheduleChange}>
-          <div>
-            <label htmlFor="start-date" style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
-              Date Range
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                style={{ flex: 1, minWidth: '140px' }}
-              />
-              <span style={{ color: '#666', fontSize: '14px' }}>to</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                style={{ flex: 1, minWidth: '140px' }}
-              />
-            </div>
+    <div className={styles.adminPage}>
+      <div className={styles.paginationType}>
+        <div
+          className={styles.slider}
+          style={{
+            width: sliderPosition?.width + 30 || 0,
+            height: sliderPosition?.height + 10 || 0,
+            left: sliderPosition?.left || 0,
+            top: sliderPosition?.top || 0,
+            backgroundColor: colors[filterIndex],
+          }}
+        />
+        {filters.map((filter, index) => (
+          <div
+            key={filter}
+            ref={(el) => (filterRefs.current[filter] = el)}
+            className={styles.filter}
+            style={{ color: activeFilter === filter ? "white" : "black", width:"fit-content"}}
+            onClick={(e) => {
+              changePagination(e);
+              setFilterIndex(index);
+            }}
+            
+          >
+            {filter}
           </div>
-
-          <div>
-            <label style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
-              Status
-            </label>
-            <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <input
-                  type="radio"
-                  id="open"
-                  name="status"
-                  value="Open"
-                  checked={open}
-                  onChange={() => setOpen(true)}
-                  style={{ width: '18px', height: '18px' }}
-                />
-                <label htmlFor="open" style={{ cursor: 'pointer', userSelect: 'none' }}>Open</label>
-              </div>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <input
-                  type="radio"
-                  id="close"
-                  name="status"
-                  value="Close"
-                  checked={!open}
-                  onChange={() => setOpen(false)}
-                  style={{ width: '18px', height: '18px' }}
-                />
-                <label htmlFor="close" style={{ cursor: 'pointer', userSelect: 'none' }}>Closed</label>
-              </div>
-            </div>
-          </div>
-
-          {open && (
-            <div>
-              <label style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
-                Hours
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  style={{ flex: 1, minWidth: '120px' }}
-                />
-                <span style={{ color: '#666', fontSize: '14px' }}>to</span>
-                <input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  style={{ flex: 1, minWidth: '120px' }}
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <button
-              className={styles.button}
-              onClick={handleSubmitHours}
-              disabled={isSubmitting}
-              style={{
-                width: isMobile ? '100%' : 'auto',
-                marginTop: '10px'
-              }}
-            >
-              {isSubmitting ? "Updating..." : "Change Hours"}
-            </button>
-          </div>
-        </div>
-
-        {!isMobile && (
-           <Calendar refresh={refreshKey}/>
-        )}
+        ))}
       </div>
+      <div className={styles.contents}>
+        {components[activeFilter]}
 
-      {isMobile && (
-          <Calendar refresh={refreshKey}/>
-      )}
-      <EditSale/>
-      <Banners/>
-      <EditEmails/>
-      <AddCompanyStore />
-      <AddGalleryItem/>
-      <AddVendorItem/>
-      <AddReservation/>
-      <AddOverstock/>
-      
-
-
+      </div>
     </div>
   );
 }
-
-export default Admin;

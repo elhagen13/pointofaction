@@ -1,11 +1,10 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import styles from "./admin.module.css";
+import styles from "./components.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
-import Banners from "../components/admin/banners/uploadBanner";
+import Banners from "@/app/components/admin/banners/uploadBanner";
 
 function EditBanners() {
-  const [editOpen, setEditOpen] = useState(false);
 
   return (
     <>

@@ -11,8 +11,11 @@ import { IoWarning } from "react-icons/io5";
 import jsPDF from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { RiArrowGoBackLine } from "react-icons/ri";
-import {FaSave } from "react-icons/fa";
+import { FaSave } from "react-icons/fa";
 import { MdRemoveCircle } from "react-icons/md";
+import { FaMobileScreen } from "react-icons/fa6";
+import { IoMdSwap } from "react-icons/io";
+import AlternativeView from "./AlternativeReservation";
 
 export default function Reservation({ onClose, reservation }) {
   {
@@ -26,9 +29,9 @@ export default function Reservation({ onClose, reservation }) {
 }
 
 const Order = ({ reservation }) => {
-  let stage = "incomplete";
   const [status, setStatus] = useState(reservation.status);
   const [reservationItems, setReservationItems] = useState([]);
+  const [detailedReservation, setDetailedReservation] = useState({});
   const [deletedItems, setDeletedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reservationDict, setReservationDict] = useState({});
@@ -47,11 +50,14 @@ const Order = ({ reservation }) => {
   const [returnQuant, setReturnQuant] = useState(null);
   const [saveClicked, setSaveClicked] = useState(false);
 
+  const [view, setView] = useState(localStorage.getItem("reservationViewSetting") || "default");
+
   useEffect(() => {
     checkCompleteness();
     fetchReservationItems();
     getItemOptions();
     getBoxes();
+    getReservation();
   }, []);
 
   useEffect(() => {
@@ -71,6 +77,7 @@ const Order = ({ reservation }) => {
   }, [reservationItems]);
 
   const refresh = () => {
+    console.log("REFRESHING");
     getReservation();
   };
 
@@ -85,6 +92,8 @@ const Order = ({ reservation }) => {
       }
     );
     const result = await fetchReservation.json();
+
+    setDetailedReservation(result.data[0]);
   };
 
   const getItemOptions = async () => {
@@ -373,6 +382,16 @@ const Order = ({ reservation }) => {
     setSubmitting(false);
   };
 
+  const changeView = () => {
+    let curView = view
+    setView(curView == "default" ? "alt" : "default");
+    localStorage.setItem(
+      "reservationViewSetting",
+      curView === "default" ? "alt" : "default"
+    );
+  }
+  
+
   return (
     <div>
       <div className={styles.progressBarContainer}>
@@ -407,9 +426,17 @@ const Order = ({ reservation }) => {
                 />
               </td>
               <td>
-                {typeof reservation.customer === "object"
-                  ? reservation.customer.name
-                  : reservation.customer}
+                <a
+                  href={`/admin/reservations/customer/${
+                    typeof reservation.customer === "object"
+                      ? reservation.customer.name
+                      : reservation.customer
+                  }`}
+                >
+                  {typeof reservation.customer === "object"
+                    ? reservation.customer.name
+                    : reservation.customer}
+                </a>
               </td>
               <td>
                 <div
@@ -466,279 +493,309 @@ const Order = ({ reservation }) => {
       )}
       {!loading && (
         <>
-          <div className={styles.edit}>
+          <div className={styles.buttonContainer}>
             <button
-              className={styles.downloadButton}
-              onClick={downloadReservation}
+              className={styles.swapButton}
+              onClick={changeView}
             >
-              Download <FiDownload />
+              Switch Views
+              <IoMdSwap
+                className={`${styles.swapIcon} ${view == "default" && styles.swapUp}`}
+              />
             </button>
-            <Link href={`/admin/reservations/${reservation._id}`}>
-              <button className={styles.editButton}>
-                Edit <FiEdit />
+            <div className={styles.edit}>
+              <Link href={`/admin/reservations/${reservation._id}/mobile`}>
+                <button className={styles.pullButton}>
+                  Pull with Mobile
+                  <FaMobileScreen />
+                </button>
+              </Link>
+              <button
+                className={styles.downloadButton}
+                onClick={downloadReservation}
+              >
+                Download <FiDownload />
               </button>
-            </Link>
+              <Link href={`/admin/reservations/${reservation._id}`}>
+                <button className={styles.editButton}>
+                  Edit <FiEdit />
+                </button>
+              </Link>
+            </div>
           </div>
-          <div className={styles.tableContainer}>
-            <table className={styles.reservationItemTable}>
-              <thead>
-                <tr style={{ backgroundColor: "#c5ced9" }}>
-                  <th style={{ padding: "10px" }}>Item</th>
-                  <th>Style</th>
-                  <th>Brand</th>
-                  <th>Color</th>
-                  <th>Size</th>
-                  <th>Quantity</th>
-                  <th>Status</th>
-                  <th>Box #</th>
-                  <th>Location</th>
-                  <th>Last Edited</th>
-                  <th>RTN</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reservationItems.map((item, index) => (
-                  <tr
-                    style={{
-                      backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
-                    }}
-                  >
-                    <td>
-                      <div className={styles.imageContainer}>
-                        <img src={item.image}></img>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href={`/admin/inventory?style=${item.style}&brand=${item.brand || brandDict[item.brandId]?.brand || "N/A"}`}
-                      >
-                        {item.style}
-                      </a>
-                    </td>{" "}
-                    <td>
-                      <a
-                        href={`/admin/inventory?style=${item.style}&brand=${item.brand || brandDict[item.brandId]?.brand || "N/A"}`}
-                      >
-                        {item.brand || brandDict[item.brandId]?.brand || "N/A"}
-                      </a>
-                    </td>
-                    <td>
-                      <a
-                        href={`/admin/inventory?style=${item.style}&brand=${item.brand || brandDict[item.brandId]?.brand || "N/A"}&color=${item.color}`}
-                      >
-                        {item.color}
-                      </a>
-                    </td>
-                    <td>
-                      <a
-                        href={`/admin/inventory?style=${item.style}&brand=${item.brand || brandDict[item.brandId]?.brand || "N/A"}&color=${item.color}&size=${item.size || sizeDict[item.sizeId]?.size || "N/A"}`}
-                      >
-                        {item.size || sizeDict[item.sizeId]?.size || "N/A"}
-                      </a>
-                    </td>
-                    <td>
-                      <Quantity
-                        reservation={reservation}
-                        item={reservationDict[item._id]}
-                        itemStr={`${brandDict[item.brandId]?.brand || item.brand || "No Brand"} ${item.color} ${sizeDict[item.sizeId]?.size || item.size || "No Size"} ${item.style}`}
-                        setDict={setReservationDict}
-                        dict={reservationDict}
-                        prev={reservationDict[item._id].pulled}
-                        max={
-                          reservationDict[item._id].quantReserved -
-                          reservationDict[item._id].pulled
-                        }
-                        checkCompleteness={checkCompleteness}
-                        refresh={refresh}
-                      />
-                    </td>
-                    <td>
-                      <Status
-                        reservation={reservation}
-                        item={reservationDict[item._id]}
-                        setDict={setReservationDict}
-                        dict={reservationDict}
-                        prev={reservationDict[item._id].pulled}
-                        max={reservationDict[item._id].quantReserved}
-                        checkCompleteness={checkCompleteness}
-                        refresh={refresh}
-                      />
-                    </td>
-                    <td>
-                      <a href={`/admin/inventory?box=${item.boxId}`}>
-                      {boxDict[item.boxId]?.boxId || "N/A"}
-                      </a>
-                    </td>
-                    <td>
-                      {item.location || boxDict[item.boxId]?.location || "N/A"}
-                    </td>
-                    <td>{new Date(item.updatedAt).toLocaleString()}</td>
-                    <td
-                      onClick={() => {
-                        if (
-                          index !== returnIndex &&
-                          boxDict[item.boxId]?.boxId
-                        ) {
-                          setReturnIndex(index);
-                          setSaveClicked(false);
-                          setReturnQuant(null);
-                        }
+          {view == "default" && (
+            <div className={styles.tableContainer}>
+              <table className={styles.reservationItemTable}>
+                <thead>
+                  <tr style={{ backgroundColor: "#c5ced9" }}>
+                    <th style={{ padding: "10px" }}>Item</th>
+                    <th>Style</th>
+                    <th>Brand</th>
+                    <th>Color</th>
+                    <th>Size</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Box #</th>
+                    <th>Location</th>
+                    <th>Last Edited</th>
+                    <th>RTN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reservationItems.map((item, index) => (
+                    <tr
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0 ? "#dde4ed" : "#c5ced9",
                       }}
                     >
-                      {returnIndex == index ? (
-                        <div
-                          className={styles.dropdownButton}
-                          style={{
-                            width: "fit-content",
-                            gap: "10px",
-                            position: "relative",
-                          }}
-                        >
-                          <input
-                            type="number"
-                            defaultValue={reservationDict[item._id].pulled}
-                            max={reservationDict[item._id].pulled}
-                            value={returnQuant}
-                            onChange={(e) => {
-                              setReturnQuant(e.target.value);
-                            }}
-                            onBlur={() =>
-                              setReturnQuant(
-                                Math.min(
-                                  returnQuant,
-                                  reservationDict[item._id].pulled
-                                )
-                              )
-                            }
-                            style={{
-                              width: "50px",
-                              border: "none",
-                              backgroundColor: "rgba(255, 255, 255, 0)",
-                              padding: "5px",
-                              fontSize: "1em",
-                            }}
-                          />
-                          <FaSave
-                            onClick={() => setSaveClicked(!saveClicked)}
-                          />{" "}
-                          <MdRemoveCircle
-                            onClick={() => setReturnIndex(null)}
-                          />
+                      <td>
+                        <div className={styles.imageContainer}>
+                          <img src={item.image}></img>
                         </div>
-                      ) : (
-                        <RiArrowGoBackLine
-                          style={{
-                            marginLeft: "10px",
-                            color: boxDict[item.boxId]?.boxId
-                              ? "black"
-                              : "gray",
-                          }}
+                      </td>
+                      <td>
+                        <a
+                          href={`/admin/inventory?style=${item.style}&brand=${item.brand || brandDict[item.brandId]?.brand || "N/A"}`}
+                        >
+                          {item.style}
+                        </a>
+                      </td>{" "}
+                      <td>
+                        <a
+                          href={`/admin/inventory?style=${item.style}&brand=${item.brand || brandDict[item.brandId]?.brand || "N/A"}`}
+                        >
+                          {item.brand ||
+                            brandDict[item.brandId]?.brand ||
+                            "N/A"}
+                        </a>
+                      </td>
+                      <td>
+                        <a
+                          href={`/admin/inventory?style=${item.style}&brand=${item.brand || brandDict[item.brandId]?.brand || "N/A"}&color=${item.color}`}
+                        >
+                          {item.color}
+                        </a>
+                      </td>
+                      <td>
+                        <a
+                          href={`/admin/inventory?style=${item.style}&brand=${item.brand || brandDict[item.brandId]?.brand || "N/A"}&color=${item.color}&size=${item.size || sizeDict[item.sizeId]?.size || "N/A"}`}
+                        >
+                          {item.size || sizeDict[item.sizeId]?.size || "N/A"}
+                        </a>
+                      </td>
+                      <td>
+                        <Quantity
+                          reservation={reservation}
+                          item={reservationDict[item._id]}
+                          itemStr={`${brandDict[item.brandId]?.brand || item.brand || "No Brand"} ${item.color} ${sizeDict[item.sizeId]?.size || item.size || "No Size"} ${item.style}`}
+                          setDict={setReservationDict}
+                          dict={reservationDict}
+                          prev={reservationDict[item._id].pulled}
+                          max={
+                            reservationDict[item._id].quantReserved -
+                            reservationDict[item._id].pulled
+                          }
+                          checkCompleteness={checkCompleteness}
+                          refresh={refresh}
                         />
-                      )}
-                      {saveClicked && returnIndex == index && (
-                        <div
-                          className={styles.dropdownRTN}
-                          style={{ width: "170px", fontSize: "0.8em" }}
-                        >
-                          <div
-                            onClick={() =>
-                              handleQuantityChange("change", returnQuant)
-                            }
-                            style={{
-                              backgroundColor: "#e6f3e9ff",
-                              color: "black",
-                            }}
-                          >
-                            Change reservation quantity
-                          </div>
-                          <div
-                            onClick={() =>
-                              handleQuantityChange("keep", returnQuant)
-                            }
-                            style={{
-                              backgroundColor: "#fdfde4ff",
-                              color: "black",
-                            }}
-                          >
-                            Keep reservation quantity
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {deletedItems.map((item, index) => (
-                  <tr
-                    style={{
-                      backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
-                    }}
-                  >
-                    <td>
-                      <div className={styles.imageContainer}>
-                        <img src={item.image}></img>
-                      </div>
-                    </td>
-                    <td>{item.style}</td>
-                    <td>
-                      {item.brand || brandDict[item.brandId]?.brand || "N/A"}
-                    </td>
-                    <td>{item.color}</td>
-                    <td>{item.size || "N/A"}</td>
-                    <td>
-                      <Quantity
-                        reservation={reservation}
-                        item={reservationDict[item.itemId]}
-                        itemStr={`${brandDict[item.brandId]?.brand || item.brand || "No Brand"} ${item.color} ${sizeDict[item.sizeId]?.size || item.size || "No Size"} ${item.style}`}
-                        setDict={setReservationDict}
-                        dict={reservationDict}
-                        prev={reservationDict[item.itemId].pulled}
-                        max={
-                          reservationDict[item.itemId].quantReserved -
-                          reservationDict[item.itemId].pulled
-                        }
-                        checkCompleteness={checkCompleteness}
-                        refresh={refresh}
-                      />
-                    </td>
-                    <td>
-                      <Status
-                        reservation={reservation}
-                        item={reservationDict[item.itemId]}
-                        setDict={setReservationDict}
-                        dict={reservationDict}
-                        prev={reservationDict[item.itemId].pulled}
-                        max={reservationDict[item.itemId].quantReserved}
-                        checkCompleteness={checkCompleteness}
-                        refresh={refresh}
-                      />
-                    </td>
-                    <td>{item.boxId || "N/A"}</td>
-                    <td>
-                      {item.location || boxDict[item.boxId]?.location || "N/A"}
-                    </td>
-                    <td>
-                      <div
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          paddingRight: "20px",
+                      </td>
+                      <td>
+                        <Status
+                          reservation={reservation}
+                          item={reservationDict[item._id]}
+                          setDict={setReservationDict}
+                          dict={reservationDict}
+                          prev={reservationDict[item._id].pulled}
+                          max={reservationDict[item._id].quantReserved}
+                          checkCompleteness={checkCompleteness}
+                          refresh={refresh}
+                        />
+                      </td>
+                      <td>
+                        <a href={`/admin/inventory?box=${item.boxId}`}>
+                          {boxDict[item.boxId]?.boxId || "N/A"}
+                        </a>
+                      </td>
+                      <td>
+                        {item.location ||
+                          boxDict[item.boxId]?.location ||
+                          "N/A"}
+                      </td>
+                      <td>{new Date(item.updatedAt).toLocaleString()}</td>
+                      <td
+                        onClick={() => {
+                          if (
+                            index !== returnIndex &&
+                            boxDict[item.boxId]?.boxId
+                          ) {
+                            setReturnIndex(index);
+                            setSaveClicked(false);
+                            setReturnQuant(null);
+                          }
                         }}
                       >
-                        N/A
-                        <IoWarning
-                          size={20}
-                          style={{ color: "#AD2B10", cursor: "pointer" }}
-                          title="Item has since been removed from inventory, details reflect state at time of creation."
+                        {returnIndex == index ? (
+                          <div
+                            className={styles.dropdownButton}
+                            style={{
+                              width: "fit-content",
+                              gap: "10px",
+                              position: "relative",
+                            }}
+                          >
+                            <input
+                              type="number"
+                              defaultValue={reservationDict[item._id].pulled}
+                              max={reservationDict[item._id].pulled}
+                              value={returnQuant}
+                              onChange={(e) => {
+                                setReturnQuant(e.target.value);
+                              }}
+                              onBlur={() =>
+                                setReturnQuant(
+                                  Math.min(
+                                    returnQuant,
+                                    reservationDict[item._id].pulled
+                                  )
+                                )
+                              }
+                              style={{
+                                width: "50px",
+                                border: "none",
+                                backgroundColor: "rgba(255, 255, 255, 0)",
+                                padding: "5px",
+                                fontSize: "1em",
+                              }}
+                            />
+                            <FaSave
+                              onClick={() => setSaveClicked(!saveClicked)}
+                            />{" "}
+                            <MdRemoveCircle
+                              onClick={() => setReturnIndex(null)}
+                            />
+                          </div>
+                        ) : (
+                          <RiArrowGoBackLine
+                            style={{
+                              marginLeft: "10px",
+                              color: boxDict[item.boxId]?.boxId
+                                ? "black"
+                                : "gray",
+                            }}
+                          />
+                        )}
+                        {saveClicked && returnIndex == index && (
+                          <div
+                            className={styles.dropdownRTN}
+                            style={{ width: "170px", fontSize: "0.8em" }}
+                          >
+                            <div
+                              onClick={() =>
+                                handleQuantityChange("change", returnQuant)
+                              }
+                              style={{
+                                backgroundColor: "#e6f3e9ff",
+                                color: "black",
+                              }}
+                            >
+                              Change reservation quantity
+                            </div>
+                            <div
+                              onClick={() =>
+                                handleQuantityChange("keep", returnQuant)
+                              }
+                              style={{
+                                backgroundColor: "#fdfde4ff",
+                                color: "black",
+                              }}
+                            >
+                              Keep reservation quantity
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {deletedItems.map((item, index) => (
+                    <tr
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0 ? "#dde4ed" : "#c5ced9",
+                      }}
+                    >
+                      <td>
+                        <div className={styles.imageContainer}>
+                          <img src={item.image}></img>
+                        </div>
+                      </td>
+                      <td>{item.style}</td>
+                      <td>
+                        {item.brand || brandDict[item.brandId]?.brand || "N/A"}
+                      </td>
+                      <td>{item.color}</td>
+                      <td>{item.size || "N/A"}</td>
+                      <td>
+                        <Quantity
+                          reservation={reservation}
+                          item={reservationDict[item.itemId]}
+                          itemStr={`${brandDict[item.brandId]?.brand || item.brand || "No Brand"} ${item.color} ${sizeDict[item.sizeId]?.size || item.size || "No Size"} ${item.style}`}
+                          setDict={setReservationDict}
+                          dict={reservationDict}
+                          prev={reservationDict[item.itemId].pulled}
+                          max={
+                            reservationDict[item.itemId].quantReserved -
+                            reservationDict[item.itemId].pulled
+                          }
+                          checkCompleteness={checkCompleteness}
+                          refresh={refresh}
                         />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </td>
+                      <td>
+                        <Status
+                          reservation={reservation}
+                          item={reservationDict[item.itemId]}
+                          setDict={setReservationDict}
+                          dict={reservationDict}
+                          prev={reservationDict[item.itemId].pulled}
+                          max={reservationDict[item.itemId].quantReserved}
+                          checkCompleteness={checkCompleteness}
+                          refresh={refresh}
+                        />
+                      </td>
+                      <td>{item.boxId || "N/A"}</td>
+                      <td>
+                        {item.location ||
+                          boxDict[item.boxId]?.location ||
+                          "N/A"}
+                      </td>
+                      <td>
+                        <div
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            paddingRight: "20px",
+                          }}
+                        >
+                          N/A
+                          <IoWarning
+                            size={20}
+                            style={{ color: "#AD2B10", cursor: "pointer" }}
+                            title="Item has since been removed from inventory, details reflect state at time of creation."
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {view == "alt" && (
+            <AlternativeView res={detailedReservation} refresh={refresh} />
+          )}
         </>
       )}
     </div>

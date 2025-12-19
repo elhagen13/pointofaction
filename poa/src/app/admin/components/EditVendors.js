@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import styles from "./admin.module.css";
+import styles from "./components.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 
 const VENDOR_TYPES = [
@@ -176,7 +176,7 @@ function AddVendor({ onClose, onVendorAdded }) {
   }
 
   return (
-    <div className={styles.addStoreOverlay} onClick={handleOverlayClick}>
+    <div className={styles.overlayContainer} onClick={handleOverlayClick}>
       <div className={styles.overlay} onClick={handleModalClick}>
         <div className={styles.title} style={{ marginBottom: "30px" }}>
           Add a Vendor
@@ -490,7 +490,7 @@ function EditVendor({ vendor, onClose, onVendorItemEdited }) {
   }
 
   return (
-    <div className={styles.addStoreOverlay} onClick={handleOverlayClick}>
+    <div className={styles.overlayContainer} onClick={handleOverlayClick}>
     <div className={styles.overlay} onClick={handleModalClick}>
       <div className={styles.title} style={{ marginBottom: "30px" }}>
         Edit Vendor
@@ -628,7 +628,6 @@ function AddVendorItem() {
   const [addVendorItemOpen, setAddVendorItemOpen] = useState(false);
   const [editVendorItemOpen, setEditVendorItemOpen] = useState(false);
   const [selectedVendorItem, setSelectedVendorItem] = useState({});
-  const [vendorOpen, setVendorOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const filteredImages = useMemo(() => {
@@ -656,12 +655,6 @@ function AddVendorItem() {
   const handleVendorAdded = () => {
     getAllImages();
   };
-
-  const filterImages = () => {
-    setFilteredImages(images.filter(image => 
-        image.company.toLowerCase().includes(search.toLowerCase()) || image.category.includes(search.toLowerCase())
-    ))
-  }
 
   async function getAllImages() {
     try {
@@ -702,40 +695,26 @@ function AddVendorItem() {
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
-              gap: "15px",
+              justifyContent:"space-between",
             }}
           >
-            <button
-              className={styles.button}
-              style={{
-                border: "2px solid #538561",
-                backgroundColor: "white",
-                color: "#538561",
-              }}
-              onClick={() => setVendorOpen(!vendorOpen)}
-            >
-              {vendorOpen ? "Hide Vendors" : "View Vendors"}
-            </button>
-            <button
-              className={styles.button}
-              onClick={() => setAddVendorItemOpen(true)}
-            >
-              Add Vendor
-            </button>
-          </div>
-        </div>
-        {vendorOpen && 
-            <div style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "right"}}>
             <input 
               placeholder="Search..." 
               className={styles.search} 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
             />
+            <button
+              className={styles.button}
+              onClick={() => setAddVendorItemOpen(true)}
+            >
+              Add Vendor
+            </button>
+
           </div>
-        }
+        </div>
         <div className={styles.companies}>
-          {vendorOpen &&
+          {
             filteredImages.map((image, index) => (
               <div className={styles.company} key={index}>
                 <div className={styles.imageContainer}>

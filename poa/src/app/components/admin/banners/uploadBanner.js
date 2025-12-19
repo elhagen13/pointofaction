@@ -7,27 +7,16 @@ import { useState, useEffect, useRef } from "react";
 import { BeatLoader } from "react-spinners";
 import Banner from "@/app/components/Banner";
 
-export default function Banners({ onClose }) {
+export default function Banners() {
   const [page, setPage] = useState("banners");
   const [id, setId] = useState(null)
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const handleModalClick = (e) => {
-    e.stopPropagation();
-  };
 
   return (
-    <div className={styles.overlay} onClick={handleOverlayClick}>
-      <div onClick={handleModalClick}>
+      <div>
         {page == "banners" && <BannerList setPage={setPage} setId={setId}/>}
         {page == "add" && <AddBanner setPage={setPage}/>}
         {page == "edit" && <EditBanner id={id} setPage={setPage} />}
-      </div>
     </div>
   );
 }
@@ -158,7 +147,7 @@ const BannerList = ({ setPage, setId }) => {
   }, [coordinates]);
 
   return (
-    <div className={styles.overlayIn} ref={containerRef}>
+    <div  ref={containerRef}>
       {visibleFile !== null && (
         <div
           className={styles.preview}
@@ -171,14 +160,14 @@ const BannerList = ({ setPage, setId }) => {
         </div>
       )}
       <div className={styles.header}>
-        <h1>Frontpage Banner</h1>
+        <h2>Frontpage Banner</h2>
         <button className={styles.button} onClick={() => setPage("add")}>
           Add Banner →
         </button>
       </div>
 
       <div className={styles.bannerContainer}>
-        <h2>Active Banners</h2>
+        <h3>Active Banners</h3>
         <div
           className={styles.listSection}
           onDragOver={handleDragOver}
@@ -223,7 +212,7 @@ const BannerList = ({ setPage, setId }) => {
         </div>
 
         {/* Inactive list */}
-        <h2>Archived Banners</h2>
+        <h3>Archived Banners</h3>
         <div
           className={styles.listSection}
           onDragOver={handleDragOver}
@@ -267,18 +256,20 @@ const BannerList = ({ setPage, setId }) => {
           )}
         </div>
         <div>
-          <h2>Preview</h2>
+          <h3>Preview</h3>
           <Banner lists={lists} />
         </div>
       </div>
+      <div className={styles.submitButtonContainer}>
       <button
-        className={styles.button}
+        className={styles.submitButton}
         style={{ width: "fit-content", marginLeft: "auto" }}
         disabled={submitting}
         onClick={saveChanges}
       >
         {submitting ? <BeatLoader size={8} /> : "Save Changes"}
       </button>
+      </div>
     </div>
   );
 };
@@ -357,9 +348,9 @@ const AddBanner = ({ setPage }) => {
   };
 
   return (
-    <div className={styles.overlayIn}>
+    <div>
       <div className={styles.header}>
-        <h1>Add Banner</h1>
+        <h2>Add Banner</h2>
         <button className={styles.button} onClick={() => setPage("banners")}>
           ← Return
         </button>
@@ -428,15 +419,15 @@ const AddBanner = ({ setPage }) => {
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
-
+      <div className={styles.submitButtonContainer}>
       <button
-        className={styles.button}
-        style={{ width: "fit-content", marginLeft: "auto" }}
+        className={styles.submitButton}
         onClick={(e) => handleSubmit(e)}
         disabled={submitting || !desktopImage || !mobileImage || !description}
       >
         {submitting ? <BeatLoader size={8} /> : "Submit"}
       </button>
+      </div>
     </div>
   );
 };
@@ -539,9 +530,9 @@ const EditBanner = ({ id, setPage }) => {
   };
 
   return (
-    <div className={styles.overlayIn}>
+    <div>
       <div className={styles.header}>
-        <h1>Add Banner</h1>
+        <h2>Add Banner</h2>
         <button className={styles.button} onClick={() => setPage("banners")}>
           ← Return
         </button>
@@ -613,14 +604,15 @@ const EditBanner = ({ id, setPage }) => {
         />
       </div>
 
+      <div className={styles.submitButtonContainer}>
       <button
-        className={styles.button}
-        style={{ width: "fit-content", marginLeft: "auto" }}
+        className={styles.submitButton}
         onClick={(e) => handleSubmit(e)}
         disabled={submitting || !desktopImage || !mobileImage || !description}
       >
         {submitting ? <BeatLoader size={8} /> : "Submit"}
       </button>
+      </div>
       </>}
     </div>
   );

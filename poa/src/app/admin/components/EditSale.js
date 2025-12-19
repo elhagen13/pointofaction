@@ -1,10 +1,8 @@
-"use client";
-import { useState, useEffect, useMemo } from "react";
-import styles from "./admin.module.css";
-import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
+import {useState, useEffect} from "react"
+import styles from "./components.module.css"
 
-function EditSale({ onClose, saleData }) {
-  console.log(saleData)
+
+export default function EditSale() {
   const [saleActive, setSaleActive] = useState(false);
   const [saleLink, setSaleLink] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,15 +31,7 @@ function EditSale({ onClose, saleData }) {
     }
   };
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
 
-  const handleModalClick = (e) => {
-    e.stopPropagation();
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,7 +46,7 @@ function EditSale({ onClose, saleData }) {
     try {
       const success = await editSale();
       if (success) {
-        onClose();
+        loadSaleData();
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -100,12 +90,11 @@ function EditSale({ onClose, saleData }) {
   };
 
   return (
-    <div className={styles.addStoreOverlay} onClick={handleOverlayClick}>
-      <div className={styles.overlay} onClick={handleModalClick}>
+      <div>
         <div className={styles.title} style={{ marginBottom: "30px" }}>
           Edit Sale Status
         </div>
-        <form onSubmit={handleSubmit}>
+        <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formInput}>
             <label>Sale Status</label>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -135,17 +124,6 @@ function EditSale({ onClose, saleData }) {
 
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px" }}>
             <button
-              type="button"
-              onClick={onClose}
-              className={styles.button}
-              style={{
-                backgroundColor: "#ccc",
-                color: "#333"
-              }}
-            >
-              Cancel
-            </button>
-            <button
               type="submit"
               disabled={isSubmitting || isSaleLoading}
               className={styles.button}
@@ -155,45 +133,5 @@ function EditSale({ onClose, saleData }) {
           </div>
         </form>
       </div>
-    </div>
   );
 }
-
-function Sale() {
-  const [editSaleOpen, setEditSaleOpen] = useState(false);
-  const [saleData, setSaleData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  return (
-    <>
-      {editSaleOpen && (
-        <EditSale 
-          onClose={() => setEditSaleOpen(false)}
-          saleData={saleData}
-        />
-      )}
-      <div className={styles.addStore}>
-        <div className={styles.titleBar}>
-          <div className={styles.title}>Sale</div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: "15px",
-            }}
-          >
-            <button
-              className={styles.button}
-              onClick={() => setEditSaleOpen(true)}
-            >
-              Edit Sale
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-export default Sale;

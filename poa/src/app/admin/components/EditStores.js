@@ -1,28 +1,18 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import styles from "./admin.module.css";
+import styles from "./components.module.css";
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 
-// Define the service type options
-const SERVICE_TYPES = [
-  "Embroidery",
-  "Laser Etching",
-  "Vinyl Printing",
-  "Patches",
-  "Printing",
-  "Art Digitizing",
-];
-
-function AddImage({ onClose, onCompanyAdded }) {
+function AddStore({ onClose, onCompanyAdded }) {
   const [companyName, setCompanyName] = useState("");
-  const [image, setImage] = useState("");
-  const [type, setType] = useState("");
+  const [companyImage, setCompanyImage] = useState("");
+  const [companyLink, setCompanyLink] = useState("");
+  const [privateShop, isPrivateShop] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [page, setPage] = useState("product")
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -52,7 +42,7 @@ function AddImage({ onClose, onCompanyAdded }) {
 
       setSelectedFile(file);
       setUploadError("");
-      setImage(""); // Clear manual URL if file is selected
+      setCompanyImage(""); // Clear manual URL if file is selected
     }
   };
 
@@ -72,7 +62,7 @@ function AddImage({ onClose, onCompanyAdded }) {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch("/api/galleryImages/uploadImage", {
+      const response = await fetch("/api/companyStores/uploadImage", {
         method: "POST",
         body: formData,
       });
@@ -81,7 +71,7 @@ function AddImage({ onClose, onCompanyAdded }) {
 
       if (result.success) {
         setUploadedImageUrl(result.url);
-        setImage(result.url);
+        setCompanyImage(result.url);
         setSelectedFile(null);
       } else {
         setUploadError(result.error || "Upload failed");
@@ -93,10 +83,9 @@ function AddImage({ onClose, onCompanyAdded }) {
     }
   };
 
-
   const removeUploadedImage = () => {
     setUploadedImageUrl("");
-    setImage("");
+    setCompanyImage("");
     setSelectedFile(null);
   };
 
@@ -104,7 +93,7 @@ function AddImage({ onClose, onCompanyAdded }) {
     e.preventDefault();
 
     // Basic validation
-    if (!companyName || !image || (page === "product" && !type)) {
+    if (!companyName || !companyImage || !companyLink) {
       alert("Please fill in all fields and upload an image");
       return;
     }
@@ -112,12 +101,12 @@ function AddImage({ onClose, onCompanyAdded }) {
     setIsSubmitting(true);
 
     try {
-      const success = await createGalleryItem();
+      const success = await createCompany();
       if (success) {
         // Clear form
         setCompanyName("");
-        setImage("");
-        setType("");
+        setCompanyImage("");
+        setCompanyLink("");
         setUploadedImageUrl("");
         setSelectedFile(null);
 
@@ -136,21 +125,21 @@ function AddImage({ onClose, onCompanyAdded }) {
     }
   };
 
-  async function createGalleryItem() {
+  async function createCompany() {
     try {
-      const imageData = {
-        company: companyName,
-        imageLink: image,
-        logo: page === "company",
-        type: type || null,
+      const companyData = {
+        companyName: companyName,
+        companyLink: companyLink,
+        companyImage: companyImage,
+        private: privateShop,
       };
 
-      const response = await fetch("/api/galleryImages", {
+      const response = await fetch("/api/companyStores", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(imageData),
+        body: JSON.stringify(companyData),
       });
 
       const data = await response.json();
@@ -173,10 +162,10 @@ function AddImage({ onClose, onCompanyAdded }) {
   }
 
   return (
-    <div className={styles.addStoreOverlay} onClick={handleOverlayClick}>
+    <div className={styles.overlayContainer} onClick={handleOverlayClick}>
       <div className={styles.overlay} onClick={handleModalClick}>
         <div className={styles.title} style={{ marginBottom: "30px" }}>
-          Add a Gallery Image
+          Add a Company Store
         </div>
         <form onSubmit={handleSubmit}>
           <div className={styles.formInput}>
@@ -190,13 +179,8 @@ function AddImage({ onClose, onCompanyAdded }) {
             />
           </div>
 
-          <div className={styles.galleryButtons}>
-            <div className={page == "product" ? styles.active : styles.inactive} onClick={() => setPage("product")}>Product</div>
-            <div className={page == "company" ? styles.active : styles.inactive} onClick={() => setPage("company")}>Company</div>
-          </div>
-
           <div className={styles.formInput}>
-            <label>{page == "company" ? "Logo" : "Image"}</label>
+            <label>Company Logo</label>
 
             {/* File Upload Section */}
             <div className={styles.uploadSection}>
@@ -230,25 +214,59 @@ function AddImage({ onClose, onCompanyAdded }) {
               </div>
             )}
 
+            {/* Fallback: Manual URL input */}
+            <div className={styles.orDivider}>
+              <span>OR</span>
+            </div>
+            <input
+              className={styles.input}
+              value={companyImage}
+              onChange={(e) => setCompanyImage(e.target.value)}
+              placeholder="Or paste image URL"
+              disabled={!!uploadedImageUrl}
+            />
+
             {uploadError && <div className={styles.error}>{uploadError}</div>}
           </div>
 
-         {page == "product" && <div className={styles.formInput}>
-            <label>Service Type</label>
-            <select
+          <div className={styles.formInput}>
+            <label>Company Link</label>
+            <input
               className={styles.input}
-              value={type}
-              onChange={(e) => setType(e.target.value)}
+              value={companyLink}
+              onChange={(e) => setCompanyLink(e.target.value)}
+              placeholder="https://example.com"
               required
-            >
-              <option value="">Select a service type</option>
-              {SERVICE_TYPES.map((serviceType) => (
-                <option key={serviceType} value={serviceType}>
-                  {serviceType}
-                </option>
-              ))}
-            </select>
-          </div>}
+            />
+          </div>
+          <div
+            className={styles.formInput}
+            style={{ display: "flex", gap: "10px" }}
+          >
+            <label>Viewing Settings</label>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="private"
+                name="status"
+                value="Private"
+                checked={privateShop}
+                onClick={() => isPrivateShop(true)}
+              />
+              <label for="private">Private</label>
+            </div>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="public"
+                name="status"
+                value="Public"
+                checked={!privateShop}
+                onClick={() => isPrivateShop(false)}
+              />
+              <label for="public">Public</label>
+            </div>
+          </div>
 
           <div>
             <button
@@ -265,18 +283,20 @@ function AddImage({ onClose, onCompanyAdded }) {
   );
 }
 
-function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
-  const [companyName, setCompanyName] = useState(image.company);
-  const [galleryImage, setGalleryImage] = useState(image.imageLink);
-  const [type, setType] = useState(image.type);
+function EditStore({ company, onClose, onCompanyEdited }) {
+  console.log(company);
+  const [companyName, setCompanyName] = useState(company.companyName);
+  const [companyImage, setCompanyImage] = useState(company.companyImage);
+  const [companyLink, setCompanyLink] = useState(company.companyLink);
+  const [privateShop, isPrivateShop] = useState(company.private);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState(image.imageLink);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(
+    company.companyImage
+  );
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [page, setPage] = useState(image.logo ? "company" : "product")
-
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -323,7 +343,7 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch("/api/galleryImages/uploadImage", {
+      const response = await fetch("/api/companyStores/uploadImage", {
         method: "POST",
         body: formData,
       });
@@ -332,7 +352,7 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
 
       if (result.success) {
         setUploadedImageUrl(result.url);
-        setGalleryImage(result.url);
+        setCompanyImage(result.url);
         setSelectedFile(null);
       } else {
         setUploadError(result.error || "Upload failed");
@@ -346,14 +366,14 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
 
   const removeUploadedImage = () => {
     setUploadedImageUrl("");
-    setGalleryImage("");
+    setCompanyImage("");
     setSelectedFile(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!companyName || !galleryImage || !type) {
+    if (!companyName || !companyImage || !companyLink) {
       alert("Please fill in all fields");
       return;
     }
@@ -361,10 +381,10 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
     setIsSubmitting(true);
 
     try {
-      const success = await editGalleryItem();
+      const success = await editCompany();
       if (success) {
-        if (onGalleryItemEdited) {
-          onGalleryItemEdited();
+        if (onCompanyEdited) {
+          onCompanyEdited();
         }
         onClose();
       }
@@ -380,10 +400,10 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
     setIsDeleting(true);
 
     try {
-      const success = await deleteGalleryItem();
+      const success = await deleteCompany();
       if (success) {
-        if (onGalleryItemEdited) {
-          onGalleryItemEdited();
+        if (onCompanyEdited) {
+          onCompanyEdited();
         }
         onClose();
       }
@@ -394,31 +414,31 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
     }
   };
 
-  async function editGalleryItem() {
+  async function editCompany() {
     try {
-      const imageData = {
-        company: companyName,
-        imageLink: galleryImage,
-        type: type || null,
-        logo: page == "company"
+      const companyData = {
+        companyName: companyName,
+        companyLink: companyLink,
+        companyImage: companyImage,
+        private: privateShop,
       };
 
-      const response = await fetch(`/api/galleryImages/${image._id}`, {
+      const response = await fetch(`/api/companyStores/${company._id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(imageData),
+        body: JSON.stringify(companyData),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        console.log("Image edited successfully:", data.data);
+        console.log("Company edited successfully:", data.data);
         return true;
       } else {
-        console.error("Error editing image:", data.error);
-        alert("Error editing image: " + (data.error || "Unknown error"));
+        console.error("Error editing company:", data.error);
+        alert("Error editing company: " + (data.error || "Unknown error"));
         return false;
       }
     } catch (error) {
@@ -428,19 +448,19 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
     }
   }
 
-  async function deleteGalleryItem() {
+  async function deleteCompany() {
     try {
-      const response = await fetch(`/api/galleryImages/${image._id}`, {
+      const response = await fetch(`/api/companyStores/${company._id}`, {
         method: "DELETE",
       });
 
       const data = await response.json();
 
       if (data.success) {
-        console.log("Image deleted successfully:", data.message);
+        console.log("Company deleted successfully:", data.message);
         return true;
       } else {
-        console.error("Error deleting image:", data.error);
+        console.error("Error deleting company:", data.error);
         return false;
       }
     } catch (error) {
@@ -450,10 +470,10 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
   }
 
   return (
-    <div className={styles.addStoreOverlay} onClick={handleOverlayClick}>
+    <div className={styles.overlayContainer} onClick={handleOverlayClick}>
       <div className={styles.overlay} onClick={handleModalClick}>
         <div className={styles.title} style={{ marginBottom: "30px" }}>
-          Edit Gallery Item
+          Edit Company Store
         </div>
         <form onSubmit={handleSubmit}>
           <div className={styles.formInput}>
@@ -467,13 +487,8 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
             />
           </div>
 
-          <div className={styles.galleryButtons}>
-            <div className={page == "product" ? styles.active : styles.inactive} onClick={() => setPage("product")}>Product</div>
-            <div className={page == "company" ? styles.active : styles.inactive} onClick={() => setPage("company")}>Company</div>
-          </div>
-
           <div className={styles.formInput}>
-            <label>{page == "product" ? "Gallery Image" : "Logo"}</label>
+            <label>Company Logo</label>
 
             {/* Current Image */}
             {uploadedImageUrl && (
@@ -508,25 +523,58 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
               </label>
             </div>
 
+            {/* Manual URL input */}
+            <div className={styles.orDivider}>
+              <span>OR</span>
+            </div>
+            <input
+              className={styles.input}
+              value={companyImage}
+              onChange={(e) => setCompanyImage(e.target.value)}
+              placeholder="Or paste image URL"
+            />
+
             {uploadError && <div className={styles.error}>{uploadError}</div>}
           </div>
 
-          {page == "product" && <div className={styles.formInput}>
-            <label>Service Type</label>
-            <select
+          <div className={styles.formInput}>
+            <label>Company Link</label>
+            <input
               className={styles.input}
-              value={type}
-              onChange={(e) => setType(e.target.value)}
+              value={companyLink}
+              onChange={(e) => setCompanyLink(e.target.value)}
+              placeholder="https://example.com"
               required
-            >
-              <option value="">Select a service type</option>
-              {SERVICE_TYPES.map((serviceType) => (
-                <option key={serviceType} value={serviceType}>
-                  {serviceType}
-                </option>
-              ))}
-            </select>
-          </div>}
+            />
+          </div>
+          <div
+            className={styles.formInput}
+            style={{ display: "flex", gap: "10px" }}
+          >
+            <label>Viewing Settings</label>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="private"
+                name="status"
+                value="Private"
+                checked={privateShop}
+                onClick={() => isPrivateShop(true)}
+              />
+              <label for="private">Private</label>
+            </div>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <input
+                type="radio"
+                id="public"
+                name="status"
+                value="Public"
+                checked={!privateShop}
+                onClick={() => isPrivateShop(false)}
+              />
+              <label for="public">Public</label>
+            </div>
+          </div>
 
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <button
@@ -550,51 +598,44 @@ function EditImage({ image, onClose, onCompanyEdited: onGalleryItemEdited }) {
   );
 }
 
-function AddGalleryItem() {
-  const [images, setImages] = useState([]);
-  const [addGalleryItemOpen, setAddGalleryItemOpen] = useState(false);
-  const [editGalleryItemOpen, setEditGalleryItemOpen] = useState(false);
-  const [selectedGalleryItem, setSelectedGalleryItem] = useState({});
-  const [galleryOpen, setGalleryOpen] = useState(false);
+function AddCompanyStore() {
+  const [companies, setCompanies] = useState([]);
+  const [addStoreOpen, setAddStoreOpen] = useState(false);
+  const [editStoreOpen, setEditStoreOpen] = useState(false);
+  const [selectedStore, setSelectedStore] = useState({});
   const [search, setSearch] = useState("");
 
-  const filteredImages = useMemo(() => {
+  const filteredCompanies = useMemo(() => {
     if (!search.trim()) {
-      return images;
+      return companies;
     }
-    
+
     const searchLower = search.toLowerCase();
-    return images.filter(image => {
-      const companyMatch = image.company.toLowerCase().includes(searchLower);
-      const typeMatch = image.type.toLowerCase().includes(searchLower);
-      
-      return companyMatch || typeMatch;
+    return companies.filter((company) => {
+      const companyMatch = company.companyName
+        .toLowerCase()
+        .includes(searchLower);
+
+      return companyMatch;
     });
-  }, [images, search]);
+  }, [companies, search]);
 
   useEffect(() => {
-    getAllImages();
+    getAllCompanies();
   }, []);
 
-
   const handleCompanyAdded = () => {
-    getAllImages();
+    getAllCompanies();
   };
 
-  const filterImages = () => {
-    setFilteredImages(images.filter(image => 
-        image.company.toLowerCase().includes(search.toLowerCase()) || image.type.toLowerCase().includes(search.toLowerCase())
-    ))
-  }
-
-  async function getAllImages() {
+  async function getAllCompanies() {
     try {
-      const response = await fetch("/api/galleryImages");
+      const response = await fetch("/api/companyStores");
       const data = await response.json();
 
       if (data.success) {
-        console.log("Images:", data.data);
-        setImages(data.data);
+        console.log("Companies:", data.data);
+        setCompanies(data.data);
       } else {
         console.error("Error:", data.error);
       }
@@ -602,85 +643,78 @@ function AddGalleryItem() {
       console.error("Fetch error:", error);
     }
   }
-  console.log(images);
+  console.log(companies);
 
   return (
     <>
-      {addGalleryItemOpen && (
-        <AddImage
-          onClose={() => setAddGalleryItemOpen(false)}
+      {addStoreOpen && (
+        <AddStore
+          onClose={() => setAddStoreOpen(false)}
           onCompanyAdded={handleCompanyAdded}
         />
       )}
-      {editGalleryItemOpen && (
-        <EditImage
-          image={selectedGalleryItem}
-          onClose={() => setEditGalleryItemOpen(false)}
+      {editStoreOpen && (
+        <EditStore
+          company={selectedStore}
+          onClose={() => setEditStoreOpen(false)}
           onCompanyEdited={handleCompanyAdded}
         />
       )}
-      <div className={styles.addStore}>
-        <div className={styles.titleBar}>
-          <div className={styles.title}>Product Images</div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: "15px",
-            }}
-          >
-            <button
-              className={styles.button}
-              style={{
-                border: "2px solid #538561",
-                backgroundColor: "white",
-                color: "#538561",
+      <div>
+        <div className={styles.title}>Company Stores</div>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems:"center"
+          }}
+        >
+
+            <input
+              placeholder="Search..."
+              className={styles.search}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
               }}
-              onClick={() => setGalleryOpen(!galleryOpen)}
-            >
-              {galleryOpen ? "Hide Products" : "View Products"}
-            </button>
-            <button
-              className={styles.button}
-              onClick={() => setAddGalleryItemOpen(true)}
-            >
-              Add Image
-            </button>
-          </div>
+            />
+
+          <button
+            className={styles.button}
+            onClick={() => setAddStoreOpen(true)}
+          >
+            Add Store
+          </button>
         </div>
-        {galleryOpen && 
-            <div style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "right"}}>
-                <input placeholder="Search..." className={styles.search} value={search} onChange={(e) => {setSearch(e.target.value)}}/>
-            </div>
-        }
+
         <div className={styles.companies}>
-          {galleryOpen &&
-            filteredImages.map((image, index) => (
-                <div className={styles.company} key={index}>
-                  <div className={styles.imageContainer}>
-                    <img
-                      src={image.image}
-                      className={styles.companyImage}
-                      alt={image.company}
-                    />
-                  </div>
-                  <div className={styles.companyName}>{image.company}</div>
-                  <div
-                    className={styles.edit}
-                    onClick={() => {
-                      setSelectedGalleryItem(image);
-                      setEditGalleryItemOpen(true);
-                    }}
-                  >
-                    <FaRegEdit size={20} />
-                  </div>
-                </div>
-            ))}
+          {filteredCompanies.map((company, index) => (
+            <div className={styles.company} key={index}>
+              <div className={styles.imageContainer}>
+                <img
+                  src={company.companyImage}
+                  className={styles.companyImage}
+                  alt={company.companyName}
+                />
+              </div>
+              <div className={styles.companyName}>{company.companyName}</div>
+              <div
+                className={styles.edit}
+                onClick={() => {
+                  setSelectedStore(company);
+                  setEditStoreOpen(true);
+                }}
+              >
+                <FaRegEdit size={20} />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </>
   );
 }
 
-export default AddGalleryItem;
+export default AddCompanyStore;

@@ -24,7 +24,11 @@ export default function ProductCard({company, setEditItemOpen}) {
 
     return (
         <div className={styles.productCardContainer}>
-            <h3>{company[0].company[0].company} - {company.length} products - {getQuantity()} total</h3>
+            <span style={{flexGrow: 1}}>
+                <h3>{company[0].company[0].company}</h3> 
+                <h4>{company.length} products
+                <br/> {getQuantity()} total </h4> 
+            </span>
             <div className={styles.imageList}>
                     {images.map((image, index) => 
                         <div className={styles.imageListImageContainer} 

@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import styles from "./admin.module.css";
+import styles from "./components.module.css";
 import { FaChevronDown, FaPlusCircle, FaRegTrashAlt } from "react-icons/fa";
 import { BeatLoader } from "react-spinners";
 
-function EditEmails({ onClose }) {
+export default function EditEmails() {
   const forms = [
     "Product Request",
     "Store Request",
@@ -66,16 +66,7 @@ function EditEmails({ onClose }) {
     console.log(formRecipients);
   }, [formRecipients]);
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const handleModalClick = (e) => {
-    e.stopPropagation();
-  };
-
+ 
   const addToRecipients = (type) => {
     if(!newEmail.trim()) return;
     setFormRecipients({
@@ -120,8 +111,7 @@ function EditEmails({ onClose }) {
   }
 
   return (
-    <div className={styles.addStoreOverlay} onClick={handleOverlayClick}>
-      <div className={styles.overlay} onClick={handleModalClick}>
+      <div>
         <div className={styles.title} style={{ marginBottom: "30px" }}>
           Edit Email Recipients
         </div>
@@ -159,40 +149,5 @@ function EditEmails({ onClose }) {
           ))}
         </div>
       </div>
-    </div>
   );
 }
-
-function Sale() {
-  const [editEmailsOpen, setEditEmailsOpen] = useState(false);
-
-  return (
-    <>
-      {editEmailsOpen && (
-        <EditEmails onClose={() => setEditEmailsOpen(false)} />
-      )}
-      <div className={styles.addStore}>
-        <div className={styles.titleBar}>
-          <div className={styles.title}>Email Recipients</div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: "15px",
-            }}
-          >
-            <button
-              className={styles.button}
-              onClick={() => setEditEmailsOpen(true)}
-            >
-              Edit Emails
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-export default Sale;

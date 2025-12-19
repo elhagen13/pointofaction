@@ -1,0 +1,15 @@
+.row{
+    box-shadow: 0 0 2px gray;
+    border-radius: 20px;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+}
+
+.row img{
+    height: 5rem;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+}

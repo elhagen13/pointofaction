@@ -24,6 +24,7 @@ function Inventory() {
     "brand style",
     "color",
     "description",
+    "box",
   ];
   const [selectedSearchOption, setSelectedSearchOption] = useState("all");
 
@@ -35,6 +36,7 @@ function Inventory() {
   useEffect(() => {
     getInventory();
     getItemOptions();
+    getBoxes();
     // Initialize cart count after component mounts
     updateCartCount();
   }, []);
@@ -63,10 +65,7 @@ function Inventory() {
     });
   };
 
-  useEffect(() => {
-    console.log("options", options);
-  }, [options]);
-
+  
   const contentDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
@@ -191,6 +190,8 @@ function Inventory() {
               return descriptionText.toLowerCase().includes(searchTerm);
             case "quantity":
               return item.quantity?.toString().includes(searchTerm);
+            case "box":
+              return item.boxId && boxDict[item.boxId]?.boxId.includes(searchTerm)
             default:
               return false;
           }
@@ -226,6 +227,8 @@ function Inventory() {
           .join(" ")
           .toLowerCase();
 
+        console.log(itemText)
+
         // Check if ALL search words are found in the combined text
         return searchWords.every((word) => itemText.includes(word));
       });
@@ -238,6 +241,10 @@ function Inventory() {
     brandDict,
     descriptionDict,
   ]);
+
+  useEffect(() => {
+    console.log(filteredInventory, boxDict)
+  }, [filteredInventory, boxDict])
 
   // Safe localStorage access with proper error handling
   const getCartFromStorage = () => {
@@ -292,6 +299,15 @@ function Inventory() {
 
     setInventory(result.data.filter((item) => !item.archived));
   };
+
+  const getBoxes = async() => {
+     const response = await fetch("/api/inventory/box", {
+      method: "GET",
+    });
+
+    const result = await response.json();
+    setBoxes(result.data);
+  }
 
   return (
     <div style={{ padding: "20px" }}>

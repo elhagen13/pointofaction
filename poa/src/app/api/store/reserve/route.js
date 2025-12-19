@@ -64,10 +64,10 @@ export async function PATCH(request) {
     console.log("CUSTOMER", customer)
 
     const itemObjectIds = (cart.items && Object.keys(cart.items).map((id) => new ObjectId(id))) || []
-    const boxedLikeInventoryIds = (cart.boxLike && cart.boxLike.map((item) => new ObjectId(item.itemId)))
+    const boxedLikeInventoryIds = (cart.boxLike && cart.boxLike.map((item) => new ObjectId(item.itemId))) || []
     //get all inventory that have a matching boxId
     
-    const boxInventory = await collection.find({boxId: {$in: cart.boxes}}).toArray()
+    const boxInventory = (cart.boxes && await collection.find({boxId: {$in: cart.boxes}}).toArray())|| []
     const addedInventory = await collection.find({_id: {$in: itemObjectIds}}).toArray()
 
     const boxLikeInventory = await collection.find({_id: {$in: boxedLikeInventoryIds}}).toArray()
@@ -168,6 +168,7 @@ export async function PATCH(request) {
   
     });
   } catch(error) {
+    console.log(error)
     return Response.json(
       {
         success: false,
