@@ -696,6 +696,8 @@ function AddVendorItem() {
               flexDirection: "row",
               alignItems: "center",
               justifyContent:"space-between",
+              gap: "10px"
+
             }}
           >
             <input 

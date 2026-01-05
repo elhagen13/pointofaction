@@ -472,7 +472,7 @@ function EditStore({ company, onClose, onCompanyEdited }) {
   return (
     <div className={styles.overlayContainer} onClick={handleOverlayClick}>
       <div className={styles.overlay} onClick={handleModalClick}>
-        <div className={styles.title} style={{ marginBottom: "30px" }}>
+        <div className={styles.title} style={{ marginBottom: "30px"}}>
           Edit Company Store
         </div>
         <form onSubmit={handleSubmit}>
@@ -663,12 +663,14 @@ function AddCompanyStore() {
       <div>
         <div className={styles.title}>Company Stores</div>
         <div
+          className={styles.decisions}
           style={{
             width: "100%",
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-between",
-            alignItems:"center"
+            alignItems:"center",
+            gap: "10px"
           }}
         >
 

@@ -9,7 +9,8 @@
   margin-top: 20px;
   position: sticky;
   width: fit-content;
-  min-width: fit-content;;
+  min-width: fit-content;
+  background-color: white;
 }
 
 .filter{
@@ -31,6 +32,7 @@
 }
 
 .adminPage{
+    position: relative;
     display: flex;
     flex-direction: row;
     gap: 30px;
@@ -40,5 +42,49 @@
 .contents{
     flex-grow: 1;
     padding-right: 2rem;
+}
+
+.mobileMenu{
+  display: none;
+}
+
+
+@media(max-width: 768px){
+  .mobileMenu{
+    display: inline;
+    position: absolute;
+    background-color: white;
+    z-index: 999;
+    border-radius: 20px;
+    display: flex;
+    padding: 10px;
+    left: 10px;
+    top: -35px;
+    box-shadow: 0 0 2px gray;
+    
+  }
+
+  .paginationType{
+    position: absolute;
+    left: 0;
+    top: -10px;
+    z-index: 99;
+    width: 50%;
+    transform:translateX(-20px);
+    padding: 20px;
+    box-shadow: 0 0 2px gray;
+    border-radius: 0 20px 20px 0;
+  }
+
+  .hidden{
+    display: none
+  }
+
+  .contents{
+    max-width: 100vw;
+    padding: 10px;
+  }
+
+
 }
 

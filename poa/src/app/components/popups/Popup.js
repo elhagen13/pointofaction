@@ -1,7 +1,7 @@
 import styles from "./popup.module.css";
 import { useEffect, useState, useCallback } from "react";
 
-export default function Popup({ closePopup, closeOverlay = null, popupType }) {
+export default function Popup({ closePopup, closeOverlay = null, popupType, popupText = "" }) {
   const popups = {
     unsaved: {
       title: "Unsaved Changes",
@@ -43,6 +43,12 @@ export default function Popup({ closePopup, closeOverlay = null, popupType }) {
       subtext: [],
       backgroundColor: "#159939",
       color: "#aecfb7"
+    },
+    customError: {
+      title: "Unsuccessful",
+      subtext: [popupText],
+      backgroundColor: "#e0483d",
+      color: "rgb(230, 195, 195)"
     },
   };
   

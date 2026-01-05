@@ -8,6 +8,7 @@ import EditStores from "./components/EditStores"
 import EditGallery from "./components/EditGallery"
 import EditBanner from "@/app/components/admin/banners/uploadBanner";
 import EditVendors from "./components/EditVendors"
+import { IoMdMenu } from "react-icons/io";
 
 export default function AdminHome() {
   const [sliderPosition, setSliderPosition] = useState(null);
@@ -15,6 +16,7 @@ export default function AdminHome() {
   const [activeFilter, setActiveFilter] = useState("Change Hours");
   const [filterIndex, setFilterIndex] = useState(0);
   const colors = ["#020344", "#08215c", "#0f3f74", "#155e8d", "#1b7ca5", "#229abd", "#28b8d5"];
+  const [mobileMenu, setMobileMenu] = useState(false)
   const filterRefs = useRef({});
 
   const components = {
@@ -62,7 +64,9 @@ export default function AdminHome() {
 
   return (
     <div className={styles.adminPage}>
-      <div className={styles.paginationType}>
+      <div  className={styles.mobileMenu} onClick={() => setMobileMenu(!mobileMenu)}><IoMdMenu/></div>
+
+      <div className={`${styles.paginationType} ${mobileMenu && styles.hidden}`}>
         <div
           className={styles.slider}
           style={{

@@ -90,11 +90,12 @@
 }
 
 
-.downloadButton:hover {
+.edit .downloadButton:hover {
   border: 2px solid rgb(88, 152, 93);
   border-radius: 10px;
   color: rgb(88, 152, 93);
 }
+
 
 .edit .pullButton:hover {
   border: 2px solid rgb(208, 142, 0);
@@ -374,6 +375,14 @@ Reservation progress bar
   transform: rotate(180deg)
 }
 
+.qrCodePopup{
+  position: absolute;
+  z-index: 999;
+  padding: 20px;
+  box-shadow: 0 0 2px gray;
+  background-color: white;
+  border-radius: 10px;
+}
 
 @media(max-width: 768px){
   .buttonContainer{

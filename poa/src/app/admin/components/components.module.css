@@ -129,7 +129,8 @@ input:checked + .slider:before {
   border-radius: 5px;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s ease-in-out
+  transition: all 0.2s ease-in-out;
+  text-wrap: nowrap;
 }
 
 .button:hover{
@@ -167,7 +168,7 @@ input:checked + .slider:before {
 }
 
 .formInput {
-  width: 30rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   background-color: white;
@@ -178,6 +179,7 @@ input:checked + .slider:before {
   font-weight: 600;
   color: #333;
   font-size: 14px;
+  
 }
 
 
@@ -493,4 +495,11 @@ input:checked + .slider:before {
 
 .delete:hover {
   background-color: #9a352e;
+}
+
+
+@media(max-width: 768px){
+  .overlayContainer{
+    padding: 30px 10px;
+  }
 }

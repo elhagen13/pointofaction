@@ -14,7 +14,7 @@ import { RiArrowGoBackLine } from "react-icons/ri";
 import { FaSave } from "react-icons/fa";
 import { MdRemoveCircle } from "react-icons/md";
 import { FaMobileScreen } from "react-icons/fa6";
-import { IoMdSwap } from "react-icons/io";
+import { IoMdQrScanner, IoMdSwap } from "react-icons/io";
 import AlternativeView from "./AlternativeReservation";
 
 export default function Reservation({ onClose, reservation }) {
@@ -51,6 +51,11 @@ const Order = ({ reservation }) => {
   const [saveClicked, setSaveClicked] = useState(false);
 
   const [view, setView] = useState(localStorage.getItem("reservationViewSetting") || "default");
+
+  const [qrVisible, setQrVisible] = useState(false)
+
+  const websiteUrl = `https://www.pointofaction.com/admin/reservations/${reservation._id}/mobile}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(websiteUrl)}`;
 
   useEffect(() => {
     checkCompleteness();
@@ -504,6 +509,15 @@ const Order = ({ reservation }) => {
               />
             </button>
             <div className={styles.edit}>
+              <span style={{position: "relative"}}>
+              <button className={styles.pullButton} onClick={() => setQrVisible(!qrVisible)}>
+                  Scan QR
+                  <IoMdQrScanner/>
+                </button>
+              {qrVisible && <div className={styles.qrCodePopup}>
+                <img src={qrCodeUrl}/>
+              </div>}
+              </span>
               <Link href={`/admin/reservations/${reservation._id}/mobile`}>
                 <button className={styles.pullButton}>
                   Pull with Mobile

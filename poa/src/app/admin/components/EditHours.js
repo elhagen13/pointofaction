@@ -158,7 +158,7 @@ export default function EditHours(){
               onClick={handleSubmitHours}
               disabled={isSubmitting}
               style={{
-                width: isMobile ? '100%' : 'auto',
+                width: 'auto',
                 marginTop: '10px'
               }}
             >
