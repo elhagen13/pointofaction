@@ -442,6 +442,8 @@
 
 .presetDropdown {
   right: 78.5%;
+  position: static !important;
+  width: fit-content;
 }
 
 .dropdownItem {
