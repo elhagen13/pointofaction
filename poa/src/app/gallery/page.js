@@ -13,6 +13,17 @@ export default function Home() {
   const [hovered, setHovered] = useState(null);
   const [maxColumns, setMaxColumns] = useState(20);
 
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/tracker', {
+      method: "POST",
+      body: JSON.stringify({
+          page:'gallery'
+      })
+    })
+  }, [])
+
   
   useEffect(() => {
   const updateMax = () => {
@@ -30,6 +41,7 @@ export default function Home() {
 }, [value]);
 
   useEffect(() => {
+    setLoading(true)
     const getImages = async () => {
       const response = await fetch("/api/galleryImages", {
         method: "GET",
@@ -42,6 +54,7 @@ export default function Home() {
       setImages(
         shuffleArray(result.data.map((company) => company.items).flat())
       );
+      setLoading(false)
     };
     getImages();
   }, []);
@@ -117,7 +130,7 @@ export default function Home() {
           </Link>
         ))}
       </div>
-      <Carousel images={images} />
+      <Carousel images={images} loading={loading}/>
       <div className={styles.spaceApart}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           Company View

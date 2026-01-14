@@ -259,6 +259,7 @@ a.secondary {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .aboutUs {
+    padding: 10px;
     flex-direction: column;
   }
   
@@ -268,3 +269,4 @@ a.secondary {
   aspect-ratio: 4/3;
   }
 }
+

@@ -1,6 +1,6 @@
 "use client";
 import styles from "./portal.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function RequestPortal() {
   const [firstName, setFirstName] = useState("");
@@ -11,6 +11,15 @@ export default function RequestPortal() {
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [submitMessage, setSubmitMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+      fetch('/api/tracker', {
+        method: "POST",
+        body: JSON.stringify({
+            page:'request_portal'
+        })
+      })
+    }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -157,6 +157,14 @@
   background-image: linear-gradient(to left, rgb(255, 255, 255), rgba(255, 255, 255, 0) 50%);;
 }
 
+.loadingContainer{
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
 @media(max-width: 768px){
   .carouselContainer{
     height: 15rem;
@@ -178,8 +186,4 @@
 .imageContainer{
   width: 100%;
 }
-
-
-  
-
 }

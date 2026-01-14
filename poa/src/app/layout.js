@@ -5,11 +5,6 @@ import AdminNavbar from "./components/AdminNavbar";
 import Footer from "./components/Footer"
 import {
   ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
 } from '@clerk/nextjs'
 
 const lato = Lato({
@@ -61,6 +56,7 @@ export default function RootLayout({ children }) {
       <body className={`${roboto.className}`} style={{backgroundColor: "white"}}>
         <Navbar/>
         <AdminNavbar/>
+
         <div style={{minHeight: "calc(100vh - 100px)"}}>
           {children}
         </div>

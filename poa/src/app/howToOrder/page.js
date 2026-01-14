@@ -9,6 +9,15 @@ export default function HowToOrder() {
   const [stepLength, setStepLength] = useState(null)
   const [expandedIndices, setExpandedIndices] = useState([null, null, null]); // [sectionIndex, subSectionIndex]
   const videoRef = useRef(null);
+
+  useEffect(() => {
+    fetch('/api/tracker', {
+      method: "POST",
+      body: JSON.stringify({
+          page:'help'
+      })
+    })
+  }, [])
   
   const toggleSection = (sectionIndex) => {
     const sectionName = Object.keys(sections)[sectionIndex];

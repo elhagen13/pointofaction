@@ -1,8 +1,18 @@
 "use client";
 import styles from "./terms.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function TermsAndConditions() {
+
+  useEffect(() => {
+      fetch('/api/tracker', {
+        method: "POST",
+        body: JSON.stringify({
+            page:'policies'
+        })
+      })
+    }, [])
+
   return (
     <div className={styles.policyPage}>
       <div className={styles.title}>Policies</div>

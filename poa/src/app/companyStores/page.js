@@ -17,6 +17,15 @@ export default function companyStores() {
 
     const [isSmall, setIsSmall] = useState(false)
 
+      useEffect(() => {
+    fetch('/api/tracker', {
+    method: "POST",
+    body: JSON.stringify({
+        page:'company_stores'
+    })
+    })
+}, [])
+
     useEffect(() => {
         // Set initial value and add resize listener only on client side
         const handleResize = () => setIsSmall(window.innerWidth < 769);

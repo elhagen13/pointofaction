@@ -8,18 +8,20 @@ import EditStores from "./components/EditStores"
 import EditGallery from "./components/EditGallery"
 import EditBanner from "@/app/components/admin/banners/uploadBanner";
 import EditVendors from "./components/EditVendors"
+import Analytics from "./components/Analytics"
 import { IoMdMenu } from "react-icons/io";
 
 export default function AdminHome() {
   const [sliderPosition, setSliderPosition] = useState(null);
-  const filters = ["Change Hours", "Sale Status", "Email Recipients", "Company Stores", "Gallery Images", "Banners", "Vendors"];
-  const [activeFilter, setActiveFilter] = useState("Change Hours");
+  const filters = ["Analytics", "Change Hours", "Sale Status", "Email Recipients", "Company Stores", "Gallery Images", "Banners", "Vendors"];
+  const [activeFilter, setActiveFilter] = useState("Analytics");
   const [filterIndex, setFilterIndex] = useState(0);
-  const colors = ["#020344", "#08215c", "#0f3f74", "#155e8d", "#1b7ca5", "#229abd", "#28b8d5"];
+  const colors = ["#020344", "#08215c", "#0f3f74", "#155e8d", "#1b7ca5", "#229abd", "#28b8d5", "#67d7edff"];
   const [mobileMenu, setMobileMenu] = useState(false)
   const filterRefs = useRef({});
 
   const components = {
+    "Analytics": <Analytics/>,
     "Change Hours": <EditHours/>,
     "Sale Status": <EditSale/>,
     "Email Recipients": <EditEmails/>,
@@ -64,7 +66,8 @@ export default function AdminHome() {
 
   return (
     <div className={styles.adminPage}>
-      <div  className={styles.mobileMenu} onClick={() => setMobileMenu(!mobileMenu)}><IoMdMenu/></div>
+      <div className={styles.navContainer}>
+      <div  className={styles.mobileMenu} onClick={() => setMobileMenu(!mobileMenu)}><IoMdMenu size={20}/></div>
 
       <div className={`${styles.paginationType} ${mobileMenu && styles.hidden}`}>
         <div
@@ -92,6 +95,7 @@ export default function AdminHome() {
             {filter}
           </div>
         ))}
+      </div>
       </div>
       <div className={styles.contents}>
         {components[activeFilter]}

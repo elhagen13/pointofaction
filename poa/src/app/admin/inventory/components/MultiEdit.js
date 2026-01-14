@@ -23,6 +23,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
         color: "",
         quantity: 0,
         price: 0.0,
+        location: "",
     });
     const [anyDropdownOpen, setAnyDropdownOpen] = useState(false);
     const [openDropdownCount, setOpenDropdownCount] = useState(0);
@@ -357,7 +358,6 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                                 <td>{item.color}</td>
                                 <td>{item.quantity}</td>
                                 <td>{item.price}</td>
-
                             </tr>
                         ))
                     }

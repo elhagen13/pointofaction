@@ -15,6 +15,15 @@ export default function Home() {
   const [sale, setSale] = useState(false);
   const [saleLink, setSaleLink] = useState("");
 
+  useEffect(() => {
+    fetch('/api/tracker', {
+      method: "POST",
+      body: JSON.stringify({
+          page:''
+      })
+    })
+  }, [])
+
 
   useEffect(() => {
     async function getSaleStatus() {

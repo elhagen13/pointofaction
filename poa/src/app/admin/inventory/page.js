@@ -2,8 +2,14 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
 import { FaList, FaRegCopy } from "react-icons/fa";
-import { IoSearch, IoChevronDown, IoAlert, IoArrowDown, IoArrowUp } from "react-icons/io5";
-import { BiSelectMultiple, } from "react-icons/bi";
+import {
+  IoSearch,
+  IoChevronDown,
+  IoAlert,
+  IoArrowDown,
+  IoArrowUp,
+} from "react-icons/io5";
+import { BiSelectMultiple } from "react-icons/bi";
 import {
   MdPublic,
   MdOutlinePublicOff,
@@ -26,17 +32,18 @@ import { useUser } from "@clerk/nextjs";
 
 import SetAlert from "./components/SetAlert";
 import MultiEdit from "./components/MultiEdit";
+import MultiEditBoxes from "./components/MultiEditBoxes";
 
 function Inventory() {
-  const params = typeof window !== 'undefined' 
-  ? new URLSearchParams(window.location.search)
-  : new URLSearchParams();
-  const brand = params.get('brand'); 
-  const style = params.get('style');
-  const color = params.get('color')
-  const size = params.get('size');
-  const box = params.get('box')
-
+  const params =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
+  const brand = params.get("brand");
+  const style = params.get("style");
+  const color = params.get("color");
+  const size = params.get("size");
+  const box = params.get("box");
 
   /*"all inventory", "boxes", "public", "sale"*/
   const [page, setPage] = useState("all inventory");
@@ -57,7 +64,7 @@ function Inventory() {
   const [editBoxOpen, setEditBoxOpen] = useState(null);
 
   const [columnManagerOpen, setColumnManagerOpen] = useState(false);
-  const [groupedDict, setGroupedDict] = useState({})
+  const [groupedDict, setGroupedDict] = useState({});
 
   const [multiOpen, setMultiOpen] = useState(null);
   const [groupedView, setGroupedView] = useState(null);
@@ -87,7 +94,7 @@ function Inventory() {
     addItem: {},
   });
 
-  const [keys, setKeys] = useState([])
+  const [keys, setKeys] = useState([]);
 
   const [popup, setPopup] = useState(null);
 
@@ -99,9 +106,13 @@ function Inventory() {
   const [showAll, setShowAll] = useState(false);
 
   const [multiEdit, setMultiEdit] = useState(false);
-  const [multiEditView, setMultiEditView] = useState(false)
+  const [multiEditView, setMultiEditView] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
+
+  const [multiEditBoxes, setMultiEditBoxes] = useState(false);
+  const [multiEditViewBoxes, setMultiEditViewBoxes] = useState(false);
+  const [selectedBoxes, setSelectedBoxes] = useState(new Set());
 
   const [columns, setColumns] = useState({
     lineItems: [
@@ -135,7 +146,7 @@ function Inventory() {
     });
 
     const result = await response.json();
-    console.log(result.data)
+    console.log(result.data);
     setBoxes(result.data);
   };
 
@@ -144,8 +155,8 @@ function Inventory() {
   }, [inventory]);
 
   useEffect(() => {
-    console.log("SORT ORDER", sortOrder)
-  }, [sortOrder])
+    console.log("SORT ORDER", sortOrder);
+  }, [sortOrder]);
 
   useEffect(() => {
     getInventory();
@@ -154,12 +165,11 @@ function Inventory() {
     if (localStorage.getItem("columns"))
       setColumns(JSON.parse(localStorage.getItem("columns")));
     if (localStorage.getItem("sortBy"))
-      console.log(typeof (localStorage.getItem("sortBy")))
+      console.log(typeof localStorage.getItem("sortBy"));
     setSortBy(localStorage.getItem("sortBy"));
     if (localStorage.getItem("sortOrder"))
-      console.log("LOCAL STORAGE", localStorage.getItem("sortOrder"))
+      console.log("LOCAL STORAGE", localStorage.getItem("sortOrder"));
     setSortOrder(JSON.parse(localStorage.getItem("sortOrder")));
-
   }, []);
 
   const refresh = async () => {
@@ -167,7 +177,6 @@ function Inventory() {
     await getItemOptions();
     await getBoxes();
     await getKeys();
-
   };
 
   const getItemOptions = async () => {
@@ -208,28 +217,26 @@ function Inventory() {
     });
 
     let result = await response.json();
-    console.log(result.data)
-    setKeys(result.data)
-
-  }
+    console.log(result.data);
+    setKeys(result.data);
+  };
 
   const keyDict = useMemo(() => {
-    console.log("changing")
+    console.log("changing");
     const dict = {};
     keys.forEach((item) => {
-      dict[item.key?.toString()] = item
+      dict[item.key?.toString()] = item;
     });
     return dict;
   }, [keys]);
 
-
   const getKey = (item) => {
-    return `${item[0]?.brand || brandDict[item[0]?.brandId]?.brand
-      || "No brand"}-${item[0].style || "No style"}-${item[0]?.size || sizeDict[item[0]?.sizeId]?.size
-      || "No size"}-${item[0]?.color}`
-  }
-
-
+    return `${
+      item[0]?.brand || brandDict[item[0]?.brandId]?.brand || "No brand"
+    }-${item[0].style || "No style"}-${
+      item[0]?.size || sizeDict[item[0]?.sizeId]?.size || "No size"
+    }-${item[0]?.color}`;
+  };
 
   const contentDict = useMemo(() => {
     const dict = {};
@@ -248,8 +255,7 @@ function Inventory() {
   const itemDict = useMemo(() => {
     const dict = {};
     inventory.forEach((item) => {
-      dict[item._id] = item
-
+      dict[item._id] = item;
     });
     return dict;
   }, [inventory]);
@@ -292,14 +298,12 @@ function Inventory() {
   }, [boxes]);
 
   useEffect(() => {
-    if(!box){
-      return
+    if (!box) {
+      return;
     }
-    if(!boxDict[box]?.items) return
-    setEditBoxOpen(boxDict[box])
-
-  }, [boxDict])
-
+    if (!boxDict[box]?.items) return;
+    setEditBoxOpen(boxDict[box]);
+  }, [boxDict]);
 
   // Filter inventory based on page selection and search, then group
   const filteredInventory = useMemo(() => {
@@ -323,20 +327,22 @@ function Inventory() {
       const color = item.color.toLowerCase();
 
       // Resolve size from ID or use direct value
-      const size = item.sizeId && sizeDict[item.sizeId.toString()]
-        ? sizeDict[item.sizeId.toString()].size.toLowerCase()
-        : (item.size || "n/a").toLowerCase();
+      const size =
+        item.sizeId && sizeDict[item.sizeId.toString()]
+          ? sizeDict[item.sizeId.toString()].size.toLowerCase()
+          : (item.size || "n/a").toLowerCase();
 
       // Resolve brand from ID or use direct value
-      const brand = item.brandId && brandDict[item.brandId.toString()]
-        ? brandDict[item.brandId.toString()].brand.toLowerCase()
-        : (item.brand || "n/a").toLowerCase();
+      const brand =
+        item.brandId && brandDict[item.brandId.toString()]
+          ? brandDict[item.brandId.toString()].brand.toLowerCase()
+          : (item.brand || "n/a").toLowerCase();
 
       const key = `${style}, ${color}, ${size}, ${brand}`;
 
       if (!dict[key]) {
         dict[key] = [item];
-      } else{
+      } else {
         dict[key].push(item);
       }
     }
@@ -346,12 +352,14 @@ function Inventory() {
     //now filter our archived - if its marked as tracked it will have returned
     //this is okay to show but only if it is out of stock
     //if the length of the group is 1 and it is archived or total is 0 it is ok to show
-    let modifiedArr = []
-    for(const arr of groupedItems){
-      modifiedArr.push(arr.filter((item) => {
-        if(arr.length < 1) return true
-        else return !item.archived
-      }))
+    let modifiedArr = [];
+    for (const arr of groupedItems) {
+      modifiedArr.push(
+        arr.filter((item) => {
+          if (arr.length < 1) return true;
+          else return !item.archived;
+        })
+      );
     }
 
     // Now filter the groups based on search criteria
@@ -379,7 +387,7 @@ function Inventory() {
                 // Check both direct description and descriptionId reference
                 const descriptionText =
                   item.descriptionId &&
-                    descriptionDict[item.descriptionId.toString()]
+                  descriptionDict[item.descriptionId.toString()]
                     ? descriptionDict[item.descriptionId.toString()].description
                     : item.description || "";
                 return descriptionText.toLowerCase().includes(searchTerm);
@@ -447,14 +455,14 @@ function Inventory() {
     setNumPages(
       Math.floor(
         groupedItems.length / numItemsPage +
-        (groupedItems.length % numItemsPage !== 0 ? 1 : 0)
+          (groupedItems.length % numItemsPage !== 0 ? 1 : 0)
       )
     );
 
     return groupedItems
-      .map(group => ({
+      .map((group) => ({
         group,
-        quantity: group.reduce((sum, item) => sum + item.quantity, 0)
+        quantity: group.reduce((sum, item) => sum + item.quantity, 0),
       }))
       .sort((a, b) => {
         const getTextForSort = (wrappedGroup, field) => {
@@ -478,14 +486,13 @@ function Inventory() {
                 ? sizeDict[item.sizeId.toString()].size
                 : item.size || "";
             case "quantity":
-              return wrappedGroup.quantity;  // ← Use pre-calculated value
+              return wrappedGroup.quantity; // ← Use pre-calculated value
             case "box":
               return boxDict[item.boxId]?.boxId || 0;
             default:
               return "";
           }
         };
-
 
         switch (sortBy) {
           case "description":
@@ -522,14 +529,25 @@ function Inventory() {
             const aQty = getTextForSort(a, "quantity");
             const bQty = getTextForSort(b, "quantity");
             if (sortOrder === "alerts") {
-              const aHasAlert = keyDict[getKey(a.group)]?.quantity !== undefined;
-              const bHasAlert = keyDict[getKey(b.group)]?.quantity !== undefined;
+              const aHasAlert =
+                keyDict[getKey(a.group)]?.quantity !== undefined;
+              const bHasAlert =
+                keyDict[getKey(b.group)]?.quantity !== undefined;
 
-              if (aHasAlert && ((keyDict[getKey(a.group)]?.quantity || 0) > aQty) && !bHasAlert) return -1;
-              if (!aHasAlert && bHasAlert && ((keyDict[getKey(b.group)]?.quantity || 0) > bQty)) return 1;
+              if (
+                aHasAlert &&
+                (keyDict[getKey(a.group)]?.quantity || 0) > aQty &&
+                !bHasAlert
+              )
+                return -1;
+              if (
+                !aHasAlert &&
+                bHasAlert &&
+                (keyDict[getKey(b.group)]?.quantity || 0) > bQty
+              )
+                return 1;
 
               if (aHasAlert && bHasAlert) {
-
                 return aQty - bQty;
               }
 
@@ -545,7 +563,7 @@ function Inventory() {
             return 0;
         }
       })
-      .map(wrapped => wrapped.group)
+      .map((wrapped) => wrapped.group)
       .slice(
         showAll ? 0 : paginate * numItemsPage,
         showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage
@@ -601,13 +619,21 @@ function Inventory() {
     const searchTerm = searchValue.toLowerCase().trim();
 
     return boxItems.filter((box) => {
-      const contents = [...(new Set((contentDict[box._id.toString()] || []).map((content) => brandDict[content.brandId]?.brand || content.brand || "N/A")))]
-      const brandString = contents.reduce((a, b) => a + " " + b, "")
-      const totalQuantity = (
-        contentDict[box._id.toString()] || []
-      ).reduce((acc, item) => acc + item.quantity, 0);
+      const contents = [
+        ...new Set(
+          (contentDict[box._id.toString()] || []).map(
+            (content) =>
+              brandDict[content.brandId]?.brand || content.brand || "N/A"
+          )
+        ),
+      ];
+      const brandString = contents.reduce((a, b) => a + " " + b, "");
+      const totalQuantity = (contentDict[box._id.toString()] || []).reduce(
+        (acc, item) => acc + item.quantity,
+        0
+      );
 
-      if (totalQuantity == 0) return false
+      if (totalQuantity == 0) return false;
 
       if (selectedSearchOption !== "all") {
         switch (selectedSearchOption) {
@@ -640,7 +666,6 @@ function Inventory() {
         .filter((word) => word.length > 0);
 
       if (searchWords.length === 0) return true;
-
 
       // Combine all searchable text for this box
       const boxText = [
@@ -680,7 +705,7 @@ function Inventory() {
         dict[key].push(item);
       }
     }
-    setGroupedDict(dict)
+    setGroupedDict(dict);
     let groupedItems = Object.values(dict);
     // Now filter the groups based on search criteria
     if (searchValue.trim() !== "") {
@@ -707,7 +732,7 @@ function Inventory() {
                 // Check both direct description and descriptionId reference
                 const descriptionText =
                   item.descriptionId &&
-                    descriptionDict[item.descriptionId.toString()]
+                  descriptionDict[item.descriptionId.toString()]
                     ? descriptionDict[item.descriptionId.toString()].description
                     : item.description || "";
                 return descriptionText.toLowerCase().includes(searchTerm);
@@ -864,15 +889,14 @@ function Inventory() {
   ]);
 
   useEffect(() => {
-    if(!brand || !style){
-      return
+    if (!brand || !style) {
+      return;
     }
-    const key = `${style.toLowerCase()}, ${brand.toLowerCase()}`
-    if(!groupedDict[key]) return
+    const key = `${style.toLowerCase()}, ${brand.toLowerCase()}`;
+    if (!groupedDict[key]) return;
 
-    setGroupedView(groupedDict[key])
-
-  }, [groupedDict])
+    setGroupedView(groupedDict[key]);
+  }, [groupedDict]);
 
   const getInventory = async () => {
     const response = await fetch("/api/inventory/item", {
@@ -1109,27 +1133,35 @@ function Inventory() {
             size: item[0].size || null,
             sizeId: item[0].sizeId || null,
             color: item[0].color,
-            price: item[0].price
-          }
-        ]
-
+            price: item[0].price,
+          },
+        ],
       },
-      addItem: { ...savedInfo.addItem }
-    })
-    setAddBoxOpen(true)
-  }
+      addItem: { ...savedInfo.addItem },
+    });
+    setAddBoxOpen(true);
+  };
 
-  const handleMouseDown = (e, item) => {
-    if (!multiEdit) return;
+  const handleMouseDown = (e, item, type) => {
+    if ((type == "items" && !multiEdit) || (type == "boxes" && !multiEditBoxes))
+      return;
     e.preventDefault();
     setIsMouseDown(true);
+    console.log(item);
 
-    const newSelected = new Set(selectedItems);
-    const itemIds = item.map(i => i._id);
+    const newSelected = new Set(
+      type == "items" ? selectedItems : selectedBoxes
+    );
+    let itemIds;
+    if (type == "items") {
+      itemIds = item.map((i) => i._id);
+    } else {
+      itemIds = [item._id];
+    }
 
     // Toggle: if any selected, deselect all; otherwise select all
-    const anySelected = itemIds.some(id => newSelected.has(id));
-    itemIds.forEach(id => {
+    const anySelected = itemIds.some((id) => newSelected.has(id));
+    itemIds.forEach((id) => {
       if (anySelected) {
         newSelected.delete(id);
       } else {
@@ -1137,31 +1169,40 @@ function Inventory() {
       }
     });
 
-    setSelectedItems(newSelected);
+    type === "items"
+      ? setSelectedItems(newSelected)
+      : setSelectedBoxes(newSelected);
   };
 
-  const handleMouseEnter = (item) => {
-    if (isMouseDown && multiEdit) {
-      const newSelected = new Set(selectedItems);
-      const itemIds = item.map(i => i._id);
+  const handleMouseEnter = (item, type) => {
+    if (isMouseDown && (multiEdit || multiEditBoxes)) {
+      const newSelected = new Set(
+        type == "items" ? selectedItems : selectedBoxes
+      );
+      let itemIds;
+      if (type == "items") {
+        itemIds = item.map((i) => i._id);
+      } else {
+        itemIds = [item._id];
+      }
 
-
-      const anySelected = itemIds.some(id => newSelected.has(id));
-      itemIds.forEach(id => {
+      const anySelected = itemIds.some((id) => newSelected.has(id));
+      itemIds.forEach((id) => {
         if (anySelected) {
           newSelected.delete(id);
         } else {
           newSelected.add(id);
         }
       });
-      setSelectedItems(newSelected);
+      type == "items"
+        ? setSelectedItems(newSelected)
+        : setSelectedBoxes(newSelected);
     }
   };
 
   const handleMouseUp = () => {
     setIsMouseDown(false);
   };
-
 
   return (
     <div
@@ -1216,49 +1257,81 @@ function Inventory() {
           </div>
 
           {filter !== "grouped" && (
-            <div style={{ display: "flex", gap: "10px", flexWrap:"wrap", rowGap:"0px" }}>
-              {filter === "line items" &&
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+                rowGap: "0px",
+              }}
+            >
+              {(filter === "line items" || filter === "boxes") && (
                 <>
-                  <button style={{
-                    marginBottom: "10px",
-                    backgroundColor: "white",
-                    color: "#515151ff"
-
-                  }}
-                    className={styles.pageButton}
-                    onClick={() => setShowAll(!showAll)}
-                  >
-                    <FaList style={{ marginRight: "5px" }} /> Pagination: {showAll? "Off" : "On"}
-                  </button>
-                  {
-                    selectedItems.size > 0 &&
-                    <button style={{
+                  {filter !== "boxes" && (
+                    <button
+                      style={{
+                        marginBottom: "10px",
+                        backgroundColor: "white",
+                        color: "#515151ff",
+                      }}
+                      className={styles.pageButton}
+                      onClick={() => setShowAll(!showAll)}
+                    >
+                      <FaList style={{ marginRight: "5px" }} /> Pagination:{" "}
+                      {showAll ? "Off" : "On"}
+                    </button>
+                  )}
+                  {(filter == "line items"
+                    ? selectedItems.size > 0
+                    : selectedBoxes.size > 0) && (
+                    <button
+                      style={{
+                        marginBottom: "10px",
+                        backgroundColor: "white",
+                      }}
+                      className={styles.pageButton}
+                      onClick={() => {
+                        filter == "line items"
+                          ? setMultiEditView(!multiEditView)
+                          : setMultiEditViewBoxes(!multiEditViewBoxes);
+                      }}
+                    >
+                      <BiSelectMultiple style={{ marginRight: "5px" }} /> Multi
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    style={{
                       marginBottom: "10px",
                       backgroundColor: "white",
+                      color: "#515151ff",
                     }}
-                      className={styles.pageButton}
-                      onClick={() => setMultiEditView(!multiEditView)}
-                    >
-                      <BiSelectMultiple style={{ marginRight: "5px" }} /> Multi Edit
-                    </button>
-                  }
-                  <button style={{
-                    marginBottom: "10px",
-                    backgroundColor: "white",
-                    color: "#515151ff"
-
-                  }}
                     className={styles.pageButton}
-                    onClick={() => { setMultiEdit(!multiEdit); setSelectedItems(new Set()) }}
+                    onClick={() => {
+                      filter == "line items"
+                        ? setMultiEdit(!multiEdit)
+                        : setMultiEditBoxes(!multiEditBoxes);
+                      filter == "line items"
+                        ? setSelectedItems(new Set())
+                        : setSelectedBoxes(new Set());
+                    }}
                   >
-                    <MdEdit style={{ marginRight: "5px" }} /> Edit Mode {multiEdit ? "Off" : "On"}
+                    <MdEdit style={{ marginRight: "5px" }} /> Edit Mode{" "}
+                    {filter == "line items"
+                      ? multiEdit
+                        ? "Off"
+                        : "On"
+                      : multiEditBoxes
+                        ? "Off"
+                        : "On"}
                   </button>
-                </>}
+                </>
+              )}
               <button
                 style={{
                   marginBottom: "10px",
                   backgroundColor: "white",
-                  color: "#515151ff"
+                  color: "#515151ff",
                 }}
                 className={styles.pageButton}
                 onClick={() => setColumnManagerOpen(!columnManagerOpen)}
@@ -1279,85 +1352,85 @@ function Inventory() {
           )}
         </div>
         <div className={styles.filters}>
-        <div className={styles.pageSelection}>
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              fontWeight: "bold",
-              color: "black",
-            }}
-          >
-            <label
+          <div className={styles.pageSelection}>
+            <div
               style={{
                 display: "flex",
-                flexDirection: "row",
-                gap: "5px",
-                alignItems: "center",
+                gap: "10px",
+                fontWeight: "bold",
+                color: "black",
               }}
             >
-              <input
-                type="radio"
-                name="filterType"
-                value="grouped"
-                checked={filter === "grouped"}
-                onChange={() => setFilter("grouped")}
-              />{" "}
-              Group View
-            </label>
-            <label
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                gap: "5px",
-                alignItems: "center",
-              }}
-            >
-              <input
-                type="radio"
-                name="filterType"
-                value="line items"
-                checked={filter === "line items"}
-                onChange={() => setFilter("line items")}
-              />{" "}
-              Line Items
-            </label>
-            <label
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                gap: "5px",
-                alignItems: "center",
-              }}
-            >
-              <input
-                type="radio"
-                name="filterType"
-                value="boxes"
-                checked={filter === "boxes"}
-                onChange={() => setFilter("boxes")}
-              />
-              Boxes
-            </label>
-          </div>
-          <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
-            {pageOptions.map((opt, index) => (
-              <button
-                key={index}
-                onClick={() => setPage(opt)}
+              <label
                 style={{
-                  backgroundColor: page === opt ? colors[index] : "#f0f0f0",
-                  color: page === opt ? "white" : "black",
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "5px",
+                  alignItems: "center",
                 }}
-                className={`${styles.pageButton}`}
-                disabled={filter === "grouped"}
               >
-                {opt}
-              </button>
-            ))}
+                <input
+                  type="radio"
+                  name="filterType"
+                  value="grouped"
+                  checked={filter === "grouped"}
+                  onChange={() => setFilter("grouped")}
+                />{" "}
+                Group View
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "5px",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="filterType"
+                  value="line items"
+                  checked={filter === "line items"}
+                  onChange={() => setFilter("line items")}
+                />{" "}
+                Line Items
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "5px",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="filterType"
+                  value="boxes"
+                  checked={filter === "boxes"}
+                  onChange={() => setFilter("boxes")}
+                />
+                Boxes
+              </label>
+            </div>
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
+              {pageOptions.map((opt, index) => (
+                <button
+                  key={index}
+                  onClick={() => setPage(opt)}
+                  style={{
+                    backgroundColor: page === opt ? colors[index] : "#f0f0f0",
+                    color: page === opt ? "white" : "black",
+                  }}
+                  className={`${styles.pageButton}`}
+                  disabled={filter === "grouped"}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
         {filter === "grouped" && (
           <>
@@ -1369,16 +1442,19 @@ function Inventory() {
                 >
                   <div className={styles.groupImageContainer}>
                     <img
-
-                      src={group.find(item => item.color.toLowerCase().includes(searchValue.toLowerCase()))?.image || group[0].image}
+                      src={
+                        group.find((item) =>
+                          item.color
+                            .toLowerCase()
+                            .includes(searchValue.toLowerCase())
+                        )?.image || group[0].image
+                      }
                       style={{ objectFit: "contain" }}
                     />
-                    {
-                      group.some(item => keyDict[getKey([item])]?.quantity > item.quantity) && (
-                        <div className={styles.partialOverlay}>
-                        </div>
-                      )
-                    }
+                    {group.some(
+                      (item) =>
+                        keyDict[getKey([item])]?.quantity > item.quantity
+                    ) && <div className={styles.partialOverlay}></div>}
                   </div>
                   <div style={{ fontWeight: "bold" }}>
                     {brandDict[group[0].brandId]?.brand || group[0].brand}{" "}
@@ -1394,7 +1470,11 @@ function Inventory() {
                   >
                     <MdLayers />
                     {console.log(group)}
-                    {group.reduce((a, b) => a + (b.quantity > 0 ? 1 : 0), 0)} variants found
+                    {group.reduce(
+                      (a, b) => a + (b.quantity > 0 ? 1 : 0),
+                      0
+                    )}{" "}
+                    variants found
                   </button>
                 </div>
               ))}
@@ -1409,10 +1489,7 @@ function Inventory() {
             >
               <thead>
                 <tr style={{ backgroundColor: "#ebebeb" }}>
-                  {
-                    multiEdit &&
-                    <th></th>
-                  }
+                  {multiEdit && <th></th>}
 
                   {getVisibleColumns("lineItems").map((column, index) => {
                     const columnName = Object.keys(column)[0];
@@ -1425,7 +1502,6 @@ function Inventory() {
                       "Quantity",
                       "Box",
                     ].includes(columnName);
-
 
                     return (
                       <th
@@ -1446,22 +1522,39 @@ function Inventory() {
                             setSortBy(
                               sortValue === "brand" ? "brand" : sortValue
                             );
-                            localStorage.setItem("sortBy", sortValue === "brand" ? "brand" : sortValue)
-
-                            setSortOrder(sortValue !== "quantity" ? !sortOrder
-                              : sortOrder === "alerts" ? true : !sortOrder ? "alerts" : false
+                            localStorage.setItem(
+                              "sortBy",
+                              sortValue === "brand" ? "brand" : sortValue
                             );
-                            localStorage.setItem("sortOrder", JSON.stringify(sortValue !== "quantity" ? !sortOrder
-                              : sortOrder === "alerts" ? true : !sortOrder ? "alerts" : false))
 
-
+                            setSortOrder(
+                              sortValue !== "quantity"
+                                ? !sortOrder
+                                : sortOrder === "alerts"
+                                  ? true
+                                  : !sortOrder
+                                    ? "alerts"
+                                    : false
+                            );
+                            localStorage.setItem(
+                              "sortOrder",
+                              JSON.stringify(
+                                sortValue !== "quantity"
+                                  ? !sortOrder
+                                  : sortOrder === "alerts"
+                                    ? true
+                                    : !sortOrder
+                                      ? "alerts"
+                                      : false
+                              )
+                            );
                           }
                         }}
                       >
                         {columnName}
                         {isSortable &&
                           sortBy ===
-                          columnName.toLowerCase().replace(" ", "") &&
+                            columnName.toLowerCase().replace(" ", "") &&
                           (sortOrder === true ? (
                             <IoArrowDown
                               style={{
@@ -1476,42 +1569,49 @@ function Inventory() {
                                 transform: "translateY(2px)",
                               }}
                             />
-                          ) :
-                            <IoAlert style={{
-                              marginLeft: "5px",
-                              transform: "translateY(2px)",
-                            }} />
-                          )}
+                          ) : (
+                            <IoAlert
+                              style={{
+                                marginLeft: "5px",
+                                transform: "translateY(2px)",
+                              }}
+                            />
+                          ))}
                       </th>
                     );
-
                   })}
-                  {
-                    multiEdit &&
-                    <th></th>
-                  }
+                  {multiEdit && <th></th>}
                 </tr>
               </thead>
-              <tbody onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}>
+              <tbody onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
                 {filteredInventory.map((item, index) => {
-
-                  const quantity = item.reduce((acc, cur) => acc + (!cur.archived ? cur.quantity: 0), 0);
+                  const quantity = item.reduce(
+                    (acc, cur) => acc + (!cur.archived ? cur.quantity : 0),
+                    0
+                  );
                   const uniqueKey = getKey(item);
-                  const oneSelected = multiEdit && item.some((i) => selectedItems.has(i._id));
+                  const oneSelected =
+                    multiEdit && item.some((i) => selectedItems.has(i._id));
 
                   return (
                     <tr
                       key={uniqueKey}
                       className={styles.tableRow}
                       style={{
-                        backgroundColor: oneSelected ? "#b4c9edff" : (keyDict[getKey(item)] && quantity === 0) ? "#e2aeaaff"
-                          : (parseInt(keyDict[getKey(item)]?.quantity) > quantity) ?
-                            "#f1d7a9ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-                        overflow: "scroll"
+                        backgroundColor: oneSelected
+                          ? "#b4c9edff"
+                          : keyDict[getKey(item)] && quantity === 0
+                            ? "#e2aeaaff"
+                            : parseInt(keyDict[getKey(item)]?.quantity) >
+                                quantity
+                              ? "#f1d7a9ff"
+                              : index % 2 == 0
+                                ? "#f2f2f2"
+                                : "#ebebeb",
+                        overflow: "scroll",
                       }}
-                      onMouseDown={(e) => handleMouseDown(e, item)}
-                      onMouseEnter={() => handleMouseEnter(item)}
+                      onMouseDown={(e) => handleMouseDown(e, item, "items")}
+                      onMouseEnter={() => handleMouseEnter(item, "items")}
                       onClick={() => {
                         if (!multiEdit) {
                           getLocation(item, true);
@@ -1527,20 +1627,23 @@ function Inventory() {
                           } else if (item.length === 1) {
                             setEditItemOpen(item[0]);
                           } else setMultiOpen(item);
-
                         }
                       }}
                     >
-                      {
-                        multiEdit &&
-                        <td className={styles.tableSm} onClick={(e) => { e.stopPropagation() }}>
+                      {multiEdit && (
+                        <td
+                          className={styles.tableSm}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
                           <input
                             type="checkbox"
-                            checked={item.some(i => selectedItems.has(i._id))}
+                            checked={item.some((i) => selectedItems.has(i._id))}
                             onChange={(e) => {
                               e.stopPropagation();
                               const newSelected = new Set(selectedItems);
-                              item.forEach(i => {
+                              item.forEach((i) => {
                                 if (e.target.checked) {
                                   newSelected.add(i._id);
                                 } else {
@@ -1551,7 +1654,7 @@ function Inventory() {
                             }}
                           />
                         </td>
-                      }
+                      )}
                       {getVisibleColumns("lineItems").map((column) => {
                         const columnName = Object.keys(column)[0];
 
@@ -1575,37 +1678,55 @@ function Inventory() {
                             );
                           case "Description":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {getDescription(item)}
                               </td>
                             );
                           case "Style":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {item[0].style}
                               </td>
                             );
                           case "Brand":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {getBrand(item)}
                               </td>
                             );
                           case "Color":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {item[0].color}
                               </td>
                             );
                           case "Size":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {getSize(item)}
                               </td>
                             );
                           case "Quantity":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {quantity}
                               </td>
                             );
@@ -1615,23 +1736,35 @@ function Inventory() {
                                 key={columnName}
                                 style={{ minWidth: "100px" }}
                               >
-                                {quantity > 0 ? getBox(item) :
-                                  <div style={{ cursor: "pointer" }}>N/A</div>}
+                                {quantity > 0 ? (
+                                  getBox(item)
+                                ) : (
+                                  <div style={{ cursor: "pointer" }}>N/A</div>
+                                )}
                               </td>
                             ) : (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 N/A
                               </td>
                             );
                           case "Location":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {quantity > 0 ? getLocation(item) : "N/A"}
                               </td>
                             );
                           case "Price":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {getPrice(item) !== "Multi"
                                   ? `$${getPrice(item)}`
                                   : "Multi"}
@@ -1639,7 +1772,10 @@ function Inventory() {
                             );
                           case "Visibility":
                             return (
-                              <td key={columnName} style={{ minWidth: "100px" }}>
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px" }}
+                              >
                                 {item.every((i) => i.public) ? (
                                   <MdPublic color="green" />
                                 ) : item.some((i) => i.public) ? (
@@ -1658,17 +1794,29 @@ function Inventory() {
                             return <td key={columnName}></td>;
                         }
                       })}
-                      {
-                        multiEdit &&
-                        <td className={styles.tableSm}
-                          onClick={(e) => { e.stopPropagation(); }}
-                          onMouseDown={(e) => { e.stopPropagation(); }}
-                          onMouseEnter={(e) => { e.stopPropagation(); }}
+                      {multiEdit && (
+                        <td
+                          className={styles.tableSm}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onMouseEnter={(e) => {
+                            e.stopPropagation();
+                          }}
                         >
-                          <SetAlert keyDict={keyDict} getKey={getKey} item={item} refresh={refresh} />
+                          <SetAlert
+                            keyDict={keyDict}
+                            getKey={getKey}
+                            item={item}
+                            refresh={refresh}
+                          />
                         </td>
-                      }
-                    </tr>)
+                      )}
+                    </tr>
+                  );
                 })}
               </tbody>
             </table>
@@ -1685,6 +1833,7 @@ function Inventory() {
           >
             <thead style={{ textAlign: "left" }}>
               <tr style={{ backgroundColor: "#ebebeb" }}>
+                {multiEditBoxes && <th></th>}
                 {getVisibleColumns("boxes").map((column) => {
                   const columnName = Object.keys(column)[0];
                   return (
@@ -1699,176 +1848,197 @@ function Inventory() {
                 <th></th> {/* For the copy button column */}
               </tr>
             </thead>
-            <tbody>
-              {filteredBoxes.map((box, index) => (
-                <tr
-                  key={index}
-                  className={styles.tableRow}
+            <tbody onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+              {filteredBoxes.map((box, index) => {
+                const oneSelected =
+                  multiEditBoxes && selectedBoxes.has(box._id);
 
-                  style={{
-                    width: "100%",
-                    backgroundColor: index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
-                    cursor: "pointer",
-                  }}
-                >
-                  {getVisibleColumns("boxes").map((column) => {
-                    const columnName = Object.keys(column)[0];
+                return (
+                  <tr
+                    key={index}
+                    className={styles.tableRow}
+                    onClick={() => {
+                      if (!multiEditBoxes) setEditBoxOpen(box);
+                    }}
+                    onMouseDown={(e) => handleMouseDown(e, box, "boxes")}
+                    onMouseEnter={() => handleMouseEnter(box, "boxes")}
+                    style={{
+                      width: "100%",
+                      backgroundColor: oneSelected
+                        ? "#b4c9edff"
+                        : index % 2 == 0
+                          ? "#f2f2f2"
+                          : "#ebebeb",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {multiEditBoxes && (
+                      <td
+                        className={styles.tableSm}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedBoxes.has(box._id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            const newSelected = new Set(selectedItems);
 
-                    switch (columnName) {
-                      case "Image":
-                        return (
-                          <td
-                            key={columnName}
-                            style={{ position: "relative" }}
-                            onClick={() => setEditBoxOpen(box)}
-                          >
-                            <div className={styles.tableSm}>
-                              <img src={box.image} alt={`Item ${index + 1}`} />
-                            </div>
-                          </td>
-                        );
-                      case "Box Id.":
-                        return (
-                          <td
-                            key={columnName}
-                            onClick={() => setEditBoxOpen(box)}
-                            style={{ minWidth: "100px" }}
-                          >
-                            {box.boxId}
-                          </td>
-                        );
-                      case "Description":
-                        return (
-                          <td
-                            key={columnName}
-                            onClick={() => setEditBoxOpen(box)}
-                            style={{ minWidth: "100px" }}
-                          >
-                            {box.description.length > 80
-                              ? box.description.slice(0, 80) + "..."
-                              : box.description}
-                          </td>
-                        );
-                      case "Location":
-                        return (
-                          <td
-                            key={columnName}
-                            onClick={() => setEditBoxOpen(box)}
-                            style={{ minWidth: "100px" }}
-                          >
-                            {box.location}
-                          </td>
-                        );
-                      case "Total Quantity":
-                        return (
-                          <td
-                            key={columnName}
-                            onClick={() => setEditBoxOpen(box)}
-                            style={{ minWidth: "100px" }}
-                          >
-                            {contentDict[box._id.toString()]?.reduce(
-                              (acc, cur) => acc + cur.quantity,
-                              0
-                            ) || 0}
-                          </td>
-                        );
-                      case "Discount":
-                        return (
-                          <td
-                            key={columnName}
-                            onClick={() => setEditBoxOpen(box)}
-                            style={{ minWidth: "100px" }}
-                          >
-                            {contentDict[box._id]
-                              ? contentDict[box._id][0].sale
-                                ? `${box.discount}%`
-                                : "N/A"
-                              : "N/A"}
-                          </td>
-                        );
-                      case "Min.":
-                        return (
-                          <td
-                            key={columnName}
-                            onClick={() => setEditBoxOpen(box)}
-                            style={{ minWidth: "100px" }}
-                          >
-                            {contentDict[box._id]
-                              ? contentDict[box._id][0].sale
-                                ? `$${box.minPrice}`
-                                : "N/A"
-                              : "N/A"}
-                          </td>
-                        );
-                      case "Visibility":
-                        return (
-                          <td
-                            key={columnName}
-                            onClick={() => setEditBoxOpen(box)}
-                            style={{ minWidth: "100px" }}
-                          >
-                            {contentDict[box._id] ? (
-                              contentDict[box._id][0].public ? (
-                                <MdPublic color="green" title="Public" />
+                            if (e.target.checked) {
+                              newSelected.add(box._id);
+                            } else {
+                              newSelected.delete(box._id);
+                            }
+
+                            setSelectedBoxes(newSelected);
+                          }}
+                        />
+                      </td>
+                    )}
+                    {getVisibleColumns("boxes").map((column) => {
+                      const columnName = Object.keys(column)[0];
+
+                      switch (columnName) {
+                        case "Image":
+                          return (
+                            <td
+                              key={columnName}
+                              style={{ position: "relative" }}
+                            >
+                              <div className={styles.tableSm}>
+                                <img
+                                  src={box.image}
+                                  alt={`Item ${index + 1}`}
+                                />
+                              </div>
+                            </td>
+                          );
+                        case "Box Id.":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {box.boxId}
+                            </td>
+                          );
+                        case "Description":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {box.description.length > 80
+                                ? box.description.slice(0, 80) + "..."
+                                : box.description}
+                            </td>
+                          );
+                        case "Location":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {box.location}
+                            </td>
+                          );
+                        case "Total Quantity":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {contentDict[box._id.toString()]?.reduce(
+                                (acc, cur) => acc + cur.quantity,
+                                0
+                              ) || 0}
+                            </td>
+                          );
+                        case "Discount":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {contentDict[box._id]
+                                ? contentDict[box._id][0].sale
+                                  ? `${box.discount}%`
+                                  : "N/A"
+                                : "N/A"}
+                            </td>
+                          );
+                        case "Min.":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {contentDict[box._id]
+                                ? contentDict[box._id][0].sale
+                                  ? `$${box.minPrice}`
+                                  : "N/A"
+                                : "N/A"}
+                            </td>
+                          );
+                        case "Visibility":
+                          return (
+                            <td key={columnName} style={{ minWidth: "100px" }}>
+                              {contentDict[box._id] ? (
+                                contentDict[box._id][0].public ? (
+                                  <MdPublic color="green" title="Public" />
+                                ) : (
+                                  <MdOutlinePublicOff
+                                    color="red"
+                                    title="Admin Only"
+                                  />
+                                )
                               ) : (
-                                <MdOutlinePublicOff color="red" title="Admin Only" />
-                              )
-                            ) : (
-                              <MdOutlinePublicOff color="red" title="Admin Only" />
-                            )}
-                            {contentDict[box._id] ? (
-                              contentDict[box._id][0].sale ? (
-                                <HiCash color="blue" title="On Sale" />
-                              ) : null
-                            ) : null}
-                          </td>
-                        );
-                      default:
-                        return <td key={columnName}></td>;
-                    }
-                  })}
-                  <td>
-                    <FaRegCopy onClick={() => duplicateBox(box)} />
-                  </td>
-                </tr>
-              ))}
+                                <MdOutlinePublicOff
+                                  color="red"
+                                  title="Admin Only"
+                                />
+                              )}
+                              {contentDict[box._id] ? (
+                                contentDict[box._id][0].sale ? (
+                                  <HiCash color="blue" title="On Sale" />
+                                ) : null
+                              ) : null}
+                            </td>
+                          );
+                        default:
+                          return <td key={columnName}></td>;
+                      }
+                    })}
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <FaRegCopy onClick={() => duplicateBox(box)} />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
-        {filter === "line items" &&
-          <div style={{ width: "100%", display: "flex", gap: "10px", justifyContent: "center", padding: "10px" }}>
-            {paginate > 0 && !showAll &&
+        {filter === "line items" && (
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              gap: "10px",
+              justifyContent: "center",
+              padding: "10px",
+            }}
+          >
+            {paginate > 0 && !showAll && (
               <div
-
                 className={styles.paginate}
                 onClick={() => setPaginate(paginate - 1)}
               >
                 {paginate}
               </div>
-            }
-            {
-              !showAll &&
+            )}
+            {!showAll && (
               <div
                 className={styles.paginate}
                 style={{ backgroundColor: "rgb(140, 140, 140)" }}
               >
                 {paginate + 1}
               </div>
-            }
-            {
-              paginate < numPages - 1 && !showAll &&
+            )}
+            {paginate < numPages - 1 && !showAll && (
               <div
                 className={styles.paginate}
                 onClick={() => setPaginate(paginate + 1)}
               >
                 {paginate + 2}
               </div>
-            }
+            )}
           </div>
-        }
+        )}
       </div>
-      
-      
 
       {addItemOpen && (
         <AddItem
@@ -1926,7 +2096,11 @@ function Inventory() {
       )}
       {groupedView !== null && (
         <GroupedView
-          items={Array.isArray(groupedView) ? groupedView : filteredGroups[groupedView]}
+          items={
+            Array.isArray(groupedView)
+              ? groupedView
+              : filteredGroups[groupedView]
+          }
           onClose={() => setGroupedView(null)}
           boxDict={boxDict}
           sizeDict={sizeDict}
@@ -1944,8 +2118,9 @@ function Inventory() {
           size={size}
         />
       )}
-      {multiEditView &&
-        <MultiEdit onClose={() => setMultiEditView(false)}
+      {multiEditView && (
+        <MultiEdit
+          onClose={() => setMultiEditView(false)}
           ids={selectedItems}
           itemDict={itemDict}
           descriptionDict={descriptionDict}
@@ -1953,7 +2128,15 @@ function Inventory() {
           brandDict={brandDict}
           options={options}
           refresh={refresh}
-        />}
+        />
+      )}
+      {multiEditViewBoxes && (
+        <MultiEditBoxes
+          onClose={() => setMultiEditViewBoxes(false)}
+          ids={Array.from(selectedBoxes)}
+          refresh={refresh}
+        />
+      )}
     </div>
   );
 }

@@ -23,13 +23,38 @@
   transform: translateY(0);
 }
 
+
+.customerImageContainer:hover .customerImage {
+  transform: scale(1.05);
+}
+
+.transparencyLayer1 {
+  position: absolute;
+  top: 0;
+  height: 250px;
+  width: 100%;
+  background: linear-gradient(#ffffff 30%, rgba(255, 255, 255, 0));
+}
+
+.transparencyLayer2 {
+  position: absolute;
+  bottom: -30px;
+  height: 250px;
+  width: 100%;
+  background: linear-gradient(rgba(255, 255, 255, 0) 30%, #ffffff 70%);
+}
+
+
+
 /* Mobile layout (2 columns, 3 rows) */
 @media (max-width: 768px) {
   .customerCarousel {
     grid-template-columns: repeat(3, 1fr);
 
-    margin-top: 40px; /* Less offset needed */
+    margin-top: 40px; 
     gap: 10px;
+    padding: 10px;
+    transform: translateX(-6px)
   }
 
   .customerImageContainer:nth-child(3n + 1) {
@@ -44,6 +69,12 @@
 
   .customerImageContainer:nth-child(n + 10) {
     display: none;
+  }
+
+
+  .transparencyLayer2{
+    height: 300px;
+    bottom: -80px;
   }
 }
 
@@ -63,24 +94,4 @@
   transition: transform 0.3s ease; /* Optional hover effect */
 }
 
-/* Optional hover effect */
 
-.customerImageContainer:hover .customerImage {
-  transform: scale(1.05);
-}
-
-.transparencyLayer1 {
-  position: absolute;
-  top: 0;
-  height: 250px;
-  width: 100%;
-  background: linear-gradient(#ffffff 30%, rgba(255, 255, 255, 0));
-}
-
-.transparencyLayer2 {
-  position: absolute;
-  bottom: -20px;
-  height: 250px;
-  width: 100%;
-  background: linear-gradient(rgba(255, 255, 255, 0) 30%, #ffffff 70%);
-}

@@ -11,6 +11,15 @@ export default function Contact() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
+    fetch('/api/tracker', {
+      method: "POST",
+      body: JSON.stringify({
+          page:'contact'
+      })
+    })
+  }, [])
+
+  useEffect(() => {
     setIsClient(true);
   }, []);
 

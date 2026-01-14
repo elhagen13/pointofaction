@@ -13,6 +13,7 @@
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@stripe/react-stripe-js": "^3.10.0",
     "@stripe/stripe-js": "^7.9.0",
+    "arquero": "^8.0.3",
     "aws-sdk": "^2.1692.0",
     "heic-convert": "^2.1.0",
     "jspdf": "^3.0.3",
@@ -32,9 +33,14 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.5.3",
     "react-spinners": "^0.17.0",
+    "react-vega": "^8.0.0",
     "replicate": "^1.0.1",
     "resend": "^4.6.0",
     "sharp": "^0.34.3",
-    "stripe": "^18.3.0"
+    "stripe": "^18.3.0",
+    "vega": "^6.2.0",
+    "vega-embed": "^7.1.0",
+    "vega-lite": "^6.4.1",
+    "vega-lite-api": "^6.0.0"
   }
 }

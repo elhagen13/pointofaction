@@ -255,12 +255,7 @@ const BannerList = ({ setPage, setId }) => {
             ))
           )}
         </div>
-        <div>
-          <h3>Preview</h3>
-          <Banner lists={lists} />
-        </div>
-      </div>
-      <div className={styles.submitButtonContainer}>
+        <div className={styles.submitButtonContainer}>
       <button
         className={styles.submitButton}
         style={{ width: "fit-content", marginLeft: "auto" }}
@@ -269,6 +264,11 @@ const BannerList = ({ setPage, setId }) => {
       >
         {submitting ? <BeatLoader size={8} /> : "Save Changes"}
       </button>
+      </div>
+        <div style={{marginBottom:"2rem"}}>
+          <h3>Preview</h3>
+          <Banner lists={lists} />
+        </div>
       </div>
     </div>
   );

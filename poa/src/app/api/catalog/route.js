@@ -124,8 +124,8 @@ export async function GET(request) {
       },
       {
         $project: {
-          boxInfo: 0, // Remove the boxInfo array from the final result
-          boxObjectId: 0, // Remove the temporary boxObjectId field
+          boxInfo: 0, 
+          boxObjectId: 0, 
         },
       },
     ];

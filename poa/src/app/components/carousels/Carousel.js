@@ -2,8 +2,9 @@
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import styles from "./carousel.module.css";
 import { useState, useEffect, useRef } from "react";
+import { BarLoader, BeatLoader, GridLoader } from "react-spinners";
 
-export default function Carousel({ images, loading }) {
+export default function Carousel({ images, loading = false }) {
   const [curEnlarged, setCurEnlarged] = useState(0);
 
   const [hoverDelay, setHoverDelay] = useState(null);
@@ -148,7 +149,8 @@ export default function Carousel({ images, loading }) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {images.map((img, i) => (
+        {loading ? <div className={styles.loadingContainer}><GridLoader color="#aaa5a5ff"/></div> : 
+        images.map((img, i) => (
           <img
             key={i}
             src={img.image}

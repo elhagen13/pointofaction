@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react';
-import {vendors, categories} from './vendors.js'
 import styles from './vendors.module.css'
 import Link from 'next/link.js';
 
@@ -16,6 +15,15 @@ export default function Vendors(){
 
     const [overlay, setOverlay] = useState(false);
     const [overlayLink, setOverlayLink] = useState('')
+
+    useEffect(() => {
+    fetch('/api/tracker', {
+      method: "POST",
+      body: JSON.stringify({
+          page:'vendors'
+      })
+    })
+  }, [])
 
     const vendorClick = (link) => {
         console.log(link)
@@ -42,13 +50,6 @@ export default function Vendors(){
         setWorkwear(vendors2?.filter((vendor) => vendor.category.includes("workwear"))),
         setDrinkwear(vendors2?.filter((vendor) => vendor.category.includes("drinkware")))
 
-        /*setOverall(categories.overall.map(vendor => vendors[vendor]));
-        setTops(categories.tops.map(vendor => vendors[vendor]));
-        setOuterwear(categories.outerwear.map(vendor => vendors[vendor]));
-        setActivewear(categories.activewear.map(vendor => vendors[vendor]));
-        setHeadwear(categories.headwear.map(vendor => vendors[vendor]));
-        setWorkwear(categories.workwear.map(vendor => vendors[vendor]));
-        setDrinkwear(categories.drinkware.map(vendor => vendors[vendor]));*/
 
     }, [vendors2])
 

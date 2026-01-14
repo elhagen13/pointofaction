@@ -3,11 +3,21 @@ import { use } from 'react';
 import Link from 'next/link';
 import services from '../services.js';
 import styles from './service.module.css'
+import { useEffect } from 'react';
 
 
 export default function Service({params}) {
     const { service } = use(params); 
     const serviceInfo = services[service]
+
+    useEffect(() => {
+        fetch('/api/tracker', {
+          method: "POST",
+          body: JSON.stringify({
+              page: `services_${service}`
+          })
+        })
+      }, [])
 
     return (
         <div className={styles.servicePage}>

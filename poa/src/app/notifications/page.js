@@ -1,6 +1,6 @@
 "use client";
 import styles from "./notifications.module.css";
-import { useState } from "react";
+import { useState , useEffect} from "react";
 
 export default function Notifications() {
   const [firstName, setFirstName] = useState("");
@@ -10,6 +10,15 @@ export default function Notifications() {
   const [choice, setChoice] = useState("I would like to receive SMS messages");
   const [submitMessage, setSubmitMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+      fetch('/api/tracker', {
+        method: "POST",
+        body: JSON.stringify({
+            page:'notifications'
+        })
+      })
+    }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault();

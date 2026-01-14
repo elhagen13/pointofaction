@@ -1,0 +1,164 @@
+.options{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.option{
+    background-color: white;
+    transition: background-color 0.3s ease-in-out, border-radius 0.3s ease-in-out;
+    border-radius: 0;
+    width: fit-content;
+    padding: 0.2rem 1rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+
+}
+
+.option:hover{
+    background-color: #eeeaea;
+    border-radius: 3px;
+}
+
+.arrow{
+    transition: all 0.2s ease-in-out;
+}
+
+.buttonContainer{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+
+}
+
+.buttonContainer button{
+    padding: 0.25rem 1rem;
+    font-weight: bold;
+    background-color: white;
+    border: none;
+    border-radius: 0;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.selected{
+    background-color: rgb(81, 147, 81) !important;
+    border-radius: 5px !important;
+    color: white;
+}
+
+.monthAnalytics{
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid rgb(219, 213, 213);
+    box-shadow: 0 0 1px rgb(231, 231, 231);
+    border-radius: 5px;
+}
+
+.monthAnalytics h4{
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.monthAnalytics input{
+    border: 1px solid rgb(201, 191, 191);
+    padding: 0rem 0.5rem;
+    border-radius: 5px;
+    margin: 0 0.5rem;
+}
+
+.boxContainer{
+   width: 60rem
+}
+
+.boxInfo{
+    display: flex;
+    gap: 1rem;
+}
+
+.statBox{
+    flex-grow: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    height: fit-content;
+}
+
+.statBox > div{
+    padding: 1rem;
+    border: 1px solid rgb(219, 213, 213);
+    box-shadow: 0 0 1px rgb(231, 231, 231);
+    border-radius: 5px;
+}
+
+.stats{
+   height: fit-content;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 0.5rem;
+} 
+
+.stats h4{
+    color: rgb(141, 128, 128);
+}
+
+
+.stats span{
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.arrow{
+    transition: 0.5s ease-in-out;
+    color: gray;
+    will-change: color, transform;
+}
+
+.arrow:hover{
+    transform: translateX(3px);
+    color: black;
+}
+
+@media(max-width: 768px){
+
+    .monthAnalytics{
+        width: 100%;
+    }
+    .boxInfo{
+        flex-direction: column;
+    }
+
+    .boxContainer{
+        width: 100%;
+    }
+
+    .statBox > div{
+        width: 100%;
+    }
+
+    .buttonContainer button{
+        min-height: 44px;
+        font-size: 1rem;
+    }
+
+    .selected{
+        border-radius: 20px !important;
+    }
+
+
+}

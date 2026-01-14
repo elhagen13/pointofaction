@@ -976,6 +976,40 @@
   cursor: pointer;
 }
 
+.notAllowed, .allowed, .sometimesAllowed{
+  font-size: 1.5rem;
+}
+
+.notAllowed{
+  color: rgb(176, 20, 20);
+}
+
+.allowed{
+  color: rgb(24, 95, 24);
+}
+
+.sometimesAllowed{
+  color: rgb(247, 247, 16)
+}
+
+.boxEditButton{
+  width: 2rem;
+  height: 2rem;
+  background-color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.selectedOption{
+  background-color: rgb(221, 221, 221) !important;
+}
+
+
+.buttonContainer{
+  display: flex;
+  gap: 0.5rem;
+}
 /* ========================================
    MOBILE RESPONSIVENESS
    ======================================== */

@@ -23,6 +23,16 @@ export default function Store() {
     const [searchValue, setSearchValue] = useState("")
 
 
+    useEffect(() => {
+    fetch('/api/tracker', {
+      method: "POST",
+      body: JSON.stringify({
+          page:'overstock_store'
+      })
+    })
+  }, [])
+
+
 
     useEffect(() => {
         getSaleItems();

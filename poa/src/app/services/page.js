@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useMemo, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import styles from './services.module.css';
 import Link from 'next/link';
 import services from './services';
@@ -73,6 +73,15 @@ const ServiceItem = ({ service, index }) => {
 };
 
 export default function Services() {
+  
+  useEffect(() => {
+    fetch('/api/tracker', {
+      method: "POST",
+      body: JSON.stringify({
+          page:'services'
+      })
+    })
+  }, [])
   const servicesArray = Object.values(services)
 
   return (

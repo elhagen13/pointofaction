@@ -9,7 +9,16 @@ import {useState, useEffect} from 'react'
 export default function TargetPage({ params }) {
   const [images, setImages] = useState([])
   const { service } = use(params); 
-  const serviceRefined = service.replace("_", " ")  
+  const serviceRefined = service.replace("_", " ") 
+  
+  useEffect(() => {
+    fetch('/api/tracker', {
+      method: "POST",
+      body: JSON.stringify({
+          page:`gallery_${service}`
+      })
+    })
+  }, [])
   
   useEffect(() => {
     const getImages = async () => {

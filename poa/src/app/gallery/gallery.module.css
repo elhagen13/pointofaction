@@ -227,7 +227,7 @@
 
 @media (max-width: 768px) {
   .galleryPage {
-    padding: 30px;
+    padding: 1rem;
   }
 
   .galleryReferences {
@@ -246,5 +246,9 @@
 
   .slider {
     width: 50%;
+  }
+
+  .serviceGrid{
+    grid-template-columns: repeat(2, 1fr)
   }
 }

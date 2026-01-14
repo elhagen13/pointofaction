@@ -50,24 +50,35 @@
 
 
 @media(max-width: 768px){
+.navContainer{
+  position: fixed;
+  width: 20rem;
+  height: 1rem;
+  transform: translateY(-3rem);
+  z-index: 999;
+  padding: 1rem;
+}
+
   .mobileMenu{
     display: inline;
-    position: absolute;
     background-color: white;
     z-index: 999;
-    border-radius: 20px;
+    border-radius: 40px;
     display: flex;
     padding: 10px;
     left: 10px;
     top: -35px;
     box-shadow: 0 0 2px gray;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center
     
   }
 
   .paginationType{
     position: absolute;
     left: 0;
-    top: -10px;
     z-index: 99;
     width: 50%;
     transform:translateX(-20px);
