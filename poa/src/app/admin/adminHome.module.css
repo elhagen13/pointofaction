@@ -48,6 +48,11 @@
   display: none;
 }
 
+.navContainer{
+  min-width: 10rem;
+  width: fit-content !important;
+}
+
 
 @media(max-width: 768px){
 .navContainer{
