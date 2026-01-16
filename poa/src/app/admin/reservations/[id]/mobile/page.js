@@ -13,6 +13,7 @@ export default function MobileReservation({ params }) {
   const [boxMap, setBoxMap] = useState({});
   const [selectedBox, setSelectedBox] = useState(null);
   const [itemDict, setItemDict] = useState({});
+  const [boxDict, setBoxDict] = useState({})
 
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -45,6 +46,7 @@ export default function MobileReservation({ params }) {
     setReservation(result.data[0]);
     let tempDict = { "No Box": [] };
     let tempItemDict = {};
+    let tempBoxDict = {}
     console.log("RESERVATION", result.data[0]);
     result.data[0].items.forEach((item) => {
       tempItemDict[item.itemId] = item?.currentItemData || item;
@@ -53,12 +55,14 @@ export default function MobileReservation({ params }) {
         tempDict["No Box"].push(item);
       } else {
         if (!tempDict[item.currentItemData.boxData.boxId])
+          tempBoxDict[item.currentItemData.boxData.boxId] = item.currentItemData.boxData
           tempDict[item.currentItemData.boxData.boxId] = [];
         tempDict[item.currentItemData.boxData.boxId].push(item);
       }
     });
     setItemDict(tempItemDict);
     setBoxMap(tempDict);
+    setBoxDict(tempBoxDict)
   };
 
   const getDescription = (item) => {
@@ -154,7 +158,10 @@ export default function MobileReservation({ params }) {
                     src={value[0]?.currentItemData?.boxData?.image || "https://companystores.s3.us-east-1.amazonaws.com/gallery-images/Frame+45.png"}
                     className={styles.boxImage}
                   ></img>
+                  <div>
                   <h2>{key}</h2>
+                  <h3 style={{color:"#919191ff"}}>{boxDict[key]?.location || ""}</h3>
+                  </div>
                 </span>
                 {value.every((item) => item.quantReserved == item.pulled) && (
                   <div className={`${styles.checkmark} ${styles.confirmed}`}>

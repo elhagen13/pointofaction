@@ -1806,7 +1806,7 @@ function Inventory() {
                                 className={styles.tagContainer}
                               >
                                 {item.map((item) =>
-                                  item.tags.map((i) => (
+                                  item.tags?.map((i) => (
                                     <div
                                       className={styles.tag}
                                       style={{ backgroundColor: `${i.color}90`, border: `1px solid ${i.color}`}}

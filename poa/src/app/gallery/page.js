@@ -12,6 +12,7 @@ export default function Home() {
   const [companies, setCompanies] = useState([]);
   const [hovered, setHovered] = useState(null);
   const [maxColumns, setMaxColumns] = useState(20);
+  const [mobile, setMobile] = useState(false)
 
   const [loading, setLoading] = useState(false)
 

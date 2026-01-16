@@ -9,7 +9,7 @@ export default function Flag({ item }) {
   const [visible, setVisible] = useState(false);
   const [flags, setFlags] = useState(item?.tags || []);
   const [myFlags, setMyFlags] = useState(
-    new Set(item?.tags.map((tag) => tag.tag) || [])
+    new Set(item?.tags?.map((tag) => tag.tag) || [])
   );
   const [allFlags, setAllFlags] = useState([]);
   const [color, setColor] = useState("#9cc29dff");
