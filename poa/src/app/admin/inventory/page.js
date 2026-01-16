@@ -85,6 +85,7 @@ function Inventory() {
     "quantity",
     "box",
     "location",
+    "tags",
   ];
   const [selectedSearchOption, setSelectedSearchOption] = useState("all");
 
@@ -127,6 +128,7 @@ function Inventory() {
       { Location: true },
       { Price: false },
       { Visibility: true },
+      { Tags: false },
     ],
     boxes: [
       { Image: true },
@@ -406,6 +408,10 @@ function Inventory() {
               case "location":
                 const location = boxDict[item.boxId?.toString()]?.location;
                 return location?.toLowerCase().includes(searchTerm);
+              case "tags":
+                return item.tags.some((tag) =>
+                  tag.tag.toLowerCase().includes(searchTerm)
+                );
               default:
                 return false;
             }
@@ -1788,6 +1794,27 @@ function Inventory() {
                                 ) : item.some((i) => i.sale) ? (
                                   <HiCash color="orange" />
                                 ) : null}
+                              </td>
+                            );
+
+                          case "Tags":
+                            return (
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "100px", height:"fit-content", padding:"1rem 0"}}
+                                onClick={(e) => e.preventDefault()}
+                                className={styles.tagContainer}
+                              >
+                                {item.map((item) =>
+                                  item.tags.map((i) => (
+                                    <div
+                                      className={styles.tag}
+                                      style={{ backgroundColor: `${i.color}90`, border: `1px solid ${i.color}`}}
+                                    >
+                                      {i.tag}
+                                    </div>
+                                  ))
+                                )}
                               </td>
                             );
                           default:

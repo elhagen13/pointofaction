@@ -137,6 +137,11 @@
   
   @media(max-width: 900px){
     .popup{
+        width: 90%;
         font-size: 40px
+    }
+
+    .styledButton{
+      margin-top: 1rem;
     }
   }

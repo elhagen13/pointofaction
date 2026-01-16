@@ -15,17 +15,16 @@ import {
   IoIosAddCircle,
   IoIosCheckmarkCircle,
   IoIosRemoveCircle,
-  IoIosWarning,
 } from "react-icons/io";
-import { IoSearch, IoWarningOutline, IoWarningSharp } from "react-icons/io5";
-import { FiMinimize2, FiMaximize2 } from "react-icons/fi";
+import {IoSearch, IoWarningSharp } from "react-icons/io5";
+import { FiMinimize2, FiMaximize2} from "react-icons/fi";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
 import EditPresets from "@/app/components/admin/editPresets/EditPresets";
 import Overlay from "@/app/components/popups/Overlay";
 import { useUser } from "@clerk/nextjs";
 import jsPDF from "jspdf";
 import Dropdown from "./Dropdown";
-
+import FlagPopup from "./components/FlagPopup";
 export default function EditItem({
   box,
   onClose,
@@ -143,6 +142,7 @@ const AddBox = ({
   const { user } = useUser();
 
   const [acknowledged, setAcknowledged] = useState(false);
+
 
   const [history, setHistory] = useState(box?.history || []);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -1536,7 +1536,7 @@ const AddBox = ({
                   textAlign: "left",
                   borderCollapse: "collapse",
                   borderRadius: "10px",
-                  overflow: "hidden",
+                  overflow: "scroll",
                 }}
               >
                 <thead>
@@ -1912,6 +1912,16 @@ const AddBox = ({
                           alignItems: "center",
                         }}
                       >
+                        <div
+                          className={styles.trash}
+                          style={{
+                            cursor: "pointer",
+                            color:
+                              selectedItem === item._id ? "white" : "black",
+                          }}
+                        >
+                          <FlagPopup item={item}/>
+                        </div>
                         <div
                           className={styles.trash}
                           onClick={() => handleDropdownToggle(index)}

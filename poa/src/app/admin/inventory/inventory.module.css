@@ -1009,6 +1009,26 @@
 .buttonContainer{
   display: flex;
   gap: 0.5rem;
+  
+}
+
+.tag{
+  width: fit-content;
+  padding: 0.1rem 0.5em;
+  font-weight: bold;
+  border-radius: 10px;
+
+}
+
+.tagContainer{
+  display: flex;
+  height: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.5rem;
+  max-width: 8rem;
 }
 /* ========================================
    MOBILE RESPONSIVENESS
