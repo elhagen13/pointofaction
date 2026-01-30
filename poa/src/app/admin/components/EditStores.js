@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import styles from "./components.module.css";
+import globals from "../globals.module.css"
 import { FaRegEdit, FaUpload, FaTimes } from "react-icons/fa";
 
 function AddStore({ onClose, onCompanyAdded }) {
@@ -162,8 +163,8 @@ function AddStore({ onClose, onCompanyAdded }) {
   }
 
   return (
-    <div className={styles.overlayContainer} onClick={handleOverlayClick}>
-      <div className={styles.overlay} onClick={handleModalClick}>
+    <div className={globals.overlayContainer} onClick={handleOverlayClick}>
+      <div className={globals.overlay} onClick={handleModalClick}>
         <div className={styles.title} style={{ marginBottom: "30px" }}>
           Add a Company Store
         </div>
@@ -470,8 +471,8 @@ function EditStore({ company, onClose, onCompanyEdited }) {
   }
 
   return (
-    <div className={styles.overlayContainer} onClick={handleOverlayClick}>
-      <div className={styles.overlay} onClick={handleModalClick}>
+    <div className={globals.overlayContainer} onClick={handleOverlayClick}>
+      <div className={globals.overlay} onClick={handleModalClick}>
         <div className={styles.title} style={{ marginBottom: "30px"}}>
           Edit Company Store
         </div>

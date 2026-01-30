@@ -1,5 +1,6 @@
 "use client";
 import styles from "./inventory.module.css";
+import globals from "../globals.module.css";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { BeatLoader } from "react-spinners";
 import {
@@ -16,8 +17,8 @@ import {
   IoIosCheckmarkCircle,
   IoIosRemoveCircle,
 } from "react-icons/io";
-import {IoSearch, IoWarningSharp } from "react-icons/io5";
-import { FiMinimize2, FiMaximize2} from "react-icons/fi";
+import { IoSearch, IoWarningSharp } from "react-icons/io5";
+import { FiMinimize2, FiMaximize2 } from "react-icons/fi";
 import { RiSwapBoxLine, RiSwapBoxFill } from "react-icons/ri";
 import EditPresets from "@/app/components/admin/editPresets/EditPresets";
 import Overlay from "@/app/components/popups/Overlay";
@@ -143,7 +144,6 @@ const AddBox = ({
 
   const [acknowledged, setAcknowledged] = useState(false);
 
-
   const [history, setHistory] = useState(box?.history || []);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState(null);
@@ -157,11 +157,10 @@ const AddBox = ({
 
   const contentsRef = useRef(contents);
 
-  const [submitAttempted, setSubmitAttempted] = useState(false)
-
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const handleDropdownStateChange = useCallback((isOpen) => {
-    setOpenDropdownCount(prev => {
+    setOpenDropdownCount((prev) => {
       const newCount = isOpen ? prev + 1 : Math.max(0, prev - 1);
       setAnyDropdownOpen(newCount > 0);
       return newCount;
@@ -212,7 +211,7 @@ const AddBox = ({
    */
   const handleKeyDown = useCallback(
     (event) => {
-      if ((event.metaKey || event.shiftKey) && event.code === 'KeyQ') {
+      if ((event.metaKey || event.shiftKey) && event.code === "KeyQ") {
         downloadBoxPDF();
       }
 
@@ -229,7 +228,7 @@ const AddBox = ({
           if (document.activeElement && document.activeElement.blur) {
             document.activeElement.blur();
           }
-          
+
           // Give time for blur handlers to update state
           setTimeout(() => {
             handleSubmitBox();
@@ -247,7 +246,15 @@ const AddBox = ({
         }
       }
     },
-    [popup, onClose, unsavedChanges, checkCurrent, anyDropdownOpen, searchDropdownOpen, isDropdownOpen]
+    [
+      popup,
+      onClose,
+      unsavedChanges,
+      checkCurrent,
+      anyDropdownOpen,
+      searchDropdownOpen,
+      isDropdownOpen,
+    ]
   );
 
   useEffect(() => {
@@ -338,7 +345,9 @@ const AddBox = ({
 
       setVisibility([...visibility, ...newItems]);
 
-      setContents(matchingItems.filter((item) => item.quantity > 0 && !item.archived));
+      setContents(
+        matchingItems.filter((item) => item.quantity > 0 && !item.archived)
+      );
       setOriginalContents(matchingItems);
 
       // Store original box data for comparison
@@ -367,8 +376,8 @@ const AddBox = ({
   useEffect(() => {
     const initialVisibility = ["admin"];
 
-    if (boxDict[box._id]?.public) initialVisibility.push("public")
-    if (boxDict[box._id]?.sale) initialVisibility.push("sale")
+    if (boxDict[box._id]?.public) initialVisibility.push("public");
+    if (boxDict[box._id]?.sale) initialVisibility.push("sale");
     setVisibility(initialVisibility);
     setOriginalVisibility(initialVisibility);
   }, [box, boxDict]);
@@ -441,7 +450,6 @@ const AddBox = ({
     });
   }, [options?.combos, searchValue, descriptionDict, sizeDict, brandDict]);
 
-
   const downloadBoxPDF = async () => {
     try {
       const pdf = new jsPDF({
@@ -492,7 +500,8 @@ const AddBox = ({
         let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
 
         while (truncatedLines.length > maxLines && truncatedText.length > 0) {
-          truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedText =
+            truncatedText.substring(0, truncatedText.length - 4) + "...";
           truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
         }
 
@@ -746,7 +755,7 @@ const AddBox = ({
       return;
     }
 
-    setSubmitAttempted(true)
+    setSubmitAttempted(true);
 
     // Use the ref for the current contents throughout the function
     const currentContents = contentsRef.current;
@@ -828,12 +837,15 @@ const AddBox = ({
   };
 
   const itemDescriptor = (item) => {
-    return `${item.brand || brandDict[item.brandId]?.brand || "No brand"
-      } ${item.style || "No style"} ${item.description ||
+    return `${
+      item.brand || brandDict[item.brandId]?.brand || "No brand"
+    } ${item.style || "No style"} ${
+      item.description ||
       descriptionDict[item.descriptionId]?.description ||
       "No description"
-      } ${item.size || sizeDict[item.sizeId]?.size || "No size"
-      } ${item.color || "No color"}`;
+    } ${
+      item.size || sizeDict[item.sizeId]?.size || "No size"
+    } ${item.color || "No color"}`;
   };
 
   const contentChanged = (content, origContentsDict) => {
@@ -932,11 +944,13 @@ const AddBox = ({
         );
       });
       for (const itemToDelete of itemsToDelete) {
-        const key = `${itemToDelete.style || "No style"}-${itemToDelete.color || "No color"}-${itemToDelete.size || sizeDict[itemToDelete.sizeId]?.size || "No size"
-          }-${itemToDelete.brand || brandDict[itemToDelete.brandId]?.brand || "No brand"}-${itemToDelete.description ||
+        const key = `${itemToDelete.style || "No style"}-${itemToDelete.color || "No color"}-${
+          itemToDelete.size || sizeDict[itemToDelete.sizeId]?.size || "No size"
+        }-${itemToDelete.brand || brandDict[itemToDelete.brandId]?.brand || "No brand"}-${
+          itemToDelete.description ||
           descriptionDict[itemToDelete.descriptionId]?.description ||
           "No description"
-          }`;
+        }`;
 
         try {
           change.changes.push(
@@ -1184,11 +1198,13 @@ const AddBox = ({
       return false;
     }
 
-    const key = `${content.style || "No style"}-${content.color || "No color"}-${content.size || sizeDict[content.sizeId]?.size || "No size"
-      }-${currentItem.brand || brandDict[content.brandId]?.brand || "No brand"}-${content.description ||
+    const key = `${content.style || "No style"}-${content.color || "No color"}-${
+      content.size || sizeDict[content.sizeId]?.size || "No size"
+    }-${currentItem.brand || brandDict[content.brandId]?.brand || "No brand"}-${
+      content.description ||
       descriptionDict[content.descriptionId]?.description ||
       "No description"
-      }`;
+    }`;
 
     const itemToPush = {
       inventoryId: itemResult.data._id,
@@ -1222,7 +1238,7 @@ const AddBox = ({
         (item.size || sizeDict[item.sizeId].size) +
         " " +
         (item.brand || brandDict[item.brandId].brand) +
-        " " + 
+        " " +
         item.color +
         " " +
         (item.description || descriptionDict[item.descriptionId].description) +
@@ -1381,11 +1397,13 @@ const AddBox = ({
   };
 
   const getCommonDescription = (preset) => {
-    return `${preset.color} ${preset.size || sizeDict[preset.sizeId]?.size || "N/A"} ${preset.brand || brandDict[preset.brandId]?.brand || "N/A"
-      } ${preset.style} ${preset.description ||
+    return `${preset.color} ${preset.size || sizeDict[preset.sizeId]?.size || "N/A"} ${
+      preset.brand || brandDict[preset.brandId]?.brand || "N/A"
+    } ${preset.style} ${
+      preset.description ||
       descriptionDict[preset.descriptionId]?.description ||
       "N/A"
-      } $${preset.price}`;
+    } $${preset.price}`;
   };
   const DROPDOWN_CONFIGS = {
     description: {
@@ -1424,8 +1442,8 @@ const AddBox = ({
   };
 
   const getPrice = () => {
-    return contents.reduce((a, b) => a + b.quantity * b.price, 0)
-  }
+    return contents.reduce((a, b) => a + b.quantity * b.price, 0);
+  };
   return (
     <div style={{ overflowX: "scroll", color: "black" }}>
       <div>
@@ -1483,8 +1501,10 @@ const AddBox = ({
                   className={styles.fileInput}
                   id="file-upload"
                 />
-                <label htmlFor="file-upload" className={`${styles.fileLabel} ${submitAttempted && !imageUrl && styles.inputError}`}
->
+                <label
+                  htmlFor="file-upload"
+                  className={`${styles.fileLabel} ${submitAttempted && !imageUrl && styles.inputError}`}
+                >
                   <FaUpload /> Choose Image File
                 </label>
               </div>
@@ -1529,103 +1549,40 @@ const AddBox = ({
               </label>
             </div>{" "}
             <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
-              <table
-                className={styles.boxTable}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  borderCollapse: "collapse",
-                  borderRadius: "10px",
-                  overflow: "scroll",
-                }}
-              >
+              <table className={`${globals.table} ${globals.blue}`}>
                 <thead>
-                  <tr
-                    className={styles.row}
-                    style={{ backgroundColor: "#ccd5e0" }}
-                  >
-                    <th
-                      className={styles.tableSm}
-                      style={{ fontWeight: "bold" }}
-                    >
-                      Image
-                    </th>
-                    <th
-                      className={styles.tableLg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Description
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Style Code
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Brand Style
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Size
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Color
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Quantity
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Unit Price
-                    </th>
+                  <tr>
+                    <th>Image</th>
+                    <th>Description</th>
+                    <th>Style Code</th>
+                    <th>Brand Style</th>
+                    <th>Size</th>
+                    <th>Color</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {contents.map((item, index) => (
-                    <tr
-                      key={index}
-                      style={{
-                        height: "60px",
-                        width: "100%",
-                        backgroundColor:
-                          index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
-                      }}
-                    >
-                      <td
-                        className={styles.tableSm}
-                        style={{ position: "relative" }}
-                      >
-                        <img
-                          src={item.image}
-                          alt={`Item ${index + 1}`}
-                          onClick={() => handleThumbnailClick(index)}
-                          style={{
-                            cursor: "pointer",
-                            opacity:
-                              selectedItemIndex === index && imageUploading
-                                ? 0.5
-                                : 1,
-                            transition: "opacity 0.2s",
-                            objectFit: "contain",
-                            backgroundColor: "white",
-                          }}
-                          title="Click to change image"
-                        />
+                    <tr key={index}>
+                      <td className={globals.sm}>
+                        <div className={globals.imageContainer}>
+                          <img
+                            src={item.image}
+                            alt={`Item ${index + 1}`}
+                            onClick={() => handleThumbnailClick(index)}
+                            style={{
+                              cursor: "pointer",
+                              opacity:
+                                selectedItemIndex === index && imageUploading
+                                  ? 0.5
+                                  : 1,
+                              transition: "opacity 0.2s",
+                            }}
+                            title="Click to change image"
+                          />
+                        </div>
                         {selectedItemIndex === index && imageUploading && (
                           <div
                             style={{
@@ -1763,7 +1720,7 @@ const AddBox = ({
                           </div>
                         )}
                       </td>
-                      <td className={styles.tableLg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"description"}
@@ -1777,7 +1734,7 @@ const AddBox = ({
                           onDropdownStateChange={handleDropdownStateChange}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           value={item.style}
                           onChange={(e) =>
@@ -1788,7 +1745,6 @@ const AddBox = ({
                             )
                           }
                           className={`${styles.input} ${submitAttempted && !item.style && styles.inputError}`}
-
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1796,7 +1752,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"brand"}
@@ -1808,10 +1764,9 @@ const AddBox = ({
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
                           onDropdownStateChange={handleDropdownStateChange}
-
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"size"}
@@ -1823,10 +1778,9 @@ const AddBox = ({
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
                           onDropdownStateChange={handleDropdownStateChange}
-
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           value={item.color}
                           onChange={(e) =>
@@ -1837,7 +1791,6 @@ const AddBox = ({
                             )
                           }
                           className={`${styles.input} ${submitAttempted && !item.color && styles.inputError}`}
-
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1845,7 +1798,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg} style={{ position: "relative" }}>
+                      <td style={{ position: "relative" }}>
                         <input
                           type="text"
                           pattern="[0-9]*"
@@ -1858,23 +1811,29 @@ const AddBox = ({
                               parseInt(e.target.value) || ""
                             )
                           }
-
                           className={`${styles.input} ${submitAttempted && item.quantity == "" && styles.inputError}`}
-
                           style={{
                             margin: 0,
                             minHeight: "auto",
                             width: "100%",
                           }}
                         />
-                        {item.reserved > 0 &&
-                          <div style={{ position: "absolute", top: "0", right: "20px", height: "100%", display: "flex", alignItems: "center" }}>
+                        {item.reserved > 0 && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "0",
+                              right: "20px",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
                             <IoWarningSharp size={20} color="#dc6f57ff" />
                           </div>
-                        }
-
+                        )}
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           type="text"
                           pattern="^\d*\.?\d*$"
@@ -1895,7 +1854,6 @@ const AddBox = ({
                             updateExistingContent(index, "price", finalValue);
                           }}
                           className={`${styles.input} ${submitAttempted && item.price < 0 && styles.inputError}`}
-
                           style={{
                             margin: 0,
                             minHeight: "auto",
@@ -1904,7 +1862,6 @@ const AddBox = ({
                         />
                       </td>
                       <td
-                        className={styles.tableReg}
                         style={{
                           display: "flex",
                           flexDirection: "row",
@@ -1920,7 +1877,7 @@ const AddBox = ({
                               selectedItem === item._id ? "white" : "black",
                           }}
                         >
-                          <FlagPopup item={item}/>
+                          <FlagPopup item={item} />
                         </div>
                         <div
                           className={styles.trash}
@@ -1933,11 +1890,11 @@ const AddBox = ({
                           data-dropdown
                         >
                           {item.removed ? (
-                            <FaBoxOpen />
+                            <FaBoxOpen  title="Item removed from box"/>
                           ) : item.boxId === box._id || !item.boxId ? (
-                            <RiSwapBoxLine />
+                            <RiSwapBoxLine  title="Change item boxes"/>
                           ) : (
-                            <RiSwapBoxFill />
+                            <RiSwapBoxFill title="tem box has been changed"/>
                           )}
                         </div>
 
@@ -2011,12 +1968,13 @@ const AddBox = ({
                               filteredBoxes.map((b, boxIndex) => (
                                 <div
                                   key={boxIndex}
-                                  className={`${styles.dropdownItem} ${!item.removed &&
+                                  className={`${styles.dropdownItem} ${
+                                    !item.removed &&
                                     ((!item.boxId && b.boxId === box.boxId) ||
                                       item.boxId === b._id)
-                                    ? styles.selected
-                                    : ""
-                                    }`}
+                                      ? styles.selected
+                                      : ""
+                                  }`}
                                   onClick={() => {
                                     updateExistingContent(
                                       index,
@@ -2052,6 +2010,7 @@ const AddBox = ({
                         )}
                         <div
                           className={styles.trash}
+                          title="Copy item"
                           onClick={() => copyItem(index)}
                           style={{
                             cursor: "pointer",
@@ -2062,6 +2021,7 @@ const AddBox = ({
                           <FaRegCopy />
                         </div>
                         <div
+                          title="Delete item"
                           className={styles.trash}
                           onClick={() => removeItem(index)}
                           style={{
@@ -2134,7 +2094,11 @@ const AddBox = ({
                         filteredCombos.map((option, index) => (
                           <div
                             key={index}
-                            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px",
+                            }}
                             className={`${styles.dropdownItem}`}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -2142,8 +2106,21 @@ const AddBox = ({
                             }}
                             data-dropdown
                           >
-                            <div style={{ width: "30px", height: "30px", overflow: "hidden" }}>
-                              <img style={{ width: "100%", height: "100%", objectFit: "contain" }} src={option.image} />
+                            <div
+                              style={{
+                                width: "30px",
+                                height: "30px",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <img
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "contain",
+                                }}
+                                src={option.image}
+                              />
                             </div>
                             {getCommonDescription(option)}
                           </div>
@@ -2186,24 +2163,21 @@ const AddBox = ({
                 </div>
                 <table
                   style={{ width: "100%", textAlign: "left" }}
-                  className={`${styles.boxTable} ${styles.desktopTable}`}
+                  className={globals.table}
                 >
                   <tbody>
                     <tr
-                      style={{
-                        height: "60px",
-                        width: "100%",
-                      }}
+
                     >
                       <td
-                        className={styles.tableSm}
+                        className={globals.sm}
                         style={{
                           position: "relative",
                           width: currentItem.image !== "" ? "50px" : "150px",
                         }}
                       >
                         {currentItem.image !== "" ? (
-                          <div style={{ position: "relative" }}>
+                          <div className={globals.imageContainer}>
                             <img
                               src={currentItem.image}
                               alt="New Item"
@@ -2219,9 +2193,9 @@ const AddBox = ({
                             <IoIosRemoveCircle
                               style={{
                                 position: "absolute",
-                                top: "-15px",
-                                right: "0px",
-                                fontSize: "30px",
+                                top: "-0.2rem",
+                                right: "0.35",
+                                fontSize: "25px",
                                 color: "red",
                               }}
                               onClick={() =>
@@ -2292,7 +2266,7 @@ const AddBox = ({
                           </div>
                         )}
                       </td>
-                      <td className={styles.tableLg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"description"}
@@ -2304,10 +2278,9 @@ const AddBox = ({
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
                           onDropdownStateChange={handleDropdownStateChange}
-
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           value={currentItem.style}
                           onChange={(e) =>
@@ -2324,7 +2297,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"brand"}
@@ -2336,10 +2309,9 @@ const AddBox = ({
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
                           onDropdownStateChange={handleDropdownStateChange}
-
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"size"}
@@ -2351,10 +2323,9 @@ const AddBox = ({
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
                           onDropdownStateChange={handleDropdownStateChange}
-
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           value={currentItem.color}
                           onChange={(e) =>
@@ -2371,7 +2342,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           type="text"
                           pattern="[0-9]*"
@@ -2391,7 +2362,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td >
                         <input
                           type="text"
                           pattern="^\d*\.?\d*$"
@@ -2418,7 +2389,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableTiny}>
+                      <td className={globals.sm}>
                         <div
                           className={`${styles.trash} ${styles.add}`}
                           onClick={addNewItem}
@@ -2539,7 +2510,6 @@ const AddBox = ({
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
                           onDropdownStateChange={handleDropdownStateChange}
-
                         />
                       </div>
                     </div>
@@ -2577,7 +2547,6 @@ const AddBox = ({
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
                           onDropdownStateChange={handleDropdownStateChange}
-
                         />
                       </div>
                     </div>
@@ -2596,7 +2565,6 @@ const AddBox = ({
                           currentItem={currentItem}
                           setCurrentItem={setCurrentItem}
                           onDropdownStateChange={handleDropdownStateChange}
-
                         />
                       </div>
                     </div>
@@ -2687,8 +2655,15 @@ const AddBox = ({
           </div>
           <div>
             <label style={{ fontWeight: "bold" }}>Visibility</label>
-            <div style={{ display: "flex", flexDirection: "row", gap: "20px", alignItems:"center" }}>
-              <div style={{display:"flex", alignItems:"center"}}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "20px",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <input
                   type="radio"
                   id="radio1"
@@ -2702,7 +2677,7 @@ const AddBox = ({
                 </label>
                 <br />
               </div>
-              <div style={{display:"flex", alignItems:"center"}}>
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <input
                   type="checkbox"
                   id="checkbox1"
@@ -2730,7 +2705,7 @@ const AddBox = ({
                 <br />
               </div>
 
-              <div style={{display:"flex", alignItems:"center"}}>
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <input
                   type="checkbox"
                   id="checkbox2"
@@ -2762,17 +2737,19 @@ const AddBox = ({
             <div className={styles.horizontal} style={{ zIndex: 0 }}>
               <div className={styles.formInput}>
                 <label>Discount</label>
-                <div style={{position:"relative", width: "100%"}}>
-                <input
-                  className={styles.input}
-                  onChange={(e) => {
-                    const newValue = e.target.value.replace(/[^0-9.]/g, "");
-                    setBoxDiscountWithTracking(newValue);
-                  }}
-                  value={`${boxDiscount}%`}
-                  required
-                />
-                 <div className={styles.priceResult}>- ${getPrice() * boxDiscount * 0.01}</div>
+                <div style={{ position: "relative", width: "100%" }}>
+                  <input
+                    className={styles.input}
+                    onChange={(e) => {
+                      const newValue = e.target.value.replace(/[^0-9.]/g, "");
+                      setBoxDiscountWithTracking(newValue);
+                    }}
+                    value={`${boxDiscount}%`}
+                    required
+                  />
+                  <div className={styles.priceResult}>
+                    - ${getPrice() * boxDiscount * 0.01}
+                  </div>
                 </div>
               </div>
               <div className={styles.formInput}>

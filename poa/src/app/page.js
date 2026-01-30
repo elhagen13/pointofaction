@@ -94,65 +94,56 @@ export default function Home() {
         {sale && (
           <Link
             href={saleLink}
-            style={{
-              backgroundColor: "#FF5D5D",
-              width: "100%",
-              padding: "15px 10px",
-              display: "flex",
-              justifyContent: "space-between",
-              fontWeight: "bold",
-              color: "white",
-            }}
-            onClick={() => console.log(saleLink)}
+            className={styles.saleBanner}
           >
-            <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
-              <div className={styles.item}>
+            <div>
+              <div>
                 HEAVILY DISCOUNTED OVERSTOCKED ITEMS!
               </div>
-              <div className={styles.item}>BIG SALE!</div>
-              <div className={styles.item}>FIRST COME FIRST SERVED!</div>
+              <div>BIG SALE!</div>
+              <div>FIRST COME FIRST SERVED!</div>
               <div
-                className={styles.item}
                 style={{ textDecoration: "underline" }}
               >
                 CLICK HERE!
               </div>
             </div>
-            <LuExternalLink />
+            <LuExternalLink/>
           </Link>
         )}
         <Calendar />
         <main className={styles.main}>
-          <div
-            name="services"
+          <section
+            id="services"
             className={styles.homeItem}
-            style={{ marginTop: "3rem" }}
           >
-            <div className={styles.title}>Services</div>
-            <Link href="/services">
-              <div className={styles.learnMore}>Learn more →</div>
+            <h2 className={styles.title}>Services</h2>
+            <Link href="/services" className={styles.link}>
+              <span>Learn more</span>
+              <span aria-hidden="true"> →</span>
             </Link>
             <ServicesCarousel />
-          </div>
-          <div name="sample_works" className={styles.homeItem}>
-            <div className={styles.title}>
+          </section>
+          <section id="sample_works">
+            <h2 className={styles.title}>
               Previous works <br /> from customers
-            </div>
-            <Link href="/gallery">
-              <div className={styles.learnMore}>Go to full gallery →</div>
+            </h2>
+            <Link href="/gallery" className={styles.link}>
+              <span>Go to full gallery</span>
+               <span aria-hidden="true"> →</span>
             </Link>
             <CustomerCarousel />
-          </div>
-          <div name="about us" className={styles.homeItem}>
-            <div className={styles.title}>About Us</div>
+          </section>
+          <section id="about us">
+            <h2 className={styles.title}>About Us</h2>
             <div className={styles.aboutUs}>
-              <div className={styles.aboutUsItem}>
+              <div>
                 <img
+                  alt="our history"
                   src="/about_us/history.png"
-                  className={styles.aboutUsImage}
                 />
                 <div className={styles.aboutUsText}>
-                  <div className={styles.subtitle}>Our History </div>
+                  <h3>Our History </h3>
                   <br />
                   Point of Action opened in 1987 originally as a silk screen
                   business and has expanded and grown in Santa Maria to what it
@@ -160,13 +151,13 @@ export default function Home() {
                   Central Coast.
                 </div>
               </div>
-              <div className={styles.aboutUsItem}>
+              <div>
                 <img
+                  alt="image of staff"
                   src="/about_us/staff.png"
-                  className={styles.aboutUsImage}
                 />
                 <div className={styles.aboutUsText}>
-                  <div className={styles.subtitle}>Our Staff </div>
+                  <h3>Our Staff </h3>
                   <br />
                   P.O.A. prides itself on its experienced staff with master
                   embroiderers, graphic designers, sign-makers, and etchers. Our
@@ -175,13 +166,13 @@ export default function Home() {
                   out with the most impact in todays market.
                 </div>
               </div>
-              <div className={styles.aboutUsItem}>
+              <div>
                 <img
+                  alt="our process"
                   src="/about_us/process.png"
-                  className={styles.aboutUsImage}
                 />
                 <div className={styles.aboutUsText}>
-                  <div className={styles.subtitle}>Our Process </div>
+                  <h3>Our Process </h3>
                   <br />
                   We supply embroidery and more for many businesses in the state
                   of California as well as companies known nationally. The first
@@ -190,7 +181,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         </main>
         <footer className={styles.footer}></footer>
       </div>

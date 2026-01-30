@@ -1,0 +1,171 @@
+:root {
+  --padding-column-horiz: 1rem;
+}
+
+/* ========================================
+   TABLE
+   ======================================== */
+
+.tableContainer {
+  width: 100%;
+  overflow: scroll;
+  margin: 1rem 0;
+}
+.table {
+  display: table;
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.table th {
+  padding: 0.5rem var(--padding-column-horiz);
+  text-align: left;
+}
+
+.table td {
+  padding: 0.25rem var(--padding-column-horiz);
+}
+
+.table td:not(.sm) {
+  min-width: 10rem;
+}
+
+.imageContainer {
+  width: 50px;
+  height: 50px;
+  background-color: rgb(244, 241, 241);
+  border-radius: 3px;
+  border: 1px solid rgb(217, 217, 217);
+}
+.imageContainer img {
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+/* ========================================
+   TABLE COLOR VARIANTS
+   ======================================== */
+
+.blue tbody tr:nth-child(even),
+.blue thead tr {
+  background-color: #c5ced9;
+}
+
+.blue tbody tr:nth-child(odd) {
+  background-color: #dde4ed;
+}
+
+.gray tbody tr:nth-child(even),
+.gray thead tr {
+  background-color: #ebebeb;
+}
+
+.gray tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+
+/* ========================================
+   Buttons
+   ======================================== */
+
+.button {
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+  height: fit-content;
+  font-weight: bold;
+  transition: 0.2s ease-in-out;
+  flex-wrap: nowrap;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  width: fit-content;
+
+}
+
+:disabled {
+  background-color: white !important;
+  color: gray !important;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   Button Variants
+   ======================================== */
+
+.outline {
+  background-color: white;
+  color: #515151ff;
+}
+
+.outline:hover{
+  background-color: rgb(248, 248, 248);
+}
+
+
+.add{
+  background-color: #538561;
+  color: white;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 5px;
+
+}
+
+.green{
+  border: 2px solid #538561;
+  color: #538561;
+  background-color: white;
+}
+
+.green:hover{
+  color: white;
+  background-color: #538561;
+}
+
+.green:disabled{
+  border: 2px solid gray;
+}
+
+
+/* ========================================
+   Overlay
+   ======================================== */
+
+
+.overlayContainer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.overlay {
+  position: relative;
+  background-color: white;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  margin: 20px 0;
+  overflow-y: auto;
+}
+

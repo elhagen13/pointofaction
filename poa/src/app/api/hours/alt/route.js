@@ -59,53 +59,71 @@ export async function PATCH(request) {
     const { db } = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
 
-    // Parse request body
-    const body = await request.json();
+    const { dates, open, startTime, endTime } = await request.json();
 
-    for (const [index, banner] of body.active.entries()) {
-      collection.findOneAndUpdate(
-        {
-          _id: new ObjectId(banner._id),
-        },
-        {
-          $set: {
-            active: true,
-            index: index,
-          },
-        }
+    // ---- Validation ----
+    if (!Array.isArray(dates) || dates.length === 0) {
+      return Response.json(
+        { success: false, error: "dates must be a non-empty array" },
+        { status: 400 }
       );
     }
-    for (const [index, banner] of body.inactive.entries()) {
-      collection.findOneAndUpdate(
+
+    if (open && (!startTime || !endTime)) {
+      return Response.json(
         {
-          _id: new ObjectId(banner._id),
+          success: false,
+          error: "startTime and endTime are required when open is true",
         },
-        {
-          $set: {
-            active: false,
-            index: index,
-          },
-        }
+        { status: 400 }
       );
     }
+
+    // ---- Bulk operations ----
+    const ops = dates.map((date) => ({
+      updateOne: {
+        filter: { date },
+        update: open
+          ? {
+              $set: {
+                date,
+                open: true,
+                startTime,
+                endTime,
+              },
+            }
+          : {
+              $set: {
+                date,
+                open: false,
+              },
+              $unset: {
+                startTime: "",
+                endTime: "",
+              },
+            },
+        upsert: true,
+      },
+    }));
+
+    await collection.bulkWrite(ops);
 
     return Response.json(
       {
         success: true,
-        message: "Items edited successfully",
+        message: "Dates updated successfully",
+        count: dates.length,
       },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (error) {
-    console.error("POST error:", error);
+    console.error("PATCH /api/hours error:", error);
 
-    // Handle duplicate key error (if you have unique indexes)
     if (error.code === 11000) {
       return Response.json(
         {
           success: false,
-          error: "Duplicate entry",
-          details: "An item with this information already exists",
+          error: "Duplicate date",
         },
         { status: 409 }
       );
@@ -114,67 +132,7 @@ export async function PATCH(request) {
     return Response.json(
       {
         success: false,
-        error: "Failed to create sale item",
-        details: error.message,
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request) {
-  try {
-    const { db } = await connectToDatabase();
-    const collection = db.collection(COLLECTION_NAME);
-
-    // Parse request body
-    const body = await request.json();
-
-    const curActive = await collection.find({ active: true }).toArray();
-
-    // Prepare document for insertion
-    const itemDocument = {
-      mobileImage: body.mobileImage.trim(),
-      desktopImage: body.desktopImage.trim(),
-      description: body.description.trim(),
-      active: true,
-      index: curActive.length,
-      createdAt: new Date(),
-    };
-
-    // Insert the document
-    const result = await collection.insertOne(itemDocument);
-
-    if (result.acknowledged) {
-      return Response.json(
-        {
-          success: true,
-          message: "Item created successfully",
-        },
-        { status: 201 }
-      );
-    } else {
-      throw new Error("Failed to insert document");
-    }
-  } catch (error) {
-    console.error("POST error:", error);
-
-    // Handle duplicate key error (if you have unique indexes)
-    if (error.code === 11000) {
-      return Response.json(
-        {
-          success: false,
-          error: "Duplicate entry",
-          details: "An item with this information already exists",
-        },
-        { status: 409 }
-      );
-    }
-
-    return Response.json(
-      {
-        success: false,
-        error: "Failed to create sale item",
+        error: "Failed to update dates",
         details: error.message,
       },
       { status: 500 }

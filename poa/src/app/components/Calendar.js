@@ -1,10 +1,9 @@
 "use client";
 import { Key } from "lucide-react";
 import { useState, useEffect } from "react";
-import styles from "./calendar.module.css"
+import styles from "./calendar.module.css";
 
-
-export default function Calendar({refresh = 0}) {
+export default function Calendar({ refresh = 0 }) {
   const [dates, setDates] = useState({});
 
   const numToDay = {
@@ -14,8 +13,8 @@ export default function Calendar({refresh = 0}) {
     3: "Thursday",
     4: "Friday",
     5: "Saturday",
-    6: "Sunday"
-  }
+    6: "Sunday",
+  };
 
   const getWeekDates = () => {
     const today = new Date();
@@ -25,12 +24,15 @@ export default function Calendar({refresh = 0}) {
       (day) =>
         new Date(today.getTime() + day * 24 * 60 * 60 * 1000)
           .toISOString()
-          .split("T")[0]
+          .split("T")[0],
     );
 
     const dayDict = {};
     for (const day of currentWeek) {
-      if (new Date(day).getDay() === 6 || new Date(day).getDay() === 0) {
+      if (
+        new Date(`${day}T00:00:00`).getDay() === 6 ||
+        new Date(`${day}T00:00:00`).getDay() === 0
+      ) {
         dayDict[day] = { open: false };
       } else {
         dayDict[day] = {
@@ -46,14 +48,12 @@ export default function Calendar({refresh = 0}) {
   };
 
   const hoursToTime = (time) => {
-    const hour = time.split(":")[0]
-    const amPm = hour / 12 >= 1 ? "PM" : "AM"
-    const revisedHour = hour > 12 ? hour - 12 : hour == 0 ? 12 : hour
+    const hour = time.split(":")[0];
+    const amPm = hour / 12 >= 1 ? "PM" : "AM";
+    const revisedHour = hour > 12 ? hour - 12 : hour == 0 ? 12 : hour;
 
-
-    return `${revisedHour}:${time.split(":")[1]} ${amPm}`
-
-  }
+    return `${revisedHour}:${time.split(":")[1]} ${amPm}`;
+  };
 
   useEffect(() => {
     const run = async () => {
@@ -71,6 +71,7 @@ export default function Calendar({refresh = 0}) {
       },
     });
     const data = await response.json();
+    console.log("DATA", data);
 
     setDates((prevDates) => {
       const dateDict = { ...prevDates };
@@ -81,22 +82,27 @@ export default function Calendar({refresh = 0}) {
     });
   };
 
-
-
   return (
     <div className={styles.container}>
       This Weeks Hours:
-    <div className={styles.calendarContainer}>
-        {
-            Object.entries(dates).map(([key, val], index) => 
-            <div className={styles.weekDay} style={{borderColor: index == 0 && "red"}}>
-                <div>{numToDay[new Date(key).getDay()]}</div>
-                <div>
-                  {val.open ? `${hoursToTime(val.startTime)}-${hoursToTime(val.endTime)}` : <span style={{color: "#652525ff"}}>CLOSED</span>}
-                </div>
-            </div>)
-        }
-    </div>
+      <div className={styles.calendarContainer}>
+        {Object.entries(dates).map(([key, val], index) => (
+          <div
+            className={styles.weekDay}
+            style={{ borderColor: index == 0 && "red" }}
+            onClick={() => console.log(key, val)}
+          >
+            <div>{numToDay[new Date(key).getDay()]}</div>
+            <div>
+              {val.open ? (
+                `${hoursToTime(val.startTime)}-${hoursToTime(val.endTime)}`
+              ) : (
+                <span style={{ color: "#652525ff" }}>CLOSED</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

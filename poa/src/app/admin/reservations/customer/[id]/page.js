@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState, useRef, useCallback, useMemo } from "react";
 import React from "react";
 import styles from "./reservation.module.css";
+import globals from "@/app/admin/globals.module.css"
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Reservation from "../../Reservation";
@@ -140,11 +141,11 @@ export default function ReservationsContent({params}) {
           </div>
         ))}
       </div>
-      {filteredReservations.length > 0 ? <div className={styles.tableContainer}>
-        <table className={styles.reservationItemTable}>
+      {filteredReservations.length > 0 ? <div className={globals.tableContainer}>
+        <table className={`${globals.table} ${globals.blue}`}>
           <thead>
-            <tr style={{ backgroundColor: "#c5ced9" }}>
-              <th style={{ padding: "10px" }}>Order #</th>
+            <tr>
+              <th>Order #</th>
               <th>Order Title</th>
               <th>Status</th>
               <th>SO#/IN#</th>
@@ -156,12 +157,9 @@ export default function ReservationsContent({params}) {
             {filteredReservations.map((reservation, index) => (
               <tr
                 key={reservation._id} 
-                style={{
-                  backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
-                }}
                 onClick={() => setReservation(reservation)}
               >
-                <td style={{ padding: "10px" }}>
+                <td>
                   {reservation.sequentialId.toString().padStart(5, "0")}
                 </td>
                 <td>{reservation.orderTitle}</td>
@@ -188,10 +186,10 @@ export default function ReservationsContent({params}) {
                   </div>
                 </td>
                 <td>{reservation.soIn || "N/A"}</td>
-                <td className={styles.columnItem}>
+                <td>
                   {new Date(reservation.createdAt).toLocaleString()}
                 </td>
-                <td className={styles.columnItem}>
+                <td >
                   {new Date(reservation.updatedAt).toLocaleString()}
                 </td>
               </tr>

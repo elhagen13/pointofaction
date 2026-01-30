@@ -1,5 +1,6 @@
 "use client";
 import styles from "@/app/admin/inventory/inventory.module.css";
+import globals from "@/app/admin/globals.module.css";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   FaUpload,
@@ -37,7 +38,6 @@ export default function AddItem({
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [popup, setPopup] = useState(null);
-
 
   return (
     <Overlay
@@ -104,79 +104,80 @@ const QrPopup = ({ box, onClose }) => {
     };
   }, [handleKeyDown]);
 
-   const downloadBoxPDF = async () => {
-      try {
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "in",
-          format: [4, 6],
-          putOnlyUsedFonts: true,
-          compress: true,
-        });
-  
-        // Constants
-        const pageWidth = 4;
-        const pageHeight = 6;
-        const qrSize = 2;
-        const bottomMargin = 0.5;
-        const textStartY = 1.6;
-        const lineHeight = 0.2;
-        const topMargin = 0.3;
-  
-        // Box Location in top right corner
-        pdf.setFontSize(20);
-        pdf.setFont(undefined, "bold");
-        const locationWidth = pdf.getTextWidth(box.location);
-        pdf.text(box.location, pageWidth - locationWidth - 0.2, topMargin);
-  
-        // Title
-        pdf.setFontSize(24);
-        pdf.setFont(undefined, "bold");
-        pdf.text(`Box ${box?.boxId}`, 2, 1, { align: "center" });
-  
-        const maxQrY = pageHeight - qrSize - bottomMargin;
-        pdf.setFontSize(12);
-        pdf.setFont(undefined, "normal");
-  
-        let description = box.description;
-        let currentQrY = 2.2;
-        const textLines = pdf.splitTextToSize(description, 3.5);
-        const textHeight = textLines.length * lineHeight;
-        const idealQrY = textStartY + textHeight + 0.3;
-  
-        // If QR would go past bottom, truncate text
-        if (idealQrY + qrSize > pageHeight - bottomMargin) {
-          const availableHeight = maxQrY - textStartY - 0.3;
-          const maxLines = Math.floor(availableHeight / lineHeight);
-  
-          // Truncate text to fit
-          let truncatedText = description;
-          let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
-  
-          while (truncatedLines.length > maxLines && truncatedText.length > 0) {
-            truncatedText = truncatedText.substring(0, truncatedText.length - 4) + "...";
-            truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
-          }
-  
-          description = truncatedText;
-          currentQrY = maxQrY;
-        } else {
-          currentQrY = idealQrY;
+  const downloadBoxPDF = async () => {
+    try {
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "in",
+        format: [4, 6],
+        putOnlyUsedFonts: true,
+        compress: true,
+      });
+
+      // Constants
+      const pageWidth = 4;
+      const pageHeight = 6;
+      const qrSize = 2;
+      const bottomMargin = 0.5;
+      const textStartY = 1.6;
+      const lineHeight = 0.2;
+      const topMargin = 0.3;
+
+      // Box Location in top right corner
+      pdf.setFontSize(20);
+      pdf.setFont(undefined, "bold");
+      const locationWidth = pdf.getTextWidth(box.location);
+      pdf.text(box.location, pageWidth - locationWidth - 0.2, topMargin);
+
+      // Title
+      pdf.setFontSize(24);
+      pdf.setFont(undefined, "bold");
+      pdf.text(`Box ${box?.boxId}`, 2, 1, { align: "center" });
+
+      const maxQrY = pageHeight - qrSize - bottomMargin;
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, "normal");
+
+      let description = box.description;
+      let currentQrY = 2.2;
+      const textLines = pdf.splitTextToSize(description, 3.5);
+      const textHeight = textLines.length * lineHeight;
+      const idealQrY = textStartY + textHeight + 0.3;
+
+      // If QR would go past bottom, truncate text
+      if (idealQrY + qrSize > pageHeight - bottomMargin) {
+        const availableHeight = maxQrY - textStartY - 0.3;
+        const maxLines = Math.floor(availableHeight / lineHeight);
+
+        // Truncate text to fit
+        let truncatedText = description;
+        let truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
+
+        while (truncatedLines.length > maxLines && truncatedText.length > 0) {
+          truncatedText =
+            truncatedText.substring(0, truncatedText.length - 4) + "...";
+          truncatedLines = pdf.splitTextToSize(truncatedText, 3.5);
         }
-  
-        pdf.text(description, 2, textStartY, {
-          align: "center",
-          maxWidth: 3.5,
-        });
-  
-        const qrX = (pageWidth - qrSize) / 2;
-        pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
-  
-        pdf.save(`box-${box.boxId}.pdf`);
-      } catch (error) {
-        console.error("Error generating PDF:", error);
+
+        description = truncatedText;
+        currentQrY = maxQrY;
+      } else {
+        currentQrY = idealQrY;
       }
-    };
+
+      pdf.text(description, 2, textStartY, {
+        align: "center",
+        maxWidth: 3.5,
+      });
+
+      const qrX = (pageWidth - qrSize) / 2;
+      pdf.addImage(box.qrCode, "PNG", qrX, currentQrY, qrSize, qrSize);
+
+      pdf.save(`box-${box.boxId}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
 
   return (
     <div
@@ -281,7 +282,7 @@ const AddBox = ({
   const [searchValue, setSearchValue] = useState("");
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
 
-  const [submitAttempted, setSubmitAttempted] = useState(false)
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const checkCurrent = useCallback(() => {
     // Check if user has entered any meaningful data for the current item
@@ -788,7 +789,7 @@ const AddBox = ({
       return;
     }
 
-    setSubmitAttempted(true)
+    setSubmitAttempted(true);
     if (
       !boxDescription ||
       !imageUrl ||
@@ -1015,9 +1016,8 @@ const AddBox = ({
         (item.size || sizeDict[item.sizeId].size) +
         " " +
         item.color +
-        " " + 
+        " " +
         (item.brand || brandDict[item.brandId].brand) +
-
         " " +
         (item.description || descriptionDict[item.descriptionId].description) +
         " (" +
@@ -1108,7 +1108,10 @@ const AddBox = ({
                   className={styles.fileInput}
                   id="file-upload"
                 />
-                <label htmlFor="file-upload" className={`${styles.fileLabel} ${submitAttempted && !imageUrl && styles.inputError}`}>
+                <label
+                  htmlFor="file-upload"
+                  className={`${styles.fileLabel} ${submitAttempted && !imageUrl && styles.inputError}`}
+                >
                   <FaUpload /> Choose Image File
                 </label>
               </div>
@@ -1155,106 +1158,47 @@ const AddBox = ({
               </label>
             </div>
             <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto" }}>
-              <table
-                className={styles.boxTable}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  borderCollapse: "collapse",
-                  borderRadius: "10px",
-                  overflow: "hidden",
-                }}
-              >
+              <table className={`${globals.table} ${globals.blue}`}>
                 <thead>
-                  <tr
-                    className={styles.row}
-                    style={{ backgroundColor: "#ccd5e0" }}
-                  >
-                    <th
-                      className={styles.tableSm}
-                      style={{ fontWeight: "bold" }}
-                    >
-                      Image
-                    </th>
-                    <th
-                      className={styles.tableLg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Description
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Style Code
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Brand Style
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Size
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Color
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Quantity
-                    </th>
-                    <th
-                      className={styles.tableReg}
-                      style={{ border: "none", fontWeight: "bold" }}
-                    >
-                      Unit Price
-                    </th>
+                  <tr>
+                    <th>Image</th>
+                    <th>Description</th>
+                    <th>Style Code</th>
+                    <th>Brand Style</th>
+                    <th>Size</th>
+                    <th>Color</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
                     {appendToBox === null && <th></th>}
                   </tr>
                 </thead>
                 <tbody>
                   {contents.map((item, index) => (
-                    <tr
-                      key={index}
-                      style={{
-                        height: "60px",
-                        width: "100%",
-                        backgroundColor:
-                          index % 2 === 0 ? "#dae2eb" : "#ccd5e0",
-                      }}
-                    >
+                    <tr key={index}>
                       <td
-                        className={styles.tableSm}
+                        className={globals.sm}
                         style={{ position: "relative" }}
                       >
-                        <img
-                          src={item.imageUrl || item.image}
-                          alt={`Item ${index + 1}`}
-                          onClick={() =>
-                            appendToBox === null && handleThumbnailClick(index)
-                          }
-                          style={{
-                            cursor:
-                              appendToBox === null ? "pointer" : "default",
-                            opacity:
-                              selectedItemIndex === index && imageUploading
-                                ? 0.5
-                                : 1,
-                            transition: "opacity 0.2s",
-                            objectFit: "contain",
-                            backgroundColor: "white",
-                          }}
-                          title="Click to change image"
-                        />
+                        <div className={globals.imageContainer}>
+                          <img
+                            src={item.imageUrl || item.image}
+                            alt={`Item ${index + 1}`}
+                            onClick={() =>
+                              appendToBox === null &&
+                              handleThumbnailClick(index)
+                            }
+                            style={{
+                              cursor:
+                                appendToBox === null ? "pointer" : "default",
+                              opacity:
+                                selectedItemIndex === index && imageUploading
+                                  ? 0.5
+                                  : 1,
+                              transition: "opacity 0.2s",
+                            }}
+                            title="Click to change image"
+                          />
+                        </div>
                         {selectedItemIndex === index && imageUploading && (
                           <div
                             style={{
@@ -1392,7 +1336,7 @@ const AddBox = ({
                           </div>
                         )}
                       </td>
-                      <td className={styles.tableLg}>
+                      <td >
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"description"}
@@ -1406,7 +1350,7 @@ const AddBox = ({
                           disabledInput={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           value={item.style}
                           onChange={(e) =>
@@ -1425,7 +1369,7 @@ const AddBox = ({
                           disabled={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"brand"}
@@ -1439,7 +1383,7 @@ const AddBox = ({
                           disabledInput={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"size"}
@@ -1453,7 +1397,7 @@ const AddBox = ({
                           disabledInput={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           value={item.color}
                           onChange={(e) =>
@@ -1472,7 +1416,7 @@ const AddBox = ({
                           disabled={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           type="text"
                           pattern="[0-9]*"
@@ -1494,7 +1438,7 @@ const AddBox = ({
                           disabled={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           type="text"
                           pattern="^\d*\.?\d*$"
@@ -1613,7 +1557,11 @@ const AddBox = ({
                         filteredCombos.map((option, index) => (
                           <div
                             key={index}
-                            style={{display:"flex", alignItems:"center", gap:"10px"}}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px",
+                            }}
                             className={`${styles.dropdownItem}`}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1621,8 +1569,21 @@ const AddBox = ({
                             }}
                             data-dropdown
                           >
-                            <div style={{width:"30px", height:"30px", overflow:"hidden"}}>
-                            <img style={{width:"100%", height:"100%", objectFit:"contain"}}src={option.image}/>
+                            <div
+                              style={{
+                                width: "30px",
+                                height: "30px",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <img
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "contain",
+                                }}
+                                src={option.image}
+                              />
                             </div>
                             {getCommonDescription(option)}
                           </div>
@@ -1665,7 +1626,7 @@ const AddBox = ({
                 </div>
                 <table
                   style={{ width: "100%", textAlign: "left" }}
-                  className={`${styles.boxTable} ${styles.desktopTable}`}
+                  className={globals.table}
                 >
                   <tbody>
                     <tr
@@ -1675,14 +1636,14 @@ const AddBox = ({
                       }}
                     >
                       <td
-                        className={styles.tableSm}
+                        className={globals.sm}
                         style={{
                           position: "relative",
                           width: currentItem.imageUrl !== "" ? "50px" : "150px",
                         }}
                       >
                         {currentItem.imageUrl !== "" ? (
-                          <div style={{ position: "relative" }}>
+                          <div className={globals.imageContainer}>
                             <img
                               src={currentItem.imageUrl}
                               alt="New Item"
@@ -1699,9 +1660,9 @@ const AddBox = ({
                             <IoIosRemoveCircle
                               style={{
                                 position: "absolute",
-                                top: "-15px",
-                                right: "0px",
-                                fontSize: "30px",
+                                top: "-0.2rem",
+                                right: "0.35",
+                                fontSize: "25px",
                                 color: "red",
                               }}
                               onClick={() =>
@@ -1772,7 +1733,7 @@ const AddBox = ({
                           </div>
                         )}
                       </td>
-                      <td className={styles.tableLg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"description"}
@@ -1786,7 +1747,7 @@ const AddBox = ({
                           disabledInput={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           value={currentItem.style}
                           onChange={(e) =>
@@ -1803,7 +1764,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"brand"}
@@ -1817,7 +1778,7 @@ const AddBox = ({
                           disabledInput={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <Dropdown
                           configs={DROPDOWN_CONFIGS}
                           config_type={"size"}
@@ -1831,7 +1792,7 @@ const AddBox = ({
                           disabledInput={appendToBox !== null}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           value={currentItem.color}
                           onChange={(e) =>
@@ -1848,7 +1809,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           type="text"
                           pattern="[0-9]*"
@@ -1868,7 +1829,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableReg}>
+                      <td>
                         <input
                           type="text"
                           pattern="^\d*\.?\d*$"
@@ -1895,7 +1856,7 @@ const AddBox = ({
                           }}
                         />
                       </td>
-                      <td className={styles.tableTiny}>
+                      <td className={globals.sm}>
                         <div
                           className={`${styles.trash} ${styles.add}`}
                           onClick={addNewItem}
@@ -2239,7 +2200,7 @@ const AddBox = ({
               </div>
 
               {visibility.includes("sale") && (
-                <div className={styles.horizontal} style={{zIndex: 0}}>
+                <div className={styles.horizontal} style={{ zIndex: 0 }}>
                   <div className={styles.formInput}>
                     <label>Discount</label>
                     <input

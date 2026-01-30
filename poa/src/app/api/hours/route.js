@@ -1,8 +1,32 @@
 import { MongoClient } from 'mongodb';
-const DATABASE_NAME = process.env.DATABASE_NAME;
-const uri = process.env.MONGO_URI;
-const client = new MongoClient(uri);
 
+// MongoDB connection string - replace with your actual connection string
+const MONGODB_URI = process.env.MONGO_URI;
+const DATABASE_NAME = process.env.DATABASE_NAME;
+const COLLECTION_NAME = 'hours';
+
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  try {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    const db = client.db(DATABASE_NAME);
+
+    cachedClient = client;
+    cachedDb = db;
+
+    return { client, db };
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    throw error;
+  }
+}
 // Helper function to generate array of dates between start and end date
 function getDateRange(startDate, endDate) {
   const dates = [];
@@ -26,26 +50,11 @@ function getDateRange(startDate, endDate) {
 
 export async function GET(request) {
   try {
-    let date;
-    try {
-      const url = new URL(request.url);
-      console.log(url)
-      date = url.searchParams.get('date');
-      console.log(date)
-    } catch (error) {
-      console.error('Error parsing URL:', error);
-      return Response.json(
-        { error: 'Invalid request URL' },
-        { status: 400 }
-      );
-    }
-
-    await client.connect();
-    const db = client.db(DATABASE_NAME);
+    const { db } = await connectToDatabase();
     const collection = db.collection('hours');
 
-    if (date) {
-      const hours = await collection.findOne({ date });
+    
+      const hours = await collection.find({ }).toArray();
       if (!hours) {
         return Response.json(
           { error: 'Hours not found for the specified date' },
@@ -53,19 +62,14 @@ export async function GET(request) {
         );
       }
       return Response.json(hours);
-    } else {
-      const allHours = await collection.find({}).sort({ date: 1 }).toArray();
-      return Response.json(allHours);
-    }
-  } catch (error) {
+  } 
+  catch (error) {
     console.error('Database error:', error);
     return Response.json(
       { error: 'Failed to fetch hours' },
       { status: 500 }
     );
-  } finally {
-    await client.close();
-  }
+  } 
 }
 
 export async function POST(request) {

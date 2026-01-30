@@ -87,14 +87,18 @@ export default function Flag({ item }) {
 
   return (
     <div ref={popupRef}>
-      {(!flags || flags.length == 0) ? <GrFlag
+      {(!flags || flags.length == 0) ? 
+      <GrFlag
+        title="Add a tag to inventory item (no tags)"
         onClick={() => {
           console.log(flags.length);
           setVisible(!visible);
         }}
       />
         : 
-        <GrFlagFill  onClick={() => {
+        <GrFlagFill 
+        title="Add or remove a tag from item" 
+        onClick={() => {
           console.log(flags.length);
           setVisible(!visible);
         }}/>

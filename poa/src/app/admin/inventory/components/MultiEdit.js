@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Overlay from "@/app/components/popups/Overlay";
 import styles from "../inventory.module.css"
+import globals from "@/app/admin/globals.module.css"
 import { FaUpload, FaLink } from "react-icons/fa";
 import Dropdown from "../Dropdown";
 
@@ -311,11 +312,12 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
             setUnsavedChanges={setUnsavedChanges}
         >
             <h1>Edit {ids.size} items</h1>
-            <table className={styles.inventoryTable}
-                style={{ borderCollapse: "collapse", borderRadius: "10px" }}>
+            <div className={globals.tableContainer}>
+            <table className={`${globals.table} ${globals.gray}`}
+                >
                 <thead>
                     <tr style={{ backgroundColor: "#ebebeb" }}>
-                        <th style={{ padding: "10px" }} className={styles.tableSm}>
+                        <th>
                             Image
                         </th>
                         <th>Description</th>
@@ -331,25 +333,23 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                     {
                         items.map((item, index) => (
                             <tr style={{
-                                width: "100%",
-                                backgroundColor: item.inReservation ? "#edb6b6ff" : item.selected ? "#cfdcf4ff" : index % 2 == 0 ? "#f2f2f2" : "#ebebeb",
+                                backgroundColor: item.inReservation ? "#edb6b6ff" : item.selected ? "#cfdcf4ff" : "",
                                 cursor: item.inReservation ? "not-allowed" : "pointer",
                             }}
                                 onClick={() => toggleSelection(index)}
 
                             >
                                 <td
-                                    className={styles.tableSm}
+                                    className={globals.sm}
                                     style={{ position: "relative" }}
                                 >
-                                    <img
-                                        style={{
-                                            objectFit: "contain",
-                                            backgroundColor: "white",
-                                        }}
+                                    <div className={globals.imageContainer}>
+                                         <img
                                         src={item.image}
                                         alt={`Item ${index + 1}`}
                                     />
+                                    </div>
+                                   
                                 </td>
                                 <td>{descriptionDict[item.descriptionId]?.description || item.description}</td>
                                 <td>{item.style}</td>
@@ -362,11 +362,13 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                         ))
                     }
                     <tr>
-                        <td style={{ padding: "10px", width: "100px" }} className={styles.tableSm}
-                        ><img src={currentItem.image || DEFAULT_IMAGE}
-                            style={{ width: "50px", position: "relative" }}
+                        <td className={globals.sm}
+                        >
+                            <div className={globals.imageContainer}>
+                            <img src={currentItem.image || DEFAULT_IMAGE}
                             onClick={() => setShowImageDropdown(!showImageDropdown)}
                             />
+                            </div>
 
                             {showImageDropdown &&
                                 <div className={styles.dropdown} data-image-options>
@@ -485,7 +487,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                                 </div>
                             )}
                         </td>
-                        <td style={{ padding: "10px 10px 10px 0" }}>
+                        <td>
                             <Dropdown
                                 configs={DROPDOWN_CONFIGS}
                                 config_type={"description"}
@@ -500,7 +502,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
 
                             />
                         </td>
-                        <td style={{ padding: "10px 10px 10px 0" }}>
+                        <td>
                             <input className={styles.input}
                                 value={currentItem.style}
                                 onChange={(e) => setCurrentItem({
@@ -510,7 +512,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
 
                             />
                         </td>
-                        <td style={{ padding: "10px 10px 10px 0" }}>
+                        <td >
                             <Dropdown
                                 configs={DROPDOWN_CONFIGS}
                                 config_type={"brand"}
@@ -525,7 +527,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
 
                             />
                         </td>
-                        <td style={{ padding: "10px 10px 10px 0" }}>
+                        <td>
                             <Dropdown
                                 configs={DROPDOWN_CONFIGS}
                                 config_type={"size"}
@@ -540,7 +542,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
 
                             />
                         </td>
-                        <td style={{ padding: "10px 10px 10px 0" }}>
+                        <td>
                             <input className={styles.input}
                                 value={currentItem.color}
                                 onChange={(e) => setCurrentItem({
@@ -549,7 +551,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
                                 })}
                             />
                         </td>
-                        <td style={{ padding: "10px 10px 10px 0" }}>
+                        <td >
                             <input className={styles.input}
                                 type="text"
                                 pattern="[0-9]*"
@@ -589,6 +591,7 @@ export default function MultiEdit({ onClose, ids, itemDict, descriptionDict, bra
 
                 </tbody>
             </table>
+            </div>
             <button className={styles.pageButton} style={{
                 marginLeft: "auto",
                 backgroundColor: "white",

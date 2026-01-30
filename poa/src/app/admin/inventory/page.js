@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
+import globals from "../globals.module.css"
 import { FaList, FaRegCopy } from "react-icons/fa";
 import {
   IoSearch,
@@ -26,6 +27,7 @@ import EditBox from "./EditBox.js";
 import MultiOpen from "./MultiOpen.js";
 import GroupedView from "./GroupedView.js";
 import ColumnManager from "./components/ColumnManager";
+import Image from "@/app/components/Image";
 
 import Popup from "@/app/components/popups/Popup";
 import { useUser } from "@clerk/nextjs";
@@ -1217,10 +1219,10 @@ function Inventory() {
     >
       {popup && <Popup closePopup={() => setPopup(null)} popupType={popup} />}
       <div className={styles.addSelection}>
-        <button className={styles.button} onClick={() => setAddItemOpen(true)}>
+        <button className={`${globals.button} ${globals.add}`} onClick={() => setAddItemOpen(true)}>
           Add Item
         </button>
-        <button className={styles.button} onClick={() => setAddBoxOpen(true)}>
+        <button className={`${globals.button} ${globals.add}`} onClick={() => setAddBoxOpen(true)}>
           Add Box
         </button>
       </div>
@@ -1275,15 +1277,12 @@ function Inventory() {
                 <>
                   {filter !== "boxes" && (
                     <button
-                      style={{
-                        marginBottom: "10px",
-                        backgroundColor: "white",
-                        color: "#515151ff",
-                      }}
-                      className={styles.pageButton}
+                      
+                      className={`${globals.button} ${globals.outline}`}
                       onClick={() => setShowAll(!showAll)}
+                      title="See all inventory on/off"
                     >
-                      <FaList style={{ marginRight: "5px" }} /> Pagination:{" "}
+                      <FaList/> Pagination:{" "}
                       {showAll ? "Off" : "On"}
                     </button>
                   )}
@@ -1291,28 +1290,21 @@ function Inventory() {
                     ? selectedItems.size > 0
                     : selectedBoxes.size > 0) && (
                     <button
-                      style={{
-                        marginBottom: "10px",
-                        backgroundColor: "white",
-                      }}
-                      className={styles.pageButton}
+                      title="Select multiple items to edit"
+                      className={`${globals.button} ${globals.outline}`}
                       onClick={() => {
                         filter == "line items"
                           ? setMultiEditView(!multiEditView)
                           : setMultiEditViewBoxes(!multiEditViewBoxes);
                       }}
                     >
-                      <BiSelectMultiple style={{ marginRight: "5px" }} /> Multi
+                      <BiSelectMultiple/> Multi
                       Edit
                     </button>
                   )}
                   <button
-                    style={{
-                      marginBottom: "10px",
-                      backgroundColor: "white",
-                      color: "#515151ff",
-                    }}
-                    className={styles.pageButton}
+                    className={`${globals.button} ${globals.outline}`}
+                    title="Edit selected items"
                     onClick={() => {
                       filter == "line items"
                         ? setMultiEdit(!multiEdit)
@@ -1322,7 +1314,7 @@ function Inventory() {
                         : setSelectedBoxes(new Set());
                     }}
                   >
-                    <MdEdit style={{ marginRight: "5px" }} /> Edit Mode{" "}
+                    <MdEdit/> Edit Mode{" "}
                     {filter == "line items"
                       ? multiEdit
                         ? "Off"
@@ -1334,15 +1326,11 @@ function Inventory() {
                 </>
               )}
               <button
-                style={{
-                  marginBottom: "10px",
-                  backgroundColor: "white",
-                  color: "#515151ff",
-                }}
-                className={styles.pageButton}
+                className={`${globals.button} ${globals.outline}`}
+                title="Edit order and visibility of columns"
                 onClick={() => setColumnManagerOpen(!columnManagerOpen)}
               >
-                <MdViewColumn style={{ marginRight: "5px" }} />
+                <MdViewColumn/>
                 {columnManagerOpen ? "Close Column Manager" : "Manage Columns"}
               </button>
               {columnManagerOpen && (
@@ -1428,7 +1416,7 @@ function Inventory() {
                     backgroundColor: page === opt ? colors[index] : "#f0f0f0",
                     color: page === opt ? "white" : "black",
                   }}
-                  className={`${styles.pageButton}`}
+                  className={globals.button}
                   disabled={filter === "grouped"}
                 >
                   {opt}
@@ -1488,13 +1476,12 @@ function Inventory() {
           </>
         )}
         {filter === "line items" && (
-          <>
+          <div className={globals.tableContainer}>
             <table
-              className={styles.inventoryTable}
-              style={{ borderCollapse: "collapse", borderRadius: "10px" }}
+              className={`${globals.table} ${globals.gray}`}
             >
               <thead>
-                <tr style={{ backgroundColor: "#ebebeb" }}>
+                <tr>
                   {multiEdit && <th></th>}
 
                   {getVisibleColumns("lineItems").map((column, index) => {
@@ -1512,11 +1499,7 @@ function Inventory() {
                     return (
                       <th
                         key={columnName}
-                        className={columnName === "Image" ? styles.tableSm : ""}
                         style={{
-                          ...(columnName === "Description" && {
-                            minWidth: "200px",
-                          }),
                           ...(isSortable && { cursor: "pointer" }),
                         }}
                         onClick={() => {
@@ -1602,7 +1585,6 @@ function Inventory() {
                   return (
                     <tr
                       key={uniqueKey}
-                      className={styles.tableRow}
                       style={{
                         backgroundColor: oneSelected
                           ? "#b4c9edff"
@@ -1611,9 +1593,7 @@ function Inventory() {
                             : parseInt(keyDict[getKey(item)]?.quantity) >
                                 quantity
                               ? "#f1d7a9ff"
-                              : index % 2 == 0
-                                ? "#f2f2f2"
-                                : "#ebebeb",
+                              : "",
                         overflow: "scroll",
                       }}
                       onMouseDown={(e) => handleMouseDown(e, item, "items")}
@@ -1638,7 +1618,7 @@ function Inventory() {
                     >
                       {multiEdit && (
                         <td
-                          className={styles.tableSm}
+                          className={globals.sm}
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
@@ -1668,25 +1648,23 @@ function Inventory() {
                           case "Image":
                             return (
                               <td
+                                className={globals.sm}
                                 key={columnName}
-                                className={styles.tableSm}
-                                style={{ position: "relative" }}
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                <img
-                                  style={{
-                                    objectFit: "contain",
-                                    backgroundColor: "white",
-                                  }}
-                                  src={item[0].image}
-                                  alt={`Item ${index + 1}`}
+                                <div className={globals.imageContainer}>
+                                <Image
+                                  image={item[0].image}
                                 />
+                                </div>
                               </td>
                             );
                           case "Description":
                             return (
                               <td
+                                style={{width:"20rem", maxWidth:"25rem"}}
+                                className={globals.veryLg}
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {getDescription(item)}
                               </td>
@@ -1695,7 +1673,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {item[0].style}
                               </td>
@@ -1704,7 +1681,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {getBrand(item)}
                               </td>
@@ -1713,7 +1689,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {item[0].color}
                               </td>
@@ -1722,7 +1697,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {getSize(item)}
                               </td>
@@ -1731,7 +1705,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {quantity}
                               </td>
@@ -1740,7 +1713,6 @@ function Inventory() {
                             return boxDict[item[0].boxId?.toString()] ? (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {quantity > 0 ? (
                                   getBox(item)
@@ -1751,7 +1723,6 @@ function Inventory() {
                             ) : (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 N/A
                               </td>
@@ -1760,7 +1731,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {quantity > 0 ? getLocation(item) : "N/A"}
                               </td>
@@ -1769,7 +1739,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {getPrice(item) !== "Multi"
                                   ? `$${getPrice(item)}`
@@ -1780,7 +1749,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px" }}
                               >
                                 {item.every((i) => i.public) ? (
                                   <MdPublic color="green" />
@@ -1801,7 +1769,6 @@ function Inventory() {
                             return (
                               <td
                                 key={columnName}
-                                style={{ minWidth: "100px", height:"fit-content", padding:"1rem 0"}}
                                 onClick={(e) => e.preventDefault()}
                                 className={styles.tagContainer}
                               >
@@ -1823,7 +1790,7 @@ function Inventory() {
                       })}
                       {multiEdit && (
                         <td
-                          className={styles.tableSm}
+                          className={globals.sm}
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
@@ -1847,26 +1814,21 @@ function Inventory() {
                 })}
               </tbody>
             </table>
-          </>
+          </div>
         )}
         {filter === "boxes" && (
+          <div className={globals.tableContainer}>
           <table
-            className={styles.inventoryTable}
-            style={{
-              borderCollapse: "collapse",
-              borderRadius: "10px",
-              overflow: "auto",
-            }}
+            className={`${globals.table} ${globals.gray}`}
           >
-            <thead style={{ textAlign: "left" }}>
-              <tr style={{ backgroundColor: "#ebebeb" }}>
+            <thead>
+              <tr>
                 {multiEditBoxes && <th></th>}
                 {getVisibleColumns("boxes").map((column) => {
                   const columnName = Object.keys(column)[0];
                   return (
                     <th
                       key={columnName}
-                      className={columnName === "Image" ? styles.tableSm : ""}
                     >
                       {columnName}
                     </th>
@@ -1883,25 +1845,21 @@ function Inventory() {
                 return (
                   <tr
                     key={index}
-                    className={styles.tableRow}
                     onClick={() => {
                       if (!multiEditBoxes) setEditBoxOpen(box);
                     }}
                     onMouseDown={(e) => handleMouseDown(e, box, "boxes")}
                     onMouseEnter={() => handleMouseEnter(box, "boxes")}
                     style={{
-                      width: "100%",
                       backgroundColor: oneSelected
                         ? "#b4c9edff"
-                        : index % 2 == 0
-                          ? "#f2f2f2"
-                          : "#ebebeb",
+                        : "",
                       cursor: "pointer",
                     }}
                   >
                     {multiEditBoxes && (
                       <td
-                        className={styles.tableSm}
+                        className={globals.sm}
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
@@ -1931,26 +1889,25 @@ function Inventory() {
                         case "Image":
                           return (
                             <td
+                              className={globals.sm}
                               key={columnName}
-                              style={{ position: "relative" }}
                             >
-                              <div className={styles.tableSm}>
-                                <img
-                                  src={box.image}
-                                  alt={`Item ${index + 1}`}
+                              <div className={globals.imageContainer}>
+                                <Image
+                                  image={box.image}
                                 />
                               </div>
                             </td>
                           );
                         case "Box Id.":
                           return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
+                            <td key={columnName}>
                               {box.boxId}
                             </td>
                           );
                         case "Description":
                           return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
+                            <td key={columnName} style={{minWidth:"20rem", maxWidth:"25rem"}}>
                               {box.description.length > 80
                                 ? box.description.slice(0, 80) + "..."
                                 : box.description}
@@ -1958,13 +1915,13 @@ function Inventory() {
                           );
                         case "Location":
                           return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
+                            <td key={columnName}>
                               {box.location}
                             </td>
                           );
                         case "Total Quantity":
                           return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
+                            <td key={columnName}>
                               {contentDict[box._id.toString()]?.reduce(
                                 (acc, cur) => acc + cur.quantity,
                                 0
@@ -1973,7 +1930,7 @@ function Inventory() {
                           );
                         case "Discount":
                           return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
+                            <td key={columnName}>
                               {contentDict[box._id]
                                 ? contentDict[box._id][0].sale
                                   ? `${box.discount}%`
@@ -1983,7 +1940,7 @@ function Inventory() {
                           );
                         case "Min.":
                           return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
+                            <td key={columnName}>
                               {contentDict[box._id]
                                 ? contentDict[box._id][0].sale
                                   ? `$${box.minPrice}`
@@ -1993,7 +1950,7 @@ function Inventory() {
                           );
                         case "Visibility":
                           return (
-                            <td key={columnName} style={{ minWidth: "100px" }}>
+                            <td key={columnName}>
                               {contentDict[box._id] ? (
                                 contentDict[box._id][0].public ? (
                                   <MdPublic color="green" title="Public" />
@@ -2028,6 +1985,7 @@ function Inventory() {
               })}
             </tbody>
           </table>
+          </div>
         )}
         {filter === "line items" && (
           <div

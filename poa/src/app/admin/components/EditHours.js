@@ -73,7 +73,6 @@ export default function EditHours(){
     return(
         <>
         <div className={styles.title} style={{marginBottom: "20px"}}>Change Hours</div>
-      <div className={styles.schedule}>
         <div className={styles.scheduleChange}>
           <div>
             <label htmlFor="start-date" style={{ fontSize: '14px', fontWeight: 'bold', display: 'block' }}>
@@ -170,7 +169,6 @@ export default function EditHours(){
         {!isMobile && (
            <Calendar refresh={refreshKey}/>
         )}
-      </div>
 
       {isMobile && (
           <Calendar refresh={refreshKey}/>

@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import styles from "./companyInventory.module.css";
+import globals from "../globals.module.css"
 import AddItem from "./AddItem";
 import EditItem from "./EditItem";
 import Popup from "@/app/components/popups/Popup";
 import ProductCard from "./ProductCard";
+import Image from "@/app/components/Image";
 import { FaSearch } from "react-icons/fa";
 
 export default function CompanyInventory() {
@@ -123,10 +125,9 @@ export default function CompanyInventory() {
           </div>
         </div>
         {filter === "line items" && (
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
+            <table className={`${globals.table} ${globals.blue}`}>
               <thead>
-                <tr style={{ backgroundColor: "#c5ced9" }}>
+                <tr>
                   <th>Image</th>
                   <th>Company</th>
                   <th>Name</th>
@@ -141,17 +142,14 @@ export default function CompanyInventory() {
                 {filteredInventory.map((item, index) => (
                   <tr
                     key={item._id || index}
-                    style={{
-                      backgroundColor: index % 2 === 0 ? "#dde4ed" : "#c5ced9",
-                    }}
                     onClick={() => setEditItemOpen(item)}
                   >
-                    <td className={styles.imageContainer}>
-                      <img
-                        src={item.image}
-                        className={styles.image}
-                        style={{ width: "3rem" }}
+                    <td className={globals.sm}>
+                      <div className={globals.imageContainer}>
+                      <Image
+                        image={item.image}
                       />
+                      </div>
                     </td>
                     <td>{item.company[0].company}</td>
                     <td>{item.name || "N/A"}</td>
@@ -172,7 +170,6 @@ export default function CompanyInventory() {
                 ))}
               </tbody>
             </table>
-          </div>
         )}
         {filter === "grouped" && (
           <div className={styles.companyGrid}>

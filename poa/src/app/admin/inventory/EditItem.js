@@ -1,5 +1,6 @@
 "use client";
 import styles from "./inventory.module.css";
+import globals from "../globals.module.css"
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   FaUpload,
@@ -804,62 +805,47 @@ const Edit = ({
 
             {/* Desktop Table View */}
             <table
-              className={`${styles.boxTable} ${styles.desktopTable}`}
-              style={{
-                width: "100%",
-                textAlign: "left",
-                borderCollapse: "collapse",
-                borderRadius: "10px",
-                overflow: "hidden",
-              }}
+              className={`${globals.table} ${globals.blue}`}
+
             >
               <thead>
                 <tr
-                  className={styles.row}
-                  style={{ backgroundColor: "#ccd5e0" }}
+                
                 >
-                  <th className={styles.tableSm} style={{ fontWeight: "bold" }}>
+                  <th>
                     Image
                   </th>
                   <th
-                    className={styles.tableLg}
-                    style={{ border: "none", fontWeight: "bold" }}
                   >
                     Description
                   </th>
                   <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
+                   
                   >
                     Style Code
                   </th>
                   <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
+                    
                   >
                     Brand Style
                   </th>
                   <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
+                    
                   >
                     Size
                   </th>
                   <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
+                    
                   >
                     Color
                   </th>
                   <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
+                    
                   >
                     Quantity
                   </th>
                   <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
+                    
                   >
                     Unit Price
                   </th>
@@ -867,20 +853,17 @@ const Edit = ({
               </thead>
               <tbody>
                 <tr
-                  style={{
-                    height: "60px",
-                    width: "100%",
-                  }}
+                  
                 >
                   <td
-                    className={styles.tableSm}
+                    className={globals.sm}
                     style={{
                       position: "relative",
                       width: currentItem.imageUrl !== "" ? "50px" : "150px",
                     }}
                   >
                     {currentItem.imageUrl !== "" ? (
-                      <div style={{ position: "relative" }}>
+                      <div className={globals.imageContainer}>
                         <img
                           src={currentItem.imageUrl}
                           alt="New Item"
@@ -897,10 +880,10 @@ const Edit = ({
                         <IoIosRemoveCircle
                           style={{
                             position: "absolute",
-                            top: "-15px",
-                            right: "0px",
-                            fontSize: "30px",
-                            color: "red",
+                            top: "-0.4rem",
+                            right: "0.2rem",
+                            fontSize: "25px",
+                            color: "#bd3434ff",
                           }}
                           onClick={() =>
                             setCurrentItemWithTracking({
@@ -973,7 +956,7 @@ const Edit = ({
                       </div>
                     )}
                   </td>
-                  <td className={styles.tableLg}>
+                  <td>
                     <Dropdown
                       configs={DROPDOWN_CONFIGS}
                       config_type={"description"}
@@ -986,7 +969,7 @@ const Edit = ({
                       setCurrentItem={setCurrentItem}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <input
                       value={currentItem.style}
                       onChange={(e) =>
@@ -1003,7 +986,7 @@ const Edit = ({
                       }}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <Dropdown
                       configs={DROPDOWN_CONFIGS}
                       config_type={"brand"}
@@ -1016,7 +999,7 @@ const Edit = ({
                       setCurrentItem={setCurrentItem}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <Dropdown
                       configs={DROPDOWN_CONFIGS}
                       config_type={"size"}
@@ -1029,7 +1012,7 @@ const Edit = ({
                       setCurrentItem={setCurrentItem}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <input
                       value={currentItem.color}
                       onChange={(e) =>
@@ -1046,7 +1029,7 @@ const Edit = ({
                       }}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <input
                       type="text"
                       pattern="[0-9]*"
@@ -1066,7 +1049,7 @@ const Edit = ({
                       }}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <input
                       type="text"
                       pattern="^\d*\.?\d*$"

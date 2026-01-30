@@ -1,15 +1,9 @@
 "use client";
 import styles from "./inventory.module.css";
+import globals from "../globals.module.css";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  FaUpload,
-  FaTimes,
-  FaLink,
-  FaDownload,
-} from "react-icons/fa";
-import {
-  IoIosRemoveCircle,
-} from "react-icons/io";
+import { FaUpload, FaTimes, FaLink, FaDownload } from "react-icons/fa";
+import { IoIosRemoveCircle } from "react-icons/io";
 import jsPDF from "jspdf";
 import Overlay from "@/app/components/popups/Overlay";
 import EditPresets from "@/app/components/admin/editPresets/EditPresets";
@@ -527,7 +521,7 @@ const AddBox = ({
         setUploadError(itemResult.error || "Unknown error occurred");
         return false;
       }
-      
+
       return true;
     } catch (error) {
       console.error("Network error:", error);
@@ -886,84 +880,30 @@ const AddBox = ({
             </div>
 
             {/* Desktop Table View */}
-            <table
-              className={`${styles.boxTable} ${styles.desktopTable}`}
-              style={{
-                width: "100%",
-                textAlign: "left",
-                borderCollapse: "collapse",
-                borderRadius: "10px",
-                overflow: "hidden",
-              }}
-            >
+            <table className={`${globals.table} ${globals.blue}`}>
               <thead>
-                <tr
-                  className={styles.row}
-                  style={{ backgroundColor: "#ccd5e0" }}
-                >
-                  <th className={styles.tableSm} style={{ fontWeight: "bold" }}>
-                    Image
-                  </th>
-                  <th
-                    className={styles.tableLg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Description
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Style Code
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Brand Style
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Size
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Color
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Quantity
-                  </th>
-                  <th
-                    className={styles.tableReg}
-                    style={{ border: "none", fontWeight: "bold" }}
-                  >
-                    Unit Price
-                  </th>
+                <tr>
+                  <th>Image</th>
+                  <th>Description</th>
+                  <th>Style Code</th>
+                  <th>Brand Style</th>
+                  <th>Size</th>
+                  <th>Color</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  style={{
-                    height: "60px",
-                    width: "100%",
-                  }}
-                >
+                <tr>
                   <td
-                    className={styles.tableSm}
+                    className={globals.sm}
                     style={{
                       position: "relative",
                       width: currentItem.imageUrl !== "" ? "50px" : "150px",
                     }}
                   >
                     {currentItem.imageUrl !== "" ? (
-                      <div style={{ position: "relative", width: "auto" }}>
+                      <div className={globals.imageContainer}>
                         <img
                           src={currentItem.imageUrl}
                           alt="New Item"
@@ -972,18 +912,18 @@ const AddBox = ({
                             cursor: "pointer",
                             opacity: imageUploading ? 0.5 : 1,
                             transition: "opacity 0.2s",
-                            objectFit:"contain",
-                                backgroundColor:"white"
+                            objectFit: "contain",
+                            backgroundColor: "white",
                           }}
                           title="Click to change image"
                         />
                         <IoIosRemoveCircle
                           style={{
                             position: "absolute",
-                            top: "-15px",
-                            right: "0",
-                            fontSize: "30px",
-                            color: "red",
+                            top: "-0.4rem",
+                            right: "0.2rem",
+                            fontSize: "25px",
+                            color: "#bd3434ff",
                           }}
                           onClick={() => {
                             setUnsavedChanges(true);
@@ -1060,7 +1000,7 @@ const AddBox = ({
                       </div>
                     )}
                   </td>
-                  <td className={styles.tableLg}>
+                  <td>
                     <Dropdown
                       configs={DROPDOWN_CONFIGS}
                       config_type={"description"}
@@ -1073,7 +1013,7 @@ const AddBox = ({
                       setCurrentItem={setCurrentItem}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <input
                       value={currentItem.style}
                       onChange={(e) => {
@@ -1091,7 +1031,7 @@ const AddBox = ({
                       }}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <Dropdown
                       configs={DROPDOWN_CONFIGS}
                       config_type={"brand"}
@@ -1104,7 +1044,7 @@ const AddBox = ({
                       setCurrentItem={setCurrentItem}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <Dropdown
                       configs={DROPDOWN_CONFIGS}
                       config_type={"size"}
@@ -1117,7 +1057,7 @@ const AddBox = ({
                       setCurrentItem={setCurrentItem}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <input
                       value={currentItem.color}
                       onChange={(e) => {
@@ -1135,7 +1075,7 @@ const AddBox = ({
                       }}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <input
                       type="text"
                       pattern="[0-9]*"
@@ -1156,7 +1096,7 @@ const AddBox = ({
                       }}
                     />
                   </td>
-                  <td className={styles.tableReg}>
+                  <td>
                     <input
                       type="text"
                       pattern="^\d*\.?\d*$"
@@ -1206,8 +1146,8 @@ const AddBox = ({
                             transition: "opacity 0.2s",
                             maxWidth: "100px",
                             maxHeight: "100px",
-                            objectFit:"contain",
-                            backgroundColor:"white"
+                            objectFit: "contain",
+                            backgroundColor: "white",
                           }}
                           title="Click to change image"
                         />

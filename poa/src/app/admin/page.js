@@ -8,6 +8,7 @@ import EditStores from "./components/EditStores"
 import EditGallery from "./components/EditGallery"
 import EditBanner from "@/app/components/admin/banners/uploadBanner";
 import EditVendors from "./components/EditVendors"
+import EditCalendar from "./components/EditCalendar";
 import Analytics from "./components/Analytics"
 import { IoMdMenu } from "react-icons/io";
 
@@ -22,7 +23,7 @@ export default function AdminHome() {
 
   const components = {
     "Analytics": <Analytics/>,
-    "Change Hours": <EditHours/>,
+    "Change Hours": <EditCalendar/>,
     "Sale Status": <EditSale/>,
     "Email Recipients": <EditEmails/>,
     "Company Stores": <EditStores/>,

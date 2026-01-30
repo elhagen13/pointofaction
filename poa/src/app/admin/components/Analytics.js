@@ -194,6 +194,7 @@ export default function Analytics() {
                       {!changingDates ? (
                         data[0] && (
                           <h4
+                            title="click to change date range"
                             onClick={() => {
                               setChangingDates(true);
                               setTempStartDate(startDate);
@@ -239,7 +240,7 @@ export default function Analytics() {
                           Total Visitors
                         </button>
                       </div>
-                      <div className={styles.boxContainer} ref={containerRef}></div>
+                      <div className={styles.boxContainer} title="drag to see average of selected period" ref={containerRef}></div>
                     </div>
                     <div className={styles.statBox}>
                       <div className={styles.stats}>
