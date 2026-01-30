@@ -1,6 +1,7 @@
 "use client";
 import Overlay from "@/app/components/popups/Overlay";
 import styles from "./reservation.module.css";
+import tableStyles from "../globals.module.css"
 import { useEffect, useState, useMemo, useRef } from "react";
 import { BeatLoader } from "react-spinners";
 import ProgressBar from "./ProgressBar";
@@ -406,7 +407,7 @@ const Order = ({ reservation }) => {
         />
       </div>
       <div className={styles.tableContainer} style={{ marginTop: "30px" }}>
-        <table className={styles.reservationItemTable}>
+        <table className={`${tableStyles.table} ${tableStyles.blue}`}>
           <thead>
             <tr style={{ backgroundColor: "#c5ced9" }}>
               <th style={{ padding: "10px" }}>Order #</th>
@@ -538,11 +539,11 @@ const Order = ({ reservation }) => {
             </div>
           </div>
           {view == "default" && (
-            <div className={styles.tableContainer}>
-              <table className={styles.reservationItemTable}>
+            <div>
+              <table className={`${tableStyles.table} ${tableStyles.blue}`}>
                 <thead>
-                  <tr style={{ backgroundColor: "#c5ced9" }}>
-                    <th style={{ padding: "10px" }}>Item</th>
+                  <tr>
+                    <th>Item</th>
                     <th>Style</th>
                     <th>Brand</th>
                     <th>Color</th>
@@ -557,14 +558,9 @@ const Order = ({ reservation }) => {
                 </thead>
                 <tbody>
                   {reservationItems.map((item, index) => (
-                    <tr
-                      style={{
-                        backgroundColor:
-                          index % 2 === 0 ? "#dde4ed" : "#c5ced9",
-                      }}
-                    >
+                    <tr>
                       <td>
-                        <div className={styles.imageContainer}>
+                        <div className={tableStyles.imageContainer}>
                           <img src={item.image}></img>
                         </div>
                       </td>
