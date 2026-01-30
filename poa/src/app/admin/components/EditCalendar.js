@@ -309,7 +309,7 @@ function EditHours({ onClose, dateDict, selectedDates, reload }) {
     };
 
     if (!dateDict[day]) {
-      if (new Date(day).getDay() == 0 || new Date(day).getDay() == 6) {
+      if ((new Date(`${day}T00:00:00`)).getDay() == 0 || (new Date(`${day}T00:00:00`).getDay() == 6)){
         return "CLOSED";
       }
       return "10:00am - 5:00pm";
