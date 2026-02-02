@@ -411,7 +411,7 @@ function Inventory() {
                 const location = boxDict[item.boxId?.toString()]?.location;
                 return location?.toLowerCase().includes(searchTerm);
               case "tags":
-                return item.tags.some((tag) =>
+                return item.tags?.some((tag) =>
                   tag.tag.toLowerCase().includes(searchTerm)
                 );
               default:

@@ -53,6 +53,9 @@ export async function PATCH(request, { params }) {
       case "Contact Us":
         page = "contact";
         break;
+      case "Gallery":
+        page = "gallery";
+        break;
       default:
         break;
     }

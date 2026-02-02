@@ -468,6 +468,91 @@ input:checked + .slider:before {
 }
 
 
+.employeeGrid{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+
+.employeeGrid > div img{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 500px;
+}
+
+.employeeWrapper {
+  width: 10rem;
+  height: fit-content;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+}
+
+.employeeWrapper > div{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media(max-width: 768px){
+  .employeeGrid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr)
+  }
+
+  .employeeWrapper{
+    width: 100%;
+  }
+
+  .employeeWrapper img{
+   aspect-ratio: 1 / 1 !important;
+  }
+
+
+}
+
+.dropIndicator {
+  width: 3px;
+  height: 13rem;
+  background: dodgerblue;
+  margin-right: 8px;
+  border-radius: 2px;
+  transition: opacity 0.15s ease;
+}
+
+.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.capabilitiesBox{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.capabilitiesBox div{
+  background-color: rgb(241, 242, 250);
+  outline: 1px solid rgb(198, 198, 232);
+  color: rgb(124, 124, 183);
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+
+.uploadFile{
+  cursor: pointer;
+}
+
+
 @media(max-width: 768px){
   .overlayContainer{
     padding: 30px 10px;

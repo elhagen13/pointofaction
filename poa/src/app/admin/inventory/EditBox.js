@@ -1235,15 +1235,15 @@ const AddBox = ({
       retString =
         retString +
         "• " +
-        (item.size || sizeDict[item.sizeId].size) +
+        (item.size || sizeDict[item.sizeId]?.size || "") +
         " " +
-        (item.brand || brandDict[item.brandId].brand) +
+        (item.brand || brandDict[item.brandId]?.brand || "") +
         " " +
-        item.color +
+        (item.color || "") +
         " " +
-        (item.description || descriptionDict[item.descriptionId].description) +
+        (item.description || descriptionDict[item.descriptionId]?.description || "") +
         " (" +
-        item.style +
+        (item.style || "")  +
         ")\n";
     });
     setBoxDescriptionWithTracking(retString);

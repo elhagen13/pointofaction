@@ -231,7 +231,7 @@ export default function EditCalendar() {
           </div>
         )}
       </div>
-
+      <div className={styles.gridContainer}>
       <div className={styles.grid}>
         {days.map((day) => (
           <div>{day}</div>
@@ -258,7 +258,9 @@ export default function EditCalendar() {
             );
           })}
       </div>
+      </div>
       <div>
+        
         <h3>Selected Dates:</h3>
         {Array.from(selectedDates)
           .map((date) => `${new Date(`${date}T00:00:00`).toDateString()}`)

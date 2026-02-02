@@ -1,6 +1,6 @@
 import styles from "./image.module.css";
 import { useState, useEffect } from "react";
-export default function Image({ image }) {
+export default function Image({ image, objectFit="contain" }) {
   const [expand, setExpand] = useState(false);
 
     useEffect(() => {
@@ -20,8 +20,8 @@ export default function Image({ image }) {
 
   return (
     <div style={{ position: "relative" }}>
-      <div className={styles.thumbnailContainer}>
-        <img src={image} onClick={(e) => {e.stopPropagation(); setExpand(true)}}></img>
+      <div className={styles.thumbnailContainer} style={{borderRadius: objectFit == "cover" && "2px"}}>
+        <img src={image} onClick={(e) => {e.stopPropagation(); setExpand(true)}} style={{objectFit: objectFit}}></img>
       </div>
       {expand &&
        <div className={styles.imageExpanded} onClick={(e) => e.stopPropagation()}>

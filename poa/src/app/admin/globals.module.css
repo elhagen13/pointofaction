@@ -8,8 +8,8 @@
 
 .tableContainer {
   width: 100%;
-  overflow: scroll;
   margin: 1rem 0;
+  
 }
 .table {
   display: table;
@@ -124,12 +124,23 @@
   background-color: white;
 }
 
+.red{
+  border: 2px solid #af574f;
+  color: #af574f;;
+  background-color: white;
+}
+
 .green:hover{
   color: white;
   background-color: #538561;
 }
 
-.green:disabled{
+.red:hover{
+  color: white;
+  background-color: #af574f;
+}
+
+.green:disabled, .red:disabled{
   border: 2px solid gray;
 }
 
@@ -167,5 +178,73 @@
   border-radius: 20px;
   margin: 20px 0;
   overflow-y: auto;
+}
+
+@media(max-width: 768px){
+
+  .overlayContainer{
+    padding: 2rem;
+  }
+  .overlay{
+    padding: 10px;
+  }
+}
+
+
+/* ========================================
+   Flex Containers
+   ======================================== */
+
+.flexH, .flexV{
+  display: flex;
+  width: 100%;
+  gap: 1rem;
+  
+}
+
+.flexH{
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+
+.flexV{
+  flex-direction: column;
+  align-items: center;
+}
+
+
+/* ========================================
+   Inputs Containers
+   ======================================== */
+.input{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.input label{
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: rgb(159, 156, 156);
+}
+.input input, .input textarea{
+  width: 100%;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  border: 1px solid rgb(219, 210, 210);
+}
+
+.input input:focus, .input textarea:focus{
+  outline: 3px solid rgba(167, 196, 237, 0.521);
+  
+}
+
+.input textarea{
+  width: 100%;
+  resize: vertical;
 }
 
