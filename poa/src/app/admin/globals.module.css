@@ -27,6 +27,7 @@
 
 .table td {
   padding: 0.25rem var(--padding-column-horiz);
+  
 }
 
 .table td:not(.sm) {
@@ -58,6 +59,7 @@
 .blue tbody tr:nth-child(odd) {
   background-color: #dde4ed;
 }
+
 
 .gray tbody tr:nth-child(even),
 .gray thead tr {
@@ -230,12 +232,16 @@
   font-weight: bold;
   color: rgb(159, 156, 156);
 }
-.input input, .input textarea{
+.input input, .input textarea, .inputReadOnly{
   width: 100%;
   font-size: 0.9rem;
   padding: 0.25rem 0.5rem;
   border-radius: 5px;
   border: 1px solid rgb(219, 210, 210);
+}
+
+.inputReadOnly{
+  background-color: #eae6e6
 }
 
 .input input:focus, .input textarea:focus{
@@ -248,3 +254,6 @@
   resize: vertical;
 }
 
+.impartial{
+  border: 1px solid rgba(231, 103, 29, 0.706) !important;
+}

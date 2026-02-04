@@ -9,15 +9,17 @@ import EditGallery from "./components/EditGallery"
 import EditBanner from "@/app/components/admin/banners/uploadBanner";
 import EditVendors from "./components/EditVendors"
 import EditCalendar from "./components/EditCalendar";
+import EditImages from "./components/EditImages";
 import Analytics from "./components/Analytics"
 import { IoMdMenu } from "react-icons/io";
+import EditEmployees from "./components/EditEmployees";
 
 export default function AdminHome() {
   const [sliderPosition, setSliderPosition] = useState(null);
-  const filters = ["Analytics", "Change Hours", "Sale Status", "Email Recipients", "Company Stores", "Gallery Images", "Banners", "Vendors"];
+  const filters = ["Analytics", "Change Hours", "Sale Status", "Email Recipients", "Company Stores", "Gallery Images", "Banners", "Vendors", "Employees", "Image Bank"];
   const [activeFilter, setActiveFilter] = useState("Analytics");
   const [filterIndex, setFilterIndex] = useState(0);
-  const colors = ["#020344", "#08215c", "#0f3f74", "#155e8d", "#1b7ca5", "#229abd", "#28b8d5", "#67d7edff"];
+  const colors = ["#020344", "#08215c", "#0f3f74", "#155e8d", "#1b7ca5", "#229abd", "#28b8d5", "#67d7edff",  "#a5d4deff", "#c5e5edff"];
   const [mobileMenu, setMobileMenu] = useState(false)
   const filterRefs = useRef({});
 
@@ -29,7 +31,9 @@ export default function AdminHome() {
     "Company Stores": <EditStores/>,
     "Gallery Images": <EditGallery/>,
     "Banners": <EditBanner/>,
-    "Vendors": <EditVendors/>
+    "Vendors": <EditVendors/>,
+    "Employees": <EditEmployees/>,
+    "Image Bank": <EditImages/>
   }
 
   const updateSliderPosition = useCallback((filterName) => {
@@ -86,7 +90,7 @@ export default function AdminHome() {
             key={filter}
             ref={(el) => (filterRefs.current[filter] = el)}
             className={styles.filter}
-            style={{ color: activeFilter === filter ? "white" : "black", width:"fit-content"}}
+            style={{ color: activeFilter === filter ? "white" : "black", width:"fit-content", textWrap:"nowrap"}}
             onClick={(e) => {
               changePagination(e);
               setFilterIndex(index);
