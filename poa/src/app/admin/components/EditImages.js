@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Image from "@/app/components/Image";
 import { IoCheckmark, IoCopyOutline } from "react-icons/io5";
 import { BeatLoader } from "react-spinners";
+import { FaTrash } from "react-icons/fa";
+import { GoTrash } from "react-icons/go";
 
 export default function EditImages() {
   const [images, setImages] = useState([]);
@@ -91,7 +93,7 @@ export default function EditImages() {
       });
       const result = await response.json();
       if(result.success){
-        setCurrentEdit(0)
+        setCurrentEdit(result.key)
       }
       
     } catch (error) {
@@ -117,6 +119,33 @@ export default function EditImages() {
 
   }
 
+  const deleteImage = async(key) => {
+    //delete from aws
+    const aws_response = await fetch("/api/uploadImage",{
+        method: "DELETE",
+        body: JSON.stringify({
+            key: key
+        })
+    })
+    console.log(aws_response)
+    //if aws delete is successful, then delete from mongo
+    if(aws_response.ok){
+        const mongo_response = await fetch("/api/imageBank",{
+            method: "DELETE",
+            body: JSON.stringify({
+                key: key
+            })
+        })
+
+        if(mongo_response.ok){
+            fetchImages();
+        }
+        else{
+            alert("PROBLEM")
+        }
+    }
+  }
+
   return (
     <div>
       <h2 className={globals.flexH} style={{marginBottom:"1rem"}}>
@@ -128,17 +157,18 @@ export default function EditImages() {
             <th>Image</th>
             <th>Description</th>
             <th>URL</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {images.map((image, index) => (
-            <tr>
+            <tr key={image.key}>
               <td className={globals.smlo}>
                 <div className={globals.imageContainer}>
                   <Image image={image.url} objectFit={"cover"}/>
                 </div>
               </td>
-              <td onClick={() => setCurrentEdit(index)} style={{width:"50%"}}>
+              <td onClick={() => setCurrentEdit(image.key)} style={{width:"50%"}}>
                
                 <div className={globals.input} style={{position:"relative"}}>
                     <input
@@ -147,16 +177,19 @@ export default function EditImages() {
                         ...imageDescriptors,
                         [image.key] : e.target.value
                     })}
-                    className={`${!(currentEdit == index) && globals.inputReadOnly} ${imageDescriptors[image.key] !== descriptorDict[image.key] && globals.impartial}`}/>
-                    {currentEdit == index && 
+                    className={`${!(currentEdit == image.key) && globals.inputReadOnly} ${imageDescriptors[image.key] !== descriptorDict[image.key] && globals.impartial}`}/>
+                    {currentEdit == image.key && 
                     <div className={styles.checkmark} onClick={() => sendChanges(image)}>
                         <IoCheckmark></IoCheckmark>
                     </div>}
                 </div>
                 
               </td>
-              <td className={globals.flexH} style={{minHeight:"4rem"}} onClick={() => handleCopyClick(image.url, index)}>
+              <td className={globals.flexH} style={{minHeight:"4rem", cursor:"pointer"}} onClick={() => handleCopyClick(image.url, index)}>
                 {image.url} <div>{copied == index ? <IoCheckmark/> : <IoCopyOutline/>}</div>
+              </td>
+              <td className={globals.sm} style={{cursor:"pointer"}} onClick={() => deleteImage(image.key)}>
+                <GoTrash/>
               </td>
             </tr>
           ))}

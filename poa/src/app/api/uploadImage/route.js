@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command} from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand} from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 import heicConvert from 'heic-convert';
@@ -145,6 +145,53 @@ export async function GET() {
       {
         success: false,
         error: 'Failed to list files',
+        details: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+
+export async function DELETE(request) {
+  try {
+    const { key } = await request.json();
+
+    if (!key) {
+      return Response.json(
+        { success: false, error: 'No key provided' },
+        { status: 400 }
+      );
+    }
+
+    // Safety check: only allow deleting from imagebank
+    if (!key.startsWith('imagebank/')) {
+      return Response.json(
+        { success: false, error: 'Invalid key' },
+        { status: 400 }
+      );
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: key,
+    });
+
+    await s3Client.send(command);
+
+    return Response.json({
+      success: true,
+      message: 'Image deleted successfully',
+      key,
+    });
+
+  } catch (error) {
+    console.error('Delete error:', error);
+
+    return Response.json(
+      {
+        success: false,
+        error: 'Failed to delete image',
         details: error.message,
       },
       { status: 500 }
