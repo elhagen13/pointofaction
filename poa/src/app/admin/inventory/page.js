@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import styles from "./inventory.module.css";
-import globals from "../globals.module.css"
+import globals from "../globals.module.css";
 import { FaList, FaRegCopy } from "react-icons/fa";
 import {
   IoSearch,
@@ -171,9 +171,15 @@ function Inventory() {
     if (localStorage.getItem("sortBy"))
       console.log(typeof localStorage.getItem("sortBy"));
     setSortBy(localStorage.getItem("sortBy"));
-    if (localStorage.getItem("sortOrder"))
-      console.log("LOCAL STORAGE", localStorage.getItem("sortOrder"));
-    setSortOrder(JSON.parse(localStorage.getItem("sortOrder")));
+    const storedSortOrder = localStorage.getItem("sortOrder");
+
+    if (storedSortOrder) {
+      try {
+        setSortOrder(JSON.parse(storedSortOrder));
+      } catch (e) {
+        setSortOrder(storedSortOrder); // fallback to raw string
+      }
+    }
   }, []);
 
   const refresh = async () => {
@@ -362,7 +368,7 @@ function Inventory() {
         arr.filter((item) => {
           if (arr.length < 1) return true;
           else return !item.archived;
-        })
+        }),
       );
     }
 
@@ -412,7 +418,7 @@ function Inventory() {
                 return location?.toLowerCase().includes(searchTerm);
               case "tags":
                 return item.tags?.some((tag) =>
-                  tag.tag.toLowerCase().includes(searchTerm)
+                  tag.tag.toLowerCase().includes(searchTerm),
                 );
               default:
                 return false;
@@ -463,8 +469,8 @@ function Inventory() {
     setNumPages(
       Math.floor(
         groupedItems.length / numItemsPage +
-          (groupedItems.length % numItemsPage !== 0 ? 1 : 0)
-      )
+          (groupedItems.length % numItemsPage !== 0 ? 1 : 0),
+      ),
     );
 
     return groupedItems
@@ -574,7 +580,7 @@ function Inventory() {
       .map((wrapped) => wrapped.group)
       .slice(
         showAll ? 0 : paginate * numItemsPage,
-        showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage
+        showAll ? groupedItems.length : paginate * numItemsPage + numItemsPage,
       );
   }, [
     inventory,
@@ -615,7 +621,7 @@ function Inventory() {
     boxItems = boxItems.filter((box) => {
       const totalQuantity = (contentDict[box._id.toString()] || []).reduce(
         (acc, item) => acc + item.quantity,
-        0
+        0,
       );
       return totalQuantity > 0;
     });
@@ -631,14 +637,14 @@ function Inventory() {
         ...new Set(
           (contentDict[box._id.toString()] || []).map(
             (content) =>
-              brandDict[content.brandId]?.brand || content.brand || "N/A"
-          )
+              brandDict[content.brandId]?.brand || content.brand || "N/A",
+          ),
         ),
       ];
       const brandString = contents.reduce((a, b) => a + " " + b, "");
       const totalQuantity = (contentDict[box._id.toString()] || []).reduce(
         (acc, item) => acc + item.quantity,
-        0
+        0,
       );
 
       if (totalQuantity == 0) return false;
@@ -1012,7 +1018,7 @@ function Inventory() {
           console.error("Error creating item:", itemResult.error);
           console.error("Details:", itemResult.details);
           alert(
-            "Error creating item: " + (itemResult.error || "Unknown error")
+            "Error creating item: " + (itemResult.error || "Unknown error"),
           );
           return false;
         }
@@ -1158,7 +1164,7 @@ function Inventory() {
     console.log(item);
 
     const newSelected = new Set(
-      type == "items" ? selectedItems : selectedBoxes
+      type == "items" ? selectedItems : selectedBoxes,
     );
     let itemIds;
     if (type == "items") {
@@ -1185,7 +1191,7 @@ function Inventory() {
   const handleMouseEnter = (item, type) => {
     if (isMouseDown && (multiEdit || multiEditBoxes)) {
       const newSelected = new Set(
-        type == "items" ? selectedItems : selectedBoxes
+        type == "items" ? selectedItems : selectedBoxes,
       );
       let itemIds;
       if (type == "items") {
@@ -1219,10 +1225,16 @@ function Inventory() {
     >
       {popup && <Popup closePopup={() => setPopup(null)} popupType={popup} />}
       <div className={styles.addSelection}>
-        <button className={`${globals.button} ${globals.add}`} onClick={() => setAddItemOpen(true)}>
+        <button
+          className={`${globals.button} ${globals.add}`}
+          onClick={() => setAddItemOpen(true)}
+        >
           Add Item
         </button>
-        <button className={`${globals.button} ${globals.add}`} onClick={() => setAddBoxOpen(true)}>
+        <button
+          className={`${globals.button} ${globals.add}`}
+          onClick={() => setAddBoxOpen(true)}
+        >
           Add Box
         </button>
       </div>
@@ -1277,13 +1289,11 @@ function Inventory() {
                 <>
                   {filter !== "boxes" && (
                     <button
-                      
                       className={`${globals.button} ${globals.outline}`}
                       onClick={() => setShowAll(!showAll)}
                       title="See all inventory on/off"
                     >
-                      <FaList/> Pagination:{" "}
-                      {showAll ? "Off" : "On"}
+                      <FaList /> Pagination: {showAll ? "Off" : "On"}
                     </button>
                   )}
                   {(filter == "line items"
@@ -1298,8 +1308,7 @@ function Inventory() {
                           : setMultiEditViewBoxes(!multiEditViewBoxes);
                       }}
                     >
-                      <BiSelectMultiple/> Multi
-                      Edit
+                      <BiSelectMultiple /> Multi Edit
                     </button>
                   )}
                   <button
@@ -1314,7 +1323,7 @@ function Inventory() {
                         : setSelectedBoxes(new Set());
                     }}
                   >
-                    <MdEdit/> Edit Mode{" "}
+                    <MdEdit /> Edit Mode{" "}
                     {filter == "line items"
                       ? multiEdit
                         ? "Off"
@@ -1330,7 +1339,7 @@ function Inventory() {
                 title="Edit order and visibility of columns"
                 onClick={() => setColumnManagerOpen(!columnManagerOpen)}
               >
-                <MdViewColumn/>
+                <MdViewColumn />
                 {columnManagerOpen ? "Close Column Manager" : "Manage Columns"}
               </button>
               {columnManagerOpen && (
@@ -1440,14 +1449,14 @@ function Inventory() {
                         group.find((item) =>
                           item.color
                             .toLowerCase()
-                            .includes(searchValue.toLowerCase())
+                            .includes(searchValue.toLowerCase()),
                         )?.image || group[0].image
                       }
                       style={{ objectFit: "contain" }}
                     />
                     {group.some(
                       (item) =>
-                        keyDict[getKey([item])]?.quantity > item.quantity
+                        keyDict[getKey([item])]?.quantity > item.quantity,
                     ) && <div className={styles.partialOverlay}></div>}
                   </div>
                   <div style={{ fontWeight: "bold" }}>
@@ -1466,7 +1475,7 @@ function Inventory() {
                     {console.log(group)}
                     {group.reduce(
                       (a, b) => a + (b.quantity > 0 ? 1 : 0),
-                      0
+                      0,
                     )}{" "}
                     variants found
                   </button>
@@ -1477,9 +1486,7 @@ function Inventory() {
         )}
         {filter === "line items" && (
           <div className={globals.tableContainer}>
-            <table
-              className={`${globals.table} ${globals.gray}`}
-            >
+            <table className={`${globals.table} ${globals.gray}`}>
               <thead>
                 <tr>
                   {multiEdit && <th></th>}
@@ -1509,11 +1516,11 @@ function Inventory() {
                               .replace(" ", "");
 
                             setSortBy(
-                              sortValue === "brand" ? "brand" : sortValue
+                              sortValue === "brand" ? "brand" : sortValue,
                             );
                             localStorage.setItem(
                               "sortBy",
-                              sortValue === "brand" ? "brand" : sortValue
+                              sortValue === "brand" ? "brand" : sortValue,
                             );
 
                             setSortOrder(
@@ -1523,7 +1530,7 @@ function Inventory() {
                                   ? true
                                   : !sortOrder
                                     ? "alerts"
-                                    : false
+                                    : false,
                             );
                             localStorage.setItem(
                               "sortOrder",
@@ -1534,8 +1541,8 @@ function Inventory() {
                                     ? true
                                     : !sortOrder
                                       ? "alerts"
-                                      : false
-                              )
+                                      : false,
+                              ),
                             );
                           }
                         }}
@@ -1576,15 +1583,18 @@ function Inventory() {
                 {filteredInventory.map((item, index) => {
                   const quantity = item.reduce(
                     (acc, cur) => acc + (!cur.archived ? cur.quantity : 0),
-                    0
+                    0,
                   );
-                  const uniqueKey = getKey(item);
+                  const rowKey = item
+                    .map((i) => i._id.toString())
+                    .sort()
+                    .join("-");
                   const oneSelected =
                     multiEdit && item.some((i) => selectedItems.has(i._id));
 
                   return (
                     <tr
-                      key={uniqueKey}
+                      key={rowKey}
                       style={{
                         backgroundColor: oneSelected
                           ? "#b4c9edff"
@@ -1653,16 +1663,14 @@ function Inventory() {
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className={globals.imageContainer}>
-                                <Image
-                                  image={item[0].image}
-                                />
+                                  <Image image={item[0].image} />
                                 </div>
                               </td>
                             );
                           case "Description":
                             return (
                               <td
-                                style={{width:"20rem", maxWidth:"25rem"}}
+                                style={{ width: "20rem", maxWidth: "25rem" }}
                                 className={globals.veryLg}
                                 key={columnName}
                               >
@@ -1670,50 +1678,18 @@ function Inventory() {
                               </td>
                             );
                           case "Style":
-                            return (
-                              <td
-                                key={columnName}
-                              >
-                                {item[0].style}
-                              </td>
-                            );
+                            return <td key={columnName}>{item[0].style}</td>;
                           case "Brand":
-                            return (
-                              <td
-                                key={columnName}
-                              >
-                                {getBrand(item)}
-                              </td>
-                            );
+                            return <td key={columnName}>{getBrand(item)}</td>;
                           case "Color":
-                            return (
-                              <td
-                                key={columnName}
-                              >
-                                {item[0].color}
-                              </td>
-                            );
+                            return <td key={columnName}>{item[0].color}</td>;
                           case "Size":
-                            return (
-                              <td
-                                key={columnName}
-                              >
-                                {getSize(item)}
-                              </td>
-                            );
+                            return <td key={columnName}>{getSize(item)}</td>;
                           case "Quantity":
-                            return (
-                              <td
-                                key={columnName}
-                              >
-                                {quantity}
-                              </td>
-                            );
+                            return <td key={columnName}>{quantity}</td>;
                           case "Box":
                             return boxDict[item[0].boxId?.toString()] ? (
-                              <td
-                                key={columnName}
-                              >
+                              <td key={columnName}>
                                 {quantity > 0 ? (
                                   getBox(item)
                                 ) : (
@@ -1721,25 +1697,17 @@ function Inventory() {
                                 )}
                               </td>
                             ) : (
-                              <td
-                                key={columnName}
-                              >
-                                N/A
-                              </td>
+                              <td key={columnName}>N/A</td>
                             );
                           case "Location":
                             return (
-                              <td
-                                key={columnName}
-                              >
+                              <td key={columnName}>
                                 {quantity > 0 ? getLocation(item) : "N/A"}
                               </td>
                             );
                           case "Price":
                             return (
-                              <td
-                                key={columnName}
-                              >
+                              <td key={columnName}>
                                 {getPrice(item) !== "Multi"
                                   ? `$${getPrice(item)}`
                                   : "Multi"}
@@ -1747,9 +1715,7 @@ function Inventory() {
                             );
                           case "Visibility":
                             return (
-                              <td
-                                key={columnName}
-                              >
+                              <td key={columnName}>
                                 {item.every((i) => i.public) ? (
                                   <MdPublic color="green" />
                                 ) : item.some((i) => i.public) ? (
@@ -1776,11 +1742,14 @@ function Inventory() {
                                   item.tags?.map((i) => (
                                     <div
                                       className={styles.tag}
-                                      style={{ backgroundColor: `${i.color}90`, border: `1px solid ${i.color}`}}
+                                      style={{
+                                        backgroundColor: `${i.color}90`,
+                                        border: `1px solid ${i.color}`,
+                                      }}
                                     >
                                       {i.tag}
                                     </div>
-                                  ))
+                                  )),
                                 )}
                               </td>
                             );
@@ -1818,173 +1787,153 @@ function Inventory() {
         )}
         {filter === "boxes" && (
           <div className={globals.tableContainer}>
-          <table
-            className={`${globals.table} ${globals.gray}`}
-          >
-            <thead>
-              <tr>
-                {multiEditBoxes && <th></th>}
-                {getVisibleColumns("boxes").map((column) => {
-                  const columnName = Object.keys(column)[0];
+            <table className={`${globals.table} ${globals.gray}`}>
+              <thead>
+                <tr>
+                  {multiEditBoxes && <th></th>}
+                  {getVisibleColumns("boxes").map((column) => {
+                    const columnName = Object.keys(column)[0];
+                    return <th key={columnName}>{columnName}</th>;
+                  })}
+                  <th></th> {/* For the copy button column */}
+                </tr>
+              </thead>
+              <tbody onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+                {filteredBoxes.map((box, index) => {
+                  const oneSelected =
+                    multiEditBoxes && selectedBoxes.has(box._id);
+
                   return (
-                    <th
-                      key={columnName}
+                    <tr
+                      key={index}
+                      onClick={() => {
+                        if (!multiEditBoxes) setEditBoxOpen(box);
+                      }}
+                      onMouseDown={(e) => handleMouseDown(e, box, "boxes")}
+                      onMouseEnter={() => handleMouseEnter(box, "boxes")}
+                      style={{
+                        backgroundColor: oneSelected ? "#b4c9edff" : "",
+                        cursor: "pointer",
+                      }}
                     >
-                      {columnName}
-                    </th>
-                  );
-                })}
-                <th></th> {/* For the copy button column */}
-              </tr>
-            </thead>
-            <tbody onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
-              {filteredBoxes.map((box, index) => {
-                const oneSelected =
-                  multiEditBoxes && selectedBoxes.has(box._id);
-
-                return (
-                  <tr
-                    key={index}
-                    onClick={() => {
-                      if (!multiEditBoxes) setEditBoxOpen(box);
-                    }}
-                    onMouseDown={(e) => handleMouseDown(e, box, "boxes")}
-                    onMouseEnter={() => handleMouseEnter(box, "boxes")}
-                    style={{
-                      backgroundColor: oneSelected
-                        ? "#b4c9edff"
-                        : "",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {multiEditBoxes && (
-                      <td
-                        className={globals.sm}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedBoxes.has(box._id)}
-                          onChange={(e) => {
+                      {multiEditBoxes && (
+                        <td
+                          className={globals.sm}
+                          onClick={(e) => {
                             e.stopPropagation();
-                            const newSelected = new Set(selectedItems);
-
-                            if (e.target.checked) {
-                              newSelected.add(box._id);
-                            } else {
-                              newSelected.delete(box._id);
-                            }
-
-                            setSelectedBoxes(newSelected);
                           }}
-                        />
-                      </td>
-                    )}
-                    {getVisibleColumns("boxes").map((column) => {
-                      const columnName = Object.keys(column)[0];
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBoxes.has(box._id)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              const newSelected = new Set(selectedItems);
 
-                      switch (columnName) {
-                        case "Image":
-                          return (
-                            <td
-                              className={globals.sm}
-                              key={columnName}
-                            >
-                              <div className={globals.imageContainer}>
-                                <Image
-                                  image={box.image}
-                                />
-                              </div>
-                            </td>
-                          );
-                        case "Box Id.":
-                          return (
-                            <td key={columnName}>
-                              {box.boxId}
-                            </td>
-                          );
-                        case "Description":
-                          return (
-                            <td key={columnName} style={{minWidth:"20rem", maxWidth:"25rem"}}>
-                              {box.description.length > 80
-                                ? box.description.slice(0, 80) + "..."
-                                : box.description}
-                            </td>
-                          );
-                        case "Location":
-                          return (
-                            <td key={columnName}>
-                              {box.location}
-                            </td>
-                          );
-                        case "Total Quantity":
-                          return (
-                            <td key={columnName}>
-                              {contentDict[box._id.toString()]?.reduce(
-                                (acc, cur) => acc + cur.quantity,
-                                0
-                              ) || 0}
-                            </td>
-                          );
-                        case "Discount":
-                          return (
-                            <td key={columnName}>
-                              {contentDict[box._id]
-                                ? contentDict[box._id][0].sale
-                                  ? `${box.discount}%`
-                                  : "N/A"
-                                : "N/A"}
-                            </td>
-                          );
-                        case "Min.":
-                          return (
-                            <td key={columnName}>
-                              {contentDict[box._id]
-                                ? contentDict[box._id][0].sale
-                                  ? `$${box.minPrice}`
-                                  : "N/A"
-                                : "N/A"}
-                            </td>
-                          );
-                        case "Visibility":
-                          return (
-                            <td key={columnName}>
-                              {contentDict[box._id] ? (
-                                contentDict[box._id][0].public ? (
-                                  <MdPublic color="green" title="Public" />
+                              if (e.target.checked) {
+                                newSelected.add(box._id);
+                              } else {
+                                newSelected.delete(box._id);
+                              }
+
+                              setSelectedBoxes(newSelected);
+                            }}
+                          />
+                        </td>
+                      )}
+                      {getVisibleColumns("boxes").map((column) => {
+                        const columnName = Object.keys(column)[0];
+
+                        switch (columnName) {
+                          case "Image":
+                            return (
+                              <td className={globals.sm} key={columnName}>
+                                <div className={globals.imageContainer}>
+                                  <Image image={box.image} />
+                                </div>
+                              </td>
+                            );
+                          case "Box Id.":
+                            return <td key={columnName}>{box.boxId}</td>;
+                          case "Description":
+                            return (
+                              <td
+                                key={columnName}
+                                style={{ minWidth: "20rem", maxWidth: "25rem" }}
+                              >
+                                {box.description.length > 80
+                                  ? box.description.slice(0, 80) + "..."
+                                  : box.description}
+                              </td>
+                            );
+                          case "Location":
+                            return <td key={columnName}>{box.location}</td>;
+                          case "Total Quantity":
+                            return (
+                              <td key={columnName}>
+                                {contentDict[box._id.toString()]?.reduce(
+                                  (acc, cur) => acc + cur.quantity,
+                                  0,
+                                ) || 0}
+                              </td>
+                            );
+                          case "Discount":
+                            return (
+                              <td key={columnName}>
+                                {contentDict[box._id]
+                                  ? contentDict[box._id][0].sale
+                                    ? `${box.discount}%`
+                                    : "N/A"
+                                  : "N/A"}
+                              </td>
+                            );
+                          case "Min.":
+                            return (
+                              <td key={columnName}>
+                                {contentDict[box._id]
+                                  ? contentDict[box._id][0].sale
+                                    ? `$${box.minPrice}`
+                                    : "N/A"
+                                  : "N/A"}
+                              </td>
+                            );
+                          case "Visibility":
+                            return (
+                              <td key={columnName}>
+                                {contentDict[box._id] ? (
+                                  contentDict[box._id][0].public ? (
+                                    <MdPublic color="green" title="Public" />
+                                  ) : (
+                                    <MdOutlinePublicOff
+                                      color="red"
+                                      title="Admin Only"
+                                    />
+                                  )
                                 ) : (
                                   <MdOutlinePublicOff
                                     color="red"
                                     title="Admin Only"
                                   />
-                                )
-                              ) : (
-                                <MdOutlinePublicOff
-                                  color="red"
-                                  title="Admin Only"
-                                />
-                              )}
-                              {contentDict[box._id] ? (
-                                contentDict[box._id][0].sale ? (
-                                  <HiCash color="blue" title="On Sale" />
-                                ) : null
-                              ) : null}
-                            </td>
-                          );
-                        default:
-                          return <td key={columnName}></td>;
-                      }
-                    })}
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <FaRegCopy onClick={() => duplicateBox(box)} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                                )}
+                                {contentDict[box._id] ? (
+                                  contentDict[box._id][0].sale ? (
+                                    <HiCash color="blue" title="On Sale" />
+                                  ) : null
+                                ) : null}
+                              </td>
+                            );
+                          default:
+                            return <td key={columnName}></td>;
+                        }
+                      })}
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <FaRegCopy onClick={() => duplicateBox(box)} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
         {filter === "line items" && (
