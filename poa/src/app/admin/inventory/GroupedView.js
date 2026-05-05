@@ -115,7 +115,7 @@ export default function GroupedView({
     const dict = {};
     for (const item of items) {
       if (dict[item.color]) {
-        dict[item.color].totalQuant += item.quantity;
+        dict[item.color].totalQuant += parseInt(item.quantity || 0);
         dict[item.color].items.push(item);
       } else {
         dict[item.color] = {

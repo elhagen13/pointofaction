@@ -48,7 +48,7 @@ export async function GET(request) {
           error:
             "Missing required fields: style, color, and either brand or size",
         }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -60,6 +60,7 @@ export async function GET(request) {
       const brandDoc = await brands.findOne({
         brand: { $regex: `^${brand}$`, $options: "i" },
       });
+      console.log(brandDoc);
       brandId = brandDoc?._id;
     }
 
@@ -67,29 +68,36 @@ export async function GET(request) {
       const sizeDoc = await sizes.findOne({
         size: { $regex: `^${size}$`, $options: "i" },
       });
+      console.log(sizeDoc);
       sizeId = sizeDoc?._id;
     }
+
+    const andConditions = [];
+
+    if (brandId || brand) {
+      andConditions.push({
+        $or: [
+          ...(brandId ? [{ brandId: String(brandId) }] : []),
+          ...(brand ? [{ brand }] : []),
+        ],
+      });
+    }
+
+    if (sizeId || size) {
+      andConditions.push({
+        $or: [
+          ...(sizeId ? [{ sizeId: String(sizeId) }] : []),
+          ...(size ? [{ size }] : []),
+        ],
+      });
+    }
+    andConditions.forEach((and) => console.log(and))
 
     const matchQuery = {
       archived: false,
       style,
       color,
-      ...(brandId || brand
-        ? {
-            $or: [
-              ...(brandId ? [{ brandId: String(brandId) }] : []),
-              ...(brand ? [{ brand: brand }] : []),
-            ],
-          }
-        : {}),
-      ...(sizeId || size
-        ? {
-            $or: [
-              ...(sizeId ? [{ sizeId: String(sizeId) }] : []),
-              ...(size ? [{ size: size }] : []),
-            ],
-          }
-        : {}),
+      ...(andConditions.length ? { $and: andConditions } : {}),
       ...(!reserved
         ? {
             $expr: {
@@ -98,6 +106,8 @@ export async function GET(request) {
           }
         : {}),
     };
+
+    console.log(matchQuery);
 
     // Use aggregation pipeline to join with boxes collection
     const pipeline = [
@@ -124,8 +134,8 @@ export async function GET(request) {
       },
       {
         $project: {
-          boxInfo: 0, 
-          boxObjectId: 0, 
+          boxInfo: 0,
+          boxObjectId: 0,
         },
       },
     ];
@@ -144,7 +154,7 @@ export async function GET(request) {
         error: "Internal server error",
         details: error.message,
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 }
@@ -165,14 +175,14 @@ export async function PATCH(request, res) {
     if (!style || !color || (!brand && !size) || !quantityToReserve) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
     if (quantityToReserve <= 0) {
       return new Response(
         JSON.stringify({ error: "quantityToReserve must be greater than 0" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -231,7 +241,7 @@ export async function PATCH(request, res) {
 
     if (totalAvailable < quantityToReserve) {
       throw new Error(
-        `Insufficient inventory. Requested: ${quantityToReserve}, Available: ${totalAvailable}`
+        `Insufficient inventory. Requested: ${quantityToReserve}, Available: ${totalAvailable}`,
       );
     }
 
@@ -252,7 +262,7 @@ export async function PATCH(request, res) {
       // Determine how much to reserve from this item
       const toReserveFromThisItem = Math.min(
         remainingToReserve,
-        availableInThisItem
+        availableInThisItem,
       );
       const newReservedTotal = currentReserved + toReserveFromThisItem;
 
@@ -265,7 +275,7 @@ export async function PATCH(request, res) {
             updatedAt: new Date(),
           },
         },
-        { returnDocument: "after" }
+        { returnDocument: "after" },
       );
 
       let box = null;
@@ -323,7 +333,7 @@ export async function PATCH(request, res) {
         error: "Internal server error",
         details: error.message,
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 }
@@ -345,7 +355,7 @@ export async function POST(request) {
           success: false,
           error: "No items found with this ID",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -361,7 +371,7 @@ export async function POST(request) {
         error: "Failed to fetch items",
         details: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
