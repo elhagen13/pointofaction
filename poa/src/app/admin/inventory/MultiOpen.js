@@ -1,22 +1,6 @@
 "use client";
 import styles from "./inventory.module.css";
-import { useState, useEffect, useMemo } from "react";
-import {
-  FaUpload,
-  FaTimes,
-  FaRegTrashAlt,
-  FaLink,
-  FaBookmark,
-  FaDownload,
-  FaRegCopy,
-  FaPlus,
-} from "react-icons/fa";
-import {
-  IoIosAddCircle,
-  IoIosRemoveCircle,
-  IoIosCheckmarkCircle,
-} from "react-icons/io";
-import jsPDF from "jspdf";
+import { useState, useEffect, useMemo } from "react"
 
 export default function MultiOpen({
   items,
@@ -25,7 +9,6 @@ export default function MultiOpen({
   setEditItemOpen,
   boxDict,
   sizeDict,
-  descriptionDict,
   brandDict,
 }) {
   const [boxTotals, setBoxTotals] = useState({});
@@ -102,6 +85,8 @@ export default function MultiOpen({
         >
           
           {items.map((item, index) => {
+            if(item.archived) return  <></>;
+            else
             return(
               item.quantity > 0 && (item.boxId ? boxTotals[item.boxId] > 0 : true) &&
             <div
