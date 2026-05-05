@@ -127,10 +127,10 @@ export default function GroupedView({
 
       if (dict[item.color].sizes[sizeDict[item.sizeId]?.size || item.size]) {
         dict[item.color].sizes[sizeDict[item.sizeId]?.size || item.size] +=
-          item.quantity;
+          parseInt(item.quantity);
       } else {
         dict[item.color].sizes[sizeDict[item.sizeId]?.size || item.size] =
-          item.quantity;
+          parseInt(item.quantity);
       }
     }
     setSortedItems(
