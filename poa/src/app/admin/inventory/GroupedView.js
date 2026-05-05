@@ -119,7 +119,7 @@ export default function GroupedView({
         dict[item.color].items.push(item);
       } else {
         dict[item.color] = {
-          totalQuant: item.quantity,
+          totalQuant: parseInt(item.quantity),
           items: [item],
           sizes: {},
         };
