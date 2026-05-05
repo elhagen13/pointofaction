@@ -14,6 +14,8 @@ export default function SetQuantity({
   const [orderQuant, setOrderQuant] = useState([]);
   const [sizeToItemMap, setSizeToItemMap] = useState({}); // Maps size to item with that size
 
+  console.log(items)
+
   const getPriority = (size) => {
     if (size.includes("oz")) {
       return parseInt(size.slice(0, -2));

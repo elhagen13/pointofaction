@@ -17,8 +17,8 @@
   text-align: left;
   border-collapse: collapse;
   border-radius: 5px;
-  overflow: hidden;
 }
+
 
 .table th {
   padding: 0.5rem var(--padding-column-horiz);
@@ -46,6 +46,7 @@
   aspect-ratio: 1 / 1;
   object-fit: contain;
 }
+
 
 /* ========================================
    TABLE COLOR VARIANTS
