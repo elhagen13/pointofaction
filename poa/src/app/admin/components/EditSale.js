@@ -1,6 +1,5 @@
-import {useState, useEffect} from "react"
-import styles from "./components.module.css"
-
+import { useState, useEffect } from "react";
+import styles from "./components.module.css";
 
 export default function EditSale() {
   const [saleActive, setSaleActive] = useState(false);
@@ -19,7 +18,7 @@ export default function EditSale() {
     try {
       const response = await fetch("/api/checkSale");
       const data = await response.json();
-      
+
       if (data.success) {
         setSaleActive(data.data.active || false);
         setSaleLink(data.data.link || "");
@@ -31,11 +30,9 @@ export default function EditSale() {
     }
   };
 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Only require sale link if sale is active
     if (saleActive && !saleLink.trim()) {
       alert("Please provide a sale link when sale is active");
@@ -55,13 +52,11 @@ export default function EditSale() {
     }
   };
 
-  
-
   const editSale = async () => {
     try {
       const saleData = {
         active: saleActive,
-        link: saleLink.trim()
+        link: saleLink.trim(),
       };
 
       const response = await fetch("/api/checkSale", {
@@ -90,26 +85,29 @@ export default function EditSale() {
   };
 
   return (
-      <div>
-        <div className={styles.title} style={{ marginBottom: "30px" }}>
-          Edit Sale Status
-        </div>
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.formInput}>
-            <label>Sale Status</label>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <label className={styles.switch}>
-                <input
-                  type="checkbox"
-                  checked={saleActive}
-                  onChange={(e) => setSaleActive(e.target.checked)}
-                  disabled={isSaleLoading || isUpdatingSale}
-                />
-                <span className={`${styles.slider} ${styles.round}`}></span>
-              </label>
-            </div>
+    <div>
+      <div className={styles.title} style={{ marginBottom: "30px" }}>
+        Edit Sale Status
+      </div>
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.formInput}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <label>Sale Status</label>{" "}
+            <button className={styles.defaultButton} onClick={() => setSaleLink("https://pointofaction.com/store")}>use default</button>
           </div>
-        {saleActive &&
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <label className={styles.switch}>
+              <input
+                type="checkbox"
+                checked={saleActive}
+                onChange={(e) => setSaleActive(e.target.checked)}
+                disabled={isSaleLoading || isUpdatingSale}
+              />
+              <span className={`${styles.slider} ${styles.round}`}></span>
+            </label>
+          </div>
+        </div>
+        {saleActive && (
           <div className={styles.formInput}>
             <label>Sale Link</label>
             <input
@@ -120,18 +118,25 @@ export default function EditSale() {
               disabled={!saleActive || isSaleLoading}
               required={saleActive}
             />
-          </div>}
-
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px" }}>
-            <button
-              type="submit"
-              disabled={isSubmitting || isSaleLoading}
-              className={styles.button}
-            >
-              {isSubmitting ? "Updating..." : "Update Sale"}
-            </button>
           </div>
-        </form>
-      </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: "20px",
+          }}
+        >
+          <button
+            type="submit"
+            disabled={isSubmitting || isSaleLoading}
+            className={styles.button}
+          >
+            {isSubmitting ? "Updating..." : "Update Sale"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
