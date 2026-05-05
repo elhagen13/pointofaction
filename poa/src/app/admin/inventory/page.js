@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import styles from "./inventory.module.css";
 import globals from "../globals.module.css";
 import { FaList, FaRegCopy } from "react-icons/fa";
@@ -64,6 +64,7 @@ function Inventory() {
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [editItemOpen, setEditItemOpen] = useState(null);
   const [editBoxOpen, setEditBoxOpen] = useState(null);
+  const [selectedAll, setSelectedAll] = useState(false);
 
   const [columnManagerOpen, setColumnManagerOpen] = useState(false);
   const [groupedDict, setGroupedDict] = useState({});
@@ -112,6 +113,8 @@ function Inventory() {
   const [multiEditView, setMultiEditView] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const [lastItemIndex, setLastItemIndex] = useState(null);
+  const [lastBoxIndex, setLastBoxIndex] = useState(null);
 
   const [multiEditBoxes, setMultiEditBoxes] = useState(false);
   const [multiEditViewBoxes, setMultiEditViewBoxes] = useState(false);
@@ -805,9 +808,6 @@ function Inventory() {
             .join(" ")
             .toLowerCase();
 
-          console.log("ITEMTEXT:", itemText);
-          console.log("searchWORDS:", searchWords);
-
           // Check if ALL search words are found in the combined text
           return searchWords.every((word) => itemText.includes(word));
         });
@@ -1156,37 +1156,68 @@ function Inventory() {
     setAddBoxOpen(true);
   };
 
-  const handleMouseDown = (e, item, type) => {
-    if ((type == "items" && !multiEdit) || (type == "boxes" && !multiEditBoxes))
-      return;
-    e.preventDefault();
-    setIsMouseDown(true);
-    console.log(item);
 
-    const newSelected = new Set(
-      type == "items" ? selectedItems : selectedBoxes,
-    );
-    let itemIds;
-    if (type == "items") {
-      itemIds = item.map((i) => i._id);
-    } else {
-      itemIds = [item._id];
-    }
+const handleMouseDown = (e, item, type, index) => {
+  if ((type === "items" && !multiEdit) || (type === "boxes" && !multiEditBoxes))
+    return;
 
-    // Toggle: if any selected, deselect all; otherwise select all
-    const anySelected = itemIds.some((id) => newSelected.has(id));
-    itemIds.forEach((id) => {
-      if (anySelected) {
-        newSelected.delete(id);
+  e.preventDefault();
+
+  const isItems = type === "items";
+
+  // SHIFT CLICK RANGE SELECT
+  if (e.shiftKey) {
+    const lastIndex = isItems ? lastItemIndex : lastBoxIndex;
+
+    if (lastIndex !== null) {
+      const newSelected = new Set(isItems ? selectedItems : selectedBoxes);
+      const start = Math.min(lastIndex, index);
+      const end = Math.max(lastIndex, index);
+
+      const rows = isItems ? filteredInventory : filteredBoxes;
+
+      rows.slice(start, end + 1).forEach((row) => {
+        if (isItems) {
+          row.forEach((i) => newSelected.add(i._id));
+        } else {
+          newSelected.add(row._id);
+        }
+      });
+
+      if (isItems) {
+        setSelectedItems(newSelected);
+        setLastItemIndex(index);
       } else {
-        newSelected.add(id);
+        setSelectedBoxes(newSelected);
+        setLastBoxIndex(index);
       }
-    });
 
-    type === "items"
-      ? setSelectedItems(newSelected)
-      : setSelectedBoxes(newSelected);
-  };
+      return;
+    }
+  }
+
+  // NORMAL CLICK + DRAG START
+  setIsMouseDown(true);
+
+  const newSelected = new Set(isItems ? selectedItems : selectedBoxes);
+
+  const itemIds = isItems ? item.map((i) => i._id) : [item._id];
+
+  const anySelected = itemIds.some((id) => newSelected.has(id));
+
+  itemIds.forEach((id) => {
+    if (anySelected) newSelected.delete(id);
+    else newSelected.add(id);
+  });
+
+  if (isItems) {
+    setSelectedItems(newSelected);
+    setLastItemIndex(index);
+  } else {
+    setSelectedBoxes(newSelected);
+    setLastBoxIndex(index);
+  }
+};
 
   const handleMouseEnter = (item, type) => {
     if (isMouseDown && (multiEdit || multiEditBoxes)) {
@@ -1208,6 +1239,7 @@ function Inventory() {
           newSelected.add(id);
         }
       });
+
       type == "items"
         ? setSelectedItems(newSelected)
         : setSelectedBoxes(newSelected);
@@ -1217,6 +1249,22 @@ function Inventory() {
   const handleMouseUp = () => {
     setIsMouseDown(false);
   };
+
+  const selectAll = () => {
+    if(!selectedAll)
+      setSelectedItems(new Set(filteredGroups.flat().map((item) => item._id)));
+    else setSelectedItems(new Set());
+    setSelectedAll(!selectedAll)  
+  }
+
+  const selectAllBoxes = () => {
+    console.log(filteredBoxes.slice(1, 5), selectedAll)
+    if(!selectedAll)
+      setSelectedBoxes(new Set(filteredBoxes.map((item) => item._id)));
+    else setSelectedBoxes(new Set());
+    setSelectedAll(!selectedAll)  
+  }
+
 
   return (
     <div
@@ -1489,7 +1537,7 @@ function Inventory() {
             <table className={`${globals.table} ${globals.gray}`}>
               <thead>
                 <tr>
-                  {multiEdit && <th></th>}
+                  {multiEdit && <th>{multiEdit && <input type="checkbox" onClick={selectAll} checked={selectedAll}></input>}</th>}
 
                   {getVisibleColumns("lineItems").map((column, index) => {
                     const columnName = Object.keys(column)[0];
@@ -1606,7 +1654,7 @@ function Inventory() {
                               : "",
                         overflow: "scroll",
                       }}
-                      onMouseDown={(e) => handleMouseDown(e, item, "items")}
+                      onMouseDown={(e) => handleMouseDown(e, item, "items", index)}
                       onMouseEnter={() => handleMouseEnter(item, "items")}
                       onClick={() => {
                         if (!multiEdit) {
@@ -1790,7 +1838,7 @@ function Inventory() {
             <table className={`${globals.table} ${globals.gray}`}>
               <thead>
                 <tr>
-                  {multiEditBoxes && <th></th>}
+                  {multiEditBoxes && <th>{multiEditBoxes && <input type="checkbox" onClick={selectAllBoxes} checked={selectedAll}></input>}</th>}
                   {getVisibleColumns("boxes").map((column) => {
                     const columnName = Object.keys(column)[0];
                     return <th key={columnName}>{columnName}</th>;
@@ -1809,7 +1857,7 @@ function Inventory() {
                       onClick={() => {
                         if (!multiEditBoxes) setEditBoxOpen(box);
                       }}
-                      onMouseDown={(e) => handleMouseDown(e, box, "boxes")}
+                      onMouseDown={(e) => handleMouseDown(e, box, "boxes", index)}
                       onMouseEnter={() => handleMouseEnter(box, "boxes")}
                       style={{
                         backgroundColor: oneSelected ? "#b4c9edff" : "",
