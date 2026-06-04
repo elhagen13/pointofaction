@@ -13,6 +13,7 @@ import EditImages from "./components/EditImages";
 import Analytics from "./components/Analytics"
 import { IoMdMenu } from "react-icons/io";
 import EditEmployees from "./components/EditEmployees";
+import { SignOutButton } from '@clerk/nextjs'
 
 export default function AdminHome() {
   const [sliderPosition, setSliderPosition] = useState(null);
@@ -71,6 +72,8 @@ export default function AdminHome() {
 
   return (
     <div className={styles.adminPage}>
+        <SignOutButton className={styles.signOut}><button>Sign Out</button></SignOutButton>
+
       <div className={styles.navContainer}>
       <div  className={styles.mobileMenu} onClick={() => setMobileMenu(!mobileMenu)}><IoMdMenu size={20}/></div>
 

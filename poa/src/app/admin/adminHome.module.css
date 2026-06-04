@@ -53,6 +53,16 @@
 }
 
 
+.signOut{
+  position: absolute;
+  right: 2rem;
+  top: -4rem;
+  padding: 0.5rem;
+  font-weight: bold;
+}
+
+
+
 @media(max-width: 768px){
 .navContainer{
   position: fixed;
