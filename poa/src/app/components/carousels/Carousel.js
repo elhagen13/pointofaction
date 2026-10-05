@@ -1,118 +1,143 @@
 "use client";
+
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { GridLoader } from "react-spinners";
+import { useEffect, useRef, useState } from "react";
 import styles from "./carousel.module.css";
-import { useState, useEffect, useRef } from "react";
-import { BarLoader, BeatLoader, GridLoader } from "react-spinners";
 
-export default function Carousel({ images, loading = false }) {
-  const [curEnlarged, setCurEnlarged] = useState(0);
+export default function Carousel({ images = [], loading = false }) {
+  const [carouselPosition, setCarouselPosition] = useState(0);
 
-  const [hoverDelay, setHoverDelay] = useState(null);
-  const directionRef = useRef(1);
-  const intervalRef = useRef(null);
+  const velocityRef = useRef(0);
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
+
   const SWIPE_THRESHOLD = 10;
 
-  // --- Positioning stays the same (class-based) ---
-  const getPosition = (index) => {
-    if (!images.length) return styles.hidden;
-    const current = curEnlarged;
-    if (index === current) return styles.center;
-
-    const total = images.length;
-    let diff = index - current;
-    if (diff > total / 2) diff -= total;
-    else if (diff < -total / 2) diff += total;
-
-    if (diff < 0 && diff >= -5) {
-      const d = Math.abs(diff);
-      return `${styles.left} ${styles[`left${d}`]}`;
-    } else if (diff > 0 && diff <= 5) {
-      return `${styles.right} ${styles[`right${diff}`]}`;
-    }
-    return styles.hidden;
-  };
-
   const changeEnlarged = (increment) => {
-    setCurEnlarged((previous) => {
-      if (!images.length) return 0;
-      return (previous + increment + images.length) % images.length;
-    });
+    if (!images.length) return;
+
+    setCarouselPosition((position) => position + increment);
   };
 
-  // Clear on unmount
+  // Runs continuously, but only changes the carousel when velocity is non-zero.
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    let animationFrame;
+    let previousTime;
+
+    const animate = (time) => {
+      if (previousTime !== undefined) {
+        const deltaSeconds = Math.min((time - previousTime) / 1000, 0.05);
+
+        if (velocityRef.current !== 0) {
+          setCarouselPosition(
+            (position) => position + velocityRef.current * deltaSeconds
+          );
+        }
+      }
+
+      previousTime = time;
+      animationFrame = requestAnimationFrame(animate);
     };
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrame);
   }, []);
 
-  // (Re)start an interval whenever hoverDelay changes
+  // Keep position reasonable if the image list changes.
   useEffect(() => {
-    // Stop any existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (!images.length) {
+      setCarouselPosition(0);
+    }
+  }, [images.length]);
+
+  const getImageStyle = (index) => {
+    if (!images.length) return { opacity: 0 };
+
+    let difference = index - carouselPosition;
+    const total = images.length;
+
+    // Makes the carousel wrap around in the shortest direction.
+    difference =
+      ((difference + total / 2) % total + total) % total - total / 2;
+
+    const distance = Math.abs(difference);
+
+    if (distance > 5) {
+      return {
+        opacity: 0,
+        pointerEvents: "none",
+        zIndex: 0,
+      };
     }
 
-    // If we have a valid delay, start a new interval
-    if (typeof hoverDelay === "number" && hoverDelay > 0) {
-      intervalRef.current = setInterval(() => {
-        changeEnlarged(directionRef.current);
-      }, hoverDelay);
-    }
+    // Position and scale for images 0–5 spaces from center.
+    const positions = [0, 18, 36, 52, 62, 68];
+    const scales = [1, 0.85, 0.75, 0.6, 0.5, 0.4];
 
-    // Cleanup when delay changes again
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    // Interpolate between positions so movement is fluid.
+    const lower = Math.floor(distance);
+    const upper = Math.min(Math.ceil(distance), 5);
+    const progress = distance - lower;
+
+    const x =
+      positions[lower] + (positions[upper] - positions[lower]) * progress;
+
+    const scale =
+      scales[lower] + (scales[upper] - scales[lower]) * progress;
+
+    return {
+      left: `calc(50% + ${Math.sign(difference) * x}%)`,
+      transform: `translateX(-50%) scale(${scale})`,
+      opacity: 1,
+      zIndex: Math.round(100 - distance * 10),
     };
-  }, [hoverDelay]);
+  };
 
-  const startHoverScroll = (direction = 1) => {
-    directionRef.current = direction;
-    // If delay hasn't been set by mouse move yet, give a sensible default
-    if (hoverDelay == null) {
-      setHoverDelay(220); // mid-speed default
+  const handlePointerMove = (event) => {
+    if (event.pointerType !== "mouse") return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+
+    // -1 = far left, 0 = center, 1 = far right
+    const relativePosition = Math.max(
+      -1,
+      Math.min(1, (event.clientX - centerX) / (rect.width / 2))
+    );
+
+    // The center 44% of the carousel will not move.
+    const deadZone = 0.22;
+
+    if (Math.abs(relativePosition) < deadZone) {
+      velocityRef.current = 0;
+      return;
     }
+
+    const normalizedSpeed =
+      (Math.abs(relativePosition) - deadZone) / (1 - deadZone);
+
+    const minSpeed = 0.35;
+    const maxSpeed = 2.5;
+
+    // Squaring gives a gentler increase near center and faster edges.
+    velocityRef.current =
+      Math.sign(relativePosition) *
+      (minSpeed + (maxSpeed - minSpeed) * normalizedSpeed ** 2);
   };
 
-  const stopHoverScroll = () => {
-    directionRef.current = 1;
-    setHoverDelay(null); // stop the interval (effect cleanup handles it)
+  const stopCarousel = () => {
+    velocityRef.current = 0;
   };
 
-  // Map mouse position to delay (ms): closer to edge => smaller delay => faster
-  const handleMouseMove = (e, direction) => {
-    directionRef.current = direction;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const zoneWidth = Math.max(1, rect.width); // avoid division by zero
-    // Position within the zone [0..zoneWidth]
-    const localX = Math.min(Math.max(e.clientX - rect.left, 0), zoneWidth);
-
-    const distanceFromEdge = direction === 1 ? zoneWidth - localX : localX;
-
-    // ratio: 0 (far from edge) -> 1 (at the edge)
-    const ratio = 1 - Math.min(Math.max(distanceFromEdge / zoneWidth, 0), 1);
-
-    // Map ratio to delay: near edge -> minDelay (fast); far -> maxDelay (slow)
-    const minDelay = 200;
-    const maxDelay = 400;
-    const delay = Math.round(maxDelay - ratio * (maxDelay - minDelay));
-
-    setHoverDelay(delay);
+  const handleTouchStart = (event) => {
+    touchStartX.current = event.touches[0].clientX;
+    touchEndX.current = null;
   };
 
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e) => {
-    touchEndX.current = e.touches[0].clientX;
+  const handleTouchMove = (event) => {
+    touchEndX.current = event.touches[0].clientX;
   };
 
   const handleTouchEnd = () => {
@@ -120,17 +145,12 @@ export default function Carousel({ images, loading = false }) {
 
     const dx = touchEndX.current - touchStartX.current;
 
-    // Swipe Right → go left (previous)
     if (dx > SWIPE_THRESHOLD) {
       changeEnlarged(-1);
-    }
-
-    // Swipe Left → go right (next)
-    if (dx < -SWIPE_THRESHOLD) {
+    } else if (dx < -SWIPE_THRESHOLD) {
       changeEnlarged(1);
     }
 
-    // Reset
     touchStartX.current = null;
     touchEndX.current = null;
   };
@@ -139,45 +159,36 @@ export default function Carousel({ images, loading = false }) {
     <div className={styles.carouselContainer}>
       <div className={styles.controls}>
         <FaArrowLeft />
-        hover to navigate
+        <span>hover to navigate</span>
         <FaArrowRight />
       </div>
 
       <div
         className={styles.imageContainer}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={stopCarousel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {loading ? <div className={styles.loadingContainer}><GridLoader color="#aaa5a5ff"/></div> : 
-        images.map((img, i) => (
-          <img
-            key={i}
-            src={img.image}
-            alt={`Gallery ${i}`}
-            className={`${styles.galleryItem} ${getPosition(i)}`}
-            draggable={false}
-          />
-        ))}
-        <div
-          className={styles.mouseRight}
-          onMouseEnter={() => startHoverScroll(1)}
-          onMouseLeave={stopHoverScroll}
-          onMouseMove={(e) => handleMouseMove(e, 1)}
-        />
-
-        <div
-          className={styles.mouseCenter}
-          onMouseEnter={stopHoverScroll}
-          onMouseMove={stopHoverScroll}
-        />
-
-        <div
-          className={styles.mouseLeft}
-          onMouseEnter={() => startHoverScroll(-1)}
-          onMouseLeave={stopHoverScroll}
-          onMouseMove={(e) => handleMouseMove(e, -1)}
-        />
+        <div className={styles.gradientLeft}></div>
+        {loading ? (
+          <div className={styles.loadingContainer}>
+            <GridLoader color="#aaa5a5" />
+          </div>
+        ) : (
+          images.map((img, index) => (
+            <img
+              key={img.id ?? img.image ?? index}
+              src={img.image}
+              alt={`Gallery ${index + 1}`}
+              className={styles.galleryItem}
+              style={getImageStyle(index)}
+              draggable={false}
+            />
+          ))
+        )}
+        <div className={styles.gradientRight}></div>
       </div>
     </div>
   );

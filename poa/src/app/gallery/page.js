@@ -1,5 +1,4 @@
 "use client";
-import GalleryCarousel from "../components/galleryCarousel";
 import Carousel from "../components/carousels/Carousel";
 import styles from "./gallery.module.css";
 import Link from "next/link";
@@ -186,8 +185,7 @@ export default function Home() {
                   className={`${styles.companyTile} ${
                     hovered === index ? styles.expanded : ""
                   }`}
-                  onMouseEnter={() => changeHovered(index)}
-                  onMouseLeave={() => setHovered(null)}
+                  onClick={() => changeHovered(index)}
                 >
                   <img src={company.image} className={styles.companyImage} />
 

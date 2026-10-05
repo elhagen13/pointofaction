@@ -539,7 +539,7 @@ const Order = ({ reservation }) => {
             </div>
           </div>
           {view == "default" && (
-            <div>
+            <div style={{overflow:"scroll"}}>
               <table className={`${tableStyles.table} ${tableStyles.blue}`}>
                 <thead>
                   <tr>
