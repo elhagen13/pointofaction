@@ -172,6 +172,8 @@
 
     /* Hide scrollbar for IE and Edge */
     -ms-overflow-style: none;
+  aspect-ratio: 1 / 1;
+  
 
 }
 
