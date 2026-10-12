@@ -162,8 +162,16 @@
   box-shadow: 0 0 4px rgba(0,0,0,0.2);
   overflow: hidden;
   transition: all 0.3s ease;
-  overflow: scroll;
   cursor: pointer;
+  &::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Hide scrollbar for Firefox */
+    scrollbar-width: none;
+
+    /* Hide scrollbar for IE and Edge */
+    -ms-overflow-style: none;
 
 }
 
@@ -180,6 +188,7 @@
   transform: scale(1.03);
   min-width: 15rem;
   min-height: 15rem;
+  cursor: default;
 }
 
 .companyTile.expanded .companyImage {
@@ -224,6 +233,22 @@
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 10px;
+}
+
+.exit{
+  position: absolute;
+  right: 0.25rem;
+  top: 0.25rem;
+  z-index: 10;
+  background-color: rgba(241, 240, 240, 0.653);
+  border: 1px solid white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.25rem;
+  border-radius: 5px;
+  cursor: pointer;
+
 }
 
 @media (max-width: 768px) {

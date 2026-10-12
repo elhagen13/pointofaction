@@ -290,7 +290,6 @@ const AddBox = ({
   };
 
   const setVisibilityWithTracking = (newVisibility) => {
-    console.log("inside", newVisibility);
     setUnsavedChanges(true);
     setVisibility(newVisibility);
   };
@@ -427,7 +426,6 @@ const AddBox = ({
     }
 
     const searchTerm = searchValue.toLowerCase().trim();
-    console.log(searchTerm);
     return options.combos.filter((combo) => {
       // Create a searchable string from all combo properties
       const searchableString = [
@@ -561,7 +559,6 @@ const AddBox = ({
     }
     if (type === "content" && itemIndex !== null) {
       // Update specific item's image
-      console.log(contents);
       setContents((prevContents) =>
         prevContents.map((item, index) => {
           if (index === itemIndex) {
@@ -588,7 +585,6 @@ const AddBox = ({
 
   const handleUploadImage = async (file, type, itemIndex = null) => {
     setUnsavedChanges(true);
-    console.log(file, type, itemIndex);
     if (!file) {
       return;
     }
@@ -961,6 +957,7 @@ const AddBox = ({
           console.error(`Failed to delete item ${itemToDelete._id}:`, error);
         }
       }
+
       for (const content of currentContents) {
         if (content.removed) {
           change.changes.push(
@@ -1019,6 +1016,7 @@ const AddBox = ({
         }
       );
 
+      let newContents = []
       for (const content of currentContents) {
         try {
           //STEP 1: if it is taken out of the box, then change
@@ -1061,6 +1059,10 @@ const AddBox = ({
                 },
                 body: JSON.stringify(itemData),
               });
+              const res = await itemResponse.json();
+              console.log(res.data._id);
+              newContents.push(res.data);
+
             } else if (contentChanged(content, origContentsDict)) {
               itemResponse = await fetch(`/api/inventory/item/${content._id}`, {
                 method: "PATCH",
@@ -1081,11 +1083,12 @@ const AddBox = ({
           console.error(`Error processing item:`, error);
           throw error;
         }
-      }
+      } 
       setOrigDescription(boxDescription);
       setOrigLocation(boxLocation);
       setOrigImageUrl(imageUrl);
-      setOriginalContents(currentContents);
+      setOriginalContents([...currentContents.filter(content => content._id), ...newContents]);
+
       setHistory([...history, change]);
       return true;
     } catch (error) {
@@ -1100,7 +1103,6 @@ const AddBox = ({
     try {
       if (opt === "all") {
         for (const item of originalContents) {
-          console.log(item);
           if (item._id) {
             console.log(`deleting ${item._id}`);
             const itemResponse = await fetch(
@@ -2695,7 +2697,6 @@ const AddBox = ({
                         (item) => item !== "public"
                       );
                     }
-                    console.log(newVisibility);
                     setVisibilityWithTracking(newVisibility); // Use tracking function
                   }}
                 />

@@ -1,5 +1,6 @@
 "use client";
 import Carousel from "../components/carousels/Carousel";
+import { AiOutlineFullscreenExit } from "react-icons/ai";
 import styles from "./gallery.module.css";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -11,37 +12,36 @@ export default function Home() {
   const [companies, setCompanies] = useState([]);
   const [hovered, setHovered] = useState(null);
   const [maxColumns, setMaxColumns] = useState(20);
-  const [mobile, setMobile] = useState(false)
+  const [mobile, setMobile] = useState(false);
 
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('/api/tracker', {
+    fetch("/api/tracker", {
       method: "POST",
       body: JSON.stringify({
-          page:'gallery'
-      })
-    })
-  }, [])
-
-  
-  useEffect(() => {
-  const updateMax = () => {
-    if (window.innerWidth <= 768) {
-      setMaxColumns(8);
-      if (value > 8) setValue(8); 
-    } else {
-      setMaxColumns(20);
-    }
-  };
-
-  updateMax();
-  window.addEventListener("resize", updateMax);
-  return () => window.removeEventListener("resize", updateMax);
-}, [value]);
+        page: "gallery",
+      }),
+    });
+  }, []);
 
   useEffect(() => {
-    setLoading(true)
+    const updateMax = () => {
+      if (window.innerWidth <= 768) {
+        setMaxColumns(8);
+        if (value > 8) setValue(8);
+      } else {
+        setMaxColumns(20);
+      }
+    };
+
+    updateMax();
+    window.addEventListener("resize", updateMax);
+    return () => window.removeEventListener("resize", updateMax);
+  }, [value]);
+
+  useEffect(() => {
+    setLoading(true);
     const getImages = async () => {
       const response = await fetch("/api/galleryImages", {
         method: "GET",
@@ -52,9 +52,9 @@ export default function Home() {
       console.log(result.data);
       console.log(result.data.map((company) => company.items).flat());
       setImages(
-        shuffleArray(result.data.map((company) => company.items).flat())
+        shuffleArray(result.data.map((company) => company.items).flat()),
       );
-      setLoading(false)
+      setLoading(false);
     };
     getImages();
   }, []);
@@ -107,18 +107,17 @@ export default function Home() {
   ];
 
   const changeHovered = (index) => {
-    if((index + 1) % value !== 0){
-      setHovered(index)
-    }
-    else{
-      let modifiedCompanies = companies
-      const valAtIndex = modifiedCompanies[index]
+    if ((index + 1) % value !== 0) {
+      setHovered(index);
+    } else {
+      let modifiedCompanies = companies;
+      const valAtIndex = modifiedCompanies[index];
       modifiedCompanies[index] = modifiedCompanies[index - 1];
-      modifiedCompanies[index - 1] = valAtIndex
-      setCompanies(modifiedCompanies)
-      setHovered(index - 1)
+      modifiedCompanies[index - 1] = valAtIndex;
+      setCompanies(modifiedCompanies);
+      setHovered(index - 1);
     }
-  }
+  };
   return (
     <div className={styles.galleryPage}>
       <div className={styles.title}>Gallery</div>
@@ -130,7 +129,7 @@ export default function Home() {
           </Link>
         ))}
       </div>
-      <Carousel images={images} loading={loading}/>
+      <Carousel images={images} loading={loading} />
       <div className={styles.spaceApart}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           Company View
@@ -188,21 +187,36 @@ export default function Home() {
                   onClick={() => changeHovered(index)}
                 >
                   <img src={company.image} className={styles.companyImage} />
+                  {hovered === index && (
+                    <div
+                      className={styles.exit}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setHovered(null);
+                      }}
+                    >
+                      <AiOutlineFullscreenExit />
+                    </div>
+                  )}
 
                   <div className={styles.itemsGrid}>
                     <div className={styles.flexGrid}>
-                      {company.items.slice(0, Math.round(company.items.length / 2)).map((item, i) => (
-                        <img key={i} src={item.image} />
-                      ))}
+                      {company.items
+                        .slice(0, Math.round(company.items.length / 2))
+                        .map((item, i) => (
+                          <img key={i} src={item.image} />
+                        ))}
                     </div>
                     <div className={styles.flexGrid}>
-                      {company.items.slice(Math.round(company.items.length / 2)).map((item, i) => (
-                        <img key={i} src={item.image} />
-                      ))}
+                      {company.items
+                        .slice(Math.round(company.items.length / 2))
+                        .map((item, i) => (
+                          <img key={i} src={item.image} />
+                        ))}
                     </div>
                   </div>
                 </div>
-              )
+              ),
           )}
         </div>
       )}
